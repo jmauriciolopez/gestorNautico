@@ -22,6 +22,15 @@ export class Embarcacion {
   @Column('decimal', { precision: 5, scale: 2, nullable: true })
   eslora: number;
 
+  @Column('decimal', { precision: 5, scale: 2, nullable: true })
+  manga: number;
+
+  @Column({ default: 'Lancha' })
+  tipo: string;
+
+  @Column({ default: 'EN_CUNA' })
+  estado: string; // EN_CUNA, EN_AGUA, MANTENIMIENTO, INACTIVA
+
   @ManyToOne(() => Cliente, (cliente) => cliente.id)
   cliente: Cliente;
 
