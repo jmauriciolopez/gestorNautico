@@ -1,0 +1,2 @@
+Abre Technical_Specification.md en el editor de tu IDE, agrega algunas notas (como "Usemos Python en lugar de Node") y dile al agente que lo vuelva a trabajar. Revisará el archivo de forma autónoma.
+Una vez que lo apruebas, Gemini cambia el contexto de forma nativa al ingeniero y usa la especificación aprobada para escribir el código de backend o frontend.
