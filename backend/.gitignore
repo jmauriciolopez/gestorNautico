@@ -1,0 +1,543 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# production
+/build
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# typescript
+*.tsbuildinfo
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# local env files
+.env*.local
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+
+# optional npm cache directory
+.npm
+
+# optional eslint cache
+.eslintcache
+
+# optional stylelint cache
+.stylelintcache
+
+# next.js
+.next/
+out/
+
+# nuxt.js
+.nuxt/
+dist/
+
+# svelte.js
+.svelte-kit/
+build/
+
+# vite
+.vite/build/
+
+# turbo
+.turbo/
+
+# vercel
+.vercel
+
+# prisma
+.prisma/
+
+# supabase
+.supabase/
+
+# playwright
+.playwright-report/
+
+# code coverage
+coverage/
+
+# editor directories and files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# macos
+.DS_Store
+
+# windows
+Thumbs.db
+
+# linux
+.Trash-*
+
+# jetbrains
+.idea/
+
+# visual studio code
+.vscode/
+
+# eclipse
+.metadata
+
+# netbeans
+.nbproject
+.nbbuild
+.nbplatform
+
+# intellij idea
+.idea/
+
+# android studio
+.idea/
+
+# xcode
+build/
+DerivedData/
+
+# swift
+.build/
+
+# rust
+target/
+
+# go
+bin/
+pkg/
+
+# php
+vendor/
+
+# python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# ruby
+.bundle/
+.gem/
+.rake/
+.rbenv/
+.rghost/
+.rvm/
+
+# node
+node_modules/
+
+# java
+target/
+
+# c#
+bin/
+obj/
+
+# c++
+build/
+cmake-build-debug/
+cmake-build-release/
+
+# c
+build/
+
+# objective-c
+build/
+DerivedData/
+
+# swift
+.build/
+
+# rust
+target/
+
+# go
+bin/
+pkg/
+
+# php
+vendor/
+
+# python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# ruby
+.bundle/
+.gem/
+.rake/
+.rbenv/
+.rghost/
+.rvm/
+
+# node
+node_modules/
+
+# java
+target/
+
+# c#
+bin/
+obj/
+
+# c++
+build/
+cmake-build-debug/
+cmake-build-release/
+
+# c
+build/
+
+# objective-c
+build/
+DerivedData/
+
+# swift
+.build/
+
+# rust
+target/
+
+# go
+bin/
+pkg/
+
+# php
+vendor/
+
+# python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# ruby
+.bundle/
+.gem/
+.rake/
+.rbenv/
+.rghost/
+.rvm/
+
+# node
+node_modules/
+
+# java
+target/
+
+# c#
+bin/
+obj/
+
+# c++
+build/
+cmake-build-debug/
+cmake-build-release/
+
+# c
+build/
+
+# objective-c
+build/
+DerivedData/
+
+# swift
+.build/
+
+# rust
+target/
+
+# go
+bin/
+pkg/
+
+# php
+vendor/
+
+# python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# ruby
+.bundle/
+.gem/
+.rake/
+.rbenv/
+.rghost/
+.rvm/
+
+# node
+node_modules/
+
+# java
+target/
+
+# c#
+bin/
+obj/
+
+# c++
+build/
+cmake-build-debug/
+cmake-build-release/
+
+# c
+build/
+
+# objective-c
+build/
+DerivedData/
+
+# swift
+.build/
+
+# rust
+target/
+
+# go
+bin/
+pkg/
+
+# php
+vendor/
+
+# python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# ruby
+.bundle/
+.gem/
+.rake/
+.rbenv/
+.rghost/
+.rvm/
+
+# node
+node_modules/
+
+# java
+target/
+
+# c#
+bin/
+obj/
+
+# c++
+build/
+cmake-build-debug/
+cmake-build-release/
+
+# c
+build/
+
+# objective-c
+build/
+DerivedData/
+
+# swift
+.build/
+
+# rust
+target/
+
+# go
+bin/
+pkg/
+
+# php
+vendor/
+
+# python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# ruby
+.bundle/
+.gem/
+.rake/
+.rbenv/
+.rghost/
+.rvm/
+
+# node
+node_modules/
+
+# java
+target/
+
+# c#
+bin/
+obj/
+
+# c++
+build/
+cmake-build-debug/
+cmake-build-release/
+
+# c
+build/
+
+# objective-c
+build/
+DerivedData/
+
+# swift
+.build/
+
+# rust
+target/
+
+# go
+bin/
+pkg/
+
+# php
+vendor/
+
+# python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# ruby
+.bundle/
+.gem/
+.rake/
+.rbenv/
+.rghost/
+.rvm/
+
+# node
+node_modules/
+
+# java
+target/
+
+# c#
+bin/
+obj/
+
+# c++
+build/
+cmake-build-debug/
+cmake-build-release/
+
+# c
+build/
+
+# objective-c
+build/
+DerivedData/
+
+# swift
+.build/
+
+# rust
+target/
+
+# go
+bin/
+pkg/
+
+# php
+vendor/
+
+# python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# ruby
+.bundle/
+.gem/
+.rake/
+.rbenv/
+.rghost/
+.rvm/
+
+# node
+node_modules/
+
+# java
+target/
+
+# c#
+bin/
+obj/
+
+# c++
+build/
+cmake-build-debug/
+cmake-build-release/
+
+# c
+build/
+
+# objective-c
+build/
+DerivedData/
+
+# swift
+.build/
+
+# rust
+target/
+
+# go
+bin/
+pkg/
+
+# php
+vendor/
+
+# python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# ruby
+.bundle/
+.gem/
+.rake/
