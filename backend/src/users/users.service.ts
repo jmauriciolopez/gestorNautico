@@ -8,7 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { User, Role } from './entities/user.entity';
+import { User, Role } from './user.entity';
 
 @Injectable()
 export class UsersService {
@@ -52,7 +52,7 @@ export class UsersService {
   }
 
   async createSuperAdmin(createUserDto: CreateUserDto) {
-    const superAdminDto = { ...createUserDto, rol: Role.SUPERADMIN };
+    const superAdminDto = { ...createUserDto, role: Role.SUPERADMIN };
     return this.create(superAdminDto);
   }
 

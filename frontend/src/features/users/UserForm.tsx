@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import type { User, UserRole } from '../../types';
+import { User, Role } from '../../types';
 
 interface Props {
     initialData?: User | null;
@@ -10,230 +9,150 @@ interface Props {
 
 const emptyForm = {
     nombre: '',
-    apellido: '',
     usuario: '',
     email: '',
     clave: '',
     repetirClave: '',
-    activo: true,
-    rol: 'periodista' as UserRole,
-    permisoCrearNoticias: false,
-    permisoEditarNoticias: false,
-    permisoEliminarNoticias: false,
-    permisoPreportada: false,
-    permisoComentarios: false
+    role: Role.OPERADOR,
 };
 
 function userToFormData(u: User | null | undefined): typeof emptyForm {
     if (!u) return emptyForm;
     return {
         nombre: u.nombre ?? '',
-        apellido: u.apellido ?? '',
         usuario: u.usuario ?? '',
         email: u.email ?? '',
         clave: '',
         repetirClave: '',
-        activo: u.activo ?? true,
-        rol: u.rol ?? 'periodista',
-        permisoCrearNoticias: u.permisoCrearNoticias ?? false,
-        permisoEditarNoticias: u.permisoEditarNoticias ?? false,
-        permisoEliminarNoticias: u.permisoEliminarNoticias ?? false,
-        permisoPreportada: u.permisoPreportada ?? false,
-        permisoComentarios: u.permisoComentarios ?? false,
+        role: u.role ?? Role.OPERADOR,
     };
 }
 
 export function UserForm({ initialData, onSubmit, onCancel }: Props) {
-    const { t } = useTranslation();
     const [formData, setFormData] = useState(() => userToFormData(initialData));
-
-
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
         if (formData.clave !== formData.repetirClave) {
-            alert(t('user_form.errors.passwords_dont_match'));
+            alert('Las contraseñas no coinciden');
             return;
         }
 
-        const { ...payload } = formData;
+        const payload: any = { ...formData };
+        delete payload.repetirClave;
 
         // Al editar, si la clave está vacía, no la enviamos para no sobrescribir con vacío
         if (initialData && !payload.clave) {
-            delete (payload as Partial<User>).clave;
+            delete payload.clave;
         }
+        
         onSubmit(payload as Partial<User>);
     };
 
     return (
-        <div className="form-panel animate-fade-in">
-            <div style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <button className="btn btn-secondary" style={{ padding: '0.5rem' }} title={t('user_form.actions.cancel')} onClick={onCancel}>
+        <div className="bg-slate-900/40 backdrop-blur-xl border border-slate-800/50 p-8 rounded-3xl animate-fade-in shadow-2xl">
+            <div className="flex items-center gap-4 mb-8">
+                <button 
+                  className="p-2.5 bg-slate-800/50 hover:bg-slate-800 text-slate-400 hover:text-white rounded-xl transition-all border border-slate-700/30" 
+                  onClick={onCancel}
+                >
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
                 </button>
-                <h3 style={{ fontSize: '1.25rem' }}>{initialData ? t('user_form.title_edit') : t('user_form.title_new')}</h3>
+                <h3 className="text-xl font-bold text-white tracking-tight">
+                  {initialData ? 'Editar Usuario' : 'Nuevo Usuario'}
+                </h3>
             </div>
 
-            <form onSubmit={handleSubmit} className="form-grid">
-                <div className="form-group">
-                    <label>{t('user_form.first_name')}</label>
-                    <input
-                        type="text"
-                        required
-                        value={formData.nombre}
-                        onChange={e => setFormData({ ...formData, nombre: e.target.value })}
-                        placeholder={t('user_form.first_name_placeholder')}
-                    />
+            <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Nombre Completo</label>
+                      <input
+                          type="text"
+                          required
+                          className="w-full bg-slate-950/40 border border-slate-800/60 rounded-xl px-4 py-3 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/40 transition-all"
+                          value={formData.nombre}
+                          onChange={e => setFormData({ ...formData, nombre: e.target.value })}
+                          placeholder="Ej: Juan Pérez"
+                      />
+                  </div>
+
+                  <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Email</label>
+                      <input
+                          type="email"
+                          required
+                          className="w-full bg-slate-950/40 border border-slate-800/60 rounded-xl px-4 py-3 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/40 transition-all"
+                          value={formData.email}
+                          onChange={e => setFormData({ ...formData, email: e.target.value })}
+                          placeholder="juan@ejemplo.com"
+                      />
+                  </div>
+
+                  <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Nombre de Usuario</label>
+                      <input
+                          type="text"
+                          required
+                          className="w-full bg-slate-950/40 border border-slate-800/60 rounded-xl px-4 py-3 text-white placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/40 transition-all"
+                          value={formData.usuario}
+                          onChange={e => setFormData({ ...formData, usuario: e.target.value })}
+                          placeholder="juan.perez"
+                      />
+                  </div>
+
+                  <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Rol en la Empresa</label>
+                      <select
+                          required
+                          className="w-full bg-slate-950/40 border border-slate-800/60 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/40 transition-all appearance-none cursor-pointer"
+                          value={formData.role}
+                          onChange={e => setFormData({ ...formData, role: e.target.value as Role })}
+                      >
+                          <option value={Role.OPERADOR}>Operador</option>
+                          <option value={Role.ADMIN}>Administrador</option>
+                          <option value={Role.SUPERADMIN}>Super Admin</option>
+                      </select>
+                  </div>
+
+                  <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Contraseña {initialData && '(Opcional)'}</label>
+                      <input
+                          type="password"
+                          required={!initialData}
+                          className="w-full bg-slate-950/40 border border-slate-800/60 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/40 transition-all"
+                          value={formData.clave}
+                          onChange={e => setFormData({ ...formData, clave: e.target.value })}
+                      />
+                  </div>
+
+                  <div className="space-y-2">
+                      <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Repetir Contraseña</label>
+                      <input
+                          type="password"
+                          required={!initialData}
+                          className="w-full bg-slate-950/40 border border-slate-800/60 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/40 transition-all"
+                          value={formData.repetirClave}
+                          onChange={e => setFormData({ ...formData, repetirClave: e.target.value })}
+                      />
+                  </div>
                 </div>
 
-                <div className="form-group">
-                    <label>{t('user_form.last_name')}</label>
-                    <input
-                        type="text"
-                        required
-                        value={formData.apellido}
-                        onChange={e => setFormData({ ...formData, apellido: e.target.value })}
-                        placeholder={t('user_form.last_name_placeholder')}
-                    />
-                </div>
-
-                <div className="form-group">
-                    <label>{t('user_form.email')}</label>
-                    <input
-                        type="email"
-                        required
-                        value={formData.email}
-                        onChange={e => setFormData({ ...formData, email: e.target.value })}
-                        placeholder={t('user_form.email_placeholder')}
-                    />
-                </div>
-
-                <div className="form-group">
-                    <label>{t('user_form.username')}</label>
-                    <input
-                        type="text"
-                        required
-                        value={formData.usuario}
-                        onChange={e => setFormData({ ...formData, usuario: e.target.value })}
-                        placeholder={t('user_form.username_placeholder')}
-                    />
-                </div>
-
-                <div className="form-group">
-                    <label>{t('user_form.password')} {initialData ? t('user_form.password_helper') : '*'}</label>
-                    <input
-                        type="password"
-                        required={!initialData}
-                        value={formData.clave}
-                        onChange={e => setFormData({ ...formData, clave: e.target.value })}
-                    />
-                </div>
-
-                <div className="form-group">
-                    <label>{t('user_form.repeat_password')} {initialData ? t('user_form.password_helper') : '*'}</label>
-                    <input
-                        type="password"
-                        required={!initialData}
-                        value={formData.repetirClave}
-                        onChange={e => setFormData({ ...formData, repetirClave: e.target.value })}
-                    />
-                </div>
-
-                <div className="form-group">
-                    <label>{t('user_form.role')}</label>
-                    <select
-                        required
-                        value={formData.rol}
-                        onChange={e => {
-                            const newRol = e.target.value as UserRole;
-                            const isPrivileged = newRol === 'admin' || newRol === 'superadmin';
-                            setFormData({ 
-                                ...formData, 
-                                rol: newRol,
-                                // Si es admin/superadmin, forzamos todos los permisos a true
-                                permisoCrearNoticias: isPrivileged ? true : formData.permisoCrearNoticias,
-                                permisoEditarNoticias: isPrivileged ? true : formData.permisoEditarNoticias,
-                                permisoEliminarNoticias: isPrivileged ? true : formData.permisoEliminarNoticias,
-                                permisoPreportada: isPrivileged ? true : formData.permisoPreportada,
-                                permisoComentarios: isPrivileged ? true : formData.permisoComentarios
-                            });
-                        }}
+                <div className="flex gap-4 pt-4">
+                    <button 
+                      type="button" 
+                      className="flex-1 px-6 py-3 bg-slate-800/50 hover:bg-slate-800 text-slate-300 font-bold rounded-xl transition-all border border-slate-700/30" 
+                      onClick={onCancel}
                     >
-                        <option value="periodista">{t('users.table.roles.periodista')}</option>
-                        <option value="admin">{t('users.table.roles.admin')}</option>
-                        <option value="superadmin">{t('users.table.roles.superadmin')}</option>
-                    </select>
-                </div>
-
-                {formData.rol === 'periodista' && (
-                    <div className="form-group full-width" style={{ marginTop: '1rem', borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem' }}>
-                    <h4 style={{ marginBottom: '1rem', color: 'var(--text-main)', fontSize: '1rem' }}>{t('user_form.permissions_title')}</h4>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                            <input
-                                type="checkbox"
-                                checked={formData.permisoCrearNoticias}
-                                onChange={e => setFormData({ ...formData, permisoCrearNoticias: e.target.checked })}
-                                style={{ width: 'auto', cursor: 'pointer' }}
-                            />
-                            <span>{t('user_form.permissions.create_news')}</span>
-                        </label>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                            <input
-                                type="checkbox"
-                                checked={formData.permisoEditarNoticias}
-                                onChange={e => setFormData({ ...formData, permisoEditarNoticias: e.target.checked })}
-                                style={{ width: 'auto', cursor: 'pointer' }}
-                            />
-                            <span>{t('user_form.permissions.edit_news')}</span>
-                        </label>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                            <input
-                                type="checkbox"
-                                checked={formData.permisoEliminarNoticias}
-                                onChange={e => setFormData({ ...formData, permisoEliminarNoticias: e.target.checked })}
-                                style={{ width: 'auto', cursor: 'pointer' }}
-                            />
-                            <span>{t('user_form.permissions.delete_news')}</span>
-                        </label>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                            <input
-                                type="checkbox"
-                                checked={formData.permisoPreportada}
-                                onChange={e => setFormData({ ...formData, permisoPreportada: e.target.checked })}
-                                style={{ width: 'auto', cursor: 'pointer' }}
-                            />
-                            <span>{t('user_form.permissions.manage_preportada')}</span>
-                        </label>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                            <input
-                                type="checkbox"
-                                checked={formData.permisoComentarios}
-                                onChange={e => setFormData({ ...formData, permisoComentarios: e.target.checked })}
-                                style={{ width: 'auto', cursor: 'pointer' }}
-                            />
-                            <span>{t('user_form.permissions.moderate_comments')}</span>
-                        </label>
-                    </div>
-                </div>
-                )}
-
-                <div className="form-group full-width" style={{ marginTop: '1rem' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
-                        <input
-                            type="checkbox"
-                            checked={formData.activo}
-                            onChange={e => setFormData({ ...formData, activo: e.target.checked })}
-                            style={{ width: 'auto', cursor: 'pointer' }}
-                        />
-                        <span>{t('user_form.active')}</span>
-                    </label>
-                </div>
-
-                <div className="full-width form-actions">
-                    <button type="button" className="btn btn-secondary" onClick={onCancel}>{t('user_form.actions.cancel')}</button>
-                    <button type="submit" className="btn btn-primary">{initialData ? t('user_form.actions.submit_edit') : t('user_form.actions.submit_new')}</button>
+                      Cancelar
+                    </button>
+                    <button 
+                      type="submit" 
+                      className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg shadow-blue-600/20 transition-all"
+                    >
+                      {initialData ? 'Guardar Cambios' : 'Crear Usuario'}
+                    </button>
                 </div>
             </form>
         </div>

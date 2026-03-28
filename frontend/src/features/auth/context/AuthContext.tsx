@@ -7,7 +7,7 @@ interface AuthContextType {
     isAuthenticated: boolean;
     isInitializing: boolean;
     login: (token?: string) => Promise<void>;
-    logout: () => Promise<void>;
+    logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -16,47 +16,47 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [user, setUser] = useState<User | null>(null);
     const [isInitializing, setIsInitializing] = useState(true);
 
-    useEffect(() => {
-        const verifySession = async () => {
-            try {
-                const userData = await httpClient.get<User>('/auth/me');
-                setUser(userData);
-            } catch {
-                setUser(null);
-            } finally {
-                setIsInitializing(false);
-            }
-        };
+    const verifySession = async () => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            setUser(null);
+            setIsInitializing(false);
+            return;
+        }
 
+        try {
+            const userData = await httpClient.get<User>('/auth/me');
+            setUser(userData);
+        } catch (error) {
+            console.error('Error verificando sesión:', error);
+            localStorage.removeItem('token');
+            setUser(null);
+        } finally {
+            setIsInitializing(false);
+        }
+    };
+
+    useEffect(() => {
         httpClient.setUnauthorizedCallback(() => {
+            localStorage.removeItem('token');
             setUser(null);
         });
 
         verifySession();
-    }, []); // Corregido: dependía de [user] causando loop infinito
+    }, []);
 
     const login = async (token?: string) => {
-        try {
-            if (token) {
-                localStorage.setItem('token', token);
-            }
-            const userData = await httpClient.get<User>('/auth/me');
-            setUser(userData);
-        } catch (error) {
-            console.error('Error al obtener datos tras login:', error);
-            localStorage.removeItem('token');
+        if (token) {
+            localStorage.setItem('token', token);
         }
+        await verifySession();
     };
 
-    const logout = async () => {
-        try {
-            await httpClient.post('/auth/logout');
-        } catch (error) {
-            console.error('Error al cerrar sesión en el servidor:', error);
-        } finally {
-            localStorage.removeItem('token');
-            setUser(null);
-        }
+    const logout = () => {
+        localStorage.removeItem('token');
+        setUser(null);
+        // Opcional: Llamar a /auth/logout en el back
+        httpClient.post('/auth/logout').catch(() => {});
     };
 
     return (
@@ -72,8 +72,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     );
 };
 
-// Hook personalizado para usar el contexto
-// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
     const context = useContext(AuthContext);
     if (!context) throw new Error('useAuth debe usarse dentro de un AuthProvider');

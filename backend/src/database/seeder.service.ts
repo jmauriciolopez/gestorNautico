@@ -3,8 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Cliente } from '../clientes/clientes.entity';
 import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
-import { Caja, EstadoCaja } from '../finanzas/entities/caja.entity';
-import { User } from '../users/entities/user.entity';
+import { Caja, EstadoCaja } from '../cajas/caja.entity';
+import { User } from '../users/user.entity';
 import { InitialDataService } from './initial-data.service';
 
 @Injectable()

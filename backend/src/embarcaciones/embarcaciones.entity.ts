@@ -1,6 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, OneToOne, JoinColumn } from 'typeorm';
 import { Cliente } from '../clientes/clientes.entity';
-import { Espacio } from '../ubicaciones/ubicaciones.entity';
+import { Espacio } from '../espacios/espacio.entity';
 
 @Entity('embarcaciones')
 export class Embarcacion {
@@ -31,11 +31,18 @@ export class Embarcacion {
   @Column({ default: 'EN_CUNA' })
   estado: string; // EN_CUNA, EN_AGUA, MANTENIMIENTO, INACTIVA
 
+  @Column({ nullable: true })
+  clienteId: number;
+
   @ManyToOne(() => Cliente, (cliente) => cliente.id)
+  @JoinColumn({ name: 'clienteId' })
   cliente: Cliente;
 
+  @Column({ nullable: true })
+  espacioId: number;
+
   @OneToOne(() => Espacio, { nullable: true })
-  @JoinColumn()
+  @JoinColumn({ name: 'espacioId' })
   espacio: Espacio;
 
   @CreateDateColumn()

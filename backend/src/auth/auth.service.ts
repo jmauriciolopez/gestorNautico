@@ -3,7 +3,7 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from './dto/login.dto';
 
-import { AuthResponse } from './entities/auth-response.entity';
+import { AuthResponse } from './auth-response.entity';
 import { UsersService } from '../users/users.service';
 
 import { ConfigService } from '@nestjs/config';
@@ -43,14 +43,9 @@ export class AuthService {
 
     const payload = {
       sub: user.id,
-      email: user.email,
-      role: user.rol,
+      usuario: user.usuario,
+      role: user.role,
       nombre: user.nombre,
-      permisoCrearNoticias: user.permisoCrearNoticias,
-      permisoEditarNoticias: user.permisoEditarNoticias,
-      permisoEliminarNoticias: user.permisoEliminarNoticias,
-      permisoPreportada: user.permisoPreportada,
-      permisoComentarios: user.permisoComentarios,
     };
     return {
       accessToken: await this.jwtService.signAsync(payload),

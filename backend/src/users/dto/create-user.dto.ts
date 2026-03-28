@@ -5,14 +5,15 @@ import {
   IsEmail,
   IsEnum,
 } from 'class-validator';
-import { Role } from '../entities/user.entity';
+import { Role } from '../user.entity';
 
 export class CreateUserDto {
   @IsString()
   nombre: string;
 
+  @IsOptional()
   @IsString()
-  apellido: string;
+  apellido?: string;
 
   @IsString()
   usuario: string;
@@ -26,28 +27,8 @@ export class CreateUserDto {
 
   @IsOptional()
   @IsEnum(Role)
-  rol?: Role;
+  role?: Role;
 
   @IsEmail()
   email: string;
-
-  @IsOptional()
-  @IsBoolean()
-  permisoCrearNoticias?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  permisoEditarNoticias?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  permisoEliminarNoticias?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  permisoPreportada?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  permisoComentarios?: boolean;
 }

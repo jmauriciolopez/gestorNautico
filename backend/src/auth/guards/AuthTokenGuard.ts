@@ -18,18 +18,21 @@ export class AuthTokenGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const token = this.extractToken(request);
+    
     if (!token) {
-      throw new UnauthorizedException();
+      console.log('AuthTokenGuard: No se encontró token en la petición');
+      throw new UnauthorizedException('Token no encontrado');
     }
+
     try {
-      const payload = await this.jwtService.verifyAsync(token, {
-        secret: this.configService.get<string>('JWT_SECRET'),
-      });
+      const secret = this.configService.get<string>('JWT_SECRET');
+      const payload = await this.jwtService.verifyAsync(token, { secret });
       request['user'] = payload;
-    } catch {
-      throw new UnauthorizedException();
+      return true;
+    } catch (error) {
+      console.log('AuthTokenGuard: Error al verificar JWT:', error.message);
+      throw new UnauthorizedException('Token inválido o expirado');
     }
-    return true;
   }
 
   private extractToken(request: Request): string | undefined {

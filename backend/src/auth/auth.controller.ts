@@ -12,11 +12,11 @@ import { AuthTokenGuard } from './guards/AuthTokenGuard';
 import { ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
-import { AuthResponse } from './entities/auth-response.entity';
+import { AuthResponse } from './auth-response.entity';
 import { ConfigService } from '@nestjs/config';
 
 @ApiTags('Auth')
-@Controller('api/auth')
+@Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,

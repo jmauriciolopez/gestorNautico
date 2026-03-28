@@ -1,8 +1,14 @@
-import { Controller, Get, Post, Body, Put, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Put, Param, Delete, UseGuards } from '@nestjs/common';
 import { EmbarcacionesService } from './embarcaciones.service';
 import { Embarcacion } from './embarcaciones.entity';
+import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Role } from '../users/user.entity';
 
 @Controller('embarcaciones')
+@UseGuards(AuthTokenGuard, RolesGuard)
+@Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
 export class EmbarcacionesController {
   constructor(private readonly embarcacionesService: EmbarcacionesService) {}
 

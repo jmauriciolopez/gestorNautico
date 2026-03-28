@@ -11,10 +11,13 @@ export async function fetchClient<T>(
   endpoint: string,
   { method = 'GET', body, headers = {} }: { method?: string; body?: any; headers?: Record<string, string> } = {}
 ): Promise<T> {
+  const token = localStorage.getItem('token');
+  
   const config: RequestInit = {
     method,
     headers: {
       'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
       ...headers,
     },
   };

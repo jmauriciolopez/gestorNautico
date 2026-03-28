@@ -1,5 +1,5 @@
-import { useTranslation } from 'react-i18next';
-import type { User, UserRole } from '../../types';
+import { User, Role } from '../../types';
+import { Edit3, Trash2, Plus, User as UserIcon } from 'lucide-react';
 
 interface Props {
     users: User[];
@@ -9,62 +9,74 @@ interface Props {
 }
 
 export function UserList({ users, onEdit, onDelete, onCreateClick }: Props) {
-    const { t } = useTranslation();
-    const getRoleBadgeClass = (rol: UserRole) => {
+    const getRoleBadgeClass = (rol: Role) => {
         switch (rol) {
-            case 'superadmin': return 'status-published';
-            case 'admin': return 'status-published';
-            case 'periodista': return 'status-draft';
-            default: return 'status-draft';
+            case Role.SUPERADMIN: return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+            case Role.ADMIN: return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+            case Role.OPERADOR: return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+            default: return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
         }
     };
 
     return (
-        <div className="animate-fade-in">
-            <div className="controls-row">
-                <h3 style={{ fontSize: '1.25rem' }}>{t('users.title')}</h3>
-                <button className="btn btn-primary" onClick={onCreateClick}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    {t('users.create')}
+        <div className="space-y-6 animate-fade-in">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-800/50">
+                <div>
+                  <h3 className="text-xl font-bold text-white tracking-tight">Personal de la Empresa</h3>
+                  <p className="text-sm text-slate-500">Gestión de accesos y roles del sistema</p>
+                </div>
+                <button 
+                  className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-lg shadow-blue-600/20 transition-all group" 
+                  onClick={onCreateClick}
+                >
+                    <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
+                    Nuevo Usuario
                 </button>
             </div>
 
-            <div className="table-container">
-                <table className="data-table">
+            <div className="bg-slate-900/40 backdrop-blur-md border border-slate-800/50 rounded-3xl overflow-hidden shadow-xl">
+                <table className="w-full border-collapse">
                     <thead>
-                        <tr>
-                            <th>{t('users.table.user')}</th>
-                            <th>{t('users.table.role')}</th>
-                            <th>{t('users.table.status')}</th>
-                            <th>{t('users.table.actions')}</th>
+                        <tr className="bg-slate-950/30 border-b border-slate-800/50">
+                            <th className="text-left px-8 py-5 text-xs font-bold text-slate-500 uppercase tracking-widest">Usuario</th>
+                            <th className="text-left px-8 py-5 text-xs font-bold text-slate-500 uppercase tracking-widest">Rol</th>
+                            <th className="text-center px-8 py-5 text-xs font-bold text-slate-500 uppercase tracking-widest">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-slate-800/30">
                         {users.map(u => (
-                            <tr key={u.id}>
-                                <td>
-                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                        <div style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{u.nombre} {u.apellido}</div>
-                                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{u.usuario} | {u.email}</div>
+                            <tr key={u.id} className="hover:bg-slate-800/20 transition-colors group">
+                                <td className="px-8 py-5">
+                                    <div className="flex items-center gap-4">
+                                        <div className="h-10 w-10 rounded-full bg-slate-800/50 flex items-center justify-center border border-slate-700/30 text-slate-400 group-hover:text-blue-400 transition-colors">
+                                          <UserIcon size={18} />
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="font-bold text-white group-hover:text-blue-400 transition-colors">{u.nombre}</span>
+                                            <span className="text-xs text-slate-500">{u.usuario} | {u.email}</span>
+                                        </div>
                                     </div>
                                 </td>
-                                <td>
-                                    <span className={`badge ${getRoleBadgeClass(u.rol)}`} style={{ textTransform: 'capitalize' }}>
-                                        {t(`users.table.roles.${u.rol}`)}
+                                <td className="px-8 py-5">
+                                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${getRoleBadgeClass(u.role)}`}>
+                                        {u.role}
                                     </span>
                                 </td>
-                                <td>
-                                    <span className={`badge ${u.activo ? 'status-published' : 'status-danger'}`}>
-                                        {u.activo ? t('users.table.active') : t('users.table.inactive')}
-                                    </span>
-                                </td>
-                                <td>
-                                    <div className="actions">
-                                        <button className="btn btn-secondary" style={{ padding: '0.4rem', borderRadius: '0.5rem' }} onClick={() => onEdit(u)}>
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                                <td className="px-8 py-5">
+                                    <div className="flex items-center justify-center gap-3">
+                                        <button 
+                                          className="p-2 bg-slate-800/50 hover:bg-blue-600 text-slate-400 hover:text-white rounded-xl transition-all border border-slate-700/30 shadow-sm" 
+                                          onClick={() => onEdit(u)}
+                                          title="Editar"
+                                        >
+                                            <Edit3 size={16} />
                                         </button>
-                                        <button className="btn btn-danger" style={{ padding: '0.4rem', borderRadius: '0.5rem' }} onClick={() => onDelete(u.id)}>
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                                        <button 
+                                          className="p-2 bg-slate-800/50 hover:bg-red-500 text-slate-400 hover:text-white rounded-xl transition-all border border-slate-700/30 shadow-sm" 
+                                          onClick={() => onDelete(u.id)}
+                                          title="Eliminar"
+                                        >
+                                            <Trash2 size={16} />
                                         </button>
                                     </div>
                                 </td>
@@ -72,7 +84,9 @@ export function UserList({ users, onEdit, onDelete, onCreateClick }: Props) {
                         ))}
                         {users.length === 0 && (
                             <tr>
-                                <td colSpan={4} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>{t('users.table.no_items')}</td>
+                                <td colSpan={3} className="px-8 py-16 text-center text-slate-500 italic">
+                                  No hay usuarios registrados en el sistema.
+                                </td>
                             </tr>
                         )}
                     </tbody>
