@@ -7,7 +7,7 @@ import {
   Delete,
   UseGuards,
 } from '@nestjs/common';
-import { PagosService } from './pagos.service';
+import { PagosService, CreatePagoDto } from './pagos.service';
 import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -32,7 +32,7 @@ export class PagosController {
 
   @Post()
   @Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
-  create(@Body() data: Record<string, unknown>) {
+  create(@Body() data: CreatePagoDto) {
     return this.pagosService.create(data);
   }
 

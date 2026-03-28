@@ -12,7 +12,7 @@ export const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
 
     if (isInitializing) {
         return (
-            <div className="flex h-screen w-screen items-center justify-center bg-slate-950 text-white">
+            <div className="flex h-screen w-screen items-center justify-center bg-[var(--bg-primary)] text-[var(--text-primary)]">
                 <div className="text-xl font-medium animate-pulse">Cargando Sistema...</div>
             </div>
         );

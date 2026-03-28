@@ -51,6 +51,7 @@ export function useFacturas() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['facturas'] });
       queryClient.invalidateQueries({ queryKey: ['cargos'] });
+      queryClient.invalidateQueries({ queryKey: ['facturas', 'next-numero'] });
     },
   });
 
@@ -79,5 +80,6 @@ export function useFacturas() {
     createFactura,
     updateEstadoFactura,
     deleteFactura,
+    getNextNumero,
   };
 }

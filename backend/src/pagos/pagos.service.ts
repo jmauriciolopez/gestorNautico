@@ -5,6 +5,17 @@ import { Pago } from './pago.entity';
 import { CajasService } from '../cajas/cajas.service';
 import { CargosService } from '../cargos/cargos.service';
 
+export interface CreatePagoDto {
+  clienteId: number;
+  cargoId?: number;
+  cajaId?: number;
+  monto: number;
+  metodo: string;
+  fecha?: Date;
+  referencia?: string;
+  notas?: string;
+}
+
 @Injectable()
 export class PagosService {
   constructor(
@@ -30,12 +41,8 @@ export class PagosService {
     return pago;
   }
 
-  async create(data: Record<string, unknown>) {
-    const { clienteId, cargoId, cajaId, ...rest } = data as {
-      clienteId: number;
-      cargoId?: number;
-      cajaId?: number;
-    };
+  async create(data: CreatePagoDto) {
+    const { clienteId, cargoId, cajaId, ...rest } = data;
 
     // 1. Obtener una caja abierta
     const caja = cajaId
@@ -48,8 +55,8 @@ export class PagosService {
     // 2. Crear el pago
     const nuevoPago = this.pagoRepo.create({
       ...rest,
-      cliente: { id: clienteId },
-      cargo: cargoId ? { id: cargoId } : null,
+      cliente: { id: Number(clienteId) },
+      cargo: cargoId ? { id: Number(cargoId) } : null,
       caja: caja,
     });
 
@@ -57,7 +64,7 @@ export class PagosService {
 
     // 3. Si el pago está vinculado a un cargo, marcarlo como pagado
     if (cargoId) {
-      await this.cargosService.setPagado(cargoId, true);
+      await this.cargosService.setPagado(Number(cargoId), true);
     }
 
     return pagoGuardado;

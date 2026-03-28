@@ -40,9 +40,14 @@ export class PedidosService {
     const guardado = await this.pedidoRepo.save(nuevo);
     const pedidox = await this.findOne(guardado.id);
 
-    // Notificar a los operadores
+    // Notificar a los operadores y administradores
     await this.notificacionesService.createForRole(Role.OPERADOR, {
       titulo: 'Nueva Solicitud de Movimiento',
+      mensaje: `Se ha registrado una solicitud para la embarcación ${pedidox.embarcacion.nombre}.`,
+      tipo: NotificacionTipo.INFO,
+    });
+    await this.notificacionesService.createForRole(Role.ADMIN, {
+      titulo: 'Nueva Solicitud de Movimiento (Admin)',
       mensaje: `Se ha registrado una solicitud para la embarcación ${pedidox.embarcacion.nombre}.`,
       tipo: NotificacionTipo.INFO,
     });
@@ -54,14 +59,13 @@ export class PedidosService {
     const pedido = await this.findOne(id);
     await this.pedidoRepo.update(id, { estado });
 
-    // Notificar cambio de estado
-    await this.notificacionesService.create({
-      usuarioId: 1, // Placeholder: in real app, notify interested parties or relevant role
+    // Notificar cambio de estado a roles relevantes
+    await this.notificacionesService.createForRole(Role.ADMIN, {
       titulo: 'Actualización de Pedido',
       mensaje: `El pedido de ${pedido.embarcacion.nombre} ha cambiado a ${estado}.`,
-      tipo: NotificacionTipo.EXITO,
     });
 
+    // In progress: eventually notify the requester if user association is added to Pedido entity
     return this.findOne(id);
   }
 

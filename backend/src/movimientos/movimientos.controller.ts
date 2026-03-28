@@ -32,7 +32,7 @@ export class MovimientosController {
 
   @Post()
   @Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
-  create(@Body() data: Record<string, unknown>) {
+  create(@Body() data: any) {
     return this.movimientosService.create(data);
   }
 

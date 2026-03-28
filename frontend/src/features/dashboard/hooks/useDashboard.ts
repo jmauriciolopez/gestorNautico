@@ -16,6 +16,7 @@ export interface DashboardSummary {
     };
   };
   actividadReciente: any[];
+  notificacionesRecientes: any[];
   graficos: {
     finanzas: { mes: string; monto: number }[];
   };
@@ -55,13 +56,13 @@ export interface RackMap {
 export const useDashboard = () => {
   return useQuery<DashboardSummary>({
     queryKey: ['dashboard', 'summary'],
-    queryFn: () => fetchClient('dashboard/summary'),
+    queryFn: () => fetchClient('/dashboard/summary'),
   });
 };
 
 export const useRackMap = () => {
   return useQuery<RackMap[]>({
     queryKey: ['dashboard', 'rack-map'],
-    queryFn: () => fetchClient('dashboard/rack-map'),
+    queryFn: () => fetchClient('/dashboard/rack-map'),
   });
 };

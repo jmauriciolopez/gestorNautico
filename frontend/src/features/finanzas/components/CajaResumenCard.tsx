@@ -1,93 +1,103 @@
-import { Clock, Unlock, Lock, Calendar } from 'lucide-react';
+import { Lock, Unlock, Landmark, CreditCard, ChevronRight } from 'lucide-react';
 
 export interface CajaResumen {
   id: number;
+  fecha: string;
   saldoInicial: number;
   totalRecaudado: number;
-  totalEfectivo: number;
-  fechaApertura: string;
+  totalGastado: number;
+  estado: 'ABIERTA' | 'CERRADA';
 }
 
 interface CajaResumenCardProps {
-  caja?: CajaResumen;
+  caja: CajaResumen | undefined;
   isLoading: boolean;
   onAbrir: () => void;
-  onCerrar: (caja: CajaResumen) => void;
+  onCerrar: () => void;
 }
 
 export function CajaResumenCard({ caja, isLoading, onAbrir, onCerrar }: CajaResumenCardProps) {
-  if (isLoading) return <div className="h-28 bg-slate-900/50 animate-pulse rounded-2xl border border-slate-800"></div>;
+  const isAbierta = caja?.estado === 'ABIERTA';
+  const saldoActual = (caja?.saldoInicial || 0) + (caja?.totalRecaudado || 0) - (caja?.totalGastado || 0);
 
-  if (!caja) return (
-    <div className="bg-amber-500/5 border border-amber-500/20 p-6 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 animate-in fade-in duration-500">
-      <div className="flex items-center gap-4">
-        <div className="w-12 h-12 bg-amber-500/10 rounded-xl flex items-center justify-center">
-          <Clock className="w-6 h-6 text-amber-500" />
-        </div>
-        <div>
-          <h4 className="font-bold text-amber-200">Caja Cerrada</h4>
-          <p className="text-sm text-amber-500/60 font-medium">No hay una jornada financiera activa en este momento.</p>
-        </div>
+  if (isLoading) {
+    return (
+      <div className="h-44 flex items-center justify-center bg-[var(--bg-secondary)]/50 backdrop-blur-xl rounded-[2rem] border border-[var(--border-primary)]/60 animate-pulse">
+        <span className="text-slate-600 font-black uppercase text-[10px] tracking-widest">Sincronizando Estado de Bóveda...</span>
       </div>
-      <button 
-        onClick={onAbrir}
-        className="w-full md:w-auto bg-amber-600 hover:bg-amber-500 text-white px-6 py-3 rounded-xl text-sm font-black transition-all shadow-lg shadow-amber-600/20 active:scale-95 flex items-center justify-center gap-2"
-      >
-        <Unlock className="w-4 h-4" />
-        ABRIR CAJA DIARIA
-      </button>
-    </div>
-  );
+    );
+  }
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-sm relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform">
-            <Unlock className="w-8 h-8 text-white" />
+    <div className="group relative bg-[#0f172a]/80 backdrop-blur-xl p-8 rounded-[2rem] border border-[var(--border-primary)]/60 shadow-2xl overflow-hidden transition-all duration-500 hover:border-blue-500/30">
+
+      {/* Glow background effect */}
+      <div className={`absolute -top-24 -right-24 w-64 h-64 rounded-full blur-[100px] transition-all duration-1000 ${isAbierta ? 'bg-emerald-500/10' : 'bg-rose-500/10'}`} />
+
+      <div className="relative flex flex-col md:flex-row justify-between items-center gap-8">
+
+        <div className="flex gap-6 items-center flex-1">
+          <div className={`w-16 h-16 rounded-2xl flex items-center justify-center border transition-all duration-500 ${isAbierta
+            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.1)]'
+            : 'bg-rose-500/10 border-rose-500/20 text-rose-400'
+            }`}>
+            {isAbierta ? <Unlock className="w-8 h-8" /> : <Lock className="w-8 h-8" />}
           </div>
-          <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Saldo Inicial</p>
-          <p className="text-2xl font-black text-white mt-1">${Number(caja.saldoInicial).toLocaleString()}</p>
+
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className={`text-[10px] font-black uppercase tracking-widest ${isAbierta ? 'text-emerald-500' : 'text-rose-500'}`}>
+                Caja {isAbierta ? 'Operativa' : 'Bloqueada'}
+              </span>
+              <span className="text-slate-700">•</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)]">
+                ID SESIÓN: {caja?.id || '---'}
+              </span>
+            </div>
+            <h3 className="text-2xl font-black text-[var(--text-primary)] flex items-center gap-1">
+              <span className="text-[var(--text-secondary)]">$</span>
+              {saldoActual.toLocaleString()}
+            </h3>
+            <p className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-wider">Disponibilidad en Efectivo</p>
+          </div>
         </div>
 
-        <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-sm relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform">
-            <Calendar className="w-8 h-8 text-white" />
+        <div className="grid grid-cols-2 gap-4 w-full md:w-auto">
+          <div className="p-4 bg-[var(--bg-secondary)]/50 rounded-2xl border border-[var(--border-primary)]/60 hover:border-slate-700 transition-colors">
+            <div className="flex items-center gap-2 mb-1.5">
+              <Landmark className="w-3 h-3 text-[var(--text-secondary)]" />
+              <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest">Base Inicial</span>
+            </div>
+            <p className="text-sm font-bold text-[var(--text-primary)]">${(caja?.saldoInicial || 0).toLocaleString()}</p>
           </div>
-          <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Recaudado Total</p>
-          <p className="text-2xl font-black text-emerald-500 mt-1">${Number(caja.totalRecaudado).toLocaleString()}</p>
+          <div className="p-4 bg-[var(--bg-secondary)]/50 rounded-2xl border border-[var(--border-primary)]/60 hover:border-slate-700 transition-colors">
+            <div className="flex items-center gap-2 mb-1.5">
+              <CreditCard className="w-3 h-3 text-blue-400" />
+              <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest">Cobros Hoy</span>
+            </div>
+            <p className="text-sm font-bold text-emerald-400">+ ${(caja?.totalRecaudado || 0).toLocaleString()}</p>
+          </div>
         </div>
 
-        <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-sm relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:scale-110 transition-transform">
-            <Clock className="w-8 h-8 text-white" />
-          </div>
-          <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Total Efectivo</p>
-          <p className="text-2xl font-black text-white mt-1">${Number(caja.totalEfectivo).toLocaleString()}</p>
+        <div className="shrink-0 w-full md:w-auto">
+          {isAbierta ? (
+            <button
+              onClick={onCerrar}
+              className="w-full md:w-auto group/btn flex items-center justify-center gap-3 bg-white text-black px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all hover:bg-rose-500 hover:text-[var(--text-primary)] active:scale-95 shadow-xl shadow-white/5"
+            >
+              Arquear y Cerrar
+              <ChevronRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-1" />
+            </button>
+          ) : (
+            <button
+              onClick={onAbrir}
+              className="w-full md:w-auto group/btn flex items-center justify-center gap-3 bg-blue-600 text-[var(--text-primary)] px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all hover:bg-blue-500 active:scale-95 shadow-xl shadow-blue-900/40"
+            >
+              Aperturar Caja
+              <ChevronRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-1" />
+            </button>
+          )}
         </div>
-
-        <div className="bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-sm flex flex-col justify-between items-start">
-          <div>
-            <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Estado</p>
-            <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black bg-emerald-500/10 text-emerald-500 mt-2 border border-emerald-500/20 tracking-tighter">
-              CAJA ABIERTA
-            </span>
-          </div>
-          <button
-            onClick={() => onCerrar(caja)}
-            className="mt-4 w-full bg-slate-800 hover:bg-rose-600 text-slate-300 hover:text-white px-3 py-2 rounded-xl text-[10px] font-black tracking-widest transition-all flex items-center justify-center gap-2 group/btn"
-          >
-            <Lock className="w-3 h-3 group-hover/btn:scale-110" />
-            CERRAR CAJA
-          </button>
-        </div>
-      </div>
-      
-      <div className="px-4 py-2 bg-slate-950/30 rounded-full border border-slate-800/50 inline-flex items-center gap-2">
-        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-tight">
-          Apertura: {new Date(caja.fechaApertura).toLocaleString()}
-        </span>
       </div>
     </div>
   );

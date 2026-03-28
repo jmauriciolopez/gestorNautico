@@ -1,14 +1,11 @@
+import { CreditCard, Calendar, Hash, ArrowUpRight } from 'lucide-react';
+
 export interface Pago {
   id: number;
   monto: number;
   fecha: string;
   metodoPago: string;
-  cliente: {
-    nombre: string;
-  };
-  cargo?: {
-    descripcion: string;
-  };
+  referencia?: string;
 }
 
 interface PagosListProps {
@@ -18,41 +15,61 @@ interface PagosListProps {
 
 export function PagosList({ pagos, isLoading }: PagosListProps) {
   return (
-    <table className="w-full text-left">
-      <thead className="bg-gray-50 border-b border-gray-100">
-        <tr>
-          <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Fecha</th>
-          <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Cliente</th>
-          <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Método</th>
-          <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase">Referencia</th>
-          <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase text-right">Monto</th>
-        </tr>
-      </thead>
-      <tbody className="divide-y divide-gray-100">
-        {isLoading ? (
-          <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-400">Cargando pagos...</td></tr>
-        ) : pagos.length === 0 ? (
-          <tr><td colSpan={5} className="px-6 py-8 text-center text-gray-400">No hay pagos registrados.</td></tr>
-        ) : (
-          pagos.map((pago) => (
-            <tr key={pago.id} className="hover:bg-gray-50/50 transition-colors">
-              <td className="px-6 py-4 text-gray-500 text-sm">
-                {new Date(pago.fecha).toLocaleDateString()}
-              </td>
-              <td className="px-6 py-4 font-medium text-gray-900">{pago.cliente?.nombre}</td>
-              <td className="px-6 py-4">
-                <span className="text-gray-600 text-sm px-2 py-1 bg-gray-100 rounded">{pago.metodoPago}</span>
-              </td>
-              <td className="px-6 py-4 text-gray-500 text-sm italic">
-                {pago.cargo?.descripcion || 'Pago general'}
-              </td>
-              <td className="px-6 py-4 text-right font-bold text-emerald-600">
-                + ${Number(pago.monto).toLocaleString()}
-              </td>
-            </tr>
-          ))
-        )}
-      </tbody>
-    </table>
+    <div className="overflow-x-auto">
+      <table className="w-full text-left border-collapse">
+        <thead>
+          <tr className="border-b border-[var(--border-primary)]/60 bg-[var(--bg-secondary)]/20">
+            <th className="px-8 py-5 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Referencia / ID</th>
+            <th className="px-8 py-5 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Método de Pago</th>
+            <th className="px-8 py-5 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Fecha Proceso</th>
+            <th className="px-8 py-5 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] text-right">Monto Recaudado</th>
+            <th className="px-8 py-5"></th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-800/40">
+          {isLoading ? (
+            <tr><td colSpan={5} className="px-8 py-20 text-center text-slate-600 font-bold bg-[var(--bg-secondary)]/20">Recuperando registros históricos...</td></tr>
+          ) : pagos.length === 0 ? (
+            <tr><td colSpan={5} className="px-8 py-20 text-center text-slate-600 font-bold bg-[var(--bg-secondary)]/20">No se detectaron transacciones procesadas.</td></tr>
+          ) : (
+            pagos.map((pago) => (
+              <tr key={pago.id} className="group hover:bg-slate-800/30 transition-all cursor-default">
+                <td className="px-8 py-5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center border border-slate-700">
+                      <Hash className="w-3.5 h-3.5 text-[var(--text-secondary)]" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-tight">{pago.referencia || `RECIBO-${pago.id}`}</span>
+                      <span className="text-[10px] text-slate-600 font-black uppercase tracking-widest mt-0.5">ORDEN: #{pago.id}</span>
+                    </div>
+                  </div>
+                </td>
+                <td className="px-8 py-5">
+                  <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-blue-500/10 border border-blue-500/20">
+                    <CreditCard className="w-3 h-3 text-blue-400" />
+                    <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest">{pago.metodoPago}</span>
+                  </div>
+                </td>
+                <td className="px-8 py-5">
+                  <div className="flex items-center gap-2 text-[var(--text-secondary)] font-medium text-xs">
+                    <Calendar className="w-3.5 h-3.5" />
+                    {new Date(pago.fecha).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}
+                  </div>
+                </td>
+                <td className="px-8 py-5 text-right font-black text-emerald-400 text-sm">
+                  + ${Number(pago.monto).toLocaleString()}
+                </td>
+                <td className="px-8 py-5 text-right">
+                  <button className="p-2 text-slate-700 hover:text-[var(--text-primary)] transition-colors group-hover:bg-slate-700 rounded-lg">
+                    <ArrowUpRight className="w-4 h-4" />
+                  </button>
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
   );
 }

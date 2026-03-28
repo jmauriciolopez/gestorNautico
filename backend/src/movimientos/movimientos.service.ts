@@ -4,6 +4,15 @@ import { Repository } from 'typeorm';
 import { Movimiento } from './movimientos.entity';
 import { EmbarcacionesService } from '../embarcaciones/embarcaciones.service';
 import { EspaciosService } from '../espacios/espacios.service';
+import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
+
+export interface CreateMovimientoDto {
+  embarcacionId: number;
+  espacioId?: number;
+  tipo: 'entrada' | 'salida';
+  fecha?: Date;
+  notas?: string;
+}
 
 @Injectable()
 export class MovimientosService {
@@ -31,30 +40,26 @@ export class MovimientosService {
     return movimiento;
   }
 
-  async create(data: Record<string, unknown>) {
+  async create(data: CreateMovimientoDto) {
     const { embarcacionId, espacioId, tipo, ...rest } = data;
 
     // Find the current boat to get its assigned space if needed
-    const embarcacion = await this.embarcacionesService.findOne(
+    const embarcacion: Embarcacion = await this.embarcacionesService.findOne(
       Number(embarcacionId),
     );
     const targetEspacioId = espacioId
       ? Number(espacioId)
-      : (embarcacion as any).espacio?.id || null;
+      : embarcacion.espacio?.id || null;
 
-    const createData: any = {
-      ...(rest as object),
+    const createData = {
+      ...rest,
       tipo,
       embarcacion: { id: Number(embarcacionId) },
+      espacio: targetEspacioId ? { id: Number(targetEspacioId) } : null,
     };
 
-    if (targetEspacioId) {
-      createData.espacio = { id: targetEspacioId };
-    }
-
-    const savedMovement = await this.movimientoRepo.save(
-      this.movimientoRepo.create(createData),
-    );
+    const nuevoMovimiento = this.movimientoRepo.create(createData);
+    const savedMovement = await this.movimientoRepo.save(nuevoMovimiento);
 
     // --- SYNC STATUS ---
     if (tipo === 'entrada') {
@@ -63,7 +68,9 @@ export class MovimientosService {
         estado: 'EN_CUNA',
       });
       if (targetEspacioId) {
-        await this.espaciosService.update(targetEspacioId, { ocupado: true });
+        await this.espaciosService.update(Number(targetEspacioId), {
+          ocupado: true,
+        });
       }
     } else if (tipo === 'salida') {
       // Boat goes to water -> Free space
@@ -71,7 +78,9 @@ export class MovimientosService {
         estado: 'EN_AGUA',
       });
       if (targetEspacioId) {
-        await this.espaciosService.update(targetEspacioId, { ocupado: false });
+        await this.espaciosService.update(Number(targetEspacioId), {
+          ocupado: false,
+        });
       }
     }
 

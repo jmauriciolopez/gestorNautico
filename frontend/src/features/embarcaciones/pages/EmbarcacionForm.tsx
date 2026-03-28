@@ -10,11 +10,11 @@ export default function EmbarcacionForm() {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditing = Boolean(id);
-  
+
   const { useEmbarcacion, createEmbarcacion, updateEmbarcacion } = useEmbarcaciones();
   const { getClientes } = useClientes();
   const { useZonas } = useUbicaciones();
-  
+
   const embarcacionQuery = useEmbarcacion(Number(id));
   const { data: embarcacion, isLoading: isFetchingEmb } = embarcacionQuery;
   const { data: clientes = [], isLoading: isFetchingClientes } = getClientes;
@@ -67,7 +67,7 @@ export default function EmbarcacionForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const payload = {
       ...formData,
       eslora: parseFloat(formData.eslora) || 0,
@@ -93,7 +93,7 @@ export default function EmbarcacionForm() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px]">
         <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
-        <p className="mt-4 text-gray-500">Cargando datos de la embarcación...</p>
+        <p className="mt-4 text-[var(--text-secondary)]">Cargando datos de la embarcación...</p>
       </div>
     );
   }
@@ -103,46 +103,46 @@ export default function EmbarcacionForm() {
   return (
     <div className="max-w-4xl mx-auto space-y-8 p-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center gap-6">
-        <Link to="/embarcaciones" className="p-3 bg-slate-900 border border-slate-800 rounded-2xl hover:bg-slate-800 text-slate-400 hover:text-white transition-all active:scale-95 shadow-lg">
+        <Link to="/embarcaciones" className="p-3 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-2xl hover:bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all active:scale-95 shadow-lg">
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h2 className="text-3xl font-extrabold text-white tracking-tight">
+          <h2 className="text-3xl font-extrabold text-[var(--text-primary)] tracking-tight">
             {isEditing ? 'Editar Embarcación' : 'Registrar Embarcación'}
           </h2>
-          <p className="text-slate-400 mt-2 font-medium">Completa los datos técnicos y de titularidad de la unidad.</p>
+          <p className="text-[var(--text-secondary)] mt-2 font-medium">Completa los datos técnicos y de titularidad de la unidad.</p>
         </div>
       </div>
 
-      <div className="bg-slate-900/40 backdrop-blur-xl rounded-3xl border border-slate-800/60 shadow-2xl p-8 overflow-hidden relative">
+      <div className="bg-[var(--bg-secondary)]/40 backdrop-blur-xl rounded-3xl border border-[var(--border-primary)]/60 shadow-2xl p-8 overflow-hidden relative">
         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/5 blur-3xl rounded-full -z-10" />
-        
+
         <form onSubmit={handleSubmit} className="space-y-10">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            
+
             <div className="space-y-3">
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Nombre de la Embarcación *</label>
-              <input 
+              <label className="block text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest ml-1">Nombre de la Embarcación *</label>
+              <input
                 type="text" name="nombre" value={formData.nombre} onChange={handleChange} required
-                className="w-full px-5 py-4 bg-slate-950 border border-slate-800 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 text-white placeholder-slate-600 transition-all font-bold"
+                className="w-full px-5 py-4 bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 text-[var(--text-primary)] placeholder-[var(--text-secondary)]/30 transition-all font-bold"
                 placeholder="Ej: La Bestia"
               />
             </div>
 
             <div className="space-y-3">
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Matrícula (REY) *</label>
-              <input 
+              <label className="block text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest ml-1">Matrícula (REY) *</label>
+              <input
                 type="text" name="matricula" value={formData.matricula} onChange={handleChange} required
-                className="w-full px-5 py-4 bg-slate-950 border border-slate-800 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 text-white placeholder-slate-600 transition-all font-mono"
+                className="w-full px-5 py-4 bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 text-[var(--text-primary)] placeholder-[var(--text-secondary)]/30 transition-all font-mono"
                 placeholder="REY-1234"
               />
             </div>
 
             <div className="space-y-3">
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Tipo *</label>
-              <select 
+              <label className="block text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest ml-1">Tipo *</label>
+              <select
                 name="tipo" value={formData.tipo} onChange={handleChange}
-                className="w-full px-5 py-4 bg-slate-950 border border-slate-800 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 text-white transition-all font-medium appearance-none"
+                className="w-full px-5 py-4 bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 text-[var(--text-primary)] transition-all font-medium appearance-none"
               >
                 <option value="Lancha">Lancha</option>
                 <option value="Crucero">Crucero</option>
@@ -153,10 +153,10 @@ export default function EmbarcacionForm() {
             </div>
 
             <div className="space-y-3">
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Propietario *</label>
-              <select 
+              <label className="block text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest ml-1">Propietario *</label>
+              <select
                 name="clienteId" value={formData.clienteId} onChange={handleChange} required
-                className="w-full px-5 py-4 bg-slate-950 border border-slate-800 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 text-white transition-all font-bold appearance-none"
+                className="w-full px-5 py-4 bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 text-[var(--text-primary)] transition-all font-bold appearance-none"
                 disabled={isFetchingClientes}
               >
                 <option value="">{isFetchingClientes ? 'Cargando clientes...' : 'Seleccione un cliente...'}</option>
@@ -169,37 +169,37 @@ export default function EmbarcacionForm() {
             </div>
 
             <div className="space-y-3">
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Eslora (Metros)</label>
-              <input 
+              <label className="block text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest ml-1">Eslora (Metros)</label>
+              <input
                 type="number" step="0.01" name="eslora" value={formData.eslora} onChange={handleChange}
-                className="w-full px-5 py-4 bg-slate-950 border border-slate-800 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 text-white transition-all font-mono"
+                className="w-full px-5 py-4 bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 text-[var(--text-primary)] transition-all font-mono"
                 placeholder="Ej: 5.50"
               />
             </div>
 
             <div className="space-y-3">
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Manga (Metros)</label>
-              <input 
+              <label className="block text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest ml-1">Manga (Metros)</label>
+              <input
                 type="number" step="0.01" name="manga" value={formData.manga} onChange={handleChange}
-                className="w-full px-5 py-4 bg-slate-950 border border-slate-800 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 text-white transition-all font-mono"
+                className="w-full px-5 py-4 bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 text-[var(--text-primary)] transition-all font-mono"
                 placeholder="Ej: 2.10"
               />
             </div>
 
             <div className="space-y-3 col-span-full">
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Ubicación Asignada (Rack / Espacio)</label>
-              
+              <label className="block text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest ml-1">Ubicación Asignada (Rack / Espacio)</label>
+
               <div className="flex items-center gap-4">
-                <div className="flex-1 px-5 py-4 bg-slate-950 border border-slate-800 rounded-2xl flex items-center justify-between">
+                <div className="flex-1 px-5 py-4 bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-2xl flex items-center justify-between">
                   {selectedEspacioLabel ? (
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400">
                         <MapPin className="w-5 h-5" />
                       </div>
-                      <span className="font-bold text-slate-200">{selectedEspacioLabel}</span>
+                      <span className="font-bold text-[var(--text-primary)]">{selectedEspacioLabel}</span>
                     </div>
                   ) : (
-                    <span className="text-slate-500 italic font-medium">Sin ubicación asignada (A flote o transitoria)</span>
+                    <span className="text-[var(--text-secondary)] italic font-medium">Sin ubicación asignada (A flote o transitoria)</span>
                   )}
                 </div>
 
@@ -207,16 +207,16 @@ export default function EmbarcacionForm() {
                   type="button"
                   onClick={() => setIsModalOpen(true)}
                   disabled={isFetchingZonas}
-                  className="px-6 py-4 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-2xl transition-colors shrink-0 disabled:opacity-50"
+                  className="px-6 py-4 bg-[var(--bg-secondary)] hover:bg-[var(--bg-primary)] border border-[var(--border-primary)] text-[var(--text-primary)] font-bold rounded-2xl transition-colors shrink-0 disabled:opacity-50"
                 >
                   {isFetchingZonas ? 'Cargando...' : selectedEspacioLabel ? 'Cambiar Ubicación' : 'Asignar Ubicación'}
                 </button>
               </div>
 
-              <UbicacionPickerModal 
-                isOpen={isModalOpen} 
-                onClose={() => setIsModalOpen(false)} 
-                zonas={zonas} 
+              <UbicacionPickerModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                zonas={zonas}
                 onSelect={(espacioId) => {
                   setFormData(prev => ({ ...prev, espacioId: espacioId ? String(espacioId) : '' }));
                 }}
@@ -225,38 +225,37 @@ export default function EmbarcacionForm() {
             </div>
 
             <div className="space-y-3 col-span-full">
-              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Estado Operativo Actual</label>
+              <label className="block text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest ml-1">Estado Operativo Actual</label>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
                 {['EN_CUNA', 'EN_AGUA', 'MANTENIMIENTO', 'INACTIVA'].map((estado) => (
                   <button
                     key={estado}
                     type="button"
                     onClick={() => setFormData({ ...formData, estado })}
-                    className={`px-4 py-3 rounded-xl border font-bold text-xs transition-all ${
-                      formData.estado === estado 
-                        ? 'bg-blue-600 border-blue-500 text-white shadow-lg shadow-blue-600/20' 
-                        : 'bg-slate-950 border-slate-800 text-slate-500 hover:border-slate-700'
-                    }`}
+                    className={`px-4 py-3 rounded-xl border font-bold text-xs transition-all ${formData.estado === estado
+                      ? 'bg-blue-600 border-blue-500 text-[var(--text-primary)] shadow-lg shadow-blue-600/20'
+                      : 'bg-[var(--bg-primary)] border-[var(--border-primary)] text-[var(--text-secondary)] hover:border-blue-500/40'
+                      }`}
                   >
                     {estado.replace('_', ' ')}
                   </button>
                 ))}
               </div>
             </div>
-            
+
           </div>
 
-          <div className="pt-8 flex items-center justify-end gap-4 border-t border-slate-800/60">
-            <Link 
-              to="/embarcaciones" 
-              className="px-8 py-4 text-slate-400 font-bold bg-slate-900 border border-slate-800 rounded-2xl hover:bg-slate-800 hover:text-white transition-all active:scale-95 shadow-lg"
+          <div className="pt-8 flex items-center justify-end gap-4 border-t border-[var(--border-primary)]/60">
+            <Link
+              to="/embarcaciones"
+              className="px-8 py-4 text-[var(--text-secondary)] font-bold bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-2xl hover:bg-[var(--bg-primary)] hover:text-[var(--text-primary)] transition-all active:scale-95 shadow-lg"
             >
               Cancelar
             </Link>
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={isPending}
-              className="flex items-center gap-3 px-10 py-4 text-white font-bold bg-blue-600 rounded-2xl hover:bg-blue-500 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-blue-600/20"
+              className="flex items-center gap-3 px-10 py-4 text-[var(--text-primary)] font-bold bg-blue-600 rounded-2xl hover:bg-blue-500 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl shadow-blue-600/20"
             >
               {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
               {isEditing ? 'Guardar Cambios' : 'Registrar Embarcación'}

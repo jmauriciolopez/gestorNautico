@@ -32,38 +32,38 @@ export function LiberarEspacioModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div 
-        className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" 
+      <div
+        className="absolute inset-0 bg-[var(--bg-primary)]/80 backdrop-blur-sm"
         onClick={onClose}
       />
-      
-      <div className="relative w-full max-w-lg bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+
+      <div className="relative w-full max-w-lg bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between px-6 py-5 border-b border-blue-500/20 bg-blue-500/5">
           <div>
-            <h3 className="text-xl font-extrabold text-white flex items-center gap-3">
+            <h3 className="text-xl font-extrabold text-[var(--text-primary)] flex items-center gap-3">
               <Ship className="w-5 h-5 text-blue-400" />
               Gestionar Ocupación: {codigoEspacio}
             </h3>
-            <p className="text-slate-400 text-sm mt-1">
+            <p className="text-[var(--text-secondary)] text-sm mt-1">
               Actualizar el estado operativo o desasignar la ubicación actual.
             </p>
           </div>
-          <button 
+          <button
             onClick={onClose}
-            className="p-2 bg-slate-950 text-slate-400 hover:text-white rounded-xl border border-slate-800 active:scale-95 transition-all"
+            className="p-2 bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-xl border border-[var(--border-primary)] active:scale-95 transition-all"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div className="p-6 space-y-6">
-          
+
           {embarcacionEnElLugar ? (
-            <div className="bg-slate-950 border border-slate-800 p-5 rounded-2xl flex items-center gap-4">
-              <div className="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center text-slate-500 font-mono text-xs">ID_{embarcacionEnElLugar.id}</div>
+            <div className="bg-[var(--bg-primary)] border border-[var(--border-primary)] p-5 rounded-2xl flex items-center gap-4">
+              <div className="w-12 h-12 bg-[var(--bg-secondary)] rounded-xl flex items-center justify-center text-[var(--text-secondary)] font-mono text-xs">ID_{embarcacionEnElLugar.id}</div>
               <div>
-                <p className="text-xl font-black text-white">{embarcacionEnElLugar.nombre}</p>
-                <p className="text-slate-500 font-medium text-sm">Propietario: {embarcacionEnElLugar.cliente?.nombre || 'Desconocido'}</p>
+                <p className="text-xl font-black text-[var(--text-primary)]">{embarcacionEnElLugar.nombre}</p>
+                <p className="text-[var(--text-secondary)] font-medium text-sm">Propietario: {embarcacionEnElLugar.cliente?.nombre || 'Desconocido'}</p>
               </div>
             </div>
           ) : (
@@ -74,7 +74,7 @@ export function LiberarEspacioModal({
           )}
 
           <div className="space-y-3">
-            <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Nuevo Estado Operativo de la Embarcación</label>
+            <label className="block text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest ml-1">Nuevo Estado Operativo de la Embarcación</label>
             <div className="grid grid-cols-2 gap-3">
               {[
                 { value: 'EN_CUNA', label: '📦 En Cuna (Regresa)' },
@@ -84,47 +84,45 @@ export function LiberarEspacioModal({
               ]
                 .filter(estado => estado.value !== embarcacionEnElLugar?.estado)
                 .map((estado) => (
-                <button
-                  key={estado.value}
-                  type="button"
-                  onClick={() => setNuevoEstado(estado.value)}
-                  className={`px-4 py-3 rounded-xl border font-bold text-sm transition-all text-left ${
-                    nuevoEstado === estado.value 
-                      ? estado.value === 'INACTIVA' 
+                  <button
+                    key={estado.value}
+                    type="button"
+                    onClick={() => setNuevoEstado(estado.value)}
+                    className={`px-4 py-3 rounded-xl border font-bold text-sm transition-all text-left ${nuevoEstado === estado.value
+                      ? estado.value === 'INACTIVA'
                         ? 'bg-rose-500/10 border-rose-500/50 text-rose-400 shadow-lg shadow-rose-500/5'
-                        : 'bg-blue-500/10 border-blue-500/50 text-blue-400 shadow-lg shadow-blue-500/5' 
-                      : 'bg-slate-950 border-slate-800 text-slate-500 hover:border-slate-700'
-                  }`}
-                >
-                  {estado.label}
-                </button>
-              ))}
+                        : 'bg-blue-500/10 border-blue-500/50 text-blue-400 shadow-lg shadow-blue-500/5'
+                      : 'bg-[var(--bg-primary)] border-[var(--border-primary)] text-[var(--text-secondary)] hover:border-slate-700'
+                      }`}
+                  >
+                    {estado.label}
+                  </button>
+                ))}
             </div>
           </div>
 
         </div>
 
-        <div className="px-6 py-4 border-t border-slate-800/60 bg-slate-900/50 flex justify-end gap-3">
+        <div className="px-6 py-4 border-t border-[var(--border-primary)]/60 bg-[var(--bg-secondary)]/50 flex justify-end gap-3">
           <button
             onClick={onClose}
-            className="px-5 py-3 text-slate-400 hover:text-white font-bold rounded-xl hover:bg-slate-800 transition-colors"
+            className="px-5 py-3 text-[var(--text-secondary)] hover:text-[var(--text-primary)] font-bold rounded-xl hover:bg-slate-800 transition-colors"
           >
             Cancelar
           </button>
-          
+
           <button
             onClick={handleConfirm}
-            disabled={isLoading || !nuevoEstado} 
-            className={`px-6 py-3 disabled:opacity-50 text-white font-bold rounded-xl transition-all shadow-lg active:scale-95 flex items-center gap-2 ${
-              nuevoEstado === 'INACTIVA' 
-                ? 'bg-rose-600 hover:bg-rose-500 shadow-rose-600/20' 
-                : 'bg-blue-600 hover:bg-blue-500 shadow-blue-600/20'
-            }`}
+            disabled={isLoading || !nuevoEstado}
+            className={`px-6 py-3 disabled:opacity-50 text-[var(--text-primary)] font-bold rounded-xl transition-all shadow-lg active:scale-95 flex items-center gap-2 ${nuevoEstado === 'INACTIVA'
+              ? 'bg-rose-600 hover:bg-rose-500 shadow-rose-600/20'
+              : 'bg-blue-600 hover:bg-blue-500 shadow-blue-600/20'
+              }`}
           >
-            {isLoading 
-              ? 'Procesando...' 
-              : nuevoEstado === 'INACTIVA' 
-                ? 'Liberar Espacio' 
+            {isLoading
+              ? 'Procesando...'
+              : nuevoEstado === 'INACTIVA'
+                ? 'Liberar Espacio'
                 : 'Guardar Estado'}
           </button>
         </div>

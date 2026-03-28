@@ -10,6 +10,7 @@ import { Pago } from '../pagos/pago.entity';
 import { Zona } from '../zonas/zona.entity';
 import { Rack } from '../racks/rack.entity';
 import { Espacio } from '../espacios/espacio.entity';
+import { NotificacionesModule } from '../notificaciones/notificaciones.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { Espacio } from '../espacios/espacio.entity';
       Rack,
       Espacio,
     ]),
+    NotificacionesModule,
   ],
   providers: [DashboardService],
   controllers: [DashboardController],

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { 
-  Anchor, 
-  Maximize2, 
-  Info, 
-  ChevronRight, 
+import {
+  Anchor,
+  Maximize2,
+  Info,
+  ChevronRight,
   ChevronDown,
   ExternalLink,
   LogOut,
@@ -29,9 +29,9 @@ export const MapaRacks: React.FC<MapaRacksProps> = ({ data }) => {
 
   if (!data || data.length === 0) {
     return (
-      <div className="bg-slate-900/40 p-12 rounded-3xl border border-slate-800 flex flex-col items-center gap-4">
+      <div className="bg-[var(--bg-secondary)]/40 p-12 rounded-3xl border border-[var(--border-primary)] flex flex-col items-center gap-4">
         <Box className="w-12 h-12 text-slate-700" />
-        <p className="text-slate-500 font-medium">No hay racks configurados en el sistema.</p>
+        <p className="text-[var(--text-secondary)] font-medium">No hay racks configurados en el sistema.</p>
       </div>
     );
   }
@@ -46,32 +46,32 @@ export const MapaRacks: React.FC<MapaRacksProps> = ({ data }) => {
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
       <div className="flex justify-between items-center px-2">
         <div>
-          <h2 className="text-2xl font-bold text-white tracking-tight">Mapa Maestro de Racks</h2>
-          <p className="text-slate-400 text-sm mt-1">Visualización técnica de ocupación por zona y dimensiones.</p>
+          <h2 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight">Mapa Maestro de Racks</h2>
+          <p className="text-[var(--text-secondary)] text-sm mt-1">Visualización técnica de ocupación por zona y dimensiones.</p>
         </div>
-        
+
         {/* Legend */}
         <div className="flex gap-4 items-center bg-slate-800/30 px-5 py-2.5 rounded-2xl border border-slate-700/50">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mr-2">Leyenda Eslora:</span>
+          <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mr-2">Leyenda Eslora:</span>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-blue-500/30 border border-blue-500/50" />
-            <span className="text-xs text-slate-400">&lt;6m</span>
+            <span className="text-xs text-[var(--text-secondary)]">&lt;6m</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-indigo-500/40 border border-indigo-500/50" />
-            <span className="text-xs text-slate-400">6-10m</span>
+            <span className="text-xs text-[var(--text-secondary)]">6-10m</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-purple-500/50 border border-purple-500/50" />
-            <span className="text-xs text-slate-400">&gt;10m</span>
+            <span className="text-xs text-[var(--text-secondary)]">&gt;10m</span>
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 gap-8">
         {data.map(zona => (
-          <section key={zona.id} className="bg-slate-900/60 rounded-[2.5rem] border border-slate-800 overflow-hidden shadow-2xl transition-all hover:border-slate-700">
-            <button 
+          <section key={zona.id} className="bg-[var(--bg-secondary)]/60 rounded-[2.5rem] border border-[var(--border-primary)] overflow-hidden shadow-2xl transition-all hover:border-slate-700">
+            <button
               onClick={() => setExpandedZona(expandedZona === zona.id ? null : zona.id)}
               className="w-full flex items-center justify-between p-8 hover:bg-slate-800/30 transition-colors"
             >
@@ -80,15 +80,15 @@ export const MapaRacks: React.FC<MapaRacksProps> = ({ data }) => {
                   <Maximize2 className="text-blue-400 w-6 h-6" />
                 </div>
                 <div className="text-left">
-                  <h3 className="text-xl font-bold text-white mb-1">{zona.nombre}</h3>
-                  <p className="text-slate-400 text-sm flex items-center gap-2">
+                  <h3 className="text-xl font-bold text-[var(--text-primary)] mb-1">{zona.nombre}</h3>
+                  <p className="text-[var(--text-secondary)] text-sm flex items-center gap-2">
                     <span className="px-2 py-0.5 bg-slate-800 rounded text-blue-400 font-mono text-xs">{zona.ubicacion.nombre}</span>
                     • {zona.racks.length} Racks configurados
                   </p>
                 </div>
               </div>
               <div className={`p-2 rounded-full bg-slate-800 transition-transform duration-300 ${expandedZona === zona.id ? 'rotate-180' : ''}`}>
-                <ChevronDown className="text-slate-400" />
+                <ChevronDown className="text-[var(--text-secondary)]" />
               </div>
             </button>
 
@@ -98,18 +98,18 @@ export const MapaRacks: React.FC<MapaRacksProps> = ({ data }) => {
                   <div key={rack.id} className="space-y-4">
                     <div className="flex justify-between items-end">
                       <div className="flex items-center gap-3">
-                        <span className="bg-blue-600 text-white text-[10px] font-black px-2 py-1 rounded">RACK</span>
-                        <h4 className="text-lg font-bold text-slate-200">{rack.codigo}</h4>
-                        <span className="text-xs text-slate-500 font-mono">({rack.ancho}x{rack.alto}x{rack.largo}m)</span>
+                        <span className="bg-blue-600 text-[var(--text-primary)] text-[10px] font-black px-2 py-1 rounded">RACK</span>
+                        <h4 className="text-lg font-bold text-[var(--text-primary)]">{rack.codigo}</h4>
+                        <span className="text-xs text-[var(--text-secondary)] font-mono">({rack.ancho}x{rack.alto}x{rack.largo}m)</span>
                       </div>
-                      <span className="text-xs text-slate-500">{rack.columnas} col x {rack.filas} filas</span>
+                      <span className="text-xs text-[var(--text-secondary)]">{rack.columnas} col x {rack.filas} filas</span>
                     </div>
 
                     {/* Grid Container */}
-                    <div className="bg-black/40 p-4 rounded-[2rem] border border-slate-800/50 backdrop-blur-sm relative group">
-                      <div 
+                    <div className="bg-black/40 p-4 rounded-[2rem] border border-[var(--border-primary)]/50 backdrop-blur-sm relative group">
+                      <div
                         className="grid gap-3"
-                        style={{ 
+                        style={{
                           gridTemplateColumns: `repeat(${rack.columnas}, minmax(0, 1fr))`,
                           gridTemplateRows: `repeat(${rack.pisos}, minmax(0, 1fr))`
                         }}
@@ -119,22 +119,21 @@ export const MapaRacks: React.FC<MapaRacksProps> = ({ data }) => {
                           return Array.from({ length: rack.columnas }).map((_, cIdx) => {
                             const c = cIdx + 1;
                             const espacio = rack.espacios.find(e => e.piso === p && e.columna === c);
-                            
-                            if (!espacio) return <div key={`empty-${p}-${c}`} className="aspect-square bg-slate-950/20 rounded-xl border border-dashed border-slate-800/30" />;
+
+                            if (!espacio) return <div key={`empty-${p}-${c}`} className="aspect-square bg-[var(--bg-primary)]/20 rounded-xl border border-dashed border-[var(--border-primary)]/30" />;
 
                             return (
-                              <div 
+                              <div
                                 key={espacio.id}
-                                onClick={() => setSelectedEspacio({ 
-                                  rackId: rack.id, 
-                                  espacioId: espacio.id, 
-                                  embarcacion: espacio.embarcacion 
+                                onClick={() => setSelectedEspacio({
+                                  rackId: rack.id,
+                                  espacioId: espacio.id,
+                                  embarcacion: espacio.embarcacion
                                 })}
-                                className={`aspect-square rounded-xl border transition-all cursor-pointer flex flex-col items-center justify-center gap-1 group/item relative ${
-                                  espacio.ocupado 
-                                    ? getBoatSizeClass(espacio.embarcacion?.eslora || 0)
-                                    : 'bg-slate-900/50 text-slate-600 border-slate-800 hover:border-slate-600 hover:bg-slate-800/50'
-                                }`}
+                                className={`aspect-square rounded-xl border transition-all cursor-pointer flex flex-col items-center justify-center gap-1 group/item relative ${espacio.ocupado
+                                  ? getBoatSizeClass(espacio.embarcacion?.eslora || 0)
+                                  : 'bg-[var(--bg-secondary)]/50 text-slate-600 border-[var(--border-primary)] hover:border-slate-600 hover:bg-slate-800/50'
+                                  }`}
                               >
                                 {espacio.ocupado ? (
                                   <>
@@ -170,15 +169,15 @@ export const MapaRacks: React.FC<MapaRacksProps> = ({ data }) => {
       {/* Quick Action Overlay (Drawer/Modal pseudo) */}
       {selectedEspacio && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
-          <div className="bg-slate-900 border border-slate-700 w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-8 text-white relative">
-              <button 
+          <div className="bg-[var(--bg-secondary)] border border-slate-700 w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-8 text-[var(--text-primary)] relative">
+              <button
                 onClick={() => setSelectedEspacio(null)}
                 className="absolute top-6 right-6 p-2 bg-black/20 hover:bg-black/40 rounded-full transition-colors"
               >
                 <X size={20} />
               </button>
-              
+
               <div className="flex items-center gap-4 mb-4">
                 <div className="bg-white/20 p-3 rounded-2xl">
                   <Anchor size={24} />
@@ -204,31 +203,31 @@ export const MapaRacks: React.FC<MapaRacksProps> = ({ data }) => {
             </div>
 
             <div className="p-8 space-y-4">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Acciones Operativas</span>
-              
+              <span className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest">Acciones Operativas</span>
+
               {selectedEspacio.embarcacion ? (
                 <div className="grid grid-cols-1 gap-3">
-                  <button 
+                  <button
                     onClick={() => navigate(`/embarcaciones/editar/${selectedEspacio.embarcacion.id}`)}
                     className="flex items-center justify-between w-full p-4 bg-slate-800 hover:bg-slate-700 rounded-2xl border border-slate-700 transition-all group"
                   >
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-blue-500/10 text-blue-400 rounded-lg"><ExternalLink size={18} /></div>
-                      <span className="font-semibold text-white">Ver Expediente</span>
+                      <span className="font-semibold text-[var(--text-primary)]">Ver Expediente</span>
                     </div>
-                    <ChevronRight size={18} className="text-slate-500 group-hover:translate-x-1 transition-transform" />
+                    <ChevronRight size={18} className="text-[var(--text-secondary)] group-hover:translate-x-1 transition-transform" />
                   </button>
-                  <button 
+                  <button
                     onClick={() => navigate('/operaciones')}
                     className="flex items-center justify-between w-full p-4 bg-slate-800 hover:bg-slate-700 rounded-2xl border border-slate-700 transition-all group"
                   >
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg"><History size={18} /></div>
-                      <span className="font-semibold text-white">Últimos Pedidos</span>
+                      <span className="font-semibold text-[var(--text-primary)]">Últimos Pedidos</span>
                     </div>
-                    <ChevronRight size={18} className="text-slate-500 group-hover:translate-x-1 transition-transform" />
+                    <ChevronRight size={18} className="text-[var(--text-secondary)] group-hover:translate-x-1 transition-transform" />
                   </button>
-                  <button 
+                  <button
                     onClick={() => navigate('/operaciones')}
                     className="flex items-center justify-between w-full p-4 bg-red-500/10 hover:bg-red-500/20 rounded-2xl border border-red-500/20 transition-all group mt-2"
                   >
@@ -239,7 +238,7 @@ export const MapaRacks: React.FC<MapaRacksProps> = ({ data }) => {
                   </button>
                 </div>
               ) : (
-                <div className="p-12 text-center text-slate-500">
+                <div className="p-12 text-center text-[var(--text-secondary)]">
                   <p>Espacio disponible para nuevas embarcaciones.</p>
                 </div>
               )}

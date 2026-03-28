@@ -7,6 +7,18 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { Factura, EstadoFactura } from './factura.entity';
 import { Cargo } from '../cargos/cargo.entity';
+import { CargosService } from '../cargos/cargos.service';
+import { NotificacionesService } from '../notificaciones/notificaciones.service';
+import { Role } from '../users/user.entity';
+import { NotificacionTipo } from '../notificaciones/notificacion.entity';
+
+export interface CreateFacturaDto {
+  clienteId: number;
+  numero?: string;
+  fechaEmision: string;
+  cargoIds: number[];
+  observaciones?: string;
+}
 
 @Injectable()
 export class FacturasService {
@@ -15,6 +27,8 @@ export class FacturasService {
     private readonly facturaRepo: Repository<Factura>,
     @InjectRepository(Cargo)
     private readonly cargoRepo: Repository<Cargo>,
+    private readonly cargosService: CargosService,
+    private readonly notificacionesService: NotificacionesService,
   ) {}
 
   async findAll() {
@@ -44,13 +58,7 @@ export class FacturasService {
     return `FAC-${nextId.toString().padStart(4, '0')}`;
   }
 
-  async create(data: {
-    clienteId: number;
-    numero?: string;
-    fechaEmision: string;
-    cargoIds: number[];
-    observaciones?: string;
-  }) {
+  async create(data: CreateFacturaDto) {
     const { clienteId, cargoIds, numero, ...rest } = data;
 
     if (!cargoIds || cargoIds.length === 0) {
@@ -88,6 +96,13 @@ export class FacturasService {
 
     const guardada = await this.facturaRepo.save(nueva);
 
+    // Notificar a administración/operación sobre nueva factura
+    await this.notificacionesService.createForRole(Role.ADMIN, {
+      titulo: 'Nueva Factura Generada',
+      mensaje: `Se ha emitido la factura ${guardada.numero} para ${guardada.cliente.nombre}.`,
+      tipo: NotificacionTipo.INFO,
+    });
+
     // 5. Vincular cargos a la factura
     await this.cargoRepo.update(
       { id: In(cargoIds) },
@@ -98,7 +113,25 @@ export class FacturasService {
   }
 
   async updateEstado(id: number, estado: EstadoFactura) {
+    const factura = await this.findOne(id);
     await this.facturaRepo.update(id, { estado });
+
+    // SIDE EFFECTS
+    if (estado === EstadoFactura.PAGADA) {
+      // Mark all cargos as paid
+      const cargoIds = (factura.cargos || []).map((c) => c.id);
+      if (cargoIds.length > 0) {
+        await this.cargoRepo.update({ id: In(cargoIds) }, { pagado: true });
+      }
+
+      // Notify operators
+      await this.notificacionesService.createForRole(Role.OPERADOR, {
+        titulo: 'Factura Realizada',
+        mensaje: `La factura ${factura.numero} del cliente ${factura.cliente.nombre} ha sido marcada como PAGADA.`,
+        tipo: NotificacionTipo.EXITO,
+      });
+    }
+
     return this.findOne(id);
   }
 

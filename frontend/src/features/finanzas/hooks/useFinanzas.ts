@@ -13,6 +13,10 @@ export interface Cargo {
     id: number;
     nombre: string;
   };
+  factura?: {
+    id: number;
+    numero: string;
+  };
 }
 
 export interface Pago {

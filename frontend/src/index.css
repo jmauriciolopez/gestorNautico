@@ -8,7 +8,41 @@
 }
 
 :root {
+  /* Slate-3D Dark Mode (Default) */
+  --bg-primary: #020617;
+  --bg-secondary: #0f172a;
+  --bg-surface: rgba(15, 23, 42, 0.4);
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #475569;
+  --border-primary: rgba(30, 41, 59, 0.5);
+  --border-secondary: rgba(30, 41, 59, 0.3);
+  --accent-primary: #4f46e5; /* Indigo 600 */
+  --accent-secondary: #0ea5e9; /* Sky 500 */
+  --glass-blur: 12px;
+  --scrollbar-track: #020617;
+  --scrollbar-thumb: #1e293b;
+  --scrollbar-thumb-hover: #334155;
   color-scheme: dark;
+}
+
+:root.light {
+  /* Slate-Silver Light Mode */
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-surface: rgba(255, 255, 255, 0.7);
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --border-primary: rgba(226, 232, 240, 0.8);
+  --border-secondary: rgba(226, 232, 240, 0.5);
+  --accent-primary: #4f46e5;
+  --accent-secondary: #0284c7;
+  --glass-blur: 10px;
+  --scrollbar-track: #f1f5f9;
+  --scrollbar-thumb: #cbd5e1;
+  --scrollbar-thumb-hover: #94a3b8;
+  color-scheme: light;
 }
 
 body {
@@ -18,16 +52,18 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #020617; /* Slate 950 */
-  color: #f8fafc; /* Slate 50 */
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Glassmorphism utility */
 .glass {
-  background: rgba(15, 23, 42, 0.4);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(30, 41, 59, 0.5);
+  background: var(--bg-surface);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--border-primary);
+  transition: background 0.3s ease, border 0.3s ease;
 }
 
 /* Custom Scrollbar */
@@ -36,16 +72,16 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #020617;
+  background: var(--scrollbar-track);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: var(--scrollbar-thumb);
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: var(--scrollbar-thumb-hover);
 }
 
 @layer base {

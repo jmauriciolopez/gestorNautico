@@ -11,7 +11,7 @@ export function InfraestructuraStats({ stats }: InfraestructuraStatsProps) {
   return (
     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
       <div>
-        <h1 className="text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
+        <h1 className="text-3xl font-extrabold text-[var(--text-primary)] tracking-tight flex items-center gap-3">
           <LayoutGrid className="text-blue-500 w-8 h-8" />
           Infraestructura
         </h1>

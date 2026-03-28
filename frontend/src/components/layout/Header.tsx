@@ -1,8 +1,9 @@
 import { useAuth } from '../../features/auth/context/AuthContext';
-import { Menu, LogOut, Search, Bell, User as UserIcon } from 'lucide-react';
+import { Menu, LogOut, Search, Bell, User as UserIcon, Sun, Moon } from 'lucide-react';
 import { useState } from 'react';
 import { NotificationPopover } from '../../features/notificaciones/components/NotificationPopover';
 import { useNotificaciones } from '../../features/notificaciones/hooks/useNotificaciones';
+import { useTheme } from '../../context/ThemeContext';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -10,71 +11,84 @@ interface HeaderProps {
 
 export default function Header({ onMenuClick }: HeaderProps) {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const { unreadCount } = useNotificaciones();
 
   return (
-    <header className="h-20 bg-slate-950/20 backdrop-blur-md border-b border-slate-800/40 flex items-center justify-between px-8 z-10">
+    <header className="h-20 bg-[var(--bg-primary)]/[0.05] backdrop-blur-md border-b border-[var(--border-primary)] flex items-center justify-between px-8 z-10 transition-colors duration-300">
       <div className="flex items-center gap-6 flex-1">
         <div className="relative group hidden lg:block max-w-sm w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-blue-400 transition-colors" />
-          <input 
-            type="text" 
-            placeholder="Buscar..." 
-            className="w-full bg-slate-900/50 border border-slate-800/60 rounded-xl py-2 pl-10 pr-4 text-sm text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/40 transition-all"
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-secondary)] group-focus-within:text-indigo-400 transition-colors" />
+          <input
+            type="text"
+            placeholder="Búsqueda global..."
+            className="w-full bg-[var(--bg-secondary)]/[0.3] border border-[var(--border-primary)] rounded-xl py-2 pl-10 pr-4 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/40 transition-all font-medium"
           />
         </div>
-        <button 
+        <button
           onClick={onMenuClick}
-          className="lg:hidden text-slate-400 hover:text-white p-2 hover:bg-slate-800/50 rounded-lg transition-colors"
+          className="lg:hidden text-[var(--text-secondary)] hover:text-[var(--text-primary)] p-2 hover:bg-[var(--bg-secondary)]/[0.2] rounded-lg transition-colors"
         >
           <Menu className="w-6 h-6" />
         </button>
       </div>
 
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-4 md:gap-6">
+        {/* Theme Toggle */}
+        <button
+          onClick={toggleTheme}
+          className="p-2.5 bg-[var(--bg-secondary)]/[0.5] border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-indigo-400 rounded-xl transition-all active:scale-90 flex items-center justify-center group"
+          title={theme === 'dark' ? 'Activar Modo Claro' : 'Activar Modo Oscuro'}
+        >
+          {theme === 'dark' ? (
+            <Sun className="w-5 h-5 group-hover:rotate-45 transition-transform" />
+          ) : (
+            <Moon className="w-5 h-5 group-hover:-rotate-12 transition-transform" />
+          )}
+        </button>
+
         <div className="relative">
-          <button 
+          <button
             onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-            className={`text-slate-400 hover:text-white relative p-2 rounded-lg transition-all ${isNotificationsOpen ? 'bg-slate-800 text-white' : 'hover:bg-slate-800/50'}`}
+            className={`text-[var(--text-secondary)] hover:text-indigo-400 relative p-2.5 bg-[var(--bg-secondary)]/[0.5] border border-[var(--border-primary)] rounded-xl transition-all active:scale-95 ${isNotificationsOpen ? 'bg-indigo-600/10 text-indigo-400' : ''}`}
           >
             <Bell className="w-5 h-5" />
             {unreadCount > 0 && (
-              <span className="absolute top-2 right-2 w-2 h-2 bg-blue-500 rounded-full border-2 border-slate-950 animate-pulse"></span>
+              <span className="absolute top-2 right-2 w-2 h-2 bg-indigo-500 rounded-full border-2 border-[var(--bg-primary)] animate-pulse"></span>
             )}
           </button>
-          
-          <NotificationPopover 
-            isOpen={isNotificationsOpen} 
-            onClose={() => setIsNotificationsOpen(false)} 
+
+          <NotificationPopover
+            isOpen={isNotificationsOpen}
+            onClose={() => setIsNotificationsOpen(false)}
           />
         </div>
 
-        <div className="h-8 w-px bg-slate-800/60 mx-1"></div>
+        <div className="h-8 w-px bg-[var(--border-primary)] mx-1 hidden sm:block"></div>
 
         {user ? (
           <div className="flex items-center gap-4">
-            <div className="h-10 w-10 rounded-full bg-slate-800/50 border border-slate-700/50 flex items-center justify-center">
-              <UserIcon size={20} className="text-slate-400" />
+            <div className="h-10 w-10 rounded-full bg-[var(--bg-secondary)]/[0.1] border border-[var(--border-primary)] flex items-center justify-center overflow-hidden">
+              <UserIcon size={20} className="text-[var(--text-secondary)]" />
             </div>
             <div className="text-right hidden sm:block">
-              <p className="text-[10px] font-bold text-white uppercase tracking-widest leading-tight">{user.role}</p>
-              <p className="text-xs text-slate-400 font-medium truncate max-w-[120px]">{user.nombre}</p>
+              <p className="text-[10px] font-black text-[var(--text-primary)] uppercase tracking-widest leading-tight">{user.role}</p>
+              <p className="text-xs text-[var(--text-secondary)] font-bold truncate max-w-[120px] uppercase tracking-tighter">{user.nombre}</p>
             </div>
-            
-            <button 
+
+            <button
               onClick={logout}
-              className="group flex items-center justify-center p-2.5 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-xl transition-all duration-300 shadow-lg shadow-red-500/5 hover:shadow-red-500/20"
+              className="group flex items-center justify-center p-2.5 bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-[var(--text-primary)] rounded-xl transition-all duration-300 shadow-xl shadow-rose-900/10 active:scale-90"
               title="Cerrar Sesión"
             >
-              <LogOut className="w-5 h-5 group-hover:scale-90 transition-transform" />
+              <LogOut className="w-5 h-5 transition-transform" />
             </button>
           </div>
         ) : (
-          <span className="text-sm text-slate-500 font-medium">No autenticado</span>
+          <span className="text-sm text-[var(--text-muted)] font-black uppercase tracking-widest">Invitado</span>
         )}
       </div>
     </header>
   );
 }
-

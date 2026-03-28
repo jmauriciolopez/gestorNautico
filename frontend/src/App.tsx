@@ -7,6 +7,7 @@ import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { Role } from './types';
 import AppLayout from './components/layout/AppLayout';
 import { Login } from './features/auth/Login';
+import { ThemeProvider } from './context/ThemeContext';
 
 // === Feature Pages ===
 import Dashboard from './features/dashboard/pages/Dashboard';
@@ -29,60 +30,62 @@ const LoginWrapper = () => {
 
 // Componente Unauthorized
 const Unauthorized = () => (
-    <div className="flex h-screen items-center justify-center bg-slate-950 text-white">
-        <div className="text-center p-8 bg-slate-900/50 backdrop-blur-xl border border-white/5 rounded-2xl shadow-2xl">
-            <h1 className="text-4xl font-bold text-red-500 mb-4">403</h1>
-            <p className="text-slate-400 mb-6">No tienes permisos para acceder a esta sección.</p>
-            <button 
-                onClick={() => window.location.href = '/'}
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors"
-            >
-                Volver al Inicio
-            </button>
-        </div>
+  <div className="flex h-screen items-center justify-center bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans">
+    <div className="text-center p-8 bg-[var(--bg-secondary)]/50 backdrop-blur-xl border border-white/5 rounded-2xl shadow-2xl">
+      <h1 className="text-4xl font-bold text-red-500 mb-4">403</h1>
+      <p className="text-[var(--text-secondary)] mb-6 font-medium">No tienes permisos para acceder a esta sección.</p>
+      <button
+        onClick={() => window.location.href = '/'}
+        className="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors font-bold"
+      >
+        Volver al Inicio
+      </button>
     </div>
+  </div>
 );
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <AuthProvider>
-          <Routes>
-            <Route path="/login" element={<LoginWrapper />} />
-            <Route path="/unauthorized" element={<Unauthorized />} />
-            
-            {/* Rutas Protegidas */}
-            <Route element={<ProtectedRoute />}>
-              <Route path="/" element={<AppLayout />}>
-                <Route index element={<Dashboard />} />
-                
-                {/* Gestión General (Admin & Operador) */}
-                <Route path="clientes" element={<ClientesList />} />
-                <Route path="clientes/nuevo" element={<ClienteForm />} />
-                <Route path="clientes/editar/:id" element={<ClienteForm />} />
-                
-                <Route path="embarcaciones" element={<EmbarcacionesList />} />
-                <Route path="embarcaciones/nueva" element={<EmbarcacionForm />} />
-                <Route path="embarcaciones/editar/:id" element={<EmbarcacionForm />} />
-                
-                <Route path="operaciones" element={<OperacionesPage />} />
-                <Route path="infraestructura" element={<InfraestructuraPage />} />
-                <Route path="servicios" element={<ServiciosPage />} />
+      <ThemeProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <Routes>
+              <Route path="/login" element={<LoginWrapper />} />
+              <Route path="/unauthorized" element={<Unauthorized />} />
 
-                {/* Rutas de Finanzas y Facturación (Solo Admin/SuperAdmin) */}
-                <Route element={<ProtectedRoute allowedRoles={[Role.ADMIN, Role.SUPERADMIN]} />}>
+              {/* Rutas Protegidas */}
+              <Route element={<ProtectedRoute />}>
+                <Route path="/" element={<AppLayout />}>
+                  <Route index element={<Dashboard />} />
+
+                  {/* Gestión General (Admin & Operador) */}
+                  <Route path="clientes" element={<ClientesList />} />
+                  <Route path="clientes/nuevo" element={<ClienteForm />} />
+                  <Route path="clientes/editar/:id" element={<ClienteForm />} />
+
+                  <Route path="embarcaciones" element={<EmbarcacionesList />} />
+                  <Route path="embarcaciones/nueva" element={<EmbarcacionForm />} />
+                  <Route path="embarcaciones/editar/:id" element={<EmbarcacionForm />} />
+
+                  <Route path="operaciones" element={<OperacionesPage />} />
+                  <Route path="infraestructura" element={<InfraestructuraPage />} />
+                  <Route path="servicios" element={<ServiciosPage />} />
+
+                  {/* Rutas de Finanzas y Facturación (Solo Admin/SuperAdmin) */}
+                  <Route element={<ProtectedRoute allowedRoles={[Role.ADMIN, Role.SUPERADMIN]} />}>
                     <Route path="finanzas" element={<FinanzasPage />} />
                     <Route path="facturacion" element={<FacturacionPage />} />
+                  </Route>
                 </Route>
               </Route>
-            </Route>
 
-            {/* Fallback */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </AuthProvider>
-      </BrowserRouter>
+              {/* Fallback */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </AuthProvider>
+        </BrowserRouter>
+      </ThemeProvider>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   );

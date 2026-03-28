@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Ship, MapPin, Loader2, Plus, Calendar } from 'lucide-react';
+import { Ship, MapPin, Loader2, Plus, Calendar, ArrowRightLeft } from 'lucide-react';
 import { Movimiento, useOperaciones } from '../hooks/useOperaciones';
 import { NuevoMovimientoModal } from './NuevoMovimientoModal';
 
@@ -14,81 +14,85 @@ export function MovimientosList({ movimientos, isLoading }: MovimientosListProps
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
-        <Loader2 className="w-8 h-8 text-amber-600 animate-spin" />
-        <p className="mt-2 text-gray-500">Cargando movimientos...</p>
+      <div className="flex flex-col items-center justify-center py-20 bg-[var(--bg-secondary)]/20">
+        <Loader2 className="w-10 h-10 text-amber-500 animate-spin" />
+        <p className="mt-4 text-[var(--text-secondary)] font-black uppercase text-[10px] tracking-widest">Auditando Bitácora Histórica...</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-end mb-6">
+    <div className="p-8 space-y-6">
+      <div className="flex justify-between items-center border-b border-[var(--border-primary)]/60 pb-6 mb-6">
         <div>
-          <h3 className="text-xl font-extrabold text-slate-800 flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-amber-500" />
-            Movimientos de Galpón
-          </h3>
-          <p className="text-slate-500 text-sm font-medium">Historial cronológico de entradas y salidas.</p>
+          <h3 className="text-xl font-black text-[var(--text-primary)] uppercase tracking-tight">Registro de Movimientos</h3>
+          <p className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-widest mt-0.5">Trazabilidad física de embarcaciones</p>
         </div>
-        <button 
+        <button
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 px-6 py-3 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-2xl transition-all shadow-lg shadow-amber-600/20 active:scale-95 text-sm"
+          className="flex items-center gap-2 px-6 py-2.5 bg-amber-600 hover:bg-amber-500 text-[var(--text-primary)] font-black rounded-xl transition-all shadow-lg shadow-amber-900/40 active:scale-95 text-[10px] uppercase tracking-widest"
         >
-          <Plus className="w-5 h-5" />
-          Registrar Movimiento
+          <Plus className="w-4 h-4" />
+          Registrar Operación
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <table className="w-full text-left">
-          <thead className="bg-gray-50 text-gray-600 text-xs font-bold uppercase tracking-wider">
-            <tr>
-              <th className="px-6 py-4">Embarcación</th>
-              <th className="px-6 py-4">Tipo</th>
-              <th className="px-6 py-4">Ubicación / Destino</th>
-              <th className="px-6 py-4">Fecha</th>
+      <div className="overflow-x-auto">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="border-b border-[var(--border-primary)]/60 bg-[var(--bg-secondary)]/20">
+              <th className="px-8 py-5 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Embarcación</th>
+              <th className="px-8 py-5 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Tipo de Maniobra</th>
+              <th className="px-8 py-5 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Ubicación Actual</th>
+              <th className="px-8 py-5 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] text-right">Fecha y Hora</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100 text-sm">
+          <tbody className="divide-y divide-slate-800/40">
             {movimientos.map((mov) => (
-              <tr key={mov.id} className="hover:bg-gray-50 transition">
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-2">
-                    <Ship className="w-4 h-4 text-blue-500" />
-                    <span className="font-semibold text-gray-900">{mov.embarcacion?.nombre}</span>
+              <tr key={mov.id} className="group hover:bg-slate-800/30 transition-all cursor-default text-sm">
+                <td className="px-8 py-5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
+                      <Ship className="w-4 h-4 text-blue-400" />
+                    </div>
+                    <span className="font-bold text-[var(--text-primary)] group-hover:text-blue-400 transition-colors uppercase tracking-tight">{mov.embarcacion?.nombre}</span>
                   </div>
                 </td>
-                <td className="px-6 py-4">
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                    mov.tipo === 'entrada' ? 'bg-blue-100 text-blue-700' : 'bg-rose-100 text-rose-700'
-                  }`}>
-                    {mov.tipo}
-                  </span>
+                <td className="px-8 py-5">
+                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-lg border ${mov.tipo.toLowerCase() === 'entrada'
+                    ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                    : 'bg-blue-500/10 border-blue-500/20 text-blue-400'
+                    }`}>
+                    <ArrowRightLeft className="w-3 h-3" />
+                    <span className="text-[9px] font-black uppercase tracking-widest">{mov.tipo}</span>
+                  </div>
                 </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-1.5 text-gray-600 font-medium">
-                    <MapPin className="w-3.5 h-3.5 text-gray-400" />
+                <td className="px-8 py-5">
+                  <div className="flex items-center gap-2 text-[var(--text-secondary)] font-medium">
+                    <MapPin className="w-3.5 h-3.5 text-slate-600" />
                     {mov.espacio ? (
-                      <span className="font-bold">
-                        {mov.espacio.rack?.codigo ? `${mov.espacio.rack.codigo}-` : ''}{mov.espacio.numero}
+                      <span className="text-[12px] font-black text-[var(--text-primary)] bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+                        {mov.espacio.rack?.codigo ? `${mov.espacio.rack.codigo}` : ''}-{mov.espacio.numero}
                       </span>
                     ) : (
-                      <span className="text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded text-[10px] border border-blue-100 uppercase tracking-tighter">
-                        En el Agua / A Flote
+                      <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 rounded">
+                        Sector Agua / Flote
                       </span>
                     )}
                   </div>
                 </td>
-                <td className="px-6 py-4 text-gray-500 tabular-nums">
-                  {new Date(mov.fecha).toLocaleString()}
+                <td className="px-8 py-5 text-right text-[var(--text-secondary)] font-black text-[11px] uppercase tracking-tighter tabular-nums">
+                  {new Date(mov.fecha).toLocaleString(undefined, { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                 </td>
               </tr>
             ))}
             {movimientos.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
-                  No se registraron movimientos recientes.
+                <td colSpan={4} className="px-8 py-24 text-center">
+                  <div className="w-16 h-16 rounded-[2rem] bg-[var(--bg-secondary)] border border-[var(--border-primary)] flex items-center justify-center mx-auto mb-4 text-slate-700">
+                    <Calendar className="w-8 h-8" />
+                  </div>
+                  <p className="text-slate-600 font-black uppercase text-[10px] tracking-widest">No se detectaron movimientos en el período actual.</p>
                 </td>
               </tr>
             )}
@@ -96,11 +100,12 @@ export function MovimientosList({ movimientos, isLoading }: MovimientosListProps
         </table>
       </div>
 
-      <NuevoMovimientoModal 
+      <NuevoMovimientoModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSuccess={async (data) => {
           await createMovimiento.mutateAsync(data);
+          setIsModalOpen(false);
         }}
       />
     </div>

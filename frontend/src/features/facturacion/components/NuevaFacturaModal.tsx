@@ -2,13 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useClientes } from '../../clientes/hooks/useClientes';
 import { useCargos } from '../../finanzas/hooks/useFinanzas';
 import { useFacturas } from '../hooks/useFacturas';
-import { Button } from '../../../components/ui/Button';
-import { Input } from '../../../components/ui/Input';
-import { Select } from '../../../components/ui/Select';
-import { Modal } from '../../../components/ui/Modal';
-import { formatCurrency } from '../../../utils/formatters';
-import { Search, Plus, Trash2, FileText, Calendar, User } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { X, Search, FileText, Calendar, Loader2, FileCheck, Receipt, Hash } from 'lucide-react';
 
 interface NuevaFacturaModalProps {
   isOpen: boolean;
@@ -18,25 +12,26 @@ interface NuevaFacturaModalProps {
 export const NuevaFacturaModal: React.FC<NuevaFacturaModalProps> = ({ isOpen, onClose }) => {
   const { getClientes } = useClientes();
   const { createFactura, getNextNumero } = useFacturas();
-  
+
   const [clienteId, setClienteId] = useState<number | null>(null);
   const [cargoIds, setCargoIds] = useState<number[]>([]);
   const [numero, setNumero] = useState('');
   const [fechaEmision, setFechaEmision] = useState(new Date().toISOString().split('T')[0]);
   const [observaciones, setObservaciones] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Cargar cargos del cliente seleccionado que NO están facturados
   const { data: cargos, isLoading: isLoadingCargos } = useCargos(clienteId || undefined, true);
 
-  // Sugerir número automático cuando abre el modal o cambia el cliente
   useEffect(() => {
     if (isOpen && getNextNumero.data) {
       setNumero(getNextNumero.data);
     }
   }, [isOpen, getNextNumero.data]);
 
+  if (!isOpen) return null;
+
   const toggleCargo = (id: number) => {
-    setCargoIds(prev => 
+    setCargoIds(prev =>
       prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
     );
   };
@@ -47,11 +42,9 @@ export const NuevaFacturaModal: React.FC<NuevaFacturaModalProps> = ({ isOpen, on
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!clienteId || cargoIds.length === 0) {
-      toast.error('Seleccione un cliente y al menos un cargo');
-      return;
-    }
+    if (!clienteId || cargoIds.length === 0) return;
 
+    setIsSubmitting(true);
     try {
       await createFactura.mutateAsync({
         clienteId,
@@ -60,61 +53,85 @@ export const NuevaFacturaModal: React.FC<NuevaFacturaModalProps> = ({ isOpen, on
         cargoIds,
         observaciones
       });
-      toast.success('Factura creada correctamente');
       onClose();
-      // Reset
       setClienteId(null);
       setCargoIds([]);
       setObservaciones('');
     } catch (error) {
-      toast.error('Error al crear la factura');
+      console.error('Error al crear la factura:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
+  const formatCurrency = (monto: number) => {
+    return `$${Number(monto).toLocaleString()}`;
+  };
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Emitir Nueva Factura" size="xl">
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Columna Izquierda: Datos de la Factura */}
-          <div className="space-y-4">
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-              <h3 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
-                <FileText className="w-4 h-4 text-blue-600" />
-                Información General
-              </h3>
-              
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-500 ml-1">Cliente</label>
-                  <Select
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[var(--bg-primary)]/80 backdrop-blur-md animate-in fade-in duration-300">
+      <div className="bg-[var(--bg-secondary)] border border-[var(--border-primary)]/60 w-full max-w-5xl rounded-[2.5rem] shadow-2xl shadow-indigo-900/10 overflow-hidden transform animate-in slide-in-from-bottom-8 duration-500">
+
+        <div className="px-8 pt-8 pb-6 border-b border-[var(--border-primary)]/60 flex justify-between items-start">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+              <Receipt className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-xl font-black text-[var(--text-primary)] uppercase tracking-tight">Emisión de Comprobante</h3>
+              <p className="text-xs text-[var(--text-secondary)] font-bold uppercase tracking-widest mt-0.5">Agrupación de cargos y facturación formal</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-[var(--bg-primary)] rounded-xl text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-8">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-10">
+            {/* Left Panel: Configuration */}
+            <div className="md:col-span-2 space-y-6">
+              <div className="space-y-4 bg-[var(--bg-primary)]/40 p-6 rounded-2xl border border-[var(--border-primary)]/60">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest flex items-center gap-2">
+                    Seleccionar Receptor
+                  </label>
+                  <select
+                    className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-xl px-4 py-3 text-sm text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 transition-colors uppercase font-bold appearance-none cursor-pointer"
                     value={clienteId?.toString() || ''}
                     onChange={(e) => {
                       setClienteId(Number(e.target.value));
-                      setCargoIds([]); // Reset cargos al cambiar cliente
+                      setCargoIds([]);
                     }}
                     required
                   >
-                    <option value="">Seleccione un propietario...</option>
+                    <option value="">Elegir Cliente...</option>
                     {getClientes.data?.map(c => (
-                      <option key={c.id} value={c.id}>{c.nombre} ({c.dni})</option>
+                      <option key={c.id} value={c.id}>{c.nombre} (DNI: {c.dni})</option>
                     ))}
-                  </Select>
+                  </select>
                 </div>
-
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-slate-500 ml-1">Nº Comprobante</label>
-                    <Input
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest flex items-center gap-2">
+                      <Hash className="w-3 h-3 text-indigo-400" /> Nº Interno
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-xl px-4 py-3 text-sm text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 transition-colors font-bold uppercase"
                       value={numero}
                       onChange={(e) => setNumero(e.target.value)}
-                      placeholder="FAC-0000"
+                      placeholder="X-0000"
                       required
                     />
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-slate-500 ml-1">Fecha Emisión</label>
-                    <Input
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest flex items-center gap-2">
+                      <Calendar className="w-3 h-3" /> Fecha
+                    </label>
+                    <input
                       type="date"
+                      className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-xl px-4 py-3 text-sm text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 transition-colors font-bold [color-scheme:dark] brightness-90 contrast-125"
                       value={fechaEmision}
                       onChange={(e) => setFechaEmision(e.target.value)}
                       required
@@ -122,105 +139,135 @@ export const NuevaFacturaModal: React.FC<NuevaFacturaModalProps> = ({ isOpen, on
                   </div>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-slate-500 ml-1">Observaciones</label>
-                  <Input
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest">Observaciones Fiscales</label>
+                  <textarea
+                    className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-xl px-4 py-3 text-[13px] text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 transition-colors min-h-[100px] resize-none pb-4"
                     value={observaciones}
                     onChange={(e) => setObservaciones(e.target.value)}
-                    placeholder="Notas adicionales..."
+                    placeholder="Notas internas o aclaraciones para el cliente..."
                   />
                 </div>
               </div>
+
+              {/* Summary Card */}
+              <div className="bg-indigo-600 p-8 rounded-[2.5rem] text-[var(--text-primary)] shadow-2xl shadow-indigo-900/40 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-700">
+                  <FileCheck className="w-32 h-32" />
+                </div>
+                <div className="relative z-10">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Total Liquidación</span>
+                    <div className="bg-white/10 px-2 py-0.5 rounded border border-white/20 text-[9px] font-black uppercase tracking-widest">
+                      {cargoIds.length} CONCEPTOS
+                    </div>
+                  </div>
+                  <div className="text-5xl font-black tracking-tighter tabular-nums">
+                    {formatCurrency(totalFactura)}
+                  </div>
+                  <p className="mt-4 text-[10px] font-bold text-indigo-200 uppercase tracking-widest italic leading-relaxed">
+                    Certificado de liquidación interno listo para registro contable.
+                  </p>
+                </div>
+              </div>
             </div>
 
-            {/* Resumen de Totales */}
-            <div className="bg-blue-600 p-6 rounded-xl text-white shadow-lg shadow-blue-200">
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-blue-100 text-sm">Total de selección</span>
-                <span className="bg-blue-500 px-2 py-0.5 rounded text-xs">
-                  {cargoIds.length} ítems
-                </span>
+            {/* Right Panel: Picker */}
+            <div className="md:col-span-3 flex flex-col h-[550px]">
+              <div className="flex items-center justify-between mb-4 px-1">
+                <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest">Selección de Cargos Pendientes</label>
+                {cargoIds.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setCargoIds([])}
+                    className="text-[9px] font-black text-indigo-400 hover:text-[var(--text-primary)] uppercase tracking-widest"
+                  >
+                    Limpiar Selección
+                  </button>
+                )}
               </div>
-              <div className="text-3xl font-bold">
-                {formatCurrency(totalFactura)}
-              </div>
-            </div>
-          </div>
 
-          {/* Columna Derecha: Selección de Cargos */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
-              <Plus className="w-4 h-4 text-green-600" />
-              Cargos Pendientes de Facturar
-            </h3>
+              <div className="flex-1 bg-[var(--bg-primary)]/40 border border-[var(--border-primary)]/60 rounded-[2rem] overflow-hidden flex flex-col">
+                <div className="overflow-y-auto flex-1 p-2 custom-scrollbar">
+                  {!clienteId ? (
+                    <div className="flex flex-col items-center justify-center h-full text-[var(--text-secondary)] p-12 text-center">
+                      <div className="w-20 h-20 rounded-[2rem] bg-[var(--bg-primary)] border border-[var(--border-primary)] flex items-center justify-center mb-6 opacity-40">
+                        <Search className="w-8 h-8" />
+                      </div>
+                      <h4 className="text-[var(--text-primary)] font-black text-sm uppercase tracking-tight mb-2">Esperando Cliente</h4>
+                      <p className="text-[10px] font-bold uppercase tracking-widest leading-relaxed">Seleccione un receptor en el panel izquierdo para auditar su estado de cuenta.</p>
+                    </div>
+                  ) : isLoadingCargos ? (
+                    <div className="flex items-center justify-center h-full">
+                      <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+                    </div>
+                  ) : cargos?.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-[var(--text-secondary)] p-8 text-center">
+                      <FileText className="w-12 h-12 mb-4 opacity-10" />
+                      <p className="text-xs font-bold uppercase tracking-widest">Sin deudas pendientes detectadas para este perfil.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {cargos?.map(cargo => (
+                        <div
+                          key={cargo.id}
+                          onClick={() => toggleCargo(cargo.id)}
+                          className={`flex items-center gap-5 p-5 rounded-2xl border transition-all cursor-pointer group ${cargoIds.includes(cargo.id)
+                            ? 'bg-indigo-600/10 border-indigo-500/40'
+                            : 'bg-[var(--bg-primary)]/40 border-[var(--border-primary)]/40 hover:border-indigo-400'
+                            }`}
+                        >
+                          <div className={`w-6 h-6 rounded-lg border flex items-center justify-center transition-all ${cargoIds.includes(cargo.id)
+                            ? 'bg-indigo-600 border-indigo-500 text-[var(--text-primary)]'
+                            : 'bg-[var(--bg-secondary)] border-[var(--border-primary)] text-transparent'
+                            }`}>
+                            <FileCheck className="w-3.5 h-3.5" />
+                          </div>
 
-            <div className="bg-white border border-slate-200 rounded-xl overflow-hidden min-h-[300px] max-h-[450px] overflow-y-auto">
-              {!clienteId ? (
-                <div className="flex flex-col items-center justify-center h-full text-slate-400 p-8 text-center italic">
-                  <Search className="w-12 h-12 mb-2 opacity-20" />
-                  <p>Seleccione un cliente para ver sus cargos pendientes</p>
-                </div>
-              ) : isLoadingCargos ? (
-                <div className="flex items-center justify-center h-full">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                </div>
-              ) : cargos?.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-slate-400 p-8 text-center">
-                  <Trash2 className="w-12 h-12 mb-2 opacity-20" />
-                  <p>No se encontraron cargos pendientes de facturar para este cliente</p>
-                </div>
-              ) : (
-                <div className="divide-y divide-slate-100">
-                  {cargos?.map(cargo => (
-                    <label 
-                      key={cargo.id} 
-                      className={`flex items-center gap-4 p-4 hover:bg-slate-50 cursor-pointer transition-colors ${
-                        cargoIds.includes(cargo.id) ? 'bg-blue-50' : ''
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                        checked={cargoIds.includes(cargo.id)}
-                        onChange={() => toggleCargo(cargo.id)}
-                      />
-                      <div className="flex-1">
-                        <div className="text-sm font-medium text-slate-800">{cargo.descripcion}</div>
-                        <div className="text-xs text-slate-500 flex items-center gap-3 mt-0.5">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
-                            {new Date(cargo.fechaEmision).toLocaleDateString()}
-                          </span>
-                          <span className="bg-slate-100 px-1.5 py-0.5 rounded uppercase text-[10px] font-bold">
-                            {cargo.tipo}
-                          </span>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-bold text-[var(--text-primary)] group-hover:text-indigo-400 transition-colors uppercase tracking-tight">{cargo.descripcion}</div>
+                            <div className="flex items-center gap-3 mt-1.5">
+                              <span className="text-[9px] font-black bg-[var(--bg-secondary)] text-[var(--text-secondary)] px-2 py-0.5 rounded uppercase tracking-wider border border-[var(--border-primary)]">
+                                {cargo.tipo}
+                              </span>
+                              <div className="w-1 h-1 rounded-full bg-[var(--bg-secondary)]" />
+                              <span className="text-[10px] text-[var(--text-secondary)] flex items-center gap-1.5 font-bold uppercase tracking-widest">
+                                <Calendar className="w-3 h-3" />
+                                {new Date(cargo.fechaEmision).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="text-lg font-black text-[var(--text-primary)] tabular-nums tracking-tighter">
+                            {formatCurrency(cargo.monto)}
+                          </div>
                         </div>
-                      </div>
-                      <div className="text-sm font-semibold text-slate-900">
-                        {formatCurrency(cargo.monto)}
-                      </div>
-                    </label>
-                  ))}
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-          <Button type="button" variant="outline" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button 
-            type="submit" 
-            variant="primary" 
-            disabled={createFactura.isPending || cargoIds.length === 0}
-            className="min-w-[150px]"
-          >
-            {createFactura.isPending ? 'Emitiendo...' : 'Emitir Factura'}
-          </Button>
-        </div>
-      </form>
-    </Modal>
+          {/* Combined Actions */}
+          <div className="flex gap-4 pt-8 mt-6 border-t border-[var(--border-primary)]/60 items-center justify-between">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-8 py-3.5 border border-[var(--border-primary)] text-[var(--text-secondary)] font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-[var(--bg-primary)] hover:text-[var(--text-primary)] transition-all underline-offset-4"
+            >
+              Cancelar Emisión
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting || cargoIds.length === 0}
+              className="px-12 py-3.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-30 disabled:cursor-not-allowed text-[var(--text-primary)] font-black rounded-xl text-xs uppercase tracking-[0.2em] shadow-xl shadow-indigo-900/40 active:scale-95 flex items-center justify-center gap-3 transition-all"
+            >
+              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin text-[var(--text-primary)]" /> : 'Confirmar y Generar Factura'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 };

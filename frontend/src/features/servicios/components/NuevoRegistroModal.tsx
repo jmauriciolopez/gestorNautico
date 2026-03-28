@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { X, Wrench, Search, Ship, Calendar, DollarSign, MessageSquare, Loader2 } from 'lucide-react';
+import { X, Wrench, Search, Ship, Calendar, DollarSign, MessageSquare, Loader2, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { useEmbarcaciones } from '../../embarcaciones/hooks/useEmbarcaciones';
 import { useServicios, RegistroServicio } from '../hooks/useServicios';
 
@@ -13,7 +13,7 @@ interface NuevoRegistroModalProps {
 export function NuevoRegistroModal({ isOpen, onClose, onSave, initialData }: NuevoRegistroModalProps) {
   const { getEmbarcaciones } = useEmbarcaciones();
   const { getCatalogo } = useServicios();
-  
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBoatId, setSelectedBoatId] = useState<number | null>(null);
   const [selectedServiceId, setSelectedServiceId] = useState<number | null>(null);
@@ -22,7 +22,6 @@ export function NuevoRegistroModal({ isOpen, onClose, onSave, initialData }: Nue
   const [observaciones, setObservaciones] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Initialize for editing
   useEffect(() => {
     if (initialData && isOpen) {
       setSelectedBoatId(initialData.embarcacionId);
@@ -39,7 +38,6 @@ export function NuevoRegistroModal({ isOpen, onClose, onSave, initialData }: Nue
     }
   }, [initialData, isOpen]);
 
-  // Update cost when service changes
   useEffect(() => {
     if (!initialData && selectedServiceId && getCatalogo.data) {
       const service = getCatalogo.data.find(s => s.id === selectedServiceId);
@@ -52,8 +50,8 @@ export function NuevoRegistroModal({ isOpen, onClose, onSave, initialData }: Nue
   const filteredEmbarcaciones = useMemo(() => {
     const boats = getEmbarcaciones.data || [];
     if (!searchTerm) return boats.slice(0, 5);
-    return boats.filter(b => 
-      b.nombre.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    return boats.filter(b =>
+      b.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
       b.matricula.toLowerCase().includes(searchTerm.toLowerCase())
     ).slice(0, 5);
   }, [getEmbarcaciones.data, searchTerm]);
@@ -84,87 +82,93 @@ export function NuevoRegistroModal({ isOpen, onClose, onSave, initialData }: Nue
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div 
-        className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" 
-        onClick={onClose}
-      />
-      
-      <div className="relative w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-        
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[var(--bg-primary)]/80 backdrop-blur-md animate-in fade-in duration-300">
+      <div className="bg-[#0f172a] border border-[var(--border-primary)]/60 w-full max-w-2xl rounded-[2.5rem] shadow-2xl shadow-emerald-900/10 overflow-hidden transform animate-in slide-in-from-bottom-8 duration-500">
+
         {/* Header */}
-        <div className="flex items-center justify-between px-8 py-6 border-b border-slate-800/60 bg-slate-900/50">
-          <div>
-            <h3 className="text-xl font-extrabold text-white flex items-center gap-3">
-              <Wrench className="w-6 h-6 text-emerald-500" />
-              {initialData ? 'Editar Registro de Servicio' : 'Nuevo Registro de Servicio'}
-            </h3>
-            <p className="text-slate-400 text-sm mt-1">Asigna un servicio del catálogo a una embarcación.</p>
+        <div className="px-8 pt-8 pb-6 border-b border-[var(--border-primary)]/60 flex justify-between items-start">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-600/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+              <Wrench className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-xl font-black text-[var(--text-primary)] uppercase tracking-tight">
+                {initialData ? 'Entrada Técnica' : 'Nueva Orden Servicio'}
+              </h3>
+              <p className="text-xs text-[var(--text-secondary)] font-bold uppercase tracking-widest mt-0.5">Asignación de Trabajos en Taller</p>
+            </div>
           </div>
-          <button 
-            type="button"
-            onClick={onClose}
-            className="p-2 bg-slate-950 text-slate-400 hover:text-white rounded-xl border border-slate-800 active:scale-95 transition-all"
-          >
+          <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-xl text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-8 space-y-6 max-h-[75vh] overflow-y-auto">
-          
+        <form onSubmit={handleSubmit} className="p-8 space-y-6 max-h-[75vh] overflow-y-auto custom-scrollbar">
+
           {/* Boat Selection */}
           <div className="space-y-3">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">1. Embarcación</label>
-            
+            <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest ml-1">1. Unidad / Embarcación</label>
+
             {!selectedBoatId ? (
               <div className="space-y-3">
                 <div className="relative">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600" />
                   <input
                     type="text"
-                    className="w-full bg-slate-950 border border-slate-800 rounded-2xl pl-12 pr-5 py-3.5 text-white placeholder:text-slate-700 focus:outline-none focus:border-emerald-500 transition-all font-bold"
+                    className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-xl pl-12 pr-5 py-3.5 text-[var(--text-primary)] placeholder:text-slate-700 focus:outline-none focus:border-emerald-500 transition-all font-bold uppercase text-sm"
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
-                    placeholder="Buscar por nombre o matrícula..."
+                    placeholder="Filtrar por nombre o matrícula..."
                   />
                 </div>
                 <div className="grid grid-cols-1 gap-2">
                   {getEmbarcaciones.isLoading ? (
-                    <div className="flex justify-center p-4"><Loader2 className="w-6 h-6 animate-spin text-slate-700" /></div>
+                    <div className="flex justify-center p-4"><Loader2 className="w-6 h-6 animate-spin text-emerald-500" /></div>
                   ) : (
                     filteredEmbarcaciones.map(boat => (
                       <button
                         key={boat.id}
                         type="button"
                         onClick={() => setSelectedBoatId(boat.id)}
-                        className="flex items-center gap-4 p-3 bg-slate-950/50 border border-slate-800 rounded-xl hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all group"
+                        className="flex items-center justify-between p-4 bg-[var(--bg-primary)]/40 border border-[var(--border-primary)]/60 rounded-xl hover:border-emerald-500/40 hover:bg-emerald-500/5 transition-all group"
                       >
-                        <Ship className="w-5 h-5 text-slate-600 group-hover:text-emerald-500 transition-colors" />
-                        <div className="text-left">
-                          <p className="font-bold text-white group-hover:text-emerald-400">{boat.nombre}</p>
-                          <p className="text-xs text-slate-500 font-mono">{boat.matricula}</p>
+                        <div className="flex items-center gap-4 text-left">
+                          <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-[var(--text-secondary)] group-hover:text-amber-400 transition-colors">
+                            <Ship className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <p className="font-black text-[var(--text-primary)] group-hover:text-emerald-400 uppercase tracking-tight text-xs">{boat.nombre}</p>
+                            <p className="text-[9px] text-[var(--text-secondary)] font-bold uppercase tracking-widest">{boat.matricula}</p>
+                          </div>
                         </div>
+                        <ChevronRight className="w-4 h-4 text-slate-800 group-hover:translate-x-1 group-hover:text-emerald-500 transition-all" />
                       </button>
                     ))
                   )}
                 </div>
               </div>
             ) : (
-              <div className="flex items-center justify-between p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl">
-                <div className="flex items-center gap-4">
-                  <Ship className="w-8 h-8 text-emerald-500" />
+              <div className="flex items-center justify-between p-6 bg-emerald-500/10 border border-emerald-500/20 rounded-[2rem] relative overflow-hidden group/boat shadow-xl shadow-emerald-900/10">
+                <div className="absolute top-0 right-0 p-8 opacity-5 group-hover/boat:scale-110 transition-transform duration-700">
+                  <Ship className="w-24 h-24" />
+                </div>
+                <div className="flex items-center gap-5 relative z-10">
+                  <div className="w-14 h-14 bg-emerald-600 rounded-2xl flex items-center justify-center text-[var(--text-primary)] shadow-lg shadow-emerald-600/20">
+                    <Ship className="w-7 h-7" />
+                  </div>
                   <div>
-                    <p className="text-lg font-black text-white">{selectedBoat?.nombre}</p>
-                    <p className="text-sm text-emerald-400/70 font-bold">{selectedBoat?.matricula}</p>
+                    <h4 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em] mb-1">Unidad Seleccionada</h4>
+                    <p className="text-2xl font-black text-[var(--text-primary)] tracking-tight uppercase">{selectedBoat?.nombre}</p>
+                    <p className="text-[10px] text-emerald-400/60 font-black uppercase tracking-widest">{selectedBoat?.matricula}</p>
                   </div>
                 </div>
                 {!initialData && (
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     onClick={() => setSelectedBoatId(null)}
-                    className="text-xs font-bold text-emerald-500 hover:text-white uppercase tracking-widest px-3 py-1 bg-emerald-500/10 rounded-lg hover:bg-emerald-500 transition-all"
+                    className="relative z-10 px-5 py-2.5 bg-[var(--bg-secondary)]/60 hover:bg-slate-800 text-xs font-black text-emerald-400 uppercase tracking-widest rounded-xl transition-all active:scale-95 border border-emerald-500/10"
                   >
-                    Cambiar
+                    Liberar
                   </button>
                 )}
               </div>
@@ -172,32 +176,30 @@ export function NuevoRegistroModal({ isOpen, onClose, onSave, initialData }: Nue
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Service Selection */}
-            <div className="space-y-3">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">2. Servicio</label>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest ml-1">2. Catálogo / Tarea</label>
               <select
                 required
-                className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-5 py-3.5 text-white focus:outline-none focus:border-emerald-500 transition-all font-bold appearance-none cursor-pointer"
+                className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-xl px-5 py-3.5 text-[var(--text-primary)] focus:outline-none focus:border-emerald-500 transition-all font-bold appearance-none cursor-pointer uppercase text-xs"
                 value={selectedServiceId || ''}
                 onChange={e => setSelectedServiceId(Number(e.target.value))}
                 disabled={initialData !== null && initialData !== undefined}
               >
-                <option value="" disabled>Seleccionar servicio...</option>
+                <option value="" disabled>Seleccionar concepto...</option>
                 {getCatalogo.data?.filter(s => s.activo).map(svc => (
-                  <option key={svc.id} value={svc.id}>{svc.nombre} (${Number(svc.precioBase).toLocaleString()})</option>
+                  <option key={svc.id} value={svc.id}>{svc.nombre} - ${Number(svc.precioBase).toLocaleString()}</option>
                 ))}
               </select>
             </div>
 
-            {/* Date Selection */}
-            <div className="space-y-3">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">3. Fecha Programada</label>
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest ml-1">3. Fecha Estimada</label>
               <div className="relative">
-                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600" />
+                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
                 <input
                   type="date"
                   required
-                  className="w-full bg-slate-950 border border-slate-800 rounded-2xl pl-12 pr-5 py-3.5 text-white focus:outline-none focus:border-emerald-500 transition-all font-bold"
+                  className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-xl pl-12 pr-5 py-3.5 text-[var(--text-primary)] focus:outline-none focus:border-emerald-500 transition-all font-black text-sm [color-scheme:dark]"
                   value={fechaProgramada}
                   onChange={e => setFechaProgramada(e.target.value)}
                 />
@@ -205,34 +207,33 @@ export function NuevoRegistroModal({ isOpen, onClose, onSave, initialData }: Nue
             </div>
           </div>
 
-          {/* Amount & Observations */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-3">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">4. Costo Estimado/Final</label>
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+            <div className="md:col-span-2 space-y-2">
+              <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest ml-1">4. Monto Final Auditado</label>
               <div className="relative">
-                <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600" />
+                <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500/50" />
                 <input
                   type="number"
                   required
                   min="0"
                   step="0.01"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-2xl pl-12 pr-5 py-3.5 text-white focus:outline-none focus:border-emerald-500 transition-all font-bold"
+                  className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-xl pl-12 pr-5 py-3.5 text-lg text-[var(--text-primary)] focus:outline-none focus:border-emerald-500 transition-all font-black tabular-nums"
                   value={costoFinal}
                   onChange={e => setCostoFinal(Number(e.target.value))}
                 />
               </div>
-              <p className="text-[10px] text-slate-500 px-2 italic">Por defecto toma el precio del catálogo.</p>
+              <p className="text-[8px] text-slate-600 px-2 italic font-black uppercase tracking-widest">Base de contrato según catálogo.</p>
             </div>
 
-            <div className="space-y-3">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">5. Observaciones</label>
+            <div className="md:col-span-3 space-y-2">
+              <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest ml-1">5. Notas de Taller</label>
               <div className="relative">
-                <MessageSquare className="absolute left-4 top-4 w-5 h-5 text-slate-600" />
+                <MessageSquare className="absolute left-4 top-4 w-4 h-4 text-slate-700" />
                 <textarea
-                  className="w-full bg-slate-950 border border-slate-800 rounded-2xl pl-12 pr-5 py-3.5 text-white placeholder:text-slate-700 focus:outline-none focus:border-emerald-500 transition-all min-h-[100px] resize-none"
+                  className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-xl pl-12 pr-5 py-3.5 text-[13px] text-[var(--text-primary)] placeholder:text-slate-700 focus:outline-none focus:border-emerald-500 transition-all min-h-[100px] resize-none pb-4 font-bold"
                   value={observaciones}
                   onChange={e => setObservaciones(e.target.value)}
-                  placeholder="Detalles del trabajo..."
+                  placeholder="Detalles sobre el requerimiento técnico o estado de la unidad..."
                 />
               </div>
             </div>
@@ -242,16 +243,21 @@ export function NuevoRegistroModal({ isOpen, onClose, onSave, initialData }: Nue
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-8 py-4 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-2xl transition-all active:scale-95"
+              className="px-6 py-3.5 border border-[var(--border-primary)] text-[var(--text-secondary)] font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-slate-800 hover:text-[var(--text-primary)] transition-all underline-offset-4"
             >
-              Cancelar
+              Cerrar
             </button>
             <button
               type="submit"
               disabled={isSubmitting || !selectedBoatId || !selectedServiceId}
-              className="flex-[2] px-8 py-4 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-black rounded-2xl transition-all shadow-lg shadow-emerald-600/20 active:scale-95 flex items-center justify-center gap-2"
+              className="flex-1 px-8 py-3.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-[var(--text-primary)] font-black rounded-xl text-xs uppercase tracking-[0.2em] shadow-xl shadow-emerald-900/40 active:scale-95 flex items-center justify-center gap-3 transition-all"
             >
-              {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : (initialData ? 'Guardar Cambios' : 'Registrar Servicio')}
+              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin text-[var(--text-primary)]" /> : (
+                <>
+                  <CheckCircle2 className="w-4 h-4" />
+                  {initialData ? 'Actualizar Orden' : 'Emitir Orden Técnico'}
+                </>
+              )}
             </button>
           </div>
         </form>

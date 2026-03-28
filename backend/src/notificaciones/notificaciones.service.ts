@@ -74,4 +74,12 @@ export class NotificacionesService {
       throw new NotFoundException('Notificación no encontrada');
     }
   }
+
+  async findAllRecentGlobal(limit = 10): Promise<Notificacion[]> {
+    return this.notificacionesRepository.find({
+      order: { createdAt: 'DESC' },
+      take: limit,
+      relations: ['usuario'],
+    });
+  }
 }

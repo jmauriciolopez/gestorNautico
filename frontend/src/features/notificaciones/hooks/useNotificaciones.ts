@@ -15,8 +15,15 @@ export function useNotificaciones() {
 
   const getNotificaciones = useQuery<Notificacion[]>({
     queryKey: ['notificaciones'],
-    queryFn: () => fetchClient('/notificaciones'),
-    refetchInterval: 30000, // Poll every 30 seconds
+    queryFn: async () => {
+      try {
+        return await fetchClient('/notificaciones');
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+        return [];
+      }
+    },
+    refetchInterval: 60000, // Poll every 60 seconds (reduced frequency)
   });
 
   const markAsRead = useMutation({

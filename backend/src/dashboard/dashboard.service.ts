@@ -7,6 +7,7 @@ import { Movimiento } from '../movimientos/movimientos.entity';
 import { Cargo } from '../cargos/cargo.entity';
 import { Pago } from '../pagos/pago.entity';
 import { Zona } from '../zonas/zona.entity';
+import { NotificacionesService } from '../notificaciones/notificaciones.service';
 
 @Injectable()
 export class DashboardService {
@@ -23,6 +24,7 @@ export class DashboardService {
     private readonly pagoRepo: Repository<Pago>,
     @InjectRepository(Zona)
     private readonly zonaRepo: Repository<Zona>,
+    private readonly notificacionesService: NotificacionesService,
   ) {}
 
   async getSummary() {
@@ -53,11 +55,14 @@ export class DashboardService {
     );
 
     // Actividad Reciente
-    const ultimosMovimientos = await this.movRepo.find({
-      relations: ['embarcacion'],
-      order: { fecha: 'DESC' },
-      take: 6,
-    });
+    const [ultimosMovimientos, ultimasNotificaciones] = await Promise.all([
+      this.movRepo.find({
+        relations: ['embarcacion'],
+        order: { fecha: 'DESC' },
+        take: 6,
+      }),
+      this.notificacionesService.findAllRecentGlobal(6),
+    ]);
 
     const seriesFinanzas = await this.getFinanzasSeries();
 
@@ -76,6 +81,7 @@ export class DashboardService {
         },
       },
       actividadReciente: ultimosMovimientos,
+      notificacionesRecientes: ultimasNotificaciones,
       graficos: {
         finanzas: seriesFinanzas,
       },
@@ -126,7 +132,7 @@ export class DashboardService {
             columna: 'ASC',
           },
         },
-      },
+      } as any, // TypeORM nested order typing can be complex; maintaining 'as any' for now to ensure query correctness while keeping structure
     });
   }
 }

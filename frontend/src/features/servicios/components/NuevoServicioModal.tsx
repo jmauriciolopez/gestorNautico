@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Package, Tag, DollarSign, Type, Loader2 } from 'lucide-react';
+import { X, Package, Tag, DollarSign, Type, Loader2, CheckCircle2 } from 'lucide-react';
 import { ServicioCatalogo } from '../hooks/useServicios';
 
 interface NuevoServicioModalProps {
@@ -55,122 +55,118 @@ export function NuevoServicioModal({ isOpen, onClose, onSave, initialData }: Nue
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div 
-        className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" 
-        onClick={onClose}
-      />
-      
-      <div className="relative w-full max-w-lg bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-        
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[var(--bg-primary)]/80 backdrop-blur-md animate-in fade-in duration-300">
+      <div className="bg-[var(--bg-secondary)] border border-[var(--border-primary)]/60 w-full max-w-lg rounded-[2.5rem] shadow-2xl shadow-indigo-900/10 overflow-hidden transform animate-in slide-in-from-bottom-8 duration-500">
+
         {/* Header */}
-        <div className="flex items-center justify-between px-8 py-6 border-b border-slate-800/60 bg-slate-900/50">
-          <div>
-            <h3 className="text-xl font-extrabold text-white flex items-center gap-3">
-              <Package className="w-6 h-6 text-indigo-500" />
-              {initialData ? 'Editar Servicio' : 'Nuevo Servicio'}
-            </h3>
-            <p className="text-slate-400 text-sm mt-1">Configura los detalles del servicio en el catálogo.</p>
+        <div className="px-8 pt-8 pb-6 border-b border-[var(--border-primary)]/60 flex justify-between items-start">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+              <Package className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-xl font-black text-[var(--text-primary)] uppercase tracking-tight">
+                {initialData ? 'Editar Definición' : 'Nuevo Servicio'}
+              </h3>
+              <p className="text-xs text-[var(--text-secondary)] font-bold uppercase tracking-widest mt-0.5">Gestión de Catálogo Maestro</p>
+            </div>
           </div>
-          <button 
-            type="button"
-            onClick={onClose}
-            className="p-2 bg-slate-950 text-slate-400 hover:text-white rounded-xl border border-slate-800 active:scale-95 transition-all"
-          >
+          <button onClick={onClose} className="p-2 hover:bg-[var(--bg-primary)] rounded-xl text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
-          
+
           <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Nombre del Servicio</label>
-            <div className="relative">
-              <Tag className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600" />
-              <input
-                type="text"
-                required
-                className="w-full bg-slate-950 border border-slate-800 rounded-2xl pl-12 pr-5 py-3.5 text-white placeholder:text-slate-700 focus:outline-none focus:border-indigo-500 transition-all font-bold"
-                value={formData.nombre}
-                onChange={e => setFormData({ ...formData, nombre: e.target.value })}
-                placeholder="Ej: Lavado de Casco"
-              />
-            </div>
+            <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest flex items-center gap-2">
+              <Tag className="w-3 h-3 text-indigo-400" /> Identificador / Nombre
+            </label>
+            <input
+              type="text"
+              required
+              className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-xl px-5 py-3.5 text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/30 focus:outline-none focus:border-indigo-500 transition-all font-bold uppercase text-sm"
+              value={formData.nombre}
+              onChange={e => setFormData({ ...formData, nombre: e.target.value })}
+              placeholder="Ej: LAVADO INTEGRAL"
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Precio Base</label>
-              <div className="relative">
-                <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600" />
-                <input
-                  type="number"
-                  required
-                  min="0"
-                  step="0.01"
-                  className="w-full bg-slate-950 border border-slate-800 rounded-2xl pl-12 pr-5 py-3.5 text-white focus:outline-none focus:border-indigo-500 transition-all font-bold"
-                  value={formData.precioBase}
-                  onChange={e => setFormData({ ...formData, precioBase: parseFloat(e.target.value) })}
-                />
-              </div>
+              <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest flex items-center gap-2">
+                <DollarSign className="w-3 h-3 text-emerald-500" /> Precio Base
+              </label>
+              <input
+                type="number"
+                required
+                min="0"
+                step="0.01"
+                className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-xl px-5 py-3.5 text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 transition-all font-black tabular-nums text-sm"
+                value={formData.precioBase}
+                onChange={e => setFormData({ ...formData, precioBase: parseFloat(e.target.value) })}
+              />
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Categoría</label>
-              <div className="relative">
-                <Type className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-600" />
-                <select
-                  className="w-full bg-slate-950 border border-slate-800 rounded-2xl pl-12 pr-5 py-3.5 text-white focus:outline-none focus:border-indigo-500 transition-all font-bold appearance-none cursor-pointer"
-                  value={formData.categoria}
-                  onChange={e => setFormData({ ...formData, categoria: e.target.value })}
-                >
-                  <option value="GENERAL">General</option>
-                  <option value="LAVADO">Lavado</option>
-                  <option value="MECANICA">Mecánica</option>
-                  <option value="BOTADURA">Movimiento</option>
-                  <option value="MANTENIMIENTO">Mantenimiento</option>
-                </select>
-              </div>
+              <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest flex items-center gap-2">
+                <Type className="w-3 h-3 text-indigo-400" /> Categoría
+              </label>
+              <select
+                className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-xl px-5 py-3.5 text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 transition-all font-bold appearance-none cursor-pointer uppercase text-xs"
+                value={formData.categoria}
+                onChange={e => setFormData({ ...formData, categoria: e.target.value })}
+              >
+                <option value="GENERAL">General</option>
+                <option value="LAVADO">Lavado</option>
+                <option value="MECANICA">Mecánica</option>
+                <option value="BOTADURA">Movimiento</option>
+                <option value="MANTENIMIENTO">Mantenimiento</option>
+              </select>
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Descripción</label>
+            <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest">Descripción Técnica</label>
             <textarea
-              className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-5 py-3.5 text-white placeholder:text-slate-700 focus:outline-none focus:border-indigo-500 transition-all min-h-[100px] resize-none"
+              className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-xl px-5 py-3 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/30 focus:outline-none focus:border-indigo-500 transition-all min-h-[100px] resize-none"
               value={formData.descripcion}
               onChange={e => setFormData({ ...formData, descripcion: e.target.value })}
-              placeholder="Detalles adicionales sobre el servicio..."
+              placeholder="Especificaciones del servicio..."
             />
           </div>
 
-          <div className="flex items-center gap-3 p-4 bg-slate-950/50 rounded-2xl border border-slate-800/50">
-            <input
-              type="checkbox"
-              id="activo"
-              className="w-5 h-5 rounded border-slate-800 bg-slate-900 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-slate-900"
-              checked={formData.activo}
-              onChange={e => setFormData({ ...formData, activo: e.target.checked })}
-            />
-            <label htmlFor="activo" className="text-sm font-bold text-slate-300 cursor-pointer select-none">
-              Servicio Activo (Disponible para registros)
-            </label>
+          <div
+            onClick={() => setFormData({ ...formData, activo: !formData.activo })}
+            className={`flex items-center justify-between p-4 rounded-xl border transition-all cursor-pointer ${formData.activo ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-[var(--bg-primary)] border-[var(--border-primary)] opacity-60'
+              }`}
+          >
+            <div className="flex items-center gap-3">
+              <div className={`w-5 h-5 rounded flex items-center justify-center transition-all ${formData.activo ? 'bg-emerald-500 text-[var(--text-primary)]' : 'bg-slate-800 text-transparent'
+                }`}>
+                <CheckCircle2 className="w-3 h-3" />
+              </div>
+              <span className={`text-[10px] font-black uppercase tracking-widest ${formData.activo ? 'text-emerald-500' : 'text-[var(--text-secondary)]'}`}>
+                Servicio Activo
+              </span>
+            </div>
+            <span className="text-[9px] font-bold text-slate-600 uppercase tracking-tighter">Disponible para registros</span>
           </div>
 
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-4 pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-6 py-4 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-2xl transition-all active:scale-95"
+              className="px-6 py-3.5 border border-[var(--border-primary)] text-[var(--text-secondary)] font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-[var(--bg-primary)] hover:text-[var(--text-primary)] transition-all underline-offset-4"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-2 px-8 py-4 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-black rounded-2xl transition-all shadow-lg shadow-indigo-600/20 active:scale-95 flex items-center justify-center gap-2"
+              className="flex-1 px-8 py-3.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-[var(--text-primary)] font-black rounded-xl text-xs uppercase tracking-[0.2em] shadow-xl shadow-indigo-900/40 active:scale-95 flex items-center justify-center gap-3 transition-all"
             >
-              {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : (initialData ? 'Guardar Cambios' : 'Crear Servicio')}
+              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin text-[var(--text-primary)]" /> : (initialData ? 'Guardar Cambios' : 'Certificar Servicio')}
             </button>
           </div>
         </form>
