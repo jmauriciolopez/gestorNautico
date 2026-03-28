@@ -3,12 +3,29 @@ import { Wrench, Plus, BookOpen } from 'lucide-react';
 import { useServicios } from '../hooks/useServicios';
 import { CatalogoList } from '../components/CatalogoList';
 import { RegistrosList } from '../components/RegistrosList';
+import { NuevoServicioModal } from '../components/NuevoServicioModal';
+import { NuevoRegistroModal } from '../components/NuevoRegistroModal';
+import { ServicioCatalogo, RegistroServicio } from '../hooks/useServicios';
 
 type Tab = 'registros' | 'catalogo';
 
 export default function ServiciosPage() {
   const [activeTab, setActiveTab] = useState<Tab>('registros');
-  const { getCatalogo, getRegistros, completeRegistro, deleteServicioCatalogo } = useServicios();
+  const [isServicioModalOpen, setIsServicioModalOpen] = useState(false);
+  const [isRegistroModalOpen, setIsRegistroModalOpen] = useState(false);
+  const [editingServicio, setEditingServicio] = useState<ServicioCatalogo | null>(null);
+
+  const { 
+    getCatalogo, 
+    getRegistros, 
+    completeRegistro, 
+    deleteServicioCatalogo,
+    createServicioCatalogo,
+    updateServicioCatalogo,
+    createRegistro,
+    updateRegistro,
+    deleteRegistro
+  } = useServicios();
 
   const handleComplete = async (id: number) => {
     if (window.confirm('¿Marcar este servicio como completado?')) {
@@ -22,6 +39,38 @@ export default function ServiciosPage() {
     }
   };
 
+  const handleSaveServicio = async (data: Partial<ServicioCatalogo>) => {
+    if (editingServicio) {
+      await updateServicioCatalogo.mutateAsync({ id: editingServicio.id, data });
+    } else {
+      await createServicioCatalogo.mutateAsync(data);
+    }
+    setEditingServicio(null);
+  };
+
+  const handleSaveRegistro = async (data: Partial<RegistroServicio> & { embarcacionId: number; servicioId: number }) => {
+    await createRegistro.mutateAsync(data);
+  };
+
+  const handleUpdateRegistroStatus = async (id: number, estado: RegistroServicio['estado']) => {
+    await updateRegistro.mutateAsync({ id, data: { estado } });
+  };
+
+  const handleDeleteRegistro = async (id: number) => {
+    if (window.confirm('¿Eliminar este registro de servicio?')) {
+      await deleteRegistro.mutateAsync(id);
+    }
+  };
+
+  const handleOpenCreate = () => {
+    if (activeTab === 'registros') {
+      setIsRegistroModalOpen(true);
+    } else {
+      setEditingServicio(null);
+      setIsServicioModalOpen(true);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -29,7 +78,10 @@ export default function ServiciosPage() {
           <h2 className="text-2xl font-bold text-gray-800">Servicios</h2>
           <p className="text-gray-500 mt-1">Catálogo de servicios y registro de trabajos en embarcaciones.</p>
         </div>
-        <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium shadow-sm transition-all">
+        <button 
+          onClick={handleOpenCreate}
+          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium shadow-sm transition-all shadow-indigo-600/20 active:scale-95"
+        >
           <Plus className="w-4 h-4" />
           {activeTab === 'registros' ? 'Nuevo Registro' : 'Nuevo Servicio'}
         </button>
@@ -65,14 +117,36 @@ export default function ServiciosPage() {
           registros={getRegistros.data || []}
           isLoading={getRegistros.isLoading}
           onComplete={handleComplete}
+          onUpdateStatus={handleUpdateRegistroStatus}
+          onDelete={handleDeleteRegistro}
         />
       ) : (
         <CatalogoList
           servicios={getCatalogo.data || []}
           isLoading={getCatalogo.isLoading}
           onDelete={handleDeleteCatalogo}
+          onEdit={(svc: ServicioCatalogo) => {
+            setEditingServicio(svc);
+            setIsServicioModalOpen(true);
+          }}
         />
       )}
+
+      <NuevoServicioModal
+        isOpen={isServicioModalOpen}
+        onClose={() => {
+          setIsServicioModalOpen(false);
+          setEditingServicio(null);
+        }}
+        onSave={handleSaveServicio}
+        initialData={editingServicio}
+      />
+
+      <NuevoRegistroModal
+        isOpen={isRegistroModalOpen}
+        onClose={() => setIsRegistroModalOpen(false)}
+        onSave={handleSaveRegistro}
+      />
     </div>
   );
 }

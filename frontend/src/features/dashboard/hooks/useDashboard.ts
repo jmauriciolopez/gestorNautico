@@ -15,7 +15,7 @@ export interface DashboardSummary {
       deudaTotal: number;
     };
   };
-  actividadReclente: any[];
+  actividadReciente: any[];
   graficos: {
     finanzas: { mes: string; monto: number }[];
   };

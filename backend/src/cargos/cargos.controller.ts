@@ -6,6 +6,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { CargosService } from './cargos.service';
 import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
@@ -21,8 +22,14 @@ export class CargosController {
 
   @Get()
   @Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
-  findAll() {
-    return this.cargosService.findAll();
+  findAll(
+    @Query('clienteId') clienteId?: string,
+    @Query('soloSinFacturar') soloSinFacturar?: string,
+  ) {
+    return this.cargosService.findAll(
+      clienteId ? +clienteId : undefined,
+      soloSinFacturar === 'true',
+    );
   }
 
   @Get(':id')

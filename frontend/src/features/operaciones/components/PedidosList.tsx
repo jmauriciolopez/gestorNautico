@@ -6,9 +6,10 @@ interface PedidosListProps {
   isLoading: boolean;
   onUpdateStatus: (id: number, nuevoEstado: Pedido['estado']) => void;
   onDeletePedido: (id: number) => void;
+  onOpenCreate: () => void;
 }
 
-export function PedidosList({ pedidos, isLoading, onUpdateStatus, onDeletePedido }: PedidosListProps) {
+export function PedidosList({ pedidos, isLoading, onUpdateStatus, onDeletePedido, onOpenCreate }: PedidosListProps) {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
@@ -22,7 +23,10 @@ export function PedidosList({ pedidos, isLoading, onUpdateStatus, onDeletePedido
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold text-gray-700">Solicitudes de Clientes</h3>
-        <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm">
+        <button 
+          onClick={onOpenCreate}
+          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm shadow-lg shadow-indigo-600/20 active:scale-95"
+        >
           <Plus className="w-4 h-4" />
           Nuevo Pedido
         </button>

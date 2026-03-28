@@ -1,10 +1,12 @@
-import { Wrench, CheckCircle2, Clock, XCircle, Loader2 } from 'lucide-react';
+import { Wrench, CheckCircle2, Clock, XCircle, Loader2, Trash2 } from 'lucide-react';
 import { RegistroServicio } from '../hooks/useServicios';
 
 interface RegistrosListProps {
   registros: RegistroServicio[];
   isLoading: boolean;
   onComplete?: (id: number) => void;
+  onUpdateStatus?: (id: number, status: RegistroServicio['estado']) => void;
+  onDelete?: (id: number) => void;
 }
 
 const estadoBadge: Record<RegistroServicio['estado'], { color: string; icon: React.ReactNode; label: string }> = {
@@ -14,7 +16,7 @@ const estadoBadge: Record<RegistroServicio['estado'], { color: string; icon: Rea
   CANCELADO: { color: 'bg-red-100 text-red-800', icon: <XCircle className="w-3 h-3" />, label: 'Cancelado' },
 };
 
-export function RegistrosList({ registros, isLoading, onComplete }: RegistrosListProps) {
+export function RegistrosList({ registros, isLoading, onComplete, onUpdateStatus, onDelete }: RegistrosListProps) {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
@@ -74,14 +76,42 @@ export function RegistrosList({ registros, isLoading, onComplete }: RegistrosLis
                     ${Number(reg.costoFinal || reg.servicio?.precioBase || 0).toLocaleString()}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    {reg.estado === 'EN_PROCESO' && onComplete && (
-                      <button
-                        onClick={() => onComplete(reg.id)}
-                        className="text-emerald-600 hover:text-emerald-800 text-xs font-bold uppercase tracking-wider"
-                      >
-                        Completar
-                      </button>
-                    )}
+                    <div className="flex items-center justify-end gap-3">
+                      {reg.estado === 'PENDIENTE' && onUpdateStatus && (
+                        <button
+                          onClick={() => onUpdateStatus(reg.id, 'EN_PROCESO')}
+                          className="text-blue-600 hover:text-blue-800 text-xs font-bold uppercase tracking-wider"
+                        >
+                          Iniciar
+                        </button>
+                      )}
+                      {reg.estado === 'EN_PROCESO' && onComplete && (
+                        <button
+                          onClick={() => onComplete(reg.id)}
+                          className="text-emerald-600 hover:text-emerald-800 text-xs font-bold uppercase tracking-wider"
+                        >
+                          Completar
+                        </button>
+                      )}
+                      {(reg.estado === 'PENDIENTE' || reg.estado === 'EN_PROCESO') && onUpdateStatus && (
+                        <button
+                          onClick={() => onUpdateStatus(reg.id, 'CANCELADO')}
+                          className="text-gray-400 hover:text-rose-600 transition-colors"
+                          title="Cancelar"
+                        >
+                          <XCircle className="w-4 h-4" />
+                        </button>
+                      )}
+                      {onDelete && (
+                        <button
+                          onClick={() => onDelete(reg.id)}
+                          className="text-gray-300 hover:text-rose-600 transition-colors"
+                          title="Eliminar"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               );

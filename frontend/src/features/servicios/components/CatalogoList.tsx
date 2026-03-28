@@ -5,9 +5,10 @@ interface CatalogoListProps {
   servicios: ServicioCatalogo[];
   isLoading: boolean;
   onDelete?: (id: number) => void;
+  onEdit?: (svc: ServicioCatalogo) => void;
 }
 
-export function CatalogoList({ servicios, isLoading, onDelete }: CatalogoListProps) {
+export function CatalogoList({ servicios, isLoading, onDelete, onEdit }: CatalogoListProps) {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
@@ -65,9 +66,14 @@ export function CatalogoList({ servicios, isLoading, onDelete }: CatalogoListPro
                 </td>
                 <td className="px-6 py-4 text-right">
                   <div className="flex items-center justify-end gap-2">
-                    <button className="text-gray-400 hover:text-indigo-600 transition-colors">
-                      <Pencil className="w-4 h-4" />
-                    </button>
+                    {onEdit && (
+                      <button 
+                        onClick={() => onEdit(svc)}
+                        className="text-gray-400 hover:text-indigo-600 transition-colors"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                    )}
                     {onDelete && (
                       <button 
                         onClick={() => onDelete(svc.id)}

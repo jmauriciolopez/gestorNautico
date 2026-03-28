@@ -1,5 +1,7 @@
-import { Ship, MapPin, Loader2, Plus } from 'lucide-react';
-import { Movimiento } from '../hooks/useOperaciones';
+import { useState } from 'react';
+import { Ship, MapPin, Loader2, Plus, Calendar } from 'lucide-react';
+import { Movimiento, useOperaciones } from '../hooks/useOperaciones';
+import { NuevoMovimientoModal } from './NuevoMovimientoModal';
 
 interface MovimientosListProps {
   movimientos: Movimiento[];
@@ -7,6 +9,9 @@ interface MovimientosListProps {
 }
 
 export function MovimientosList({ movimientos, isLoading }: MovimientosListProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { createMovimiento } = useOperaciones();
+
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-12 bg-white rounded-xl border border-dashed border-gray-300">
@@ -18,10 +23,19 @@ export function MovimientosList({ movimientos, isLoading }: MovimientosListProps
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold text-gray-700">Movimientos de Galpón</h3>
-        <button className="flex items-center gap-2 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition text-sm">
-          <Plus className="w-4 h-4" />
+      <div className="flex justify-between items-end mb-6">
+        <div>
+          <h3 className="text-xl font-extrabold text-slate-800 flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-amber-500" />
+            Movimientos de Galpón
+          </h3>
+          <p className="text-slate-500 text-sm font-medium">Historial cronológico de entradas y salidas.</p>
+        </div>
+        <button 
+          onClick={() => setIsModalOpen(true)}
+          className="flex items-center gap-2 px-6 py-3 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-2xl transition-all shadow-lg shadow-amber-600/20 active:scale-95 text-sm"
+        >
+          <Plus className="w-5 h-5" />
           Registrar Movimiento
         </button>
       </div>
@@ -55,7 +69,15 @@ export function MovimientosList({ movimientos, isLoading }: MovimientosListProps
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-1.5 text-gray-600 font-medium">
                     <MapPin className="w-3.5 h-3.5 text-gray-400" />
-                    {mov.espacio?.nombre || 'Taller'}
+                    {mov.espacio ? (
+                      <span className="font-bold">
+                        {mov.espacio.rack?.codigo ? `${mov.espacio.rack.codigo}-` : ''}{mov.espacio.numero}
+                      </span>
+                    ) : (
+                      <span className="text-blue-600 font-bold bg-blue-50 px-2 py-0.5 rounded text-[10px] border border-blue-100 uppercase tracking-tighter">
+                        En el Agua / A Flote
+                      </span>
+                    )}
                   </div>
                 </td>
                 <td className="px-6 py-4 text-gray-500 tabular-nums">
@@ -73,6 +95,14 @@ export function MovimientosList({ movimientos, isLoading }: MovimientosListProps
           </tbody>
         </table>
       </div>
+
+      <NuevoMovimientoModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={async (data) => {
+          await createMovimiento.mutateAsync(data);
+        }}
+      />
     </div>
   );
 }

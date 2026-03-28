@@ -8,6 +8,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { Cliente } from '../clientes/clientes.entity';
+import { Factura } from '../facturas/factura.entity';
 
 export enum TipoCargo {
   AMARRE = 'AMARRE',
@@ -42,6 +43,10 @@ export class Cargo {
 
   @Column({ type: 'enum', enum: TipoCargo, default: TipoCargo.OTROS })
   tipo: TipoCargo;
+
+  @ManyToOne(() => Factura, (factura) => factura.cargos, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'factura_id' })
+  factura: Factura;
 
   @CreateDateColumn()
   createdAt: Date;

@@ -29,7 +29,11 @@ export interface Movimiento {
   };
   espacio?: {
     id: number;
-    nombre: string;
+    numero: string;
+    rack?: {
+      id: number;
+      codigo: string;
+    };
   };
 }
 
@@ -52,7 +56,7 @@ export function useOperaciones() {
     mutationFn: (data: Partial<Pedido> & { embarcacionId: number }) => 
       fetchClient('/pedidos', {
         method: 'POST',
-        body: JSON.stringify(data),
+        body: data,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });
@@ -63,7 +67,7 @@ export function useOperaciones() {
     mutationFn: ({ id, data }: { id: number; data: Partial<Pedido> }) => 
       fetchClient(`/pedidos/${id}`, {
         method: 'PUT',
-        body: JSON.stringify(data),
+        body: data,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });
@@ -90,7 +94,7 @@ export function useOperaciones() {
     mutationFn: (data: Partial<Movimiento> & { embarcacionId: number; espacioId?: number }) => 
       fetchClient('/movimientos', {
         method: 'POST',
-        body: JSON.stringify(data),
+        body: data,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['movimientos'] });

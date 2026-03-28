@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:3000';
+const BASE_URL = 'http://localhost:3000/';
 
 class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -12,7 +12,7 @@ export async function fetchClient<T>(
   { method = 'GET', body, headers = {} }: { method?: string; body?: any; headers?: Record<string, string> } = {}
 ): Promise<T> {
   const token = localStorage.getItem('token');
-  
+
   const config: RequestInit = {
     method,
     headers: {

@@ -1,8 +1,17 @@
 import { useAuth } from '../../features/auth/context/AuthContext';
 import { Menu, LogOut, Search, Bell, User as UserIcon } from 'lucide-react';
+import { useState } from 'react';
+import { NotificationPopover } from '../../features/notificaciones/components/NotificationPopover';
+import { useNotificaciones } from '../../features/notificaciones/hooks/useNotificaciones';
 
-export default function Header() {
+interface HeaderProps {
+  onMenuClick: () => void;
+}
+
+export default function Header({ onMenuClick }: HeaderProps) {
   const { user, logout } = useAuth();
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const { unreadCount } = useNotificaciones();
 
   return (
     <header className="h-20 bg-slate-950/20 backdrop-blur-md border-b border-slate-800/40 flex items-center justify-between px-8 z-10">
@@ -15,16 +24,31 @@ export default function Header() {
             className="w-full bg-slate-900/50 border border-slate-800/60 rounded-xl py-2 pl-10 pr-4 text-sm text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/40 transition-all"
           />
         </div>
-        <button className="lg:hidden text-slate-400 hover:text-white p-2 hover:bg-slate-800/50 rounded-lg transition-colors">
+        <button 
+          onClick={onMenuClick}
+          className="lg:hidden text-slate-400 hover:text-white p-2 hover:bg-slate-800/50 rounded-lg transition-colors"
+        >
           <Menu className="w-6 h-6" />
         </button>
       </div>
 
       <div className="flex items-center gap-6">
-        <button className="text-slate-400 hover:text-white relative p-2 hover:bg-slate-800/50 rounded-lg transition-all">
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-2 right-2 w-2 h-2 bg-blue-500 rounded-full border-2 border-slate-950 animate-pulse"></span>
-        </button>
+        <div className="relative">
+          <button 
+            onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+            className={`text-slate-400 hover:text-white relative p-2 rounded-lg transition-all ${isNotificationsOpen ? 'bg-slate-800 text-white' : 'hover:bg-slate-800/50'}`}
+          >
+            <Bell className="w-5 h-5" />
+            {unreadCount > 0 && (
+              <span className="absolute top-2 right-2 w-2 h-2 bg-blue-500 rounded-full border-2 border-slate-950 animate-pulse"></span>
+            )}
+          </button>
+          
+          <NotificationPopover 
+            isOpen={isNotificationsOpen} 
+            onClose={() => setIsNotificationsOpen(false)} 
+          />
+        </div>
 
         <div className="h-8 w-px bg-slate-800/60 mx-1"></div>
 
@@ -53,3 +77,4 @@ export default function Header() {
     </header>
   );
 }
+

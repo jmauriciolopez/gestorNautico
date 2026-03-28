@@ -13,6 +13,7 @@ export interface Factura {
     nombre: string;
     dni: string;
   };
+  cargos?: any[]; // Podríamos tipar esto mejor trayendo la interfaz Cargo
   createdAt: string;
   updatedAt: string;
 }
@@ -25,6 +26,12 @@ export function useFacturas() {
     queryFn: () => fetchClient('/facturas'),
   });
 
+  const getNextNumero = useQuery<string>({
+    queryKey: ['facturas', 'next-numero'],
+    queryFn: () => fetchClient('/facturas/next-numero'),
+    enabled: true,
+  });
+
   const useFactura = (id: number) =>
     useQuery<Factura>({
       queryKey: ['facturas', id],
@@ -33,10 +40,17 @@ export function useFacturas() {
     });
 
   const createFactura = useMutation({
-    mutationFn: (data: { clienteId: number; numero: string; total: number; fechaEmision: string; observaciones?: string }) =>
-      fetchClient('/facturas', { method: 'POST', body: JSON.stringify(data) }),
+    mutationFn: (data: { 
+      clienteId: number; 
+      numero?: string; 
+      fechaEmision: string; 
+      cargoIds: number[];
+      observaciones?: string;
+    }) =>
+      fetchClient('/facturas', { method: 'POST', body: data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['facturas'] });
+      queryClient.invalidateQueries({ queryKey: ['cargos'] });
     },
   });
 
@@ -44,7 +58,7 @@ export function useFacturas() {
     mutationFn: ({ id, estado }: { id: number; estado: Factura['estado'] }) =>
       fetchClient(`/facturas/${id}/estado`, {
         method: 'PATCH',
-        body: JSON.stringify({ estado }),
+        body: { estado },
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['facturas'] });

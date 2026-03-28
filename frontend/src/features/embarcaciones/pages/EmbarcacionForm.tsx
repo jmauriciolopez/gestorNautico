@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Save, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, MapPin } from 'lucide-react';
 import { useEmbarcaciones } from '../hooks/useEmbarcaciones';
 import { useClientes } from '../../clientes/hooks/useClientes';
 import { useUbicaciones } from '../../infraestructura/hooks/useUbicaciones';
+import UbicacionPickerModal from '../components/UbicacionPickerModal';
 
 export default function EmbarcacionForm() {
   const navigate = useNavigate();
@@ -18,6 +19,7 @@ export default function EmbarcacionForm() {
   const { data: embarcacion, isLoading: isFetchingEmb } = embarcacionQuery;
   const { data: clientes = [], isLoading: isFetchingClientes } = getClientes;
   const { data: zonas = [], isLoading: isFetchingZonas } = useZonas;
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     nombre: '',
@@ -29,6 +31,18 @@ export default function EmbarcacionForm() {
     espacioId: '',
     estado: 'EN_CUNA'
   });
+
+  // Calculate selected space label
+  const selectedEspacioLabel = useMemo(() => {
+    if (!formData.espacioId) return null;
+    let label = '';
+    zonas.forEach(z => z.racks.forEach(r => r.espacios.forEach(e => {
+      if (e.id === Number(formData.espacioId)) {
+        label = `${z.nombre} - Rack ${r.codigo} - Espacio ${e.numero}`;
+      }
+    })));
+    return label;
+  }, [formData.espacioId, zonas]);
 
   // Sync data when editing
   useEffect(() => {
@@ -174,32 +188,40 @@ export default function EmbarcacionForm() {
 
             <div className="space-y-3 col-span-full">
               <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Ubicación Asignada (Rack / Espacio)</label>
-              <select 
-                name="espacioId" value={formData.espacioId} onChange={handleChange}
-                className="w-full px-5 py-4 bg-slate-950 border border-slate-800 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 text-white transition-all font-bold disabled:opacity-50"
-                disabled={isFetchingZonas}
-              >
-                <option value="">{isFetchingZonas ? 'Cargando infraestructura...' : 'Sin ubicación asignada (A flote o transitoria)'}</option>
-                
-                {zonas.map(zona => (
-                  zona.racks.map(rack => {
-                    const espaciosDisponibles = rack.espacios.filter(e => !e.ocupado || e.id === Number(embarcacion?.espacio?.id));
-                    
-                    if (espaciosDisponibles.length === 0) return null;
+              
+              <div className="flex items-center gap-4">
+                <div className="flex-1 px-5 py-4 bg-slate-950 border border-slate-800 rounded-2xl flex items-center justify-between">
+                  {selectedEspacioLabel ? (
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400">
+                        <MapPin className="w-5 h-5" />
+                      </div>
+                      <span className="font-bold text-slate-200">{selectedEspacioLabel}</span>
+                    </div>
+                  ) : (
+                    <span className="text-slate-500 italic font-medium">Sin ubicación asignada (A flote o transitoria)</span>
+                  )}
+                </div>
 
-                    return (
-                      <optgroup key={rack.id} label={`${zona.nombre} - Rack ${rack.codigo}`}>
-                        {espaciosDisponibles.map(espacio => (
-                          <option key={espacio.id} value={espacio.id}>
-                            Espacio: {espacio.numero}
-                          </option>
-                        ))}
-                      </optgroup>
-                    );
-                  })
-                ))}
-              </select>
-              <p className="text-[10px] text-slate-500 font-medium ml-1">Solo se muestran espacios disponibles.</p>
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(true)}
+                  disabled={isFetchingZonas}
+                  className="px-6 py-4 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-2xl transition-colors shrink-0 disabled:opacity-50"
+                >
+                  {isFetchingZonas ? 'Cargando...' : selectedEspacioLabel ? 'Cambiar Ubicación' : 'Asignar Ubicación'}
+                </button>
+              </div>
+
+              <UbicacionPickerModal 
+                isOpen={isModalOpen} 
+                onClose={() => setIsModalOpen(false)} 
+                zonas={zonas} 
+                onSelect={(espacioId) => {
+                  setFormData(prev => ({ ...prev, espacioId: espacioId ? String(espacioId) : '' }));
+                }}
+                currentEspacioId={formData.espacioId ? Number(formData.espacioId) : undefined}
+              />
             </div>
 
             <div className="space-y-3 col-span-full">

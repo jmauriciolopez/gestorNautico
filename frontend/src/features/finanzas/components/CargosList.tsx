@@ -58,7 +58,10 @@ export function CargosList({ cargos, isLoading }: CargosListProps) {
               </td>
               <td className="px-6 py-4 text-right">
                 {!cargo.pagado && (
-                  <button className="text-indigo-600 hover:text-indigo-800 text-xs font-bold uppercase tracking-wider">
+                  <button 
+                    onClick={() => alert(`Procesando cobro para: ${cargo.cliente.nombre}`)}
+                    className="text-indigo-600 hover:text-indigo-800 text-xs font-bold uppercase tracking-wider"
+                  >
                     Cobrar
                   </button>
                 )}

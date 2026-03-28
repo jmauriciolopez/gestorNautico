@@ -4,10 +4,31 @@ import { useFinanzas } from '../hooks/useFinanzas';
 import { CargosList } from '../components/CargosList';
 import { PagosList } from '../components/PagosList';
 import { CajaResumenCard } from '../components/CajaResumenCard';
+import { CajaModal } from '../components/CajaModal';
+import { HistorialCajasList } from '../components/HistorialCajasList';
+import { CajaDetalleModal } from '../components/CajaDetalleModal';
+import { Caja } from '../hooks/useFinanzas';
 
 export default function FinanzasPage() {
   const [activeTab, setActiveTab] = useState<'cargos' | 'pagos' | 'caja'>('cargos');
-  const { getCargos, getPagos, getCajaResumen } = useFinanzas();
+  const [isCajaModalOpen, setIsCajaModalOpen] = useState(false);
+  const [cajaModalType, setCajaModalType] = useState<'ABRIR' | 'CERRAR'>('ABRIR');
+  const [selectedCaja, setSelectedCaja] = useState<Caja | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
+  const { getCargos, getPagos, getCajaResumen, abrirCaja, cerrarCaja, getCajas } = useFinanzas();
+
+  const handleCajaConfirm = async (monto: number) => {
+    if (cajaModalType === 'ABRIR') {
+      await abrirCaja.mutateAsync(monto);
+    } else {
+      const activeCaja = getCajaResumen.data;
+      if (activeCaja) {
+        await cerrarCaja.mutateAsync({ id: activeCaja.id, saldoFinal: monto });
+      }
+    }
+    setIsCajaModalOpen(false);
+  };
 
   return (
     <div className="space-y-6">
@@ -16,7 +37,10 @@ export default function FinanzasPage() {
           <h2 className="text-2xl font-bold text-gray-800">Finanzas</h2>
           <p className="text-gray-500 mt-1">Gestión de facturación, cobros y tesorería.</p>
         </div>
-        <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium shadow-sm transition-all">
+        <button 
+          onClick={() => alert(`En desarrollo: Registrar ${activeTab === 'cargos' ? 'Nuevo Cargo' : activeTab === 'pagos' ? 'Nuevo Pago' : 'Nueva Caja'}`)}
+          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium shadow-sm transition-all"
+        >
           <Plus className="w-4 h-4" />
           {activeTab === 'cargos' ? 'Nuevo Cargo' : activeTab === 'pagos' ? 'Registrar Pago' : 'Nueva Caja'}
         </button>
@@ -25,6 +49,14 @@ export default function FinanzasPage() {
       <CajaResumenCard 
         caja={getCajaResumen.data} 
         isLoading={getCajaResumen.isLoading} 
+        onAbrir={() => {
+          setCajaModalType('ABRIR');
+          setIsCajaModalOpen(true);
+        }}
+        onCerrar={() => {
+          setCajaModalType('CERRAR');
+          setIsCajaModalOpen(true);
+        }}
       />
 
       {/* Tabs */}
@@ -78,11 +110,30 @@ export default function FinanzasPage() {
         )}
         
         {activeTab === 'caja' && (
-          <div className="p-12 text-center text-gray-500">
-            Módulo de historial de cajas en desarrollo.
-          </div>
+          <HistorialCajasList 
+            cajas={getCajas.data || []}
+            isLoading={getCajas.isLoading}
+            onVerDetalle={(caja) => {
+              setSelectedCaja(caja);
+              setIsDetailModalOpen(true);
+            }}
+          />
         )}
       </div>
+
+      <CajaModal
+        isOpen={isCajaModalOpen}
+        type={cajaModalType}
+        onClose={() => setIsCajaModalOpen(false)}
+        onConfirm={handleCajaConfirm}
+        currentBalance={(getCajaResumen.data?.saldoInicial || 0) + (getCajaResumen.data?.totalRecaudado || 0)}
+      />
+
+      <CajaDetalleModal
+        isOpen={isDetailModalOpen}
+        caja={selectedCaja}
+        onClose={() => setIsDetailModalOpen(false)}
+      />
     </div>
   );
 }

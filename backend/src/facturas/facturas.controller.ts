@@ -32,9 +32,24 @@ export class FacturasController {
     return this.facturasService.findOne(+id);
   }
 
+  @Get('next-numero')
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
+  getNextNumero() {
+    return this.facturasService.generateNextNumero();
+  }
+
   @Post()
   @Roles(Role.SUPERADMIN, Role.ADMIN)
-  create(@Body() data: Record<string, unknown>) {
+  create(
+    @Body()
+    data: {
+      clienteId: number;
+      numero?: string;
+      fechaEmision: string;
+      cargoIds: number[];
+      observaciones?: string;
+    },
+  ) {
     return this.facturasService.create(data);
   }
 

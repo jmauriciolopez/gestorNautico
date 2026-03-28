@@ -24,6 +24,7 @@ import { FacturasModule } from './facturas/facturas.module';
 // Módulos Operativos (Planos)
 import { MovimientosModule } from './movimientos/movimientos.module';
 import { PedidosModule } from './pedidos/pedidos.module';
+import { NotificacionesModule } from './notificaciones/notificaciones.module';
 
 // Módulos de Servicios (Planos)
 import { CatalogoModule } from './catalogo/catalogo.module';
@@ -71,6 +72,7 @@ import { RegistrosModule } from './registros/registros.module';
     FacturasModule,
     MovimientosModule,
     PedidosModule,
+    NotificacionesModule,
   ],
 })
 export class AppModule {}

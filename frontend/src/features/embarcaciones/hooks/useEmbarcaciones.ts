@@ -14,6 +14,7 @@ export interface Embarcacion {
   estado: string;
   cliente?: Cliente;
   espacio?: any; // To be defined later
+  espacioId?: number | null;
   createdAt: string;
   updatedAt: string;
 }

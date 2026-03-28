@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { useOperaciones, Pedido } from '../hooks/useOperaciones';
 import { PedidosList } from '../components/PedidosList';
 import { MovimientosList } from '../components/MovimientosList';
+import { NuevoPedidoModal } from '../components/NuevoPedidoModal';
 
 type Tab = 'pedidos' | 'movimientos';
 
 export default function OperacionesPage() {
   const [activeTab, setActiveTab] = useState<Tab>('pedidos');
-  const { getPedidos, getMovimientos, deletePedido, updatePedido } = useOperaciones();
+  const [isPedidoModalOpen, setIsPedidoModalOpen] = useState(false);
+  const { getPedidos, getMovimientos, deletePedido, updatePedido, createPedido } = useOperaciones();
 
   const handleUpdateStatus = async (id: number, nuevoEstado: Pedido['estado']) => {
     await updatePedido.mutateAsync({ id, data: { estado: nuevoEstado } });
@@ -17,6 +19,10 @@ export default function OperacionesPage() {
     if (window.confirm('¿Eliminar esta solicitud?')) {
       await deletePedido.mutateAsync(id);
     }
+  };
+
+  const handleCreatePedido = async (data: { embarcacionId: number; fechaProgramada: string }) => {
+    await createPedido.mutateAsync(data);
   };
 
   return (
@@ -48,6 +54,7 @@ export default function OperacionesPage() {
           isLoading={getPedidos.isLoading}
           onUpdateStatus={handleUpdateStatus}
           onDeletePedido={handleDeletePedido}
+          onOpenCreate={() => setIsPedidoModalOpen(true)}
         />
       ) : (
         <MovimientosList 
@@ -55,6 +62,12 @@ export default function OperacionesPage() {
           isLoading={getMovimientos.isLoading}
         />
       )}
+
+      <NuevoPedidoModal
+        isOpen={isPedidoModalOpen}
+        onClose={() => setIsPedidoModalOpen(false)}
+        onSave={handleCreatePedido}
+      />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Raw, FindOptionsWhere } from 'typeorm';
 import { Cargo } from './cargo.entity';
 import { CreateCargoDto } from './dto/create-cargo.dto';
 
@@ -11,9 +11,18 @@ export class CargosService {
     private readonly cargoRepo: Repository<Cargo>,
   ) {}
 
-  findAll() {
+  async findAll(clienteId?: number, soloSinFacturar: boolean = false) {
+    const where: FindOptionsWhere<Cargo> = {};
+    if (clienteId) {
+      where.cliente = { id: clienteId };
+    }
+    if (soloSinFacturar) {
+      where.factura = Raw((alias) => `${alias} IS NULL`);
+    }
+
     return this.cargoRepo.find({
-      relations: ['cliente'],
+      where,
+      relations: ['cliente', 'factura'],
       order: { fechaEmision: 'DESC' },
     });
   }

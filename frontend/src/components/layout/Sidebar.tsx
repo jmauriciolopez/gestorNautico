@@ -9,12 +9,18 @@ import {
   User as UserIcon,
   LayoutGrid,
   Wrench,
-  FileText
+  FileText,
+  X
 } from 'lucide-react';
 import { useAuth } from '../../features/auth/context/AuthContext';
 import { Role } from '../../types';
 
-const Sidebar: React.FC = () => {
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
   const { user } = useAuth();
   
@@ -80,14 +86,25 @@ const Sidebar: React.FC = () => {
   );
 
   return (
-    <aside className="w-72 bg-slate-900/60 backdrop-blur-2xl border-r border-slate-800/50 text-slate-300 flex-shrink-0 flex flex-col hidden md:flex transition-all duration-300">
-      <div className="h-20 flex items-center px-8 gap-3 border-b border-slate-800/50 group select-none cursor-default">
+    <aside className={`
+      fixed inset-y-0 left-0 z-50 w-72 bg-slate-900/90 backdrop-blur-2xl border-r border-slate-800/50 text-slate-300 flex flex-col transition-all duration-300 ease-in-out
+      md:relative md:translate-x-0 md:bg-slate-900/60
+      ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+    `}>
+      <div className="h-20 flex items-center px-8 gap-3 border-b border-slate-800/50 group select-none relative">
         <div className="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-500/20 group-hover:rotate-12 transition-transform duration-500">
           <Compass className="w-6 h-6 text-white" />
         </div>
-        <span className="font-extrabold text-xl tracking-tighter text-white uppercase italic">
+        <span className="font-extrabold text-xl tracking-tighter text-white uppercase italic flex-1">
           Gestor <span className="text-blue-500">Náutico</span>
         </span>
+        
+        <button 
+          onClick={onClose}
+          className="md:hidden p-2 text-slate-500 hover:text-white transition-colors"
+        >
+          <X className="w-6 h-6" />
+        </button>
       </div>
       
       <nav className="flex-1 overflow-y-auto px-4 py-8 space-y-1 custom-scrollbar">
@@ -95,6 +112,7 @@ const Sidebar: React.FC = () => {
           <Link
             key={item.path}
             to={item.path}
+            onClick={() => { if (window.innerWidth < 768) onClose(); }}
             className={`
               flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-200 group
               ${isActive(item.path) 
@@ -128,6 +146,5 @@ const Sidebar: React.FC = () => {
       </div>
     </aside>
   );
-};
+}
 
-export default Sidebar;

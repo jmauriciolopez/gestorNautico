@@ -49,7 +49,7 @@ export function useServicios() {
 
   const createServicioCatalogo = useMutation({
     mutationFn: (data: Partial<ServicioCatalogo>) =>
-      fetchClient('/catalogo', { method: 'POST', body: JSON.stringify(data) }),
+      fetchClient('/catalogo', { method: 'POST', body: data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['catalogo'] });
     },
@@ -57,7 +57,7 @@ export function useServicios() {
 
   const updateServicioCatalogo = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<ServicioCatalogo> }) =>
-      fetchClient(`/catalogo/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+      fetchClient(`/catalogo/${id}`, { method: 'PUT', body: data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['catalogo'] });
     },
@@ -79,7 +79,7 @@ export function useServicios() {
 
   const createRegistro = useMutation({
     mutationFn: (data: Partial<RegistroServicio> & { embarcacionId: number; servicioId: number }) =>
-      fetchClient('/registros', { method: 'POST', body: JSON.stringify(data) }),
+      fetchClient('/registros', { method: 'POST', body: data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['registros'] });
     },
@@ -87,7 +87,7 @@ export function useServicios() {
 
   const updateRegistro = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<RegistroServicio> }) =>
-      fetchClient(`/registros/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+      fetchClient(`/registros/${id}`, { method: 'PUT', body: data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['registros'] });
     },
@@ -97,7 +97,7 @@ export function useServicios() {
     mutationFn: ({ id, costoFinal }: { id: number; costoFinal?: number }) =>
       fetchClient(`/registros/${id}/completar`, {
         method: 'PATCH',
-        body: JSON.stringify({ costoFinal }),
+        body: { costoFinal },
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['registros'] });

@@ -32,30 +32,33 @@ export class DashboardService {
     ]);
 
     // Ocupación
-    const enCuna = await this.barcoRepo.count({ where: { estado: 'EN_CUNA' } });
-    const enAgua = await this.barcoRepo.count({ where: { estado: 'EN_AGUA' } });
+    const [enCuna, enAgua] = await Promise.all([
+      this.barcoRepo.count({ where: { estado: 'EN_CUNA' } }),
+      this.barcoRepo.count({ where: { estado: 'EN_AGUA' } }),
+    ]);
 
     // Finanzas
     const cargosPendientes = await this.cargoRepo.find({
       where: { pagado: false },
     });
     const deudaTotal = cargosPendientes.reduce(
-      (acc, c) => acc + Number(c.monto),
+      (acc, c) => acc + Number(c.monto || 0),
       0,
     );
 
     const pagos = await this.pagoRepo.find();
-    const recaudacionTotal = pagos.reduce((acc, p) => acc + Number(p.monto), 0);
+    const recaudacionTotal = pagos.reduce(
+      (acc, p) => acc + Number(p.monto || 0),
+      0,
+    );
 
     // Actividad Reciente
     const ultimosMovimientos = await this.movRepo.find({
       relations: ['embarcacion'],
       order: { fecha: 'DESC' },
-      take: 5,
+      take: 6,
     });
 
-    // Datos para Gráficos (Simulados/Agrupados por mes)
-    // En una implementación real usaríamos QueryBuilder para agrupar por mes en la DB
     const seriesFinanzas = await this.getFinanzasSeries();
 
     return {
@@ -72,7 +75,7 @@ export class DashboardService {
           deudaTotal,
         },
       },
-      actividadReclente: ultimosMovimientos,
+      actividadReciente: ultimosMovimientos,
       graficos: {
         finanzas: seriesFinanzas,
       },
@@ -92,7 +95,10 @@ export class DashboardService {
         where: { fecha: Between(start, end) },
       });
 
-      const totalMes = pagosMes.reduce((acc, p) => acc + Number(p.monto), 0);
+      const totalMes = pagosMes.reduce(
+        (acc, p) => acc + Number(p.monto || 0),
+        0,
+      );
 
       series.push({
         mes: d.toLocaleString('default', { month: 'short' }),

@@ -8,15 +8,18 @@ import {
   ExternalLink,
   LogOut,
   History,
-  Box
+  Box,
+  X
 } from 'lucide-react';
 import { RackMap } from '../hooks/useDashboard';
+import { useNavigate } from 'react-router-dom';
 
 interface MapaRacksProps {
   data: RackMap[];
 }
 
 export const MapaRacks: React.FC<MapaRacksProps> = ({ data }) => {
+  const navigate = useNavigate();
   const [expandedZona, setExpandedZona] = useState<number | null>(data[0]?.id || null);
   const [selectedEspacio, setSelectedEspacio] = useState<{
     rackId: number;
@@ -205,21 +208,30 @@ export const MapaRacks: React.FC<MapaRacksProps> = ({ data }) => {
               
               {selectedEspacio.embarcacion ? (
                 <div className="grid grid-cols-1 gap-3">
-                  <button className="flex items-center justify-between w-full p-4 bg-slate-800 hover:bg-slate-700 rounded-2xl border border-slate-700 transition-all group">
+                  <button 
+                    onClick={() => navigate(`/embarcaciones/editar/${selectedEspacio.embarcacion.id}`)}
+                    className="flex items-center justify-between w-full p-4 bg-slate-800 hover:bg-slate-700 rounded-2xl border border-slate-700 transition-all group"
+                  >
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-blue-500/10 text-blue-400 rounded-lg"><ExternalLink size={18} /></div>
                       <span className="font-semibold text-white">Ver Expediente</span>
                     </div>
                     <ChevronRight size={18} className="text-slate-500 group-hover:translate-x-1 transition-transform" />
                   </button>
-                  <button className="flex items-center justify-between w-full p-4 bg-slate-800 hover:bg-slate-700 rounded-2xl border border-slate-700 transition-all group">
+                  <button 
+                    onClick={() => navigate('/operaciones')}
+                    className="flex items-center justify-between w-full p-4 bg-slate-800 hover:bg-slate-700 rounded-2xl border border-slate-700 transition-all group"
+                  >
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg"><History size={18} /></div>
                       <span className="font-semibold text-white">Últimos Pedidos</span>
                     </div>
                     <ChevronRight size={18} className="text-slate-500 group-hover:translate-x-1 transition-transform" />
                   </button>
-                  <button className="flex items-center justify-between w-full p-4 bg-red-500/10 hover:bg-red-500/20 rounded-2xl border border-red-500/20 transition-all group mt-2">
+                  <button 
+                    onClick={() => navigate('/operaciones')}
+                    className="flex items-center justify-between w-full p-4 bg-red-500/10 hover:bg-red-500/20 rounded-2xl border border-red-500/20 transition-all group mt-2"
+                  >
                     <div className="flex items-center gap-3 text-red-400">
                       <div className="p-2 bg-red-500/10 rounded-lg"><LogOut size={18} /></div>
                       <span className="font-semibold">Registrar Salida</span>
@@ -239,6 +251,4 @@ export const MapaRacks: React.FC<MapaRacksProps> = ({ data }) => {
   );
 };
 
-const X = ({ size }: { size: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-);
+

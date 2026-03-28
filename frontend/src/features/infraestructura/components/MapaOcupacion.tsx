@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Grid2X2, CheckCircle2, Circle, AlertCircle, Layers, MapPin, ChevronRight, ChevronDown } from 'lucide-react';
-import { Ubicacion, Zona } from '../hooks/useUbicaciones';
+import { Grid2X2, AlertCircle, Layers, MapPin, ChevronRight, ChevronDown } from 'lucide-react';
+import { Ubicacion } from '../hooks/useUbicaciones';
 
 interface MapaOcupacionProps {
   ubicaciones: Ubicacion[];
-  onToggleEspacio: (id: number, currentOcupado: boolean) => void;
+  onToggleEspacio: (id: number, currentOcupado: boolean, numero: string) => void;
 }
 
 export function MapaOcupacion({ ubicaciones, onToggleEspacio }: MapaOcupacionProps) {
@@ -73,10 +73,10 @@ export function MapaOcupacion({ ubicaciones, onToggleEspacio }: MapaOcupacionPro
                         </div>
 
                         <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-8 lg:grid-cols-10 gap-3 relative z-10">
-                          {(rack.espacios || []).map(espacio => (
+                          {([...(rack.espacios || [])].sort((a, b) => a.id - b.id)).map(espacio => (
                             <button
                               key={espacio.id}
-                              onClick={() => onToggleEspacio(espacio.id, espacio.ocupado)}
+                              onClick={() => onToggleEspacio(espacio.id, espacio.ocupado, espacio.numero)}
                               className={`
                                 aspect-square rounded-xl flex items-center justify-center transition-all duration-300 border-2 relative group/item
                                 ${espacio.ocupado 

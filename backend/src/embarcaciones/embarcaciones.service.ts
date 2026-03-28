@@ -51,20 +51,26 @@ export class EmbarcacionesService {
     updateEmbarcacionDto: Partial<Embarcacion>,
   ): Promise<Embarcacion> {
     const embarcacion = await this.findOne(id);
-    const anteriorEspacioId = embarcacion.espacioId;
+    const anteriorEspacioId = embarcacion.espacio?.id || null;
 
     Object.assign(embarcacion, updateEmbarcacionDto);
     const saved = await this.embarcacionesRepository.save(embarcacion);
 
+    // Determines the resulting DB state correctly using DTO overriding
+    const nuevoEspacioId =
+      'espacioId' in updateEmbarcacionDto
+        ? updateEmbarcacionDto.espacioId
+        : anteriorEspacioId;
+
     // Gestinar cambio de espacio
-    if (anteriorEspacioId !== saved.espacioId) {
+    if (anteriorEspacioId !== nuevoEspacioId) {
       // Liberar el anterior
       if (anteriorEspacioId) {
         await this.espacioRepo.update(anteriorEspacioId, { ocupado: false });
       }
       // Ocupar el nuevo
-      if (saved.espacioId) {
-        await this.espacioRepo.update(saved.espacioId, { ocupado: true });
+      if (nuevoEspacioId) {
+        await this.espacioRepo.update(nuevoEspacioId, { ocupado: true });
       }
     }
 

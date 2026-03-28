@@ -5,9 +5,11 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
+  OneToMany,
   JoinColumn,
 } from 'typeorm';
 import { Cliente } from '../clientes/clientes.entity';
+import { Cargo } from '../cargos/cargo.entity';
 
 export enum EstadoFactura {
   PENDIENTE = 'PENDIENTE',
@@ -42,6 +44,9 @@ export class Factura {
 
   @Column({ type: 'text', nullable: true })
   observaciones: string;
+
+  @OneToMany(() => Cargo, (cargo) => cargo.factura)
+  cargos: Cargo[];
 
   @CreateDateColumn()
   createdAt: Date;
