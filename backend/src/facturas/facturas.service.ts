@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { Factura, EstadoFactura } from './factura.entity';
@@ -35,7 +39,7 @@ export class FacturasService {
       where: {}, // No filter needed, just last created
       order: { id: 'DESC' },
     });
-    
+
     const nextId = last ? last.id + 1 : 1;
     return `FAC-${nextId.toString().padStart(4, '0')}`;
   }
@@ -59,11 +63,16 @@ export class FacturasService {
     });
 
     if (cargos.length !== cargoIds.length) {
-      throw new BadRequestException('Algunos cargos seleccionados no son válidos o no pertenecen al cliente');
+      throw new BadRequestException(
+        'Algunos cargos seleccionados no son válidos o no pertenecen al cliente',
+      );
     }
 
     // 2. Calcular total
-    const total = cargos.reduce((sum, cargo) => sum + Number(cargo.monto || 0), 0);
+    const total = cargos.reduce(
+      (sum, cargo) => sum + Number(cargo.monto || 0),
+      0,
+    );
 
     // 3. Generar número si no viene
     const finalNumero = numero || (await this.generateNextNumero());
@@ -82,7 +91,7 @@ export class FacturasService {
     // 5. Vincular cargos a la factura
     await this.cargoRepo.update(
       { id: In(cargoIds) },
-      { factura: { id: guardada.id } }
+      { factura: { id: guardada.id } },
     );
 
     return this.findOne(guardada.id);
