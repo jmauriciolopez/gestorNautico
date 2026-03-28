@@ -1,9 +1,18 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
 import { CargosService } from './cargos.service';
 import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../users/user.entity';
+import { CreateCargoDto } from './dto/create-cargo.dto';
 
 @Controller('cargos')
 @UseGuards(AuthTokenGuard, RolesGuard)
@@ -24,7 +33,7 @@ export class CargosController {
 
   @Post()
   @Roles(Role.SUPERADMIN, Role.ADMIN)
-  create(@Body() data: any) {
+  create(@Body() data: CreateCargoDto) {
     return this.cargosService.create(data);
   }
 

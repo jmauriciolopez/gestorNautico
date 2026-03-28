@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Put, Param, Delete, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Put,
+  Param,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
 import { EmbarcacionesService } from './embarcaciones.service';
 import { Embarcacion } from './embarcaciones.entity';
 import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
@@ -28,7 +37,10 @@ export class EmbarcacionesController {
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() updateEmbarcacionDto: Partial<Embarcacion>) {
+  update(
+    @Param('id') id: string,
+    @Body() updateEmbarcacionDto: Partial<Embarcacion>,
+  ) {
     return this.embarcacionesService.update(+id, updateEmbarcacionDto);
   }
 

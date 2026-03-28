@@ -1,9 +1,20 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Put,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
 import { CatalogoService } from './catalogo.service';
 import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../users/user.entity';
+
+import { Catalogo } from './catalogo.entity';
 
 @Controller('catalogo')
 @UseGuards(AuthTokenGuard, RolesGuard)
@@ -24,13 +35,13 @@ export class CatalogoController {
 
   @Post()
   @Roles(Role.SUPERADMIN, Role.ADMIN)
-  create(@Body() data: any) {
+  create(@Body() data: Partial<Catalogo>) {
     return this.catalogoService.create(data);
   }
 
   @Put(':id')
   @Roles(Role.SUPERADMIN, Role.ADMIN)
-  update(@Param('id') id: string, @Body() data: any) {
+  update(@Param('id') id: string, @Body() data: Partial<Catalogo>) {
     return this.catalogoService.update(+id, data);
   }
 

@@ -1,9 +1,20 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Put,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
 import { EspaciosService } from './espacios.service';
 import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../users/user.entity';
+
+import { Espacio } from './espacio.entity';
 
 @Controller('espacios')
 @UseGuards(AuthTokenGuard, RolesGuard)
@@ -30,13 +41,13 @@ export class EspaciosController {
 
   @Post()
   @Roles(Role.SUPERADMIN, Role.ADMIN)
-  create(@Body() data: any) {
+  create(@Body() data: Partial<Espacio>) {
     return this.espaciosService.create(data);
   }
 
   @Put(':id')
   @Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
-  update(@Param('id') id: string, @Body() data: any) {
+  update(@Param('id') id: string, @Body() data: Partial<Espacio>) {
     return this.espaciosService.update(+id, data);
   }
 

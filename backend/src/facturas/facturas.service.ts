@@ -13,25 +13,26 @@ export class FacturasService {
   findAll() {
     return this.facturaRepo.find({
       relations: ['cliente'],
-      order: { fechaEmision: 'DESC' }
+      order: { fechaEmision: 'DESC' },
     });
   }
 
   async findOne(id: number) {
     const factura = await this.facturaRepo.findOne({
       where: { id },
-      relations: ['cliente']
+      relations: ['cliente'],
     });
-    if (!factura) throw new NotFoundException(`Factura con ID ${id} no encontrada`);
+    if (!factura)
+      throw new NotFoundException(`Factura con ID ${id} no encontrada`);
     return factura;
   }
 
-  async create(data: any) {
-    const { clienteId, ...rest } = data;
+  async create(data: Record<string, unknown>) {
+    const { clienteId, ...rest } = data as { clienteId: number };
     const nueva = this.facturaRepo.create({
       ...rest,
       cliente: { id: clienteId },
-      estado: EstadoFactura.PENDIENTE
+      estado: EstadoFactura.PENDIENTE,
     });
     return this.facturaRepo.save(nueva);
   }

@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Cargo } from './cargo.entity';
+import { CreateCargoDto } from './dto/create-cargo.dto';
 
 @Injectable()
 export class CargosService {
@@ -13,24 +14,24 @@ export class CargosService {
   findAll() {
     return this.cargoRepo.find({
       relations: ['cliente'],
-      order: { fechaEmision: 'DESC' }
+      order: { fechaEmision: 'DESC' },
     });
   }
 
   async findOne(id: number) {
     const cargo = await this.cargoRepo.findOne({
       where: { id },
-      relations: ['cliente']
+      relations: ['cliente'],
     });
     if (!cargo) throw new NotFoundException(`Cargo con ID ${id} no encontrado`);
     return cargo;
   }
 
-  async create(data: any) {
+  async create(data: CreateCargoDto) {
     const { clienteId, ...rest } = data;
     const nuevo = this.cargoRepo.create({
       ...rest,
-      cliente: { id: clienteId }
+      cliente: { id: clienteId },
     });
     return this.cargoRepo.save(nuevo);
   }

@@ -26,14 +26,19 @@ export class RolesGuard implements CanActivate {
     }
 
     // 2. Obtener el usuario del Request (inyectado previamente por un AuthGuard/Passport)
-    const { user } = context.switchToHttp().getRequest();
+    const req = context
+      .switchToHttp()
+      .getRequest<{ user?: { role: string } }>();
+    const user = req.user;
 
     if (!user || !user.role) {
       throw new ForbiddenException('User context not found or roles missing');
     }
 
     // 3. Validar si el usuario tiene al menos uno de los roles requeridos
-    const hasRole = requiredRoles.some((role) => user.role?.includes(role));
+    const hasRole = requiredRoles.some((role: Role) =>
+      user.role.includes(role),
+    );
 
     if (!hasRole) {
       throw new ForbiddenException(

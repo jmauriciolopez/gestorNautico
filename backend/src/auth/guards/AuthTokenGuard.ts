@@ -16,9 +16,9 @@ export class AuthTokenGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<Request>();
     const token = this.extractToken(request);
-    
+
     if (!token) {
       console.log('AuthTokenGuard: No se encontró token en la petición');
       throw new UnauthorizedException('Token no encontrado');
@@ -26,11 +26,14 @@ export class AuthTokenGuard implements CanActivate {
 
     try {
       const secret = this.configService.get<string>('JWT_SECRET');
-      const payload = await this.jwtService.verifyAsync(token, { secret });
-      request['user'] = payload;
+      const payload: unknown = await this.jwtService.verifyAsync(token, {
+        secret,
+      });
+      (request as Request & { user: unknown }).user = payload;
       return true;
-    } catch (error) {
-      console.log('AuthTokenGuard: Error al verificar JWT:', error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      console.log('AuthTokenGuard: Error al verificar JWT:', message);
       throw new UnauthorizedException('Token inválido o expirado');
     }
   }
@@ -40,6 +43,6 @@ export class AuthTokenGuard implements CanActivate {
     if (type === 'Bearer' && token) {
       return token;
     }
-    return request.cookies?.['token'];
+    return (request.cookies as Record<string, string>)?.['token'];
   }
 }

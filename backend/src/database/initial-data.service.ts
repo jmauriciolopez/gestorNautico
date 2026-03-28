@@ -18,7 +18,9 @@ export class InitialDataService implements OnApplicationBootstrap {
   }
 
   async syncAll() {
-    this.logger.log('🌱 Sincronizando datos maestros iniciales (Master Data)...');
+    this.logger.log(
+      '🌱 Sincronizando datos maestros iniciales (Master Data)...',
+    );
     await this.ensureInitialUsers();
     this.logger.log('✅ Master Data Sync: Completed');
   }
@@ -66,15 +68,24 @@ export class InitialDataService implements OnApplicationBootstrap {
         const hashedPassword = await bcrypt.hash(userData.clave, salt);
         const newUser = this.userRepository.create({
           ...userData,
-          clave: hashedPassword
+          clave: hashedPassword,
         });
         await this.userRepository.save(newUser);
       } else {
         // "Insertar si falta o se MODIFICA" - Sincronización de campos básicos
         let hasChanges = false;
-        if (existingUser.email !== userData.email) { existingUser.email = userData.email; hasChanges = true; }
-        if (existingUser.nombre !== userData.nombre) { existingUser.nombre = userData.nombre; hasChanges = true; }
-        if (existingUser.role !== userData.role) { existingUser.role = userData.role; hasChanges = true; }
+        if (existingUser.email !== userData.email) {
+          existingUser.email = userData.email;
+          hasChanges = true;
+        }
+        if (existingUser.nombre !== userData.nombre) {
+          existingUser.nombre = userData.nombre;
+          hasChanges = true;
+        }
+        if (existingUser.role !== userData.role) {
+          existingUser.role = userData.role;
+          hasChanges = true;
+        }
 
         if (hasChanges) {
           this.logger.log(`Actualizando usuario maestro: ${userData.usuario}`);

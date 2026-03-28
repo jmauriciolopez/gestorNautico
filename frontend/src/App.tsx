@@ -7,14 +7,18 @@ import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { Role } from './types';
 import AppLayout from './components/layout/AppLayout';
 import { Login } from './features/auth/Login';
-import Dashboard from './pages/Dashboard';
-import ClientesList from './pages/ClientesList';
-import ClienteForm from './pages/ClienteForm';
-import EmbarcacionesList from './pages/EmbarcacionesList';
-import EmbarcacionForm from './pages/EmbarcacionForm';
-import Operaciones from './pages/Operaciones';
-import Finanzas from './pages/Finanzas';
-import Infraestructura from './pages/Infraestructura';
+
+// === Feature Pages ===
+import Dashboard from './features/dashboard/pages/Dashboard';
+import ClientesList from './features/clientes/pages/ClientesList';
+import ClienteForm from './features/clientes/pages/ClienteForm';
+import EmbarcacionesList from './features/embarcaciones/pages/EmbarcacionesList';
+import EmbarcacionForm from './features/embarcaciones/pages/EmbarcacionForm';
+import OperacionesPage from './features/operaciones/pages/OperacionesPage';
+import InfraestructuraPage from './features/infraestructura/pages/InfraestructuraPage';
+import FinanzasPage from './features/finanzas/pages/FinanzasPage';
+import ServiciosPage from './features/servicios/pages/ServiciosPage';
+import FacturacionPage from './features/facturacion/pages/FacturacionPage';
 
 // Componente simple para Login Helper
 const LoginWrapper = () => {
@@ -62,12 +66,14 @@ function App() {
                 <Route path="embarcaciones/nueva" element={<EmbarcacionForm />} />
                 <Route path="embarcaciones/editar/:id" element={<EmbarcacionForm />} />
                 
-                <Route path="operaciones" element={<Operaciones />} />
-                <Route path="infraestructura" element={<Infraestructura />} />
+                <Route path="operaciones" element={<OperacionesPage />} />
+                <Route path="infraestructura" element={<InfraestructuraPage />} />
+                <Route path="servicios" element={<ServiciosPage />} />
 
-                {/* Ruta de Finanzas (Solo Admin/SuperAdmin) */}
+                {/* Rutas de Finanzas y Facturación (Solo Admin/SuperAdmin) */}
                 <Route element={<ProtectedRoute allowedRoles={[Role.ADMIN, Role.SUPERADMIN]} />}>
-                    <Route path="finanzas" element={<Finanzas />} />
+                    <Route path="finanzas" element={<FinanzasPage />} />
+                    <Route path="facturacion" element={<FacturacionPage />} />
                 </Route>
               </Route>
             </Route>

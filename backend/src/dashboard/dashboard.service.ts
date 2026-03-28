@@ -33,8 +33,13 @@ export class DashboardService {
     const enAgua = await this.barcoRepo.count({ where: { estado: 'EN_AGUA' } });
 
     // Finanzas
-    const cargosPendientes = await this.cargoRepo.find({ where: { pagado: false } });
-    const deudaTotal = cargosPendientes.reduce((acc, c) => acc + Number(c.monto), 0);
+    const cargosPendientes = await this.cargoRepo.find({
+      where: { pagado: false },
+    });
+    const deudaTotal = cargosPendientes.reduce(
+      (acc, c) => acc + Number(c.monto),
+      0,
+    );
 
     const pagos = await this.pagoRepo.find();
     const recaudacionTotal = pagos.reduce((acc, p) => acc + Number(p.monto), 0);
@@ -73,7 +78,7 @@ export class DashboardService {
 
   private async getFinanzasSeries() {
     // Generar últimos 6 meses
-    const series = [];
+    const series: Array<{ mes: string; monto: number }> = [];
     const now = new Date();
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -83,9 +88,9 @@ export class DashboardService {
       const pagosMes = await this.pagoRepo.find({
         where: { fecha: Between(start, end) },
       });
-      
+
       const totalMes = pagosMes.reduce((acc, p) => acc + Number(p.monto), 0);
-      
+
       series.push({
         mes: d.toLocaleString('default', { month: 'short' }),
         monto: totalMes,

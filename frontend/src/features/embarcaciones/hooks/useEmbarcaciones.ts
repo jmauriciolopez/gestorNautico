@@ -26,7 +26,7 @@ export const useEmbarcaciones = () => {
     queryFn: () => fetchClient<Embarcacion[]>('/embarcaciones'),
   });
 
-  const getEmbarcacion = (id: number) =>
+  const useEmbarcacion = (id: number) =>
     useQuery({
       queryKey: ['embarcaciones', id],
       queryFn: () => fetchClient<Embarcacion>(`/embarcaciones/${id}`),
@@ -68,7 +68,7 @@ export const useEmbarcaciones = () => {
 
   return {
     getEmbarcaciones,
-    getEmbarcacion,
+    useEmbarcacion,
     createEmbarcacion,
     updateEmbarcacion,
     deleteEmbarcacion,

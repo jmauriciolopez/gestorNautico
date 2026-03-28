@@ -1,4 +1,12 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { Cliente } from '../clientes/clientes.entity';
 import { Cargo } from '../cargos/cargo.entity';
 import { Caja } from '../cajas/caja.entity';
@@ -19,10 +27,10 @@ export class Pago {
   @JoinColumn({ name: 'cliente_id' })
   cliente: Cliente;
 
-  @ManyToOne(() => Caja, caja => caja.pagos, { nullable: false })
+  @ManyToOne(() => Caja, (caja) => caja.pagos, { nullable: false })
   @JoinColumn({ name: 'caja_id' })
   caja: Caja;
-  
+
   @ManyToOne(() => Cargo, { nullable: true })
   @JoinColumn({ name: 'cargo_id' })
   cargo: Cargo;

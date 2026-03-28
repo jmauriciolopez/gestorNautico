@@ -13,24 +13,25 @@ export class PedidosService {
   findAll() {
     return this.pedidoRepo.find({
       relations: ['embarcacion', 'embarcacion.cliente'],
-      order: { createdAt: 'DESC' }
+      order: { createdAt: 'DESC' },
     });
   }
 
   async findOne(id: number) {
     const pedido = await this.pedidoRepo.findOne({
       where: { id },
-      relations: ['embarcacion', 'embarcacion.cliente']
+      relations: ['embarcacion', 'embarcacion.cliente'],
     });
-    if (!pedido) throw new NotFoundException(`Pedido con ID ${id} no encontrado`);
+    if (!pedido)
+      throw new NotFoundException(`Pedido con ID ${id} no encontrado`);
     return pedido;
   }
 
-  async create(data: any) {
-    const { embarcacionId, ...rest } = data;
+  async create(data: Record<string, unknown>) {
+    const { embarcacionId, ...rest } = data as { embarcacionId: number };
     const nuevo = this.pedidoRepo.create({
       ...rest,
-      embarcacion: { id: embarcacionId }
+      embarcacion: { id: embarcacionId },
     });
     return this.pedidoRepo.save(nuevo);
   }

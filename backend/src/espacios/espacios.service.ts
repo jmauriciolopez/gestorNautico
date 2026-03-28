@@ -11,15 +11,18 @@ export class EspaciosService {
   ) {}
 
   findAll() {
-    return this.espacioRepo.find({ relations: ['rack', 'rack.zona', 'rack.zona.marina'] });
+    return this.espacioRepo.find({
+      relations: ['rack', 'rack.zona', 'rack.zona.ubicacion'],
+    });
   }
 
   async findOne(id: number) {
     const espacio = await this.espacioRepo.findOne({
       where: { id },
-      relations: ['rack', 'rack.zona', 'rack.zona.marina']
+      relations: ['rack', 'rack.zona', 'rack.zona.marina'],
     });
-    if (!espacio) throw new NotFoundException(`Espacio con ID ${id} no encontrado`);
+    if (!espacio)
+      throw new NotFoundException(`Espacio con ID ${id} no encontrado`);
     return espacio;
   }
 
@@ -36,7 +39,8 @@ export class EspaciosService {
 
   async remove(id: number) {
     const espacio = await this.espacioRepo.findOne({ where: { id } });
-    if (!espacio) throw new NotFoundException(`Espacio con ID ${id} no encontrado`);
+    if (!espacio)
+      throw new NotFoundException(`Espacio con ID ${id} no encontrado`);
     return this.espacioRepo.remove(espacio);
   }
 

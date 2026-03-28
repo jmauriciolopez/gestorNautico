@@ -6,10 +6,7 @@ import { EmbarcacionesController } from './embarcaciones.controller';
 import { EspaciosModule } from '../espacios/espacios.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Embarcacion]),
-    EspaciosModule,
-  ],
+  imports: [TypeOrmModule.forFeature([Embarcacion]), EspaciosModule],
   controllers: [EmbarcacionesController],
   providers: [EmbarcacionesService],
   exports: [EmbarcacionesService],

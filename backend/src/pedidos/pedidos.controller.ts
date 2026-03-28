@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards, Patch } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  UseGuards,
+  Patch,
+} from '@nestjs/common';
 import { PedidosService } from './pedidos.service';
 import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -24,7 +33,7 @@ export class PedidosController {
 
   @Post()
   @Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
-  create(@Body() data: any) {
+  create(@Body() data: Record<string, unknown>) {
     return this.pedidosService.create(data);
   }
 

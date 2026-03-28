@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Caja, EstadoCaja } from './caja.entity';
+import { MetodoPago } from '../pagos/pago.entity';
 
 @Injectable()
 export class CajasService {
@@ -13,23 +14,23 @@ export class CajasService {
   findAll() {
     return this.cajaRepo.find({
       relations: ['pagos'],
-      order: { createdAt: 'DESC' }
+      order: { createdAt: 'DESC' },
     });
   }
 
   async findOne(id: number) {
     const caja = await this.cajaRepo.findOne({
       where: { id },
-      relations: ['pagos']
+      relations: ['pagos'],
     });
     if (!caja) throw new NotFoundException(`Caja con ID ${id} no encontrada`);
     return caja;
   }
 
   async findAbierta() {
-    return this.cajaRepo.findOne({ 
+    return this.cajaRepo.findOne({
       where: { estado: EstadoCaja.ABIERTA },
-      relations: ['pagos']
+      relations: ['pagos'],
     });
   }
 
@@ -40,14 +41,15 @@ export class CajasService {
     const nueva = this.cajaRepo.create({
       saldoInicial,
       estado: EstadoCaja.ABIERTA,
-      fechaApertura: new Date()
+      fechaApertura: new Date(),
     });
     return this.cajaRepo.save(nueva);
   }
 
   async cerrar(id: number, saldoFinal: number) {
     const caja = await this.findOne(id);
-    if (caja.estado === EstadoCaja.CERRADA) throw new Error('La caja ya está cerrada');
+    if (caja.estado === EstadoCaja.CERRADA)
+      throw new Error('La caja ya está cerrada');
 
     caja.estado = EstadoCaja.CERRADA;
     caja.saldoFinal = saldoFinal;
@@ -59,11 +61,13 @@ export class CajasService {
     const cajaAbierta = await this.findAbierta();
     if (!cajaAbierta) return null;
 
-    const totalRecaudado = cajaAbierta.pagos
-      .reduce((sum, p) => sum + Number(p.monto), 0);
+    const totalRecaudado = cajaAbierta.pagos.reduce(
+      (sum, p) => sum + Number(p.monto),
+      0,
+    );
 
     const totalEfectivo = cajaAbierta.pagos
-      .filter(p => p.metodoPago === 'EFECTIVO')
+      .filter((p) => p.metodoPago === MetodoPago.EFECTIVO)
       .reduce((sum, p) => sum + Number(p.monto), 0);
 
     return {
@@ -71,7 +75,7 @@ export class CajasService {
       saldoInicial: cajaAbierta.saldoInicial,
       totalRecaudado,
       totalEfectivo,
-      fechaApertura: cajaAbierta.fechaApertura
+      fechaApertura: cajaAbierta.fechaApertura,
     };
   }
 }

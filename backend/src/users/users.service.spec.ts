@@ -3,6 +3,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { UsersService } from './users.service';
 import { User, Role } from './user.entity';
 import { ConflictException, NotFoundException } from '@nestjs/common';
+import { CreateUserDto } from './dto/create-user.dto';
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -27,7 +28,9 @@ describe('UsersService', () => {
       .mockImplementation((user) => Promise.resolve({ ...user, id: 1 })),
     merge: jest
       .fn()
-      .mockImplementation((user, dto) => Object.assign(user, dto)),
+      .mockImplementation((user: object, dto: object) =>
+        Object.assign(user, dto),
+      ),
     remove: jest.fn().mockResolvedValue(mockUser),
   };
 
@@ -78,14 +81,14 @@ describe('UsersService', () => {
         clave: 'abc',
         nombre: 'New',
       };
-      const result = await service.create(dto as any);
+      const result = await service.create(dto as CreateUserDto);
       expect(mockRepository.save).toHaveBeenCalled();
       expect(result.id).toBe(1);
     });
 
     it('should throw ConflictException if username exists', async () => {
       const dto = { usuario: 'testuser' };
-      await expect(service.create(dto as any)).rejects.toThrow(
+      await expect(service.create(dto as CreateUserDto)).rejects.toThrow(
         ConflictException,
       );
     });

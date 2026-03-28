@@ -21,9 +21,9 @@ export class EmbarcacionesService {
   }
 
   async findOne(id: number): Promise<Embarcacion> {
-    const embarcacion = await this.embarcacionesRepository.findOne({ 
+    const embarcacion = await this.embarcacionesRepository.findOne({
       where: { id },
-      relations: ['cliente', 'espacio']
+      relations: ['cliente', 'espacio'],
     });
     if (!embarcacion) {
       throw new NotFoundException(`Embarcación con ID ${id} no encontrada`);
@@ -31,10 +31,13 @@ export class EmbarcacionesService {
     return embarcacion;
   }
 
-  async create(createEmbarcacionDto: Partial<Embarcacion>): Promise<Embarcacion> {
-    const nuevaEmbarcacion = this.embarcacionesRepository.create(createEmbarcacionDto);
+  async create(
+    createEmbarcacionDto: Partial<Embarcacion>,
+  ): Promise<Embarcacion> {
+    const nuevaEmbarcacion =
+      this.embarcacionesRepository.create(createEmbarcacionDto);
     const saved = await this.embarcacionesRepository.save(nuevaEmbarcacion);
-    
+
     // Si se asignó un espacio, marcarlo como ocupado
     if (saved.espacioId) {
       await this.espacioRepo.update(saved.espacioId, { ocupado: true });
@@ -43,10 +46,13 @@ export class EmbarcacionesService {
     return saved;
   }
 
-  async update(id: number, updateEmbarcacionDto: Partial<Embarcacion>): Promise<Embarcacion> {
+  async update(
+    id: number,
+    updateEmbarcacionDto: Partial<Embarcacion>,
+  ): Promise<Embarcacion> {
     const embarcacion = await this.findOne(id);
     const anteriorEspacioId = embarcacion.espacioId;
-    
+
     Object.assign(embarcacion, updateEmbarcacionDto);
     const saved = await this.embarcacionesRepository.save(embarcacion);
 

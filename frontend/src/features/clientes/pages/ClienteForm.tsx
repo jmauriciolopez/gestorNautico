@@ -7,9 +7,9 @@ export default function ClienteForm() {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditing = Boolean(id);
-  const { getCliente, createCliente, updateCliente } = useClientes();
+  const { useCliente, createCliente, updateCliente } = useClientes();
   
-  const clienteQuery = getCliente(Number(id));
+  const clienteQuery = useCliente(Number(id));
   const { data: cliente, isLoading: isFetching } = clienteQuery;
 
   // Form state

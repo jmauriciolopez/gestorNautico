@@ -30,11 +30,11 @@ export class AuthController {
   ): Promise<AuthResponse> {
     const authData = await this.authService.login(loginDto);
 
-    const isProd = this.configService.get('NODE_ENV') === 'production';
-    void response.cookie('token', authData.accessToken, {
+    const isProd = this.configService.get<string>('NODE_ENV') === 'production';
+    response.cookie('token', authData.accessToken, {
       httpOnly: true,
       secure: isProd,
-      sameSite: isProd ? 'none' : 'lax',
+      sameSite: isProd ? 'none' : ('lax' as const),
       path: '/',
       maxAge: (Number(authData.expiresIn) || 3600) * 1000,
     });
@@ -44,11 +44,11 @@ export class AuthController {
 
   @Post('logout')
   logout(@Res({ passthrough: true }) response: Response) {
-    const isProd = this.configService.get('NODE_ENV') === 'production';
-    void response.cookie('token', '', {
+    const isProd = this.configService.get<string>('NODE_ENV') === 'production';
+    response.cookie('token', '', {
       httpOnly: true,
       secure: isProd,
-      sameSite: isProd ? 'none' : 'lax',
+      sameSite: isProd ? 'none' : ('lax' as const),
       path: '/',
       expires: new Date(0),
     });
@@ -57,10 +57,10 @@ export class AuthController {
 
   @UseGuards(AuthTokenGuard)
   @Get('me')
-  async getMe(@Req() request: Request): Promise<any> {
-    const userId = request['user'].sub;
-    const user = await this.authService.getInternalUser(userId); // Necesito este método o similar
-    const { ...result } = user;
-    return result;
+  async getMe(@Req() request: Request): Promise<unknown> {
+    const reqWithUser = request as Request & { user: { sub: number } };
+    const userId = reqWithUser.user.sub;
+    const user = await this.authService.getInternalUser(userId);
+    return user;
   }
 }

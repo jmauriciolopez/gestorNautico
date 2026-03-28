@@ -1,12 +1,8 @@
 import { LayoutGrid } from 'lucide-react';
+import { EstadisticasInfraestructura } from '../hooks/useUbicaciones';
 
 interface InfraestructuraStatsProps {
-  stats: {
-    total: number;
-    ocupados: number;
-    libres: number;
-    porcentajeOcupacion: number;
-  };
+  stats: EstadisticasInfraestructura;
 }
 
 export function InfraestructuraStats({ stats }: InfraestructuraStatsProps) {

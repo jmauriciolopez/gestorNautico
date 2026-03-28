@@ -1,4 +1,11 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
+} from 'typeorm';
 import { RegistroServicio } from '../registros/registro.entity';
 
 @Entity('servicios_catalogo')
@@ -21,7 +28,10 @@ export class Catalogo {
   @Column({ default: true })
   activo: boolean;
 
-  @OneToMany(() => RegistroServicio, (registro: RegistroServicio) => registro.servicio)
+  @OneToMany(
+    () => RegistroServicio,
+    (registro: RegistroServicio) => registro.servicio,
+  )
   registros: RegistroServicio[];
 
   @CreateDateColumn()

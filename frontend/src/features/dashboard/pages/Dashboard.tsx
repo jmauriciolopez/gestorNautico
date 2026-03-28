@@ -9,8 +9,6 @@ import {
   ArrowDownRight
 } from 'lucide-react';
 import { 
-  BarChart, 
-  Bar, 
   XAxis, 
   YAxis, 
   CartesianGrid, 

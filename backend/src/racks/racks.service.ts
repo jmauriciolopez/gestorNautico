@@ -20,7 +20,7 @@ export class RacksService {
   async findOne(id: number) {
     const rack = await this.rackRepo.findOne({
       where: { id },
-      relations: ['zona', 'espacios']
+      relations: ['zona', 'espacios'],
     });
     if (!rack) throw new NotFoundException(`Rack con ID ${id} no encontrado`);
     return rack;
@@ -38,13 +38,15 @@ export class RacksService {
     const nuevosEspacios = [];
     for (let f = 1; f <= filas; f++) {
       for (let c = 1; c <= columnas; c++) {
-        nuevosEspacios.push(this.espacioRepo.create({
-          numero: `${codigo}-F${f}C${c}`,
-          fila: f,
-          columna: c,
-          rackId: savedRack.id,
-          ocupado: false
-        }));
+        nuevosEspacios.push(
+          this.espacioRepo.create({
+            numero: `${codigo}-F${f}C${c}`,
+            fila: f,
+            columna: c,
+            rackId: savedRack.id,
+            ocupado: false,
+          }),
+        );
       }
     }
 

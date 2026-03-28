@@ -10,7 +10,7 @@ import { DatabaseModule } from './database/database.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 
 // Módulos de Infraestructura (Planos)
-import { MarinaModule } from './marinas/marina.module';
+import { UbicacionesModule } from './ubicaciones/ubicaciones.module';
 import { ZonasModule } from './zonas/zonas.module';
 import { RacksModule } from './racks/racks.module';
 import { EspaciosModule } from './espacios/espacios.module';
@@ -47,7 +47,10 @@ import { RegistrosModule } from './registros/registros.module';
         database: configService.get<string>('DATABASE_NAME'),
         autoLoadEntities: true,
         synchronize: true, // Only for development
-        ssl: configService.get<string>('DATABASE_SSL') === 'true' ? { rejectUnauthorized: false } : false,
+        ssl:
+          configService.get<string>('DATABASE_SSL') === 'true'
+            ? { rejectUnauthorized: false }
+            : false,
       }),
     }),
     AuthModule,
@@ -56,7 +59,7 @@ import { RegistrosModule } from './registros/registros.module';
     EmbarcacionesModule,
     DatabaseModule,
     DashboardModule,
-    MarinaModule,
+    UbicacionesModule,
     ZonasModule,
     RacksModule,
     EspaciosModule,

@@ -11,7 +11,7 @@ export class SeederController {
   }
 
   @Get('health')
-  async health() {
+  health() {
     return { status: 'ok', seeder: 'available' };
   }
 }

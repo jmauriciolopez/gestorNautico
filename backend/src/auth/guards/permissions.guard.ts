@@ -22,7 +22,19 @@ export class PermissionsGuard implements CanActivate {
       return true;
     }
 
-    const { user } = context.switchToHttp().getRequest();
+    interface UserWithPermissions {
+      role: Role;
+      permisoCrearNoticias?: boolean;
+      permisoEditarNoticias?: boolean;
+      permisoEliminarNoticias?: boolean;
+      permisoPreportada?: boolean;
+      permisoComentarios?: boolean;
+    }
+
+    const req = context
+      .switchToHttp()
+      .getRequest<{ user?: UserWithPermissions }>();
+    const user = req.user;
 
     if (!user) {
       throw new ForbiddenException('User context not found');

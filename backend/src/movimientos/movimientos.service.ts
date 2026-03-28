@@ -13,26 +13,29 @@ export class MovimientosService {
   findAll() {
     return this.movimientoRepo.find({
       relations: ['embarcacion', 'espacio'],
-      order: { fecha: 'DESC' }
+      order: { fecha: 'DESC' },
     });
   }
 
   async findOne(id: number) {
     const movimiento = await this.movimientoRepo.findOne({
       where: { id },
-      relations: ['embarcacion', 'espacio']
+      relations: ['embarcacion', 'espacio'],
     });
-    if (!movimiento) throw new NotFoundException(`Movimiento con ID ${id} no encontrado`);
+    if (!movimiento)
+      throw new NotFoundException(`Movimiento con ID ${id} no encontrado`);
     return movimiento;
   }
 
-  async create(data: any) {
+  async create(data: Record<string, unknown>) {
     const { embarcacionId, espacioId, ...rest } = data;
-    const nuevo = this.movimientoRepo.create({
-      ...rest,
-      embarcacion: { id: embarcacionId },
-      espacio: { id: espacioId }
-    });
+    const createData: any = {
+      ...(rest as object),
+      embarcacion: { id: Number(embarcacionId) },
+      espacio: { id: Number(espacioId) },
+    };
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    const nuevo = this.movimientoRepo.create(createData);
     return this.movimientoRepo.save(nuevo);
   }
 

@@ -42,7 +42,7 @@ export function useOperaciones() {
     queryFn: () => fetchClient('/pedidos'),
   });
 
-  const getPedido = (id: number) => useQuery<Pedido>({
+  const usePedido = (id: number) => useQuery<Pedido>({
     queryKey: ['pedidos', id],
     queryFn: () => fetchClient(`/pedidos/${id}`),
     enabled: !!id,
@@ -99,7 +99,7 @@ export function useOperaciones() {
 
   return {
     getPedidos,
-    getPedido,
+    usePedido,
     createPedido,
     updatePedido,
     deletePedido,

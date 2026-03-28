@@ -9,10 +9,10 @@ export default function EmbarcacionForm() {
   const { id } = useParams();
   const isEditing = Boolean(id);
   
-  const { getEmbarcacion, createEmbarcacion, updateEmbarcacion } = useEmbarcaciones();
+  const { useEmbarcacion, createEmbarcacion, updateEmbarcacion } = useEmbarcaciones();
   const { getClientes } = useClientes();
   
-  const embarcacionQuery = getEmbarcacion(Number(id));
+  const embarcacionQuery = useEmbarcacion(Number(id));
   const { data: embarcacion, isLoading: isFetchingEmb } = embarcacionQuery;
   const { data: clientes = [], isLoading: isFetchingClientes } = getClientes;
 

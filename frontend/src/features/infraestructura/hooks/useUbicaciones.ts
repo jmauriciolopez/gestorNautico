@@ -1,9 +1,17 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchClient } from '../../../api/fetchClient';
 
+export interface Ubicacion {
+  id: number;
+  nombre: string;
+  descripcion?: string;
+  zonas: Zona[];
+}
+
 export interface Zona {
   id: number;
   nombre: string;
+  ubicacionId: number;
   racks: Rack[];
 }
 
@@ -31,23 +39,40 @@ export interface EstadisticasInfraestructura {
 export const useUbicaciones = () => {
   const queryClient = useQueryClient();
 
-  const getZonas = useQuery({
+  const useUbicacionesQuery = useQuery({
+    queryKey: ['ubicaciones'],
+    queryFn: () => fetchClient<Ubicacion[]>('/ubicaciones'),
+  });
+
+  const useZonas = useQuery({
     queryKey: ['zonas'],
     queryFn: () => fetchClient<Zona[]>('/zonas'),
   });
 
-  const getEstadisticas = useQuery({
+  const useEstadisticas = useQuery({
     queryKey: ['infra-stats'],
     queryFn: () => fetchClient<EstadisticasInfraestructura>('/espacios/estadisticas'),
   });
 
+  const createUbicacion = useMutation({
+    mutationFn: (data: { nombre: string; descripcion?: string }) =>
+      fetchClient<Ubicacion>('/ubicaciones', {
+        method: 'POST',
+        body: data
+      }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['ubicaciones'] }),
+  });
+
   const createZona = useMutation({
-    mutationFn: (nombre: string) => 
+    mutationFn: (data: { nombre: string; ubicacionId: number }) => 
       fetchClient<Zona>('/zonas', {
         method: 'POST',
-        body: { nombre }
+        body: data
       }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['zonas'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['zonas'] });
+      queryClient.invalidateQueries({ queryKey: ['ubicaciones'] });
+    },
   });
 
   const createRack = useMutation({
@@ -56,7 +81,10 @@ export const useUbicaciones = () => {
         method: 'POST',
         body: data
       }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['zonas'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['zonas'] });
+      queryClient.invalidateQueries({ queryKey: ['ubicaciones'] });
+    },
   });
 
   const updateEspacio = useMutation({
@@ -67,13 +95,16 @@ export const useUbicaciones = () => {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['zonas'] });
+      queryClient.invalidateQueries({ queryKey: ['ubicaciones'] });
       queryClient.invalidateQueries({ queryKey: ['infra-stats'] });
     },
   });
 
   return {
-    getZonas,
-    getEstadisticas,
+    useUbicacionesQuery,
+    useZonas,
+    useEstadisticas,
+    createUbicacion,
     createZona,
     createRack,
     updateEspacio,

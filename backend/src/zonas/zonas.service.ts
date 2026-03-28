@@ -11,13 +11,15 @@ export class ZonasService {
   ) {}
 
   findAll() {
-    return this.zonaRepo.find({ relations: ['marina', 'racks', 'racks.espacios'] });
+    return this.zonaRepo.find({
+      relations: ['ubicacion', 'racks', 'racks.espacios'],
+    });
   }
 
   async findOne(id: number) {
     const zona = await this.zonaRepo.findOne({
       where: { id },
-      relations: ['marina', 'racks', 'racks.espacios']
+      relations: ['marina', 'racks', 'racks.espacios'],
     });
     if (!zona) throw new NotFoundException(`Zona con ID ${id} no encontrada`);
     return zona;

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { User, Role } from '../../types';
+import { User, Role } from '../../../types';
 
 interface Props {
     initialData?: User | null;

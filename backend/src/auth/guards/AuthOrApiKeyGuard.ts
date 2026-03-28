@@ -17,15 +17,15 @@ export class AuthOrApiKeyGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<Request>();
 
     const token = this.extractTokenFromHeader(request);
     if (token) {
       try {
-        const payload = await this.jwtService.verifyAsync(token, {
+        const payload: unknown = await this.jwtService.verifyAsync(token, {
           secret: this.configService.get<string>('JWT_SECRET'),
         });
-        request['user'] = payload;
+        (request as Request & { user: unknown }).user = payload;
         return true;
       } catch {
         // Token failed, fall through to check API Key
@@ -34,7 +34,6 @@ export class AuthOrApiKeyGuard implements CanActivate {
 
     try {
       // Check API Key
-      // authApiKeyValidation throws UnauthorizedException if failed, so we catch it
       const validApiKey = this.configService.get<string>('API_KEY') || '';
       if (authApiKeyValidation(request, validApiKey)) {
         return true;

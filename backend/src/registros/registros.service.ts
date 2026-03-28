@@ -13,16 +13,19 @@ export class RegistrosService {
   findAll() {
     return this.registroRepo.find({
       relations: ['embarcacion', 'servicio'],
-      order: { createdAt: 'DESC' }
+      order: { createdAt: 'DESC' },
     });
   }
 
   async findOne(id: number) {
     const registro = await this.registroRepo.findOne({
       where: { id },
-      relations: ['embarcacion', 'servicio']
+      relations: ['embarcacion', 'servicio'],
     });
-    if (!registro) throw new NotFoundException(`Registro de servicio con ID ${id} no encontrado`);
+    if (!registro)
+      throw new NotFoundException(
+        `Registro de servicio con ID ${id} no encontrado`,
+      );
     return registro;
   }
 
@@ -30,7 +33,7 @@ export class RegistrosService {
     return this.registroRepo.find({
       where: { embarcacionId },
       relations: ['servicio'],
-      order: { createdAt: 'DESC' }
+      order: { createdAt: 'DESC' },
     });
   }
 

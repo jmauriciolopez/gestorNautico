@@ -1,4 +1,4 @@
-import { User, Role } from '../../types';
+import { User, Role } from '../../../types';
 import { Edit3, Trash2, Plus, User as UserIcon } from 'lucide-react';
 
 interface Props {

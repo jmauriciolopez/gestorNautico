@@ -1,9 +1,22 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards, Patch, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Put,
+  Delete,
+  UseGuards,
+  Patch,
+  Query,
+} from '@nestjs/common';
 import { RegistrosService } from './registros.service';
 import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../users/user.entity';
+
+import { RegistroServicio } from './registro.entity';
 
 @Controller('registros')
 @UseGuards(AuthTokenGuard, RolesGuard)
@@ -27,13 +40,13 @@ export class RegistrosController {
 
   @Post()
   @Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
-  create(@Body() data: any) {
+  create(@Body() data: Partial<RegistroServicio>) {
     return this.registrosService.create(data);
   }
 
   @Put(':id')
   @Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
-  update(@Param('id') id: string, @Body() data: any) {
+  update(@Param('id') id: string, @Body() data: Partial<RegistroServicio>) {
     return this.registrosService.update(+id, data);
   }
 

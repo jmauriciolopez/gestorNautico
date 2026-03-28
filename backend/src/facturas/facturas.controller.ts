@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards, Patch } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  UseGuards,
+  Patch,
+} from '@nestjs/common';
 import { FacturasService } from './facturas.service';
 import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -25,7 +34,7 @@ export class FacturasController {
 
   @Post()
   @Roles(Role.SUPERADMIN, Role.ADMIN)
-  create(@Body() data: any) {
+  create(@Body() data: Record<string, unknown>) {
     return this.facturasService.create(data);
   }
 

@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
 import { PagosService } from './pagos.service';
 import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -24,7 +32,7 @@ export class PagosController {
 
   @Post()
   @Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
-  create(@Body() data: any) {
+  create(@Body() data: Record<string, unknown>) {
     return this.pagosService.create(data);
   }
 

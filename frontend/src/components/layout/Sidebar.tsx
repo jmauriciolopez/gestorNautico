@@ -7,7 +7,9 @@ import {
   CircleDollarSign,
   Compass,
   User as UserIcon,
-  LayoutGrid
+  LayoutGrid,
+  Wrench,
+  FileText
 } from 'lucide-react';
 import { useAuth } from '../../features/auth/context/AuthContext';
 import { Role } from '../../types';
@@ -47,6 +49,12 @@ const Sidebar: React.FC = () => {
       allowedRoles: [Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR]
     },
     { 
+      name: 'Servicios', 
+      path: '/servicios', 
+      icon: <Wrench className="w-5 h-5" />,
+      allowedRoles: [Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR]
+    },
+    { 
       name: 'Infraestructura', 
       path: '/infraestructura', 
       icon: <LayoutGrid className="w-5 h-5" />,
@@ -56,6 +64,12 @@ const Sidebar: React.FC = () => {
       name: 'Finanzas', 
       path: '/finanzas', 
       icon: <CircleDollarSign className="w-5 h-5" />,
+      allowedRoles: [Role.SUPERADMIN, Role.ADMIN]
+    },
+    { 
+      name: 'Facturación', 
+      path: '/facturacion', 
+      icon: <FileText className="w-5 h-5" />,
       allowedRoles: [Role.SUPERADMIN, Role.ADMIN]
     },
   ];

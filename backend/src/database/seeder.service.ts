@@ -33,13 +33,35 @@ export class SeederService {
     await this.initialDataService.syncAll();
 
     // 3. Clientes Semilla (Datos de prueba volátiles)
-    const c1 = this.clienteRepo.create({ nombre: 'Juan Pérez', telefono: '12345678', email: 'juan@test.com', dni: '20123456' });
-    const c2 = this.clienteRepo.create({ nombre: 'María García', telefono: '87654321', email: 'maria@test.com', dni: '30123456' });
+    const c1 = this.clienteRepo.create({
+      nombre: 'Juan Pérez',
+      telefono: '12345678',
+      email: 'juan@test.com',
+      dni: '20123456',
+    });
+    const c2 = this.clienteRepo.create({
+      nombre: 'María García',
+      telefono: '87654321',
+      email: 'maria@test.com',
+      dni: '30123456',
+    });
     const clientes = await this.clienteRepo.save([c1, c2]);
 
     // 3. Embarcaciones Semilla
-    const b1 = this.embarcacionRepo.create({ nombre: 'La Mary', matricula: 'MAT-001', eslora: 10, manga: 3, cliente: clientes[0] });
-    const b2 = this.embarcacionRepo.create({ nombre: 'El Titán', matricula: 'MAT-002', eslora: 15, manga: 4, cliente: clientes[1] });
+    const b1 = this.embarcacionRepo.create({
+      nombre: 'La Mary',
+      matricula: 'MAT-001',
+      eslora: 10,
+      manga: 3,
+      cliente: clientes[0],
+    });
+    const b2 = this.embarcacionRepo.create({
+      nombre: 'El Titán',
+      matricula: 'MAT-002',
+      eslora: 15,
+      manga: 4,
+      cliente: clientes[1],
+    });
     await this.embarcacionRepo.save([b1, b2]);
 
     // 4. Caja Semilla (Abierta para tests financieros)
@@ -50,6 +72,10 @@ export class SeederService {
     });
     await this.cajaRepo.save(caja);
 
-    return { message: 'Base de datos sembrada con éxito', clientes: clientes.length, barcos: 2 };
+    return {
+      message: 'Base de datos sembrada con éxito',
+      clientes: clientes.length,
+      barcos: 2,
+    };
   }
 }

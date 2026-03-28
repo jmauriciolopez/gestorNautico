@@ -3,18 +3,32 @@ import { useUbicaciones } from '../hooks/useUbicaciones';
 import { 
   Plus, 
   Loader2, 
-  Map as MapIcon
+  Map as MapIcon,
+  Settings
 } from 'lucide-react';
 import { InfraestructuraStats } from '../components/InfraestructuraStats';
 import { MapaOcupacion } from '../components/MapaOcupacion';
 import { ConfiguracionZonas } from '../components/ConfiguracionZonas';
 
 export default function InfraestructuraPage() {
-  const { getZonas, getEstadisticas, createZona, createRack, updateEspacio } = useUbicaciones();
+  const { 
+    useUbicacionesQuery, 
+    useZonas, 
+    useEstadisticas, 
+    createUbicacion, 
+    createZona, 
+    createRack, 
+    updateEspacio 
+  } = useUbicaciones();
+  
   const [activeTab, setActiveTab] = useState<'mapa' | 'config'>('mapa');
 
-  const handleCreateZona = async (nombre: string) => {
-    await createZona.mutateAsync(nombre);
+  const handleCreateUbicacion = async (data: { nombre: string; descripcion?: string }) => {
+    await createUbicacion.mutateAsync(data);
+  };
+
+  const handleCreateZona = async (data: { nombre: string; ubicacionId: number }) => {
+    await createZona.mutateAsync(data);
   };
 
   const handleCreateRack = async (data: { zonaId: number; codigo: string; numEspacios: number }) => {
@@ -25,7 +39,9 @@ export default function InfraestructuraPage() {
     await updateEspacio.mutateAsync({ id, ocupado: !currentOcupado });
   };
 
-  if (getZonas.isLoading) {
+  const isLoading = useUbicacionesQuery.isLoading || useZonas.isLoading;
+
+  if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
         <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
@@ -34,7 +50,7 @@ export default function InfraestructuraPage() {
     );
   }
 
-  const stats = getEstadisticas.data || { total: 0, ocupados: 0, libres: 0, porcentajeOcupacion: 0 };
+  const stats = useEstadisticas.data || { total: 0, ocupados: 0, libres: 0, porcentajeOcupacion: 0 };
 
   return (
     <div className="p-6 space-y-8 max-w-7xl mx-auto">
@@ -58,21 +74,24 @@ export default function InfraestructuraPage() {
             activeTab === 'config' ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
           }`}
         >
-          <Plus size={18} />
+          <Settings size={18} />
           Configuración
         </button>
       </div>
 
       {activeTab === 'mapa' ? (
         <MapaOcupacion 
-          zonas={getZonas.data || []} 
+          ubicaciones={useUbicacionesQuery.data || []} 
           onToggleEspacio={toggleEspacio} 
         />
       ) : (
         <ConfiguracionZonas 
-          zonas={getZonas.data || []}
+          ubicaciones={useUbicacionesQuery.data || []}
+          zonas={useZonas.data || []}
+          onCreateUbicacion={handleCreateUbicacion}
           onCreateZona={handleCreateZona}
           onCreateRack={handleCreateRack}
+          isCreatingUbicacion={createUbicacion.isPending}
           isCreatingZona={createZona.isPending}
           isCreatingRack={createRack.isPending}
         />

@@ -17,35 +17,40 @@ export class PagosService {
   findAll() {
     return this.pagoRepo.find({
       relations: ['cliente', 'cargo', 'caja'],
-      order: { fecha: 'DESC' }
+      order: { fecha: 'DESC' },
     });
   }
 
   async findOne(id: number) {
     const pago = await this.pagoRepo.findOne({
       where: { id },
-      relations: ['cliente', 'cargo', 'caja']
+      relations: ['cliente', 'cargo', 'caja'],
     });
     if (!pago) throw new NotFoundException(`Pago con ID ${id} no encontrado`);
     return pago;
   }
 
-  async create(data: any) {
-    const { clienteId, cargoId, cajaId, ...rest } = data;
-    
+  async create(data: Record<string, unknown>) {
+    const { clienteId, cargoId, cajaId, ...rest } = data as {
+      clienteId: number;
+      cargoId?: number;
+      cajaId?: number;
+    };
+
     // 1. Obtener una caja abierta
-    const caja = cajaId 
-      ? await this.cajasService.findOne(cajaId) 
+    const caja = cajaId
+      ? await this.cajasService.findOne(cajaId)
       : await this.cajasService.findAbierta();
-    
-    if (!caja) throw new NotFoundException('No hay caja abierta para registrar el pago');
+
+    if (!caja)
+      throw new NotFoundException('No hay caja abierta para registrar el pago');
 
     // 2. Crear el pago
     const nuevoPago = this.pagoRepo.create({
       ...rest,
       cliente: { id: clienteId },
       cargo: cargoId ? { id: cargoId } : null,
-      caja: caja
+      caja: caja,
     });
 
     const pagoGuardado = await this.pagoRepo.save(nuevoPago);

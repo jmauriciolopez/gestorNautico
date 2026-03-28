@@ -1,8 +1,15 @@
-import { Entity, Column, PrimaryGeneratedColumn, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  OneToMany,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { Zona } from '../zonas/zona.entity';
 
-@Entity('marinas')
-export class Marina {
+@Entity('ubicaciones')
+export class Ubicacion {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -12,7 +19,7 @@ export class Marina {
   @Column({ nullable: true })
   descripcion: string;
 
-  @OneToMany(() => Zona, (zona: Zona) => zona.marina)
+  @OneToMany(() => Zona, (zona: Zona) => zona.ubicacion)
   zonas: Zona[];
 
   @CreateDateColumn()

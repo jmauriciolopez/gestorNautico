@@ -1,4 +1,12 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { Cliente } from '../clientes/clientes.entity';
 
 export enum EstadoFactura {
@@ -25,7 +33,11 @@ export class Factura {
   @Column({ type: 'date' })
   fechaEmision: Date;
 
-  @Column({ type: 'enum', enum: EstadoFactura, default: EstadoFactura.PENDIENTE })
+  @Column({
+    type: 'enum',
+    enum: EstadoFactura,
+    default: EstadoFactura.PENDIENTE,
+  })
   estado: EstadoFactura;
 
   @Column({ type: 'text', nullable: true })

@@ -11,12 +11,17 @@ export class CatalogoService {
   ) {}
 
   findAll() {
-    return this.catalogoRepo.find({ order: { categoria: 'ASC', nombre: 'ASC' } });
+    return this.catalogoRepo.find({
+      order: { categoria: 'ASC', nombre: 'ASC' },
+    });
   }
 
   async findOne(id: number) {
     const item = await this.catalogoRepo.findOne({ where: { id } });
-    if (!item) throw new NotFoundException(`Servicio con ID ${id} no encontrado en catálogo`);
+    if (!item)
+      throw new NotFoundException(
+        `Servicio con ID ${id} no encontrado en catálogo`,
+      );
     return item;
   }
 

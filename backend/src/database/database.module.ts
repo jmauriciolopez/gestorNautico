@@ -10,7 +10,7 @@ import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
 import { User } from '../users/user.entity';
 
 // Entidades de Infraestructura (4-Niveles Planos)
-import { Marina } from '../marinas/marina.entity';
+import { Ubicacion } from '../ubicaciones/ubicacion.entity';
 import { Zona } from '../zonas/zona.entity';
 import { Rack } from '../racks/rack.entity';
 import { Espacio } from '../espacios/espacio.entity';
@@ -32,21 +32,21 @@ import { Pedido } from '../pedidos/pedidos.entity';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
-      Cliente, 
-      Embarcacion, 
-      User, 
-      Marina,
-      Zona, 
-      Rack, 
-      Espacio, 
+      Cliente,
+      Embarcacion,
+      User,
+      Ubicacion,
+      Zona,
+      Rack,
+      Espacio,
       Catalogo,
       RegistroServicio,
-      Caja, 
-      Cargo, 
+      Caja,
+      Cargo,
       Pago,
       Factura,
       Movimiento,
-      Pedido
+      Pedido,
     ]),
   ],
   providers: [SeederService, InitialDataService],

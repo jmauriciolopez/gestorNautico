@@ -1,4 +1,11 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  OneToMany,
+} from 'typeorm';
 import { Pago } from '../pagos/pago.entity';
 
 export enum EstadoCaja {
@@ -26,7 +33,7 @@ export class Caja {
   @Column({ type: 'enum', enum: EstadoCaja, default: EstadoCaja.ABIERTA })
   estado: EstadoCaja;
 
-  @OneToMany(() => Pago, pago => pago.caja)
+  @OneToMany(() => Pago, (pago) => pago.caja)
   pagos: Pago[];
 
   @CreateDateColumn()
