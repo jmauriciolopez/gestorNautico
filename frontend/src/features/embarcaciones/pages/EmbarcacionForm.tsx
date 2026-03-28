@@ -3,6 +3,7 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import { useEmbarcaciones } from '../hooks/useEmbarcaciones';
 import { useClientes } from '../../clientes/hooks/useClientes';
+import { useUbicaciones } from '../../infraestructura/hooks/useUbicaciones';
 
 export default function EmbarcacionForm() {
   const navigate = useNavigate();
@@ -11,10 +12,12 @@ export default function EmbarcacionForm() {
   
   const { useEmbarcacion, createEmbarcacion, updateEmbarcacion } = useEmbarcaciones();
   const { getClientes } = useClientes();
+  const { useZonas } = useUbicaciones();
   
   const embarcacionQuery = useEmbarcacion(Number(id));
   const { data: embarcacion, isLoading: isFetchingEmb } = embarcacionQuery;
   const { data: clientes = [], isLoading: isFetchingClientes } = getClientes;
+  const { data: zonas = [], isLoading: isFetchingZonas } = useZonas;
 
   const [formData, setFormData] = useState({
     nombre: '',
@@ -167,6 +170,36 @@ export default function EmbarcacionForm() {
                 className="w-full px-5 py-4 bg-slate-950 border border-slate-800 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 text-white transition-all font-mono"
                 placeholder="Ej: 2.10"
               />
+            </div>
+
+            <div className="space-y-3 col-span-full">
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Ubicación Asignada (Rack / Espacio)</label>
+              <select 
+                name="espacioId" value={formData.espacioId} onChange={handleChange}
+                className="w-full px-5 py-4 bg-slate-950 border border-slate-800 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 text-white transition-all font-bold disabled:opacity-50"
+                disabled={isFetchingZonas}
+              >
+                <option value="">{isFetchingZonas ? 'Cargando infraestructura...' : 'Sin ubicación asignada (A flote o transitoria)'}</option>
+                
+                {zonas.map(zona => (
+                  zona.racks.map(rack => {
+                    const espaciosDisponibles = rack.espacios.filter(e => !e.ocupado || e.id === Number(embarcacion?.espacio?.id));
+                    
+                    if (espaciosDisponibles.length === 0) return null;
+
+                    return (
+                      <optgroup key={rack.id} label={`${zona.nombre} - Rack ${rack.codigo}`}>
+                        {espaciosDisponibles.map(espacio => (
+                          <option key={espacio.id} value={espacio.id}>
+                            Espacio: {espacio.numero}
+                          </option>
+                        ))}
+                      </optgroup>
+                    );
+                  })
+                ))}
+              </select>
+              <p className="text-[10px] text-slate-500 font-medium ml-1">Solo se muestran espacios disponibles.</p>
             </div>
 
             <div className="space-y-3 col-span-full">

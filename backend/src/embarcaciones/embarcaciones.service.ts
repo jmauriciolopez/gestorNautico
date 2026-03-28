@@ -15,7 +15,7 @@ export class EmbarcacionesService {
 
   async findAll(): Promise<Embarcacion[]> {
     return this.embarcacionesRepository.find({
-      relations: ['cliente', 'espacio'],
+      relations: ['cliente', 'espacio', 'espacio.rack', 'espacio.rack.zona'],
       order: { createdAt: 'DESC' },
     });
   }
@@ -23,7 +23,7 @@ export class EmbarcacionesService {
   async findOne(id: number): Promise<Embarcacion> {
     const embarcacion = await this.embarcacionesRepository.findOne({
       where: { id },
-      relations: ['cliente', 'espacio'],
+      relations: ['cliente', 'espacio', 'espacio.rack', 'espacio.rack.zona'],
     });
     if (!embarcacion) {
       throw new NotFoundException(`Embarcación con ID ${id} no encontrada`);

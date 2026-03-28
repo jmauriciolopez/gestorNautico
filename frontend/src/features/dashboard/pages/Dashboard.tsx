@@ -17,10 +17,12 @@ import {
   AreaChart,
   Area
 } from 'recharts';
-import { useDashboard } from '../hooks/useDashboard';
+import { useDashboard, useRackMap } from '../hooks/useDashboard';
+import { MapaRacks } from '../components/MapaRacks';
 
 const Dashboard: React.FC = () => {
   const { data, isLoading, isError } = useDashboard();
+  const { data: rackMapData, isLoading: isMapLoading } = useRackMap();
 
   if (isLoading) return <div className="p-8 animate-pulse text-blue-400">Cargando métricas estratégicas...</div>;
   if (isError) return <div className="p-8 text-red-500">Error al cargar el Dashboard.</div>;
@@ -120,6 +122,18 @@ const Dashboard: React.FC = () => {
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Rack Map Section */}
+      <div className="pt-8 border-t border-slate-800/50">
+        {isMapLoading ? (
+            <div className="bg-slate-950/20 p-24 rounded-[3rem] border border-dashed border-slate-800 flex flex-col items-center gap-4">
+                <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
+                <p className="text-slate-500 font-medium">Sincronizando topología de racks...</p>
+            </div>
+        ) : (
+            <MapaRacks data={rackMapData || []} />
+        )}
       </div>
     </div>
   );

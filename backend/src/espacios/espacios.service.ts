@@ -19,7 +19,7 @@ export class EspaciosService {
   async findOne(id: number) {
     const espacio = await this.espacioRepo.findOne({
       where: { id },
-      relations: ['rack', 'rack.zona', 'rack.zona.marina'],
+      relations: ['rack', 'rack.zona', 'rack.zona.ubicacion'],
     });
     if (!espacio)
       throw new NotFoundException(`Espacio con ID ${id} no encontrado`);

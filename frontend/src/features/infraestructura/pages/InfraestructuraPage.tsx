@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useUbicaciones } from '../hooks/useUbicaciones';
 import { 
-  Plus, 
   Loader2, 
   Map as MapIcon,
   Settings
@@ -17,26 +16,87 @@ export default function InfraestructuraPage() {
     useEstadisticas, 
     createUbicacion, 
     createZona, 
+    updateZona,
+    deleteZona,
     createRack, 
+    updateRack,
+    deleteRack,
     updateEspacio 
   } = useUbicaciones();
   
   const [activeTab, setActiveTab] = useState<'mapa' | 'config'>('mapa');
 
   const handleCreateUbicacion = async (data: { nombre: string; descripcion?: string }) => {
-    await createUbicacion.mutateAsync(data);
+    try {
+      await createUbicacion.mutateAsync(data);
+    } catch (error: any) {
+      alert(error.message || 'Error al crear ubicación');
+    }
   };
 
   const handleCreateZona = async (data: { nombre: string; ubicacionId: number }) => {
-    await createZona.mutateAsync(data);
+    try {
+      await createZona.mutateAsync(data);
+    } catch (error: any) {
+      alert(error.message || 'Error al crear zona');
+    }
   };
 
-  const handleCreateRack = async (data: { zonaId: number; codigo: string; numEspacios: number }) => {
-    await createRack.mutateAsync(data);
+  const handleCreateRack = async (data: { 
+    zonaId: number; 
+    codigo: string; 
+    pisos: number;
+    filas: number; 
+    columnas: number;
+    alto: number;
+    ancho: number;
+    largo: number;
+  }) => {
+    try {
+      await createRack.mutateAsync(data);
+    } catch (error: any) {
+      alert(error.message || 'Error al crear rack');
+    }
+  };
+
+  const handleUpdateRack = async (id: number, data: any) => {
+    try {
+      await updateRack.mutateAsync({ id, ...data });
+    } catch (error: any) {
+      alert(error.message || 'Error al actualizar rack');
+    }
+  };
+
+  const handleDeleteRack = async (id: number) => {
+    try {
+      await deleteRack.mutateAsync(id);
+    } catch (error: any) {
+      alert(error.message || 'Error al eliminar rack');
+    }
+  };
+
+  const handleUpdateZona = async (id: number, data: { nombre: string; ubicacionId: number }) => {
+    try {
+      await updateZona.mutateAsync({ id, ...data });
+    } catch (error: any) {
+      alert(error.message || 'Error al actualizar zona');
+    }
+  };
+
+  const handleDeleteZona = async (id: number) => {
+    try {
+      await deleteZona.mutateAsync(id);
+    } catch (error: any) {
+      alert(error.message || 'Error al eliminar zona');
+    }
   };
 
   const toggleEspacio = async (id: number, currentOcupado: boolean) => {
-    await updateEspacio.mutateAsync({ id, ocupado: !currentOcupado });
+    try {
+      await updateEspacio.mutateAsync({ id, ocupado: !currentOcupado });
+    } catch (error: any) {
+      alert(error.message || 'Error al actualizar espacio');
+    }
   };
 
   const isLoading = useUbicacionesQuery.isLoading || useZonas.isLoading;
@@ -90,10 +150,16 @@ export default function InfraestructuraPage() {
           zonas={useZonas.data || []}
           onCreateUbicacion={handleCreateUbicacion}
           onCreateZona={handleCreateZona}
+          onUpdateZona={handleUpdateZona}
+          onDeleteZona={handleDeleteZona}
           onCreateRack={handleCreateRack}
+          onUpdateRack={handleUpdateRack}
+          onDeleteRack={handleDeleteRack}
           isCreatingUbicacion={createUbicacion.isPending}
           isCreatingZona={createZona.isPending}
+          isUpdatingZona={updateZona.isPending}
           isCreatingRack={createRack.isPending}
+          isUpdatingRack={updateRack.isPending}
         />
       )}
     </div>

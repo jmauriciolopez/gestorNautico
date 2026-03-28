@@ -19,12 +19,21 @@ export interface Rack {
   id: number;
   codigo: string;
   zonaId: number;
+  pisos: number;
+  filas: number;
+  columnas: number;
+  alto: number;
+  ancho: number;
+  largo: number;
   espacios: Espacio[];
 }
 
 export interface Espacio {
   id: number;
   numero: string;
+  piso?: number;
+  fila?: number;
+  columna?: number;
   ocupado: boolean;
   rackId: number;
 }
@@ -76,10 +85,75 @@ export const useUbicaciones = () => {
   });
 
   const createRack = useMutation({
-    mutationFn: (data: { zonaId: number; codigo: string; numEspacios: number }) =>
+    mutationFn: (data: { 
+      zonaId: number; 
+      codigo: string; 
+      pisos: number;
+      filas: number; 
+      columnas: number;
+      alto: number;
+      ancho: number;
+      largo: number;
+    }) =>
       fetchClient<Rack>('/racks', {
         method: 'POST',
         body: data
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['zonas'] });
+      queryClient.invalidateQueries({ queryKey: ['ubicaciones'] });
+    },
+  });
+
+  const updateZona = useMutation({
+    mutationFn: ({ id, ...data }: { id: number; nombre: string; ubicacionId: number }) =>
+      fetchClient<Zona>(`/zonas/${id}`, {
+        method: 'PUT',
+        body: data
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['zonas'] });
+      queryClient.invalidateQueries({ queryKey: ['ubicaciones'] });
+    },
+  });
+
+  const deleteZona = useMutation({
+    mutationFn: (id: number) =>
+      fetchClient(`/zonas/${id}`, {
+        method: 'DELETE'
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['zonas'] });
+      queryClient.invalidateQueries({ queryKey: ['ubicaciones'] });
+    },
+  });
+
+  const updateRack = useMutation({
+    mutationFn: ({ id, ...data }: { 
+      id: number;
+      zonaId: number; 
+      codigo: string; 
+      pisos: number;
+      filas: number; 
+      columnas: number;
+      alto: number;
+      ancho: number;
+      largo: number;
+    }) =>
+      fetchClient<Rack>(`/racks/${id}`, {
+        method: 'PUT',
+        body: data
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['zonas'] });
+      queryClient.invalidateQueries({ queryKey: ['ubicaciones'] });
+    },
+  });
+
+  const deleteRack = useMutation({
+    mutationFn: (id: number) =>
+      fetchClient(`/racks/${id}`, {
+        method: 'DELETE'
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['zonas'] });
@@ -106,7 +180,11 @@ export const useUbicaciones = () => {
     useEstadisticas,
     createUbicacion,
     createZona,
+    updateZona,
+    deleteZona,
     createRack,
+    updateRack,
+    deleteRack,
     updateEspacio,
   };
 };

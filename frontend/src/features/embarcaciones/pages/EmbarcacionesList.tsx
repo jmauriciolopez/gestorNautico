@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Search, Edit, Trash2, Ship, Loader2 } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Ship, Loader2, MapPin } from 'lucide-react';
 import { useEmbarcaciones } from '../hooks/useEmbarcaciones';
 
 export default function EmbarcacionesList() {
@@ -81,6 +81,7 @@ export default function EmbarcacionesList() {
                 <th className="px-8 py-5">Embarcación</th>
                 <th className="px-8 py-5">Dimensiones</th>
                 <th className="px-8 py-5">Propietario</th>
+                <th className="px-8 py-5">Ubicación</th>
                 <th className="px-8 py-5">Estado</th>
                 <th className="px-8 py-5 text-right">Acciones</th>
               </tr>
@@ -111,6 +112,21 @@ export default function EmbarcacionesList() {
                     >
                       {emb.cliente?.nombre || 'Sin asignar'}
                     </button>
+                  </td>
+                  <td className="px-8 py-5">
+                    {emb.espacio ? (
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-1.5 text-slate-100 font-bold">
+                          <MapPin className="w-3.5 h-3.5 text-blue-400" />
+                          <span>{emb.espacio.rack?.zona?.nombre || 'Zona'}</span>
+                        </div>
+                        <div className="text-[10px] text-slate-400 font-mono mt-0.5 ml-5">
+                          {emb.espacio.rack?.codigo} - {emb.espacio.numero}
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-slate-500 italic text-xs">Puesto a flote</span>
+                    )}
                   </td>
                   <td className="px-8 py-5">
                     <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${

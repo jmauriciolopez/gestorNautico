@@ -50,7 +50,7 @@ export class Embarcacion {
   @Column({ nullable: true })
   espacioId: number;
 
-  @OneToOne(() => Espacio, { nullable: true })
+  @OneToOne(() => Espacio, (espacio) => espacio.embarcacion, { nullable: true })
   @JoinColumn({ name: 'espacioId' })
   espacio: Espacio;
 

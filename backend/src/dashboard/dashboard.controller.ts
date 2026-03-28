@@ -15,4 +15,10 @@ export class DashboardController {
   async getSummary() {
     return this.dashboardService.getSummary();
   }
+
+  @Get('rack-map')
+  @Roles(Role.ADMIN, Role.SUPERADMIN, Role.OPERADOR)
+  async getRackMap() {
+    return this.dashboardService.getRackMap();
+  }
 }

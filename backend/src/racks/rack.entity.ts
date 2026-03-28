@@ -18,6 +18,9 @@ export class Rack {
   codigo: string;
 
   @Column({ type: 'int', default: 1 })
+  pisos: number;
+
+  @Column({ type: 'int', default: 1 })
   filas: number;
 
   @Column({ type: 'int', default: 1 })

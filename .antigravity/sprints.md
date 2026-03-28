@@ -3,38 +3,38 @@
 ## 🚩 Sprint 1: Foundation (Backend Core)
 - **Goal**: Base functional backend and database schema.
 - **Tasks**:
-  - [ ] NestJS App initialization.
-  - [ ] Database Connection (Prisma/TypeORM setup).
-  - [ ] **Clientes** Module (CRUD).
-  - [ ] Basic Authentication.
+  - [x] NestJS App initialization.
+  - [x] Database Connection (TypeORM setup).
+  - [x] **Clientes** Module (CRUD).
+  - [x] Basic Authentication.
 
 ## ⛵ Sprint 2: Core Business Logic
 - **Goal**: Manage the main assets of the guardería.
 - **Tasks**:
-  - [ ] **Embarcaciones** Module.
-  - [ ] Relationship Cliente ↔ Embarcación.
-  - [ ] Physical Infrastructure: **Zonas**, **Racks**, **Espacios**.
+  - [x] **Embarcaciones** Module.
+  - [x] Relationship Cliente ↔ Embarcación.
+  - [x] Physical Infrastructure: **Zonas**, **Racks**, **Espacios**.
 
 ## 🔄 Sprint 3: The Engine (Operations)
 - **Goal**: Implement the daily operational flow.
 - **Tasks**:
-  - [ ] **Pedidos** Module.
-  - [ ] **Movimientos** (Registro de entradas/salidas de embarcaciones).
-  - [ ] Integration with Spaces (Updating occupancy).
+  - [x] **Pedidos** Module.
+  - [x] **Movimientos** (Registro de entradas/salidas de embarcaciones).
+  - [x] Integration with Spaces (Updating occupancy).
 
 ## 💰 Sprint 4: Financial & Billing
 - **Goal**: Monetize the operations.
 - **Tasks**:
-  - [ ] **Cargos** (Automatic and manual charges).
-  - [ ] **Pagos** (Gateway or manual entry).
-  - [ ] **Caja** Opening/Closing logic.
+  - [x] **Cargos** (Automatic and manual charges).
+  - [x] **Pagos** (Gateway or manual entry).
+  - [x] **Caja** Opening/Closing logic.
 
 ## 🖥️ Sprint 5: Frontend Implementation
 - **Goal**: A premium UI for managing the system.
 - **Tasks**:
-  - [ ] React Shell + Navigation.
-  - [ ] Interactive Dashboard (Map of Racks).
-  - [ ] Forms and Lists for all entities.
+  - [x] React Shell + Navigation.
+  - [x] Interactive Dashboard (Map of Racks).
+  - [x] Forms and Lists for all entities.
 
 ## ✨ Sprint 6: Polish & QA
 - **Goal**: Zero bugs and high performance.
@@ -42,3 +42,4 @@
   - [ ] End-to-end testing of the "Daily Flow".
   - [ ] Mobile UI optimization.
   - [ ] Final Documentation update.
+

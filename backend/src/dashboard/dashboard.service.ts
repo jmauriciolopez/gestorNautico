@@ -6,6 +6,7 @@ import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
 import { Movimiento } from '../movimientos/movimientos.entity';
 import { Cargo } from '../cargos/cargo.entity';
 import { Pago } from '../pagos/pago.entity';
+import { Zona } from '../zonas/zona.entity';
 
 @Injectable()
 export class DashboardService {
@@ -20,6 +21,8 @@ export class DashboardService {
     private readonly cargoRepo: Repository<Cargo>,
     @InjectRepository(Pago)
     private readonly pagoRepo: Repository<Pago>,
+    @InjectRepository(Zona)
+    private readonly zonaRepo: Repository<Zona>,
   ) {}
 
   async getSummary() {
@@ -97,5 +100,27 @@ export class DashboardService {
       });
     }
     return series;
+  }
+
+  async getRackMap() {
+    return this.zonaRepo.find({
+      relations: [
+        'ubicacion',
+        'racks',
+        'racks.espacios',
+        'racks.espacios.embarcacion',
+      ],
+      order: {
+        id: 'ASC',
+        racks: {
+          codigo: 'ASC',
+          espacios: {
+            piso: 'ASC',
+            fila: 'ASC',
+            columna: 'ASC',
+          },
+        },
+      },
+    });
   }
 }
