@@ -1,9 +1,11 @@
 import { useAuth } from '../../features/auth/context/AuthContext';
-import { Menu, LogOut, Search, Bell, User as UserIcon, Sun, Moon } from 'lucide-react';
-import { useState } from 'react';
+import { Menu, LogOut, Search, Bell, User as UserIcon, Sun, Moon, X } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
 import { NotificationPopover } from '../../features/notificaciones/components/NotificationPopover';
 import { useNotificaciones } from '../../features/notificaciones/hooks/useNotificaciones';
 import { useTheme } from '../../context/ThemeContext';
+import { useGlobalSearch } from '../../hooks/useGlobalSearch';
+import { GlobalSearchDropdown } from '../search/GlobalSearchDropdown';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -15,17 +17,73 @@ export default function Header({ onMenuClick }: HeaderProps) {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const { unreadCount } = useNotificaciones();
 
+  // Global Search
+  const [query, setQuery] = useState('');
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+  const { results, isLoading, hasResults, isActive } = useGlobalSearch(query);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setIsSearchOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setQuery(e.target.value);
+    setIsSearchOpen(true);
+  };
+
+  const handleClear = () => {
+    setQuery('');
+    setIsSearchOpen(false);
+  };
+
+  const handleSelect = () => {
+    setQuery('');
+    setIsSearchOpen(false);
+  };
+
   return (
     <header className="h-20 bg-[var(--bg-primary)]/[0.05] backdrop-blur-md border-b border-[var(--border-primary)] flex items-center justify-between px-8 z-10 transition-colors duration-300">
       <div className="flex items-center gap-6 flex-1">
-        <div className="relative group hidden lg:block max-w-sm w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-secondary)] group-focus-within:text-indigo-400 transition-colors" />
+        {/* Global Search Box */}
+        <div ref={searchRef} className="relative group hidden lg:block max-w-sm w-full">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-secondary)] group-focus-within:text-indigo-400 transition-colors pointer-events-none" />
           <input
             type="text"
-            placeholder="Búsqueda global..."
-            className="w-full bg-[var(--bg-secondary)]/[0.3] border border-[var(--border-primary)] rounded-xl py-2 pl-10 pr-4 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/40 transition-all font-medium"
+            value={query}
+            onChange={handleSearchChange}
+            onFocus={() => query.length >= 2 && setIsSearchOpen(true)}
+            placeholder="Búsqueda global... (clientes, barcos, racks)"
+            className="w-full bg-[var(--bg-secondary)]/[0.3] border border-[var(--border-primary)] rounded-xl py-2 pl-10 pr-10 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/40 transition-all font-medium placeholder:text-[var(--text-secondary)]/50"
           />
+          {query && (
+            <button
+              onClick={handleClear}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+
+          {/* Dropdown */}
+          {isSearchOpen && (
+            <GlobalSearchDropdown
+              results={results}
+              isLoading={isLoading}
+              hasResults={hasResults}
+              isActive={isActive}
+              onSelect={handleSelect}
+            />
+          )}
         </div>
+
         <button
           onClick={onMenuClick}
           className="lg:hidden text-[var(--text-secondary)] hover:text-[var(--text-primary)] p-2 hover:bg-[var(--bg-secondary)]/[0.2] rounded-lg transition-colors"

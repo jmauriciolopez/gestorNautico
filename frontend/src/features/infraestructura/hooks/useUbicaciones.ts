@@ -25,6 +25,7 @@ export interface Rack {
   alto: number;
   ancho: number;
   largo: number;
+  tarifaBase: number;
   espacios: Espacio[];
 }
 
@@ -100,6 +101,7 @@ export const useUbicaciones = () => {
       alto: number;
       ancho: number;
       largo: number;
+      tarifaBase: number;
     }) =>
       fetchClient<Rack>('/racks', {
         method: 'POST',
@@ -145,6 +147,7 @@ export const useUbicaciones = () => {
       alto: number;
       ancho: number;
       largo: number;
+      tarifaBase: number;
     }) =>
       fetchClient<Rack>(`/racks/${id}`, {
         method: 'PUT',

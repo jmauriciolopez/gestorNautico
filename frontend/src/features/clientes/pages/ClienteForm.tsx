@@ -18,7 +18,10 @@ export default function ClienteForm() {
     dni: '',
     email: '',
     telefono: '',
-    activo: true
+    activo: true,
+    diaFacturacion: 1,
+    descuento: 0,
+    tipoCuota: 'NINGUNA',
   });
 
   // Sync data when editing
@@ -29,7 +32,10 @@ export default function ClienteForm() {
         dni: cliente.dni || '',
         email: cliente.email || '',
         telefono: cliente.telefono || '',
-        activo: cliente.activo ?? true
+        activo: cliente.activo ?? true,
+        diaFacturacion: cliente.diaFacturacion ?? 1,
+        descuento: cliente.descuento ?? 0,
+        tipoCuota: cliente.tipoCuota || 'NINGUNA',
       });
     }
   }, [isEditing, cliente]);
@@ -144,6 +150,53 @@ export default function ClienteForm() {
                 className="w-full px-5 py-4 bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 text-[var(--text-primary)] placeholder-[var(--text-secondary)]/30 transition-all font-medium"
                 placeholder="+54 11 1234-5678"
               />
+            </div>
+
+            {/* Facturación Fields */}
+            <div className="space-y-3">
+              <label htmlFor="diaFacturacion" className="block text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest ml-1">Día de Facturación</label>
+              <input
+                type="number"
+                id="diaFacturacion"
+                name="diaFacturacion"
+                min="1"
+                max="31"
+                value={formData.diaFacturacion}
+                onChange={handleChange}
+                className="w-full px-5 py-4 bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 text-[var(--text-primary)] placeholder-[var(--text-secondary)]/30 transition-all font-medium"
+                placeholder="Ej: 1"
+              />
+            </div>
+
+            <div className="space-y-3">
+              <label htmlFor="descuento" className="block text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest ml-1">Descuento (%)</label>
+              <input
+                type="number"
+                id="descuento"
+                name="descuento"
+                min="0"
+                max="100"
+                step="0.01"
+                value={formData.descuento}
+                onChange={handleChange}
+                className="w-full px-5 py-4 bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 text-[var(--text-primary)] placeholder-[var(--text-secondary)]/30 transition-all font-medium"
+                placeholder="Ej: 10.5"
+              />
+            </div>
+
+            <div className="space-y-3 md:col-span-2">
+              <label htmlFor="tipoCuota" className="block text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest ml-1">Tipo de Cuota</label>
+              <select
+                id="tipoCuota"
+                name="tipoCuota"
+                value={formData.tipoCuota}
+                onChange={handleChange}
+                className="w-full px-5 py-4 bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 text-[var(--text-primary)] transition-all font-medium appearance-none"
+              >
+                <option value="NINGUNA">Ninguna (Solo Amarre)</option>
+                <option value="INDIVIDUAL">Socio Individual</option>
+                <option value="FAMILIAR">Grupo Familiar</option>
+              </select>
             </div>
 
           </div>

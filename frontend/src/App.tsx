@@ -21,6 +21,8 @@ import InfraestructuraPage from './features/infraestructura/pages/Infraestructur
 import FinanzasPage from './features/finanzas/pages/FinanzasPage';
 import ServiciosPage from './features/servicios/pages/ServiciosPage';
 import FacturacionPage from './features/facturacion/pages/FacturacionPage';
+import UsersPage from './features/users/pages/UsersPage';
+import SolicitudBajadaPublica from './features/operaciones/pages/SolicitudBajadaPublica';
 
 // Componente simple para Login Helper
 const LoginWrapper = () => {
@@ -60,6 +62,7 @@ function App() {
           <AuthProvider>
             <Routes>
               <Route path="/login" element={<LoginWrapper />} />
+              <Route path="/bajada-publica" element={<SolicitudBajadaPublica />} />
               <Route path="/unauthorized" element={<Unauthorized />} />
 
               {/* Rutas Protegidas */}
@@ -84,6 +87,11 @@ function App() {
                   <Route element={<ProtectedRoute allowedRoles={[Role.ADMIN, Role.SUPERADMIN]} />}>
                     <Route path="finanzas" element={<FinanzasPage />} />
                     <Route path="facturacion" element={<FacturacionPage />} />
+                  </Route>
+
+                  {/* Gestión de Usuarios (Solo SuperAdmin) */}
+                  <Route element={<ProtectedRoute allowedRoles={[Role.SUPERADMIN]} />}>
+                    <Route path="usuarios/*" element={<UsersPage />} />
                   </Route>
                 </Route>
               </Route>

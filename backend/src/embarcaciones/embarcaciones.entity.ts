@@ -43,6 +43,9 @@ export class Embarcacion {
   @Column({ nullable: true })
   clienteId: number;
 
+  @Column('decimal', { precision: 5, scale: 2, default: 0 })
+  descuento: number;
+
   @ManyToOne(() => Cliente, (cliente) => cliente.id)
   @JoinColumn({ name: 'clienteId' })
   cliente: Cliente;

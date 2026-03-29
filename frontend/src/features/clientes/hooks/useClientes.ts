@@ -8,9 +8,14 @@ export interface Cliente {
   email: string;
   telefono: string;
   activo: boolean;
+  diaFacturacion?: number;
+  descuento?: number;
+  tipoCuota?: string;
+  responsableFamiliaId?: number | null;
   createdAt: string;
   updatedAt: string;
 }
+
 
 export const useClientes = () => {
   const queryClient = useQueryClient();

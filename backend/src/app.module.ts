@@ -29,12 +29,44 @@ import { NotificacionesModule } from './notificaciones/notificaciones.module';
 // Módulos de Servicios (Planos)
 import { CatalogoModule } from './catalogo/catalogo.module';
 import { RegistrosModule } from './registros/registros.module';
+import { OperacionesModule } from './operaciones/operaciones.module';
+import { SearchModule } from './search/search.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { MailerModule } from '@nestjs-modules/mailer';
+import { HandlebarsAdapter } from '@nestjs-modules/mailer/adapters/handlebars.adapter';
+import { join } from 'path';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
+    }),
+    ScheduleModule.forRoot(),
+    MailerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        transport: {
+          host: configService.get<string>('MAIL_HOST'),
+          port: configService.get<number>('MAIL_PORT'),
+          secure: configService.get<string>('MAIL_SECURE') === 'true',
+          auth: {
+            user: configService.get<string>('MAIL_USER'),
+            pass: configService.get<string>('MAIL_PASS'),
+          },
+        },
+        defaults: {
+          from: `"Gestor Náutico" <${configService.get<string>('MAIL_FROM')}>`,
+        },
+        template: {
+          dir: join(__dirname, 'notificaciones/templates'),
+          adapter: new HandlebarsAdapter(),
+          options: {
+            strict: true,
+          },
+        },
+      }),
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -73,6 +105,8 @@ import { RegistrosModule } from './registros/registros.module';
     MovimientosModule,
     PedidosModule,
     NotificacionesModule,
+    OperacionesModule,
+    SearchModule,
   ],
 })
-export class AppModule {}
+export class AppModule { }

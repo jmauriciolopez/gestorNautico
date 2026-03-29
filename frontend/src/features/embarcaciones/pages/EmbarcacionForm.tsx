@@ -30,7 +30,8 @@ export default function EmbarcacionForm() {
     tipo: 'Lancha',
     clienteId: '',
     espacioId: '',
-    estado: 'EN_CUNA'
+    estado: 'EN_CUNA',
+    descuento: '0'
   });
 
   // Calculate selected space label
@@ -56,7 +57,8 @@ export default function EmbarcacionForm() {
         tipo: embarcacion.tipo || 'Lancha',
         clienteId: String(embarcacion.cliente?.id || ''),
         espacioId: String(embarcacion.espacio?.id || ''),
-        estado: embarcacion.estado || 'EN_CUNA'
+        estado: embarcacion.estado || 'EN_CUNA',
+        descuento: embarcacion.descuento !== undefined ? String(embarcacion.descuento) : '0'
       });
     }
   }, [isEditing, embarcacion]);
@@ -73,6 +75,7 @@ export default function EmbarcacionForm() {
       ...formData,
       eslora: parseFloat(formData.eslora) || 0,
       manga: parseFloat(formData.manga) || 0,
+      descuento: parseFloat(formData.descuento) || 0,
       clienteId: formData.clienteId ? parseInt(formData.clienteId) : null,
       espacioId: formData.espacioId ? parseInt(formData.espacioId) : null
     };
@@ -185,6 +188,15 @@ export default function EmbarcacionForm() {
                 type="number" step="0.01" name="manga" value={formData.manga} onChange={handleChange}
                 className="w-full px-5 py-4 bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 text-[var(--text-primary)] transition-all font-mono"
                 placeholder="Ej: 2.10"
+              />
+            </div>
+
+            <div className="space-y-3">
+              <label className="block text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest ml-1">Descuento Especial (%)</label>
+              <input
+                type="number" step="0.01" min="0" max="100" name="descuento" value={formData.descuento} onChange={handleChange}
+                className="w-full px-5 py-4 bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 text-[var(--text-primary)] transition-all font-mono"
+                placeholder="Ej: 15.00"
               />
             </div>
 

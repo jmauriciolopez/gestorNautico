@@ -26,6 +26,18 @@ export class Cliente {
   @Column({ default: true })
   activo: boolean;
 
+  @Column({ type: 'int', default: 1 })
+  diaFacturacion: number;
+
+  @Column('decimal', { precision: 5, scale: 2, default: 0 })
+  descuento: number;
+
+  @Column({ default: 'NINGUNA' })
+  tipoCuota: string; // INDIVIDUAL, FAMILIAR, NINGUNA
+
+  @Column({ nullable: true })
+  responsableFamiliaId: number;
+
   @CreateDateColumn()
   createdAt: Date;
 

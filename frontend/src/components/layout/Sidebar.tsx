@@ -10,7 +10,8 @@ import {
   LayoutGrid,
   Wrench,
   FileText,
-  X
+  X,
+  ShieldCheck
 } from 'lucide-react';
 import { useAuth } from '../../features/auth/context/AuthContext';
 import { Role } from '../../types';
@@ -78,6 +79,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       icon: <FileText className="w-5 h-5" />,
       allowedRoles: [Role.SUPERADMIN, Role.ADMIN]
     },
+    {
+      name: 'Usuarios',
+      path: '/usuarios',
+      icon: <ShieldCheck className="w-5 h-5" />,
+      allowedRoles: [Role.SUPERADMIN]
+    },
   ];
 
   // Filtrar items según rol
@@ -128,25 +135,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         ))}
       </nav>
 
-      <div className="p-8">
-        <div className="bg-[var(--bg-secondary)]/[0.3] p-6 rounded-[2rem] border border-[var(--border-primary)] shadow-xl relative overflow-hidden group/quote">
-          <div className="absolute -right-2 -bottom-2 opacity-5 text-indigo-500 scale-150 group-hover/quote:scale-110 transition-transform duration-1000">
-            <Compass className="w-16 h-16" />
-          </div>
-          <div className="flex items-center gap-4 mb-4 relative z-10">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-600/10 flex items-center justify-center border border-indigo-500/20">
-              <UserIcon size={18} className="text-indigo-400" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[9px] font-black text-indigo-500 uppercase tracking-[0.2em] truncate leading-none mb-1">{user?.role || 'Guest'}</p>
-              <p className="text-xs text-[var(--text-primary)] font-black uppercase tracking-tighter truncate">{user?.nombre || 'Visitante'}</p>
-            </div>
-          </div>
-          <p className="text-[9px] font-bold leading-relaxed text-[var(--text-muted)] italic uppercase tracking-tighter relative z-10">
-            "Navegar no es una opción, es un estilo de vida."
-          </p>
-        </div>
-      </div>
+
     </aside>
   );
 }

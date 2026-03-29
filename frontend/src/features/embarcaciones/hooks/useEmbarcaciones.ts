@@ -15,9 +15,11 @@ export interface Embarcacion {
   cliente?: Cliente;
   espacio?: any; // To be defined later
   espacioId?: number | null;
+  descuento?: number;
   createdAt: string;
   updatedAt: string;
 }
+
 
 export const useEmbarcaciones = () => {
   const queryClient = useQueryClient();

@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Notificacion, NotificacionTipo } from './notificacion.entity';
 import { User, Role } from '../users/user.entity';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class NotificacionesService {
@@ -11,7 +12,28 @@ export class NotificacionesService {
     private readonly notificacionesRepository: Repository<Notificacion>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly mailerService: MailerService,
   ) {}
+
+  async sendEmailNotification(
+    to: string,
+    subject: string,
+    template: string,
+    context: Record<string, unknown>,
+  ): Promise<void> {
+    try {
+      await this.mailerService.sendMail({
+        to,
+        subject,
+        template,
+        context,
+      });
+      console.log(`Email enviado con éxito a ${to}`);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`Error enviando email a ${to}:`, message);
+    }
+  }
 
   async findAllByUser(usuarioId: number): Promise<Notificacion[]> {
     return this.notificacionesRepository.find({

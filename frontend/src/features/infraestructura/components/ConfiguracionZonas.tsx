@@ -64,7 +64,8 @@ export function ConfiguracionZonas({
     columnas: 1,
     alto: 0,
     ancho: 0,
-    largo: 0
+    largo: 0,
+    tarifaBase: 0
   });
   const [editingRackId, setEditingRackId] = useState<number | null>(null);
 
@@ -97,7 +98,7 @@ export function ConfiguracionZonas({
     } else {
       await onCreateRack(newRack);
     }
-    setNewRack({ ...newRack, codigo: '', pisos: 1, filas: 1, columnas: 1 });
+    setNewRack({ ...newRack, codigo: '', pisos: 1, filas: 1, columnas: 1, tarifaBase: 0 });
   };
 
   const handleEditRack = (rack: any) => {
@@ -111,6 +112,7 @@ export function ConfiguracionZonas({
       alto: rack.alto,
       ancho: rack.ancho,
       largo: rack.largo,
+      tarifaBase: rack.tarifaBase || 0,
     });
   };
 
@@ -292,7 +294,7 @@ export function ConfiguracionZonas({
                 {editingRackId && (
                   <button onClick={() => {
                     setEditingRackId(null);
-                    setNewRack({ ...newRack, codigo: '', pisos: 1, filas: 1, columnas: 1 });
+                    setNewRack({ ...newRack, codigo: '', pisos: 1, filas: 1, columnas: 1, tarifaBase: 0 });
                   }} className="text-[10px] text-purple-400 hover:text-[var(--text-primary)] uppercase font-bold">Cancelar Edición</button>
                 )}
               </div>
@@ -351,8 +353,8 @@ export function ConfiguracionZonas({
           )}
 
           <div className="pt-6 border-t border-[var(--border-primary)]/50">
-            <span className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest block mb-6">Dimensiones Físicas del Rack (Metros)</span>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <span className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest block mb-6">Configuración Física y Comercial</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="bg-[var(--bg-primary)]/50 p-4 rounded-2xl border border-[var(--border-primary)] flex flex-col gap-2">
                 <label className="text-[10px] font-bold text-[var(--text-secondary)] uppercase">Ancho Total (X)</label>
                 <input
@@ -381,6 +383,16 @@ export function ConfiguracionZonas({
                   value={newRack.largo}
                   onChange={(e) => setNewRack({ ...newRack, largo: +e.target.value })}
                   className="bg-transparent text-xl font-bold text-[var(--text-primary)] outline-none"
+                />
+              </div>
+              <div className="bg-[var(--bg-primary)]/50 p-4 rounded-2xl border border-[var(--border-primary)] flex flex-col gap-2">
+                <label className="text-[10px] font-bold text-[var(--text-secondary)] uppercase">Tarifa Base ($)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={newRack.tarifaBase}
+                  onChange={(e) => setNewRack({ ...newRack, tarifaBase: +e.target.value })}
+                  className="bg-transparent text-xl font-bold text-emerald-500 outline-none"
                 />
               </div>
             </div>

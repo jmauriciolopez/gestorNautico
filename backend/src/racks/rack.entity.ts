@@ -36,6 +36,9 @@ export class Rack {
   @Column('decimal', { precision: 5, scale: 2, default: 0 })
   largo: number;
 
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
+  tarifaBase: number;
+
   @Column({ nullable: true })
   zonaId: number;
 
