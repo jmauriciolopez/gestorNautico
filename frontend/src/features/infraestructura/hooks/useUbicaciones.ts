@@ -36,6 +36,12 @@ export interface Espacio {
   columna?: number;
   ocupado: boolean;
   rackId: number;
+  embarcacion?: {
+    id: number;
+    nombre: string;
+    eslora: number;
+    propietario?: string;
+  };
 }
 
 export interface EstadisticasInfraestructura {

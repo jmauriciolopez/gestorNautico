@@ -1,195 +1,340 @@
-import { useState } from 'react';
-import { Grid2X2, AlertCircle, Layers, MapPin, ChevronRight, ChevronDown } from 'lucide-react';
-import { Ubicacion } from '../hooks/useUbicaciones';
+import React, { useState, useRef } from 'react';
+import { 
+  Building2, 
+  Layers, 
+  LayoutGrid,
+  ChevronRight,
+  TrendingUp,
+  Box,
+  Anchor
+} from 'lucide-react';
+import { Rack } from '../hooks/useUbicaciones';
+import { useNavigate } from 'react-router-dom';
 
 interface MapaOcupacionProps {
-  ubicaciones: Ubicacion[];
-  onToggleEspacio: (id: number, currentOcupado: boolean, numero: string) => void;
+  racks: Rack[];
+  is3D?: boolean;
 }
 
-export function MapaOcupacion({ ubicaciones, onToggleEspacio }: MapaOcupacionProps) {
-  const [is3D, setIs3D] = useState(false);
-  const [expandedUbicacion, setExpandedUbicacion] = useState<number | null>(
-    ubicaciones.length > 0 ? ubicaciones[0].id : null
-  );
+interface OccupancyRack3DContainerProps {
+  rack: Rack;
+  is3D: boolean;
+  getBoatSizeClass: (eslora: number) => string;
+}
 
-  if (ubicaciones.length === 0) {
-    // ... (unchanged)
+const OccupancyRack3DContainer: React.FC<OccupancyRack3DContainerProps> = ({ 
+  rack, 
+  is3D, 
+  getBoatSizeClass 
+}) => {
+  const localRef = useRef<HTMLDivElement>(null);
+  const [zoom, setZoom] = useState(1);
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!is3D || !localRef.current) return;
+    
+    const { left, top, width, height } = localRef.current.getBoundingClientRect();
+    const x = (e.clientX - left) / width;
+    const y = (e.clientY - top) / height;
+    
+    // Sensibilidad ajustada
+    const rotateY = -25 + (x * 20); 
+    const rotateX = 30 - (y * 15);
+    
+    localRef.current.style.setProperty('--rotate-y', `${rotateY}deg`);
+    localRef.current.style.setProperty('--rotate-x', `${rotateX}deg`);
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    if (!is3D || !localRef.current) return;
+    const delta = e.deltaY > 0 ? -0.05 : 0.05;
+    const newZoom = Math.min(Math.max(zoom + delta, 0.8), 2.0);
+    setZoom(newZoom);
+    localRef.current.style.setProperty('--zoom', `${newZoom}`);
+  };
+
+  const handleMouseLeave = () => {
+    if (!is3D || !localRef.current) return;
+    localRef.current.style.setProperty('--rotate-y', '-12deg');
+    localRef.current.style.setProperty('--rotate-x', '22deg');
+    localRef.current.style.setProperty('--zoom', '1');
+    setZoom(1);
+  };
+
+  return (
+    <div 
+      ref={localRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      onWheel={handleWheel}
+      className={`p-10 rounded-[3rem] bg-slate-900/40 border border-white/5 transition-all duration-700 ${is3D ? 'rack-3d-scene rack-3d-active overflow-visible mb-12' : 'overflow-x-auto custom-scrollbar'}`}
+    >
+      <div className="min-w-max">
+        {is3D ? (
+          /* VISTA 3D: Eje Z = Pisos, Y = Filas, X = Columnas */
+          <div
+            className="grid gap-2 items-center"
+            style={{
+              gridTemplateColumns: `50px repeat(${rack.columnas}, 85px)`,
+              gridTemplateRows: `repeat(${rack.filas}, 85px)`
+            }}
+          >
+            {Array.from({ length: rack.filas }).map((_, fIdx) => {
+              const f = fIdx + 1;
+              return (
+                <React.Fragment key={`fila-${f}`}>
+                  <div className="flex flex-col items-center justify-center h-full border-r border-white/10 pr-4 mr-2 floor-pillar-3d px-4 rounded-xl translate-z-[160px]">
+                    <span className="text-[8px] font-black text-indigo-500/50 uppercase tracking-tighter leading-none mb-1">Fila</span>
+                    <span className="text-xl font-black text-[var(--text-primary)] leading-none tabular-nums italic">{f}</span>
+                  </div>
+
+                  {Array.from({ length: rack.columnas }).map((_, cIdx) => {
+                    const c = cIdx + 1;
+                    return (
+                      <div key={`stack-${f}-${c}`} className="relative h-[85px] w-[85px]">
+                        {Array.from({ length: rack.pisos }).map((_, pIdx) => {
+                          const p = pIdx + 1;
+                          const espacio = rack.espacios.find((e: any) => e.piso === p && e.columna === c && e.fila === f);
+
+                          return (
+                            <button
+                              key={`cell-${p}-${c}-${f}`}
+                              className={`
+                                absolute inset-0 rounded-lg border transition-all duration-700 flex flex-col items-center justify-center gap-1 group/item cell-3d
+                                ${!espacio 
+                                  ? 'bg-transparent border-dashed border-white/5 opacity-20' 
+                                  : espacio.ocupado
+                                    ? `${getBoatSizeClass(espacio.embarcacion?.eslora || 0)} shadow-lg border-2 z-10`
+                                    : 'bg-slate-800/40 border-white/10 hover:border-indigo-500/50'
+                                }
+                              `}
+                              style={{
+                                transform: `translateZ(${p * 80}px) translateX(${p * 2}px) translateY(-${p * 2}px)`,
+                                zIndex: 20 - p
+                              }}
+                            >
+                              {espacio && (
+                                <>
+                                  <div className="cell-volume-side cell-volume-top" />
+                                  <div className="cell-volume-side cell-volume-left" />
+                                </>
+                              )}
+
+                              {espacio?.ocupado ? (
+                                <Anchor size={20} className="text-white drop-shadow-md" />
+                              ) : (
+                                <span className="text-[10px] font-black opacity-10">{p}</span>
+                              )}
+
+                              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[6px] font-black opacity-30 text-white tracking-widest uppercase pointer-events-none">
+                                Z{p}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
+                </React.Fragment>
+              );
+            })}
+          </div>
+        ) : (
+          /* VISTA 2D: Eje Y = Pisos (1 abajo), Eje X = (Columnas x Filas) */
+          <>
+            <div 
+              className="grid gap-2 mb-4 px-1 opacity-40"
+              style={{
+                gridTemplateColumns: `50px repeat(${rack.columnas * rack.filas}, 85px)`
+              }}
+            >
+              <div />
+              {Array.from({ length: rack.filas }).map((_, fIdx) => {
+                const f = fIdx + 1;
+                return Array.from({ length: rack.columnas }).map((_, cIdx) => {
+                  const c = cIdx + 1;
+                  return (
+                    <div key={`head-${f}-${c}`} className="text-center font-black uppercase tracking-tighter">
+                      <span className="text-[7px] text-indigo-500">F{f} C{c}</span>
+                    </div>
+                  );
+                });
+              })}
+            </div>
+
+            <div
+              className="grid gap-2 items-center"
+              style={{
+                gridTemplateColumns: `50px repeat(${rack.columnas * rack.filas}, 85px)`,
+                gridTemplateRows: `repeat(${rack.pisos}, 85px)`
+              }}
+            >
+              {Array.from({ length: rack.pisos }).map((_, pRevIdx) => {
+                const p = rack.pisos - pRevIdx; // Piso 1 abajo
+                return (
+                  <React.Fragment key={`piso-row-${p}`}>
+                    <div className="flex flex-col items-center justify-center h-full border-r border-white/10 pr-2 mr-1 sticky left-0 bg-slate-900/60 backdrop-blur-md z-20 rounded-l-lg">
+                      <span className="text-[8px] font-black text-indigo-400 uppercase leading-none mb-1">Piso</span>
+                      <span className="text-xl font-black text-[var(--text-primary)] leading-none tabular-nums">{p}</span>
+                    </div>
+
+                    {Array.from({ length: rack.filas }).map((_, fIdx) => {
+                      const f = fIdx + 1;
+                      return Array.from({ length: rack.columnas }).map((_, cIdx) => {
+                        const c = cIdx + 1;
+                        const espacio = rack.espacios.find((e: any) => e.piso === p && e.columna === c && e.fila === f);
+
+                        return (
+                          <div
+                            key={`cell-2d-${p}-${c}-${f}`}
+                            className={`
+                              w-[85px] h-[85px] rounded-lg border transition-all duration-300 flex flex-col items-center justify-center gap-1 group relative
+                              ${!espacio 
+                                ? 'bg-transparent border-dashed border-white/5 opacity-10' 
+                                : espacio.ocupado
+                                  ? `${getBoatSizeClass(espacio.embarcacion?.eslora || 0)} shadow-md border-2`
+                                  : 'bg-slate-800/40 border-white/10 hover:border-indigo-500/50'
+                              }
+                            `}
+                          >
+                            {espacio?.ocupado ? (
+                              <>
+                                <Anchor size={20} className="text-white/80" />
+                                <span className="text-[7px] font-black text-center px-1 truncate w-full uppercase text-white/90">
+                                  {espacio.embarcacion?.nombre}
+                                </span>
+                              </>
+                            ) : espacio && (
+                              <span className="text-[10px] font-black opacity-10 tracking-widest">{p}</span>
+                            )}
+                            
+                            {espacio && (
+                              <div className="absolute top-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <span className="text-[6px] bg-black/60 px-1 rounded text-indigo-400 font-bold">F{f}</span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      });
+                    })}
+                  </React.Fragment>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export const MapaOcupacion: React.FC<MapaOcupacionProps> = ({ racks, is3D = false }) => {
+  const navigate = useNavigate();
+
+  const handleVerDetalle = (codigo: string) => {
+    navigate(`/infraestructura/racks/${codigo}`);
+  };
+
+  const getBoatSizeClass = (eslora: number) => {
+    if (eslora < 6) return 'bg-blue-600/30 text-blue-100 border-blue-500/50';
+    if (eslora <= 10) return 'bg-indigo-600/40 text-indigo-100 border-indigo-500/50';
+    return 'bg-purple-600/50 text-purple-100 border-purple-500/50';
+  };
+
+  if (!racks || racks.length === 0) {
+    return (
+      <div className="bg-slate-900/40 p-16 rounded-[3rem] border border-slate-800 flex flex-col items-center gap-6 text-center">
+        <div className="bg-slate-800 p-6 rounded-3xl">
+          <Box className="w-12 h-12 text-slate-600" />
+        </div>
+        <div>
+          <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">Sin Datos de Infraestructura</h3>
+          <p className="text-[var(--text-secondary)] text-sm max-w-sm">No hay racks configurados en este sector. Comienza agregando uno desde la gestión de ubicaciones.</p>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className={`space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700 ${is3D ? 'perspective-container' : ''}`}>
-      <div className="flex justify-between items-center bg-[var(--bg-secondary)]/30 p-6 rounded-[2rem] border border-[var(--border-primary)] mb-8">
-        <div>
-          <h2 className="text-xl font-black text-[var(--text-primary)] uppercase tracking-tight">Mapa Maestro de Infraestructura</h2>
-          <p className="text-[10px] text-[var(--text-muted)] font-black uppercase tracking-widest">Control volumétrico de espacios en rack</p>
-        </div>
-        <button
-          onClick={() => setIs3D(!is3D)}
-          className={`flex items-center gap-2 px-6 py-3 rounded-2xl border transition-all font-black text-[10px] uppercase tracking-widest ${
-            is3D 
-            ? 'bg-blue-600 border-blue-400 text-white shadow-lg shadow-blue-900/40' 
-            : 'bg-[var(--bg-primary)]/40 border-[var(--border-primary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-blue-500/50'
-          }`}
-        >
-          <Layers className={`w-4 h-4 ${is3D ? 'animate-pulse' : ''}`} />
-          Inspección 3D {is3D ? 'Activa' : 'Inactiva'}
-        </button>
-      </div>
-
-      {ubicaciones.map(ubicacion => (
-        <div key={ubicacion.id} className="space-y-6">
-          {/* Ubicación Header */}
-          <button
-            onClick={() => setExpandedUbicacion(expandedUbicacion === ubicacion.id ? null : ubicacion.id)}
-            className="w-full text-left bg-[var(--bg-secondary)]/80 p-6 rounded-3xl border border-[var(--border-primary)] flex items-center justify-between group hover:border-blue-500/50 transition-all shadow-xl backdrop-blur-md"
+    <div className={`space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-1000 ${is3D ? 'perspective-container' : ''}`}>
+      <div className="grid grid-cols-1 gap-10">
+        {racks.map(rack => (
+          <div 
+            key={rack.id} 
+            className="group relative bg-slate-900/20 rounded-[4rem] border border-slate-800/50 p-10 hover:bg-slate-900/40 transition-all duration-500"
           >
-            <div className="flex items-center gap-4">
-              <div className={`p-3 rounded-2xl transition-colors ${expandedUbicacion === ubicacion.id ? 'bg-blue-600 text-[var(--text-primary)]' : 'bg-slate-800 text-[var(--text-secondary)] group-hover:text-blue-400'}`}>
-                <MapPin size={24} />
-              </div>
-              <div>
-                <h3 className="text-2xl font-black text-[var(--text-primary)] tracking-tight">{ubicacion.nombre}</h3>
-                <p className="text-sm text-[var(--text-secondary)] font-medium uppercase tracking-widest">{ubicacion.zonas?.length || 0} Zonas Operativas</p>
-              </div>
-            </div>
-            {expandedUbicacion === ubicacion.id ? <ChevronDown className="text-slate-600" /> : <ChevronRight className="text-slate-600" />}
-          </button>
-
-          {expandedUbicacion === ubicacion.id && (
-            <div className="pl-4 md:pl-10 space-y-10 animate-in fade-in slide-in-from-top-4 duration-500">
-              {(ubicacion.zonas || []).map(zona => (
-                <div key={zona.id} className="space-y-6">
-                  <h4 className="text-lg font-bold text-blue-400 flex items-center gap-3">
-                    <Layers size={18} />
-                    {zona.nombre}
-                    <span className="text-[10px] bg-blue-500/10 text-blue-500 px-2 py-0.5 rounded-full border border-blue-500/20 uppercase tracking-tighter">
-                      {zona.racks?.length || 0} racks
-                    </span>
-                  </h4>
-
-                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                    {(zona.racks || []).map(rack => (
-                      <div key={rack.id} className="bg-[var(--bg-primary)]/40 border border-[var(--border-primary)]/80 rounded-[2rem] p-8 group/rack hover:border-blue-500/30 transition-all duration-500 shadow-2xl relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-4 opacity-5 group-hover/rack:opacity-20 transition-opacity">
-                          <Grid2X2 size={80} />
-                        </div>
-
-                        <div className="flex justify-between items-center mb-8 relative z-10">
-                          <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 bg-blue-600/10 rounded-2xl flex items-center justify-center border border-blue-500/20 group-hover/rack:bg-blue-600 group-hover/rack:border-blue-400 transition-all duration-500 shadow-lg">
-                              <Grid2X2 size={24} className="text-blue-400 group-hover/rack:text-[var(--text-primary)]" />
-                            </div>
-                            <span className="font-black text-xl text-[var(--text-primary)] tracking-tighter italic uppercase">Rack {rack.codigo}</span>
-                          </div>
-                          <span className="text-[10px] uppercase font-black text-[var(--text-secondary)] tracking-tighter bg-[var(--bg-secondary)] border border-[var(--border-primary)] px-4 py-1.5 rounded-full shadow-inner">{rack.espacios?.length || 0} espacios</span>
-                        </div>
-
-                        <div className={`p-6 rounded-[2.2rem] bg-black/20 border border-white/5 transition-all duration-700 ${is3D ? 'rack-3d-scene rack-3d-active overflow-visible' : 'overflow-x-auto custom-scrollbar'}`}>
-                          <div className="min-w-max">
-                            {/* Column Headers */}
-                            <div 
-                              className={`grid gap-2 mb-4 px-1 transition-opacity duration-700 ${is3D ? 'opacity-0' : 'opacity-30'}`}
-                              style={{
-                                gridTemplateColumns: `40px repeat(${rack.columnas}, minmax(0, 1fr))`
-                              }}
-                            >
-                              <div /> {/* Spacer */}
-                              {Array.from({ length: rack.columnas }).map((_, i) => (
-                                <div key={i} className="text-center text-[10px] font-black uppercase tracking-widest text-slate-400">Col {i + 1}</div>
-                              ))}
-                            </div>
-
-                            <div 
-                              className="grid gap-2 items-center"
-                              style={{
-                                gridTemplateColumns: `40px repeat(${rack.columnas * rack.filas}, 80px)`,
-                                gridTemplateRows: `repeat(${rack.pisos}, 80px)`
-                              }}
-                            >
-                              {Array.from({ length: rack.pisos }).map((_, rIdx) => {
-                                const p = rack.pisos - rIdx; // Piso 1 abajo
-                                return (
-                                  <div key={`row-${p}`} className="contents">
-                                    {/* Floor Label */}
-                                    <div className={`text-[12px] font-black text-slate-500 pr-3 border-r border-slate-800/50 flex items-center justify-end h-full transition-all duration-700 ${is3D ? 'translate-z-[150px]' : 'sticky left-0 bg-[#0f172a] z-10'}`}>
-                                      P{p}
-                                    </div>
-
-                                    {Array.from({ length: rack.columnas }).map((_, cIdx) => {
-                                      const c = cIdx + 1;
-                                      return Array.from({ length: rack.filas }).map((_, fIdx) => {
-                                        const f = fIdx + 1;
-                                        const espacio = rack.espacios.find(e => e.piso === p && e.columna === c && e.fila === f);
-
-                                        return (
-                                          <button
-                                            key={`cell-${p}-${c}-${f}`}
-                                            onClick={() => espacio && onToggleEspacio(espacio.id, espacio.ocupado, espacio.numero)}
-                                            className={`
-                                              w-[80px] h-[80px] rounded-xl flex flex-col items-center justify-center transition-all duration-700 border-2 relative group/item cell-3d
-                                              ${!espacio 
-                                                ? 'bg-transparent border-dashed border-slate-800/20 cursor-default'
-                                                : espacio.ocupado
-                                                  ? 'bg-rose-500/10 border-rose-500/30 text-rose-400 hover:bg-rose-500/20 hover:border-rose-500/50 shadow-lg shadow-rose-500/5'
-                                                  : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-500/50 shadow-lg shadow-emerald-500/5'}
-                                              ${is3D ? `fila-depth-${f}` : ''}
-                                            `}
-                                            disabled={!espacio}
-                                            title={espacio ? `Espacio ${espacio.numero} (Piso ${p}, Col ${c}, Fila ${f})` : 'No asignado'}
-                                          >
-                                            {/* Volumetric panels */}
-                                            {is3D && espacio && (
-                                              <>
-                                                <div className="cell-volume-side cell-volume-top" />
-                                                <div className="cell-volume-side cell-volume-left" />
-                                              </>
-                                            )}
-
-                                            {espacio ? (
-                                              <>
-                                                <span className="text-[11px] font-black z-10 tracking-tighter">{espacio.numero.split('-').pop()}</span>
-                                                <span className="text-[8px] font-bold opacity-40 uppercase">F{f}</span>
-                                                {espacio.ocupado ?
-                                                  <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse shadow-sm shadow-rose-500/50" /> :
-                                                  <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-emerald-500/40 rounded-full" />
-                                                }
-                                              </>
-                                            ) : (
-                                              <span className="text-[9px] opacity-10 font-mono">N/A</span>
-                                            )}
-                                          </button>
-                                        );
-                                      });
-                                    })}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                    {/* ... (rest unchanged) */}
-                    {(!zona.racks || zona.racks.length === 0) && (
-                      <div className="col-span-full py-16 text-center bg-[var(--bg-secondary)]/30 rounded-[2rem] border-2 border-dashed border-[var(--border-primary)]/50">
-                        <AlertCircle className="mx-auto w-10 h-10 text-slate-700 mb-4" />
-                        <p className="text-[var(--text-secondary)] font-bold uppercase tracking-widest text-xs">Esta zona no tiene racks configurados</p>
-                      </div>
-                    )}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 px-4 gap-6">
+              <div className="flex items-center gap-6">
+                <div className="bg-indigo-600/20 p-5 rounded-[2rem] border border-indigo-500/20 group-hover:scale-110 transition-transform">
+                  <Building2 className="text-indigo-400 w-8 h-8" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-3 mb-1">
+                    <h2 className="text-3xl font-black text-[var(--text-primary)] tracking-tight">{rack.codigo}</h2>
+                    <span className="px-3 py-1 bg-slate-800 rounded-full text-[10px] font-black tracking-widest text-indigo-400 uppercase border border-slate-700">Digital Twin</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
+                      <LayoutGrid size={14} className="text-indigo-500" />
+                      {rack.columnas} Columnas × {rack.filas} Filas
+                    </div>
+                    <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium border-l border-slate-700 pl-4">
+                      <Layers size={14} className="text-blue-500" />
+                      {rack.pisos} Niveles (Alta Densidad)
+                    </div>
                   </div>
                 </div>
-              ))}
-              {(!ubicacion.zonas || ubicacion.zonas.length === 0) && (
-                <div className="py-16 text-center bg-[var(--bg-secondary)]/20 rounded-[2rem] border border-[var(--border-primary)]/50">
-                  <Layers className="mx-auto w-10 h-10 text-slate-800 mb-4" />
-                  <p className="text-slate-600 font-bold uppercase tracking-widest text-xs">Sin zonas registradas en esta sede</p>
-                </div>
-              )}
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={() => handleVerDetalle(rack.codigo)}
+                  className="px-6 py-3 bg-white text-slate-950 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-50 transition-all shadow-xl shadow-white/5 active:scale-95 flex items-center gap-2"
+                >
+                   Gestión Completa
+                  <ChevronRight size={14} />
+                </button>
+              </div>
             </div>
-          )}
-        </div>
-      ))}
+
+            <OccupancyRack3DContainer 
+              rack={rack} 
+              is3D={is3D} 
+              getBoatSizeClass={getBoatSizeClass} 
+            />
+
+            {/* Quick Metrics Overlay */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 px-4">
+              <div className="bg-slate-800/40 p-5 rounded-3xl border border-white/5 group-hover:border-indigo-500/20 transition-colors">
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Ocupación</p>
+                <div className="flex items-end gap-2">
+                  <span className="text-2xl font-black text-indigo-400">
+                    {Math.round((rack.espacios.filter(e => e.ocupado).length / rack.espacios.length) * 100)}%
+                  </span>
+                  <TrendingUp size={14} className="text-indigo-500 mb-1.5" />
+                </div>
+              </div>
+              <div className="bg-slate-800/40 p-5 rounded-3xl border border-white/5">
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Libres</p>
+                <span className="text-2xl font-black text-[var(--text-primary)]">
+                  {rack.espacios.filter(e => !e.ocupado).length}
+                </span>
+              </div>
+              <div className="bg-slate-800/40 p-5 rounded-3xl border border-white/5">
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Capacidad</p>
+                <span className="text-2xl font-black text-[var(--text-primary)]">{rack.espacios.length}</span>
+              </div>
+              <div className="bg-slate-800/40 p-5 rounded-3xl border border-white/5">
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Estatus</p>
+                <div className="flex items-center gap-2 mt-2">
+                  <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.5)] animate-pulse" />
+                  <span className="text-xs font-black text-green-400 uppercase tracking-tighter">Operativo</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
-}
+};
