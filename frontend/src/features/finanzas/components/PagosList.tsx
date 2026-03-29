@@ -1,4 +1,4 @@
-import { CreditCard, Calendar, Hash, ArrowUpRight } from 'lucide-react';
+import { CreditCard, Calendar, Hash, ArrowUpRight, FileText } from 'lucide-react';
 
 export interface Pago {
   id: number;
@@ -61,9 +61,37 @@ export function PagosList({ pagos, isLoading }: PagosListProps) {
                   + ${Number(pago.monto).toLocaleString()}
                 </td>
                 <td className="px-8 py-5 text-right">
-                  <button className="p-2 text-slate-700 hover:text-[var(--text-primary)] transition-colors group-hover:bg-slate-700 rounded-lg">
-                    <ArrowUpRight className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center justify-end gap-2">
+                    <button 
+                      onClick={async () => {
+                        try {
+                          const token = localStorage.getItem('token');
+                          const response = await fetch(`http://localhost:3000/pagos/${pago.id}/pdf`, {
+                            headers: {
+                              'Authorization': `Bearer ${token}`
+                            }
+                          });
+                          const blob = await response.blob();
+                          const url = window.URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `recibo-pago-${pago.id}.pdf`;
+                          document.body.appendChild(a);
+                          a.click();
+                          a.remove();
+                        } catch (error) {
+                          console.error('Error al descargar recibo:', error);
+                        }
+                      }}
+                      className="p-2 text-slate-700 hover:text-blue-400 transition-colors group-hover:bg-slate-700 rounded-lg"
+                      title="Descargar Recibo"
+                    >
+                      <FileText className="w-4 h-4" />
+                    </button>
+                    <button className="p-2 text-slate-700 hover:text-[var(--text-primary)] transition-colors group-hover:bg-slate-700 rounded-lg">
+                      <ArrowUpRight className="w-4 h-4" />
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))

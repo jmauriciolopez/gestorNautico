@@ -1,5 +1,7 @@
-import { FileText, CheckCircle2, Clock, XCircle, Loader2, MoreVertical, ExternalLink } from 'lucide-react';
+import { FileText, Loader2, MoreVertical, ExternalLink } from 'lucide-react';
 import { Factura } from '../hooks/useFacturas';
+import { RoleGuard } from '../../../components/auth/RoleGuard';
+import { Role } from '../../../types';
 
 interface FacturasListProps {
   facturas: Factura[];
@@ -84,21 +86,49 @@ export function FacturasList({ facturas, isLoading, onUpdateEstado }: FacturasLi
                 <td className="px-8 py-5 text-right">
                   <div className="flex items-center justify-end gap-2 outline-none">
                     {factura.estado === 'PENDIENTE' && onUpdateEstado && (
-                      <div className="flex items-center gap-3 mr-4">
-                        <button
-                          onClick={() => onUpdateEstado(factura.id, 'PAGADA')}
-                          className="bg-emerald-600/10 hover:bg-emerald-600 text-emerald-500 hover:text-[var(--text-primary)] px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all active:scale-95"
-                        >
-                          Liquidar
-                        </button>
-                        <button
-                          onClick={() => onUpdateEstado(factura.id, 'ANULADA')}
-                          className="text-rose-600 hover:text-rose-400 text-[9px] font-black uppercase tracking-widest transition-colors"
-                        >
-                          Anular
-                        </button>
-                      </div>
+                        <RoleGuard allowedRoles={[Role.ADMIN, Role.SUPERADMIN]}>
+                          <div className="flex items-center gap-3 mr-4">
+                            <button
+                              onClick={() => onUpdateEstado(factura.id, 'PAGADA')}
+                              className="bg-emerald-600/10 hover:bg-emerald-600 text-emerald-500 hover:text-[var(--text-primary)] px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all active:scale-95"
+                            >
+                              Liquidar
+                            </button>
+                            <button
+                              onClick={() => onUpdateEstado(factura.id, 'ANULADA')}
+                              className="text-rose-600 hover:text-rose-400 text-[9px] font-black uppercase tracking-widest transition-colors"
+                            >
+                              Anular
+                            </button>
+                          </div>
+                        </RoleGuard>
                     )}
+                    <button 
+                      onClick={async () => {
+                        try {
+                          const token = localStorage.getItem('token');
+                          const response = await fetch(`http://localhost:3000/facturas/${factura.id}/pdf`, {
+                            headers: {
+                              'Authorization': `Bearer ${token}`
+                            }
+                          });
+                          const blob = await response.blob();
+                          const url = window.URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `factura-${factura.numero}.pdf`;
+                          document.body.appendChild(a);
+                          a.click();
+                          a.remove();
+                        } catch (error) {
+                          console.error('Error al descargar PDF:', error);
+                        }
+                      }}
+                      className="p-2 text-slate-700 hover:text-indigo-400 transition-colors"
+                      title="Descargar PDF"
+                    >
+                      <FileText className="w-4 h-4" />
+                    </button>
                     <button className="p-2 text-slate-700 hover:text-[var(--text-primary)] transition-colors">
                       <ExternalLink className="w-4 h-4" />
                     </button>

@@ -1,9 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { userService } from '../services/userService';
 import type { User } from '../../../types';
+import { useConfirm } from '../../../shared/context/ConfirmContext';
 
 export const useUsers = () => {
     const queryClient = useQueryClient();
+    const confirm = useConfirm();
 
     const { 
         data: users = [], 
@@ -41,12 +43,19 @@ export const useUsers = () => {
     };
 
     const handleDelete = async (id: number) => {
-        if (!confirm('¿Estás seguro de eliminar este usuario?')) return;
+        const isConfirmed = await confirm({
+            title: 'Eliminar Usuario',
+            message: '¿Estás seguro de eliminar este usuario? Perderá el acceso al sistema de forma inmediata.',
+            confirmText: 'Confirmar Eliminación',
+            variant: 'danger'
+        });
+
+        if (!isConfirmed) return;
+        
         try {
             await deleteMutation.mutateAsync(id);
         } catch (err) {
             console.error('Error deleting user:', err);
-            alert('No se pudo eliminar el usuario.');
         }
     };
 

@@ -9,6 +9,7 @@ import AppLayout from './components/layout/AppLayout';
 import { Login } from './features/auth/Login';
 import { ThemeProvider } from './context/ThemeContext';
 import { Toaster } from 'react-hot-toast';
+import { ConfirmProvider } from './shared/context/ConfirmContext';
 
 // === Feature Pages ===
 import Dashboard from './features/dashboard/pages/Dashboard';
@@ -23,6 +24,8 @@ import ServiciosPage from './features/servicios/pages/ServiciosPage';
 import FacturacionPage from './features/facturacion/pages/FacturacionPage';
 import UsersPage from './features/users/pages/UsersPage';
 import SolicitudBajadaPublica from './features/operaciones/pages/SolicitudBajadaPublica';
+import ConfiguracionPage from './features/configuracion/pages/ConfiguracionPage';
+import UserHelp from './features/help/components/UserHelp';
 
 // Componente simple para Login Helper
 const LoginWrapper = () => {
@@ -60,45 +63,57 @@ function App() {
             }}
           />
           <AuthProvider>
-            <Routes>
-              <Route path="/login" element={<LoginWrapper />} />
-              <Route path="/bajada-publica" element={<SolicitudBajadaPublica />} />
-              <Route path="/unauthorized" element={<Unauthorized />} />
+            <ConfirmProvider>
+              <Routes>
+                <Route path="/login" element={<LoginWrapper />} />
+                <Route path="/bajada-publica" element={<SolicitudBajadaPublica />} />
+                <Route path="/unauthorized" element={<Unauthorized />} />
 
-              {/* Rutas Protegidas */}
-              <Route element={<ProtectedRoute />}>
-                <Route path="/" element={<AppLayout />}>
-                  <Route index element={<Dashboard />} />
+                {/* Rutas Protegidas */}
+                <Route element={<ProtectedRoute />}>
+                  <Route path="/" element={<AppLayout />}>
+                    <Route index element={<Dashboard />} />
 
-                  {/* Gestión General (Admin & Operador) */}
-                  <Route path="clientes" element={<ClientesList />} />
-                  <Route path="clientes/nuevo" element={<ClienteForm />} />
-                  <Route path="clientes/editar/:id" element={<ClienteForm />} />
+                    {/* Gestión General (Admin & Operador) */}
+                    <Route path="clientes" element={<ClientesList />} />
+                    <Route path="clientes/nuevo" element={<ClienteForm />} />
+                    <Route path="clientes/editar/:id" element={<ClienteForm />} />
 
-                  <Route path="embarcaciones" element={<EmbarcacionesList />} />
-                  <Route path="embarcaciones/nueva" element={<EmbarcacionForm />} />
-                  <Route path="embarcaciones/editar/:id" element={<EmbarcacionForm />} />
+                    <Route path="embarcaciones" element={<EmbarcacionesList />} />
+                    <Route path="embarcaciones/nueva" element={<EmbarcacionForm />} />
+                    <Route path="embarcaciones/editar/:id" element={<EmbarcacionForm />} />
 
-                  <Route path="operaciones" element={<OperacionesPage />} />
-                  <Route path="infraestructura" element={<InfraestructuraPage />} />
-                  <Route path="servicios" element={<ServiciosPage />} />
+                    <Route path="operaciones" element={<OperacionesPage />} />
+                    <Route path="infraestructura" element={<InfraestructuraPage />} />
+                    <Route path="servicios" element={<ServiciosPage />} />
 
-                  {/* Rutas de Finanzas y Facturación (Solo Admin/SuperAdmin) */}
-                  <Route element={<ProtectedRoute allowedRoles={[Role.ADMIN, Role.SUPERADMIN]} />}>
-                    <Route path="finanzas" element={<FinanzasPage />} />
-                    <Route path="facturacion" element={<FacturacionPage />} />
-                  </Route>
+                    {/* Rutas de Finanzas y Facturación (Solo Admin/SuperAdmin/Operador) */}
+                    <Route element={<ProtectedRoute allowedRoles={[Role.ADMIN, Role.SUPERADMIN]} />}>
+                      <Route path="finanzas" element={<FinanzasPage />} />
+                    </Route>
+                    <Route element={<ProtectedRoute allowedRoles={[Role.ADMIN, Role.SUPERADMIN, Role.OPERADOR]} />}>
+                      <Route path="facturacion" element={<FacturacionPage />} />
+                    </Route>
 
-                  {/* Gestión de Usuarios (Solo SuperAdmin) */}
-                  <Route element={<ProtectedRoute allowedRoles={[Role.SUPERADMIN]} />}>
-                    <Route path="usuarios/*" element={<UsersPage />} />
+                    {/* Gestión de Usuarios (Solo SuperAdmin) */}
+                    <Route path="ayuda" element={<UserHelp />} />
+
+                    {/* Gestión de Usuarios (Solo SuperAdmin) */}
+                    <Route element={<ProtectedRoute allowedRoles={[Role.SUPERADMIN]} />}>
+                      <Route path="usuarios/*" element={<UsersPage />} />
+                    </Route>
+
+                    {/* Configuración (Solo Admin/SuperAdmin) */}
+                    <Route element={<ProtectedRoute allowedRoles={[Role.ADMIN, Role.SUPERADMIN]} />}>
+                      <Route path="configuracion" element={<ConfiguracionPage />} />
+                    </Route>
                   </Route>
                 </Route>
-              </Route>
 
-              {/* Fallback */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
+                {/* Fallback */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </ConfirmProvider>
           </AuthProvider>
         </BrowserRouter>
       </ThemeProvider>

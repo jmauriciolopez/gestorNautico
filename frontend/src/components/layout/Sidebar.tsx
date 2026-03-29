@@ -6,12 +6,13 @@ import {
   Navigation,
   CircleDollarSign,
   Compass,
-  User as UserIcon,
   LayoutGrid,
   Wrench,
   FileText,
   X,
-  ShieldCheck
+  ShieldCheck,
+  Settings,
+  HelpCircle
 } from 'lucide-react';
 import { useAuth } from '../../features/auth/context/AuthContext';
 import { Role } from '../../types';
@@ -77,13 +78,25 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       name: 'Facturación',
       path: '/facturacion',
       icon: <FileText className="w-5 h-5" />,
-      allowedRoles: [Role.SUPERADMIN, Role.ADMIN]
+      allowedRoles: [Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR]
     },
     {
       name: 'Usuarios',
       path: '/usuarios',
       icon: <ShieldCheck className="w-5 h-5" />,
       allowedRoles: [Role.SUPERADMIN]
+    },
+    {
+      name: 'Configuración',
+      path: '/configuracion',
+      icon: <Settings className="w-5 h-5" />,
+      allowedRoles: [Role.SUPERADMIN, Role.ADMIN]
+    },
+    {
+      name: 'Ayuda',
+      path: '/ayuda',
+      icon: <HelpCircle className="w-5 h-5" />,
+      allowedRoles: [Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR]
     },
   ];
 

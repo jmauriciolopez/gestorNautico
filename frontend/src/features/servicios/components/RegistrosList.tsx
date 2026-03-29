@@ -1,5 +1,7 @@
 import { Wrench, CheckCircle2, Clock, XCircle, Loader2, Trash2, Ship, ChevronRight } from 'lucide-react';
 import { RegistroServicio } from '../hooks/useServicios';
+import { RoleGuard } from '../../../components/auth/RoleGuard';
+import { Role } from '../../../types';
 
 interface RegistrosListProps {
   registros: RegistroServicio[];
@@ -76,9 +78,26 @@ export function RegistrosList({ registros, isLoading, onComplete, onUpdateStatus
                     {new Date(reg.fechaProgramada).toLocaleDateString(undefined, { day: '2-digit', month: 'short' })}
                   </td>
                   <td className="px-8 py-5">
-                    <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-lg border ${badge.color}`}>
-                      <span className="animate-pulse">{badge.icon}</span>
-                      <span className="text-[9px] font-black uppercase tracking-widest">{badge.label}</span>
+                    <div className="flex flex-col gap-1.5">
+                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-lg border ${badge.color}`}>
+                        <span className={`${reg.estado === 'EN_PROCESO' ? 'animate-pulse' : ''}`}>{badge.icon}</span>
+                        <span className="text-[9px] font-black uppercase tracking-widest">{badge.label}</span>
+                      </div>
+                      {reg.estado === 'COMPLETADO' && (
+                        <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border text-[8px] font-black uppercase tracking-wider ${reg.facturado ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-400 opacity-60'}`}>
+                          {reg.facturado ? (
+                            <>
+                              <CheckCircle2 className="w-2.5 h-2.5" />
+                              Facturado
+                            </>
+                          ) : (
+                            <>
+                              <XCircle className="w-2.5 h-2.5" />
+                              Pte. Facturación
+                            </>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </td>
                   <td className="px-8 py-5 text-right font-black text-[var(--text-primary)] text-sm tabular-nums tracking-tighter">
@@ -111,15 +130,17 @@ export function RegistrosList({ registros, isLoading, onComplete, onUpdateStatus
                           <XCircle className="w-4 h-4" />
                         </button>
                       )}
-                      {onDelete && (
-                        <button
-                          onClick={() => onDelete(reg.id)}
-                          className="p-2 text-[var(--border-primary)] hover:text-rose-500 transition-all active:scale-90"
-                          title="Eliminar"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
+                      <RoleGuard allowedRoles={[Role.ADMIN, Role.SUPERADMIN]}>
+                        {onDelete && (
+                          <button
+                            onClick={() => onDelete(reg.id)}
+                            className="p-2 text-[var(--border-primary)] hover:text-rose-500 transition-all active:scale-90"
+                            title="Eliminar"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </RoleGuard>
                     </div>
                   </td>
                 </tr>

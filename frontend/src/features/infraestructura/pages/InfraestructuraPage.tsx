@@ -15,6 +15,8 @@ import { ConfiguracionZonas } from '../components/ConfiguracionZonas';
 import { useEmbarcaciones } from '../../embarcaciones/hooks/useEmbarcaciones';
 import { AsignarEmbarcacionModal } from '../components/AsignarEmbarcacionModal';
 import { LiberarEspacioModal } from '../components/LiberarEspacioModal';
+import { RoleGuard } from '../../../components/auth/RoleGuard';
+import { Role } from '../../../types';
 
 export default function InfraestructuraPage() {
   const {
@@ -76,7 +78,7 @@ export default function InfraestructuraPage() {
     largo: number;
   }) => {
     try {
-      await createRack.mutateAsync(data);
+      await createRack.mutateAsync({ ...data, tarifaBase: 0 });
       toast.success(`Rack ${data.codigo} generado con éxito`);
     } catch (error: any) {
       toast.error(error.message || 'Error al generar el rack');
@@ -116,16 +118,6 @@ export default function InfraestructuraPage() {
     }
   };
 
-  const handleEspacioClick = async (id: number, currentOcupado: boolean, numero: string) => {
-    if (currentOcupado) {
-      const barcoEnLugar = embarcaciones.find((e: any) => e.espacio?.id === id);
-      setSelectedSpaceState({ id, codigo: numero, embarcacionActual: barcoEnLugar });
-      setIsLiberarOpen(true);
-    } else {
-      setSelectedSpaceState({ id, codigo: numero });
-      setIsAsignarOpen(true);
-    }
-  };
 
   const handleAsignarBarco = async (embarcacionId: number) => {
     if (!selectedSpaceState) return;
@@ -202,14 +194,16 @@ export default function InfraestructuraPage() {
           <MapIcon size={16} />
           Mapa de Ocupación
         </button>
-        <button
-          onClick={() => setActiveTab('config')}
-          className={`flex items-center gap-3 px-8 py-3 rounded-[1.25rem] text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'config' ? 'bg-indigo-600 text-[var(--text-primary)] shadow-2xl shadow-indigo-900/40' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)]/40'
-            }`}
-        >
-          <Settings size={16} />
-          Parámetros Globales
-        </button>
+        <RoleGuard allowedRoles={[Role.ADMIN, Role.SUPERADMIN]}>
+          <button
+            onClick={() => setActiveTab('config')}
+            className={`flex items-center gap-3 px-8 py-3 rounded-[1.25rem] text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'config' ? 'bg-indigo-600 text-[var(--text-primary)] shadow-2xl shadow-indigo-900/40' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)]/40'
+              }`}
+          >
+            <Settings size={16} />
+            Parámetros Globales
+          </button>
+        </RoleGuard>
       </div>
 
       {/* Main Content Area */}
@@ -235,8 +229,8 @@ export default function InfraestructuraPage() {
         <div className="p-2 transition-all duration-500">
           {activeTab === 'mapa' ? (
             <MapaOcupacion
-              ubicaciones={useUbicacionesQuery.data || []}
-              onToggleEspacio={handleEspacioClick}
+              racks={(useUbicacionesQuery.data || []).flatMap(u => u.zonas.flatMap(z => z.racks))}
+              is3D={true}
             />
           ) : (
             <ConfiguracionZonas

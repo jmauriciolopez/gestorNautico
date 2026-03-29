@@ -55,6 +55,12 @@ export class RegistroServicio {
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   costoFinal: number;
 
+  @Column({ default: false })
+  facturado: boolean;
+
+  @Column({ nullable: true })
+  facturaId: number;
+
   @CreateDateColumn()
   createdAt: Date;
 

@@ -27,4 +27,7 @@ export class Movimiento {
 
   @Column({ nullable: true })
   observaciones: string;
+
+  @Column({ default: false })
+  fueraHora: boolean;
 }

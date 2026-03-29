@@ -63,11 +63,11 @@ export function useOperaciones() {
     },
   });
 
-  const updatePedido = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: Partial<Pedido> }) => 
-      fetchClient(`/pedidos/${id}`, {
-        method: 'PUT',
-        body: data,
+  const updatePedidoEstado = useMutation({
+    mutationFn: ({ id, estado }: { id: number; estado: string }) => 
+      fetchClient(`/pedidos/${id}/estado`, {
+        method: 'PATCH',
+        body: { estado },
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });
@@ -105,7 +105,7 @@ export function useOperaciones() {
     getPedidos,
     usePedido,
     createPedido,
-    updatePedido,
+    updatePedidoEstado,
     deletePedido,
     getMovimientos,
     createMovimiento,

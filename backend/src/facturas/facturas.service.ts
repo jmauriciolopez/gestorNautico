@@ -49,12 +49,12 @@ export class FacturasService {
   }
 
   async generateNextNumero(): Promise<string> {
-    const last = await this.facturaRepo.findOne({
-      where: {}, // No filter needed, just last created
+    const last = await this.facturaRepo.find({
       order: { id: 'DESC' },
+      take: 1,
     });
 
-    const nextId = last ? last.id + 1 : 1;
+    const nextId = last.length > 0 ? Number(last[0].id) + 1 : 1;
     return `FAC-${nextId.toString().padStart(4, '0')}`;
   }
 

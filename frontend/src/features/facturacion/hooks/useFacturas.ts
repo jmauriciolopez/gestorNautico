@@ -26,9 +26,9 @@ export function useFacturas() {
     queryFn: () => fetchClient('/facturas'),
   });
 
-  const getNextNumero = useQuery<string>({
+  const getNextNumero = useQuery<{ nextNumero: string }>({
     queryKey: ['facturas', 'next-numero'],
-    queryFn: () => fetchClient('/facturas/next-numero'),
+    queryFn: () => fetchClient<{ nextNumero: string }>('/facturas/next-numero'),
     enabled: true,
   });
 

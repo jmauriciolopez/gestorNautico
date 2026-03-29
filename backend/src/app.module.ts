@@ -31,6 +31,8 @@ import { CatalogoModule } from './catalogo/catalogo.module';
 import { RegistrosModule } from './registros/registros.module';
 import { OperacionesModule } from './operaciones/operaciones.module';
 import { SearchModule } from './search/search.module';
+import { PdfModule } from './common/pdf/pdf.module';
+import { ConfiguracionModule } from './configuracion/configuracion.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/adapters/handlebars.adapter';
@@ -106,7 +108,9 @@ import { join } from 'path';
     PedidosModule,
     NotificacionesModule,
     OperacionesModule,
+    ConfiguracionModule,
     SearchModule,
+    PdfModule,
   ],
 })
-export class AppModule { }
+export class AppModule {}

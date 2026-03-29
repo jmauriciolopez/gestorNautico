@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Layers, Plus, Loader2, Grid2X2, MapPin, Edit3, Check, X } from 'lucide-react';
 import { Ubicacion, Zona } from '../hooks/useUbicaciones';
+import { useConfirm } from '../../../shared/context/ConfirmContext';
 
 interface ConfiguracionZonasProps {
   ubicaciones: Ubicacion[];
@@ -68,6 +69,7 @@ export function ConfiguracionZonas({
     tarifaBase: 0
   });
   const [editingRackId, setEditingRackId] = useState<number | null>(null);
+  const confirm = useConfirm();
 
   const handleCreateUbicacion = async () => {
     if (!newUbicacion.nombre) return;
@@ -212,8 +214,14 @@ export function ConfiguracionZonas({
                         <Edit3 size={14} />
                       </button>
                       <button
-                        onClick={() => {
-                          if (confirm(`¿Estás seguro de eliminar la zona "${zona.nombre}"?`)) {
+                        onClick={async () => {
+                          const confirmed = await confirm({
+                            title: 'Eliminar Zona',
+                            message: `¿Estás seguro de eliminar la zona "${zona.nombre}"? Esta acción no se puede deshacer.`,
+                            confirmText: 'Eliminar Zona',
+                            variant: 'danger'
+                          });
+                          if (confirmed) {
                             onDeleteZona(zona.id);
                           }
                         }}
@@ -434,8 +442,14 @@ export function ConfiguracionZonas({
                             <Edit3 size={14} />
                           </button>
                           <button
-                            onClick={() => {
-                              if (confirm(`¿Eliminar rack "${rack.codigo}"? Todos su espacios se borrarán.`)) {
+                            onClick={async () => {
+                              const confirmed = await confirm({
+                                title: 'Eliminar Rack',
+                                message: `¿Eliminar rack "${rack.codigo}"? Todos sus espacios y configuraciones asociadas se borrarán permanentemente.`,
+                                confirmText: 'Eliminar Rack',
+                                variant: 'danger'
+                              });
+                              if (confirmed) {
                                 onDeleteRack(rack.id);
                               }
                             }}

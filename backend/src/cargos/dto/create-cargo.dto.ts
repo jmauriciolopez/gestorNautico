@@ -4,7 +4,9 @@ import {
   IsOptional,
   IsBoolean,
   IsDate,
+  IsEnum,
 } from 'class-validator';
+import { TipoCargo } from '../cargo.entity';
 
 export class CreateCargoDto {
   @IsNumber()
@@ -23,4 +25,8 @@ export class CreateCargoDto {
   @IsOptional()
   @IsBoolean()
   pagado?: boolean;
+
+  @IsOptional()
+  @IsEnum(TipoCargo)
+  tipo?: TipoCargo;
 }

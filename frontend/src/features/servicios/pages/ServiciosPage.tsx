@@ -5,6 +5,8 @@ import { CatalogoList } from '../components/CatalogoList';
 import { RegistrosList } from '../components/RegistrosList';
 import { NuevoServicioModal } from '../components/NuevoServicioModal';
 import { NuevoRegistroModal } from '../components/NuevoRegistroModal';
+import { RoleGuard } from '../../../components/auth/RoleGuard';
+import { Role } from '../../../types';
 import { ServicioCatalogo, RegistroServicio } from '../hooks/useServicios';
 
 type Tab = 'registros' | 'catalogo';
@@ -102,15 +104,17 @@ export default function ServiciosPage() {
           </div>
         </div>
 
-        <button
-          onClick={handleOpenCreate}
-          className="relative z-10 px-10 py-4 bg-indigo-600 hover:bg-indigo-500 text-[var(--text-primary)] rounded-2xl flex items-center gap-4 text-xs font-black uppercase tracking-[0.2em] shadow-2xl shadow-indigo-900/30 transition-all active:scale-95 group/btn"
-        >
-          <div className="p-1 bg-indigo-400/20 rounded-lg group-hover/btn:rotate-90 transition-transform">
-            <Plus className="w-4 h-4" />
-          </div>
-          {activeTab === 'registros' ? 'Ingresar Trabajo' : 'Añadir al Catálogo'}
-        </button>
+        <RoleGuard allowedRoles={activeTab === 'registros' ? [Role.OPERADOR, Role.ADMIN, Role.SUPERADMIN] : [Role.ADMIN, Role.SUPERADMIN]}>
+          <button
+            onClick={handleOpenCreate}
+            className="relative z-10 px-10 py-4 bg-indigo-600 hover:bg-indigo-500 text-[var(--text-primary)] rounded-2xl flex items-center gap-4 text-xs font-black uppercase tracking-[0.2em] shadow-2xl shadow-indigo-900/30 transition-all active:scale-95 group/btn"
+          >
+            <div className="p-1 bg-indigo-400/20 rounded-lg group-hover/btn:rotate-90 transition-transform">
+              <Plus className="w-4 h-4" />
+            </div>
+            {activeTab === 'registros' ? 'Ingresar Trabajo' : 'Añadir al Catálogo'}
+          </button>
+        </RoleGuard>
       </div>
 
       {/* Modern High-Fidelity Tabs */}

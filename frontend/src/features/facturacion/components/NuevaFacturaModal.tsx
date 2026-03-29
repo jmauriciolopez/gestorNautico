@@ -23,10 +23,10 @@ export const NuevaFacturaModal: React.FC<NuevaFacturaModalProps> = ({ isOpen, on
   const { data: cargos, isLoading: isLoadingCargos } = useCargos(clienteId || undefined, true);
 
   useEffect(() => {
-    if (isOpen && getNextNumero.data) {
-      setNumero(getNextNumero.data);
+    if (isOpen && getNextNumero.data?.nextNumero) {
+      setNumero(getNextNumero.data.nextNumero);
     }
-  }, [isOpen, getNextNumero.data]);
+  }, [isOpen, getNextNumero.data?.nextNumero]);
 
   if (!isOpen) return null;
 

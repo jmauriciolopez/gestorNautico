@@ -1,17 +1,29 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Search, Edit, Trash2, Loader2, Users, Receipt, Mail, Phone, ShieldCheck, ShieldAlert, ChevronRight } from 'lucide-react';
+import { useConfirm } from '../../../shared/context/ConfirmContext';
 import { useClientes } from '../hooks/useClientes';
+import { RoleGuard } from '../../../components/auth/RoleGuard';
+import { Role } from '../../../types';
 
 export default function ClientesList() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const { getClientes, deleteCliente } = useClientes();
-  const { data: clientes = [], isLoading, isError } = getClientes;
+  const { data: clientes = [], isLoading } = getClientes;
+  const confirm = useConfirm();
 
   const handleDelete = async (id: number) => {
-    // Replaced standard confirm with future high-fidelity modal integration
-    await deleteCliente.mutateAsync(id);
+    const isConfirmed = await confirm({
+      title: 'Archivar Cliente',
+      message: '¿Estás seguro de que deseas archivar este cliente? Se desactivará su acceso y se conservarán sus registros históricos.',
+      confirmText: 'Archivar',
+      variant: 'danger'
+    });
+
+    if (isConfirmed) {
+      await deleteCliente.mutateAsync(id);
+    }
   };
 
   const filteredClientes = clientes.filter(c =>
@@ -145,14 +157,16 @@ export default function ClientesList() {
                       >
                         <Edit className="w-4 h-4" />
                       </button>
-                      <button
-                        onClick={() => handleDelete(cliente.id)}
-                        className="p-3 bg-[var(--bg-primary)]/60 border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-rose-500 hover:border-rose-500/50 rounded-2xl transition-all active:scale-90 shadow-xl"
-                        title="Archivar Registro"
-                        disabled={deleteCliente.isPending}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <RoleGuard allowedRoles={[Role.ADMIN, Role.SUPERADMIN]}>
+                        <button
+                          onClick={() => handleDelete(cliente.id)}
+                          className="p-3 bg-[var(--bg-primary)]/60 border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-rose-500 hover:border-rose-500/50 rounded-2xl transition-all active:scale-90 shadow-xl"
+                          title="Archivar Registro"
+                          disabled={deleteCliente.isPending}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </RoleGuard>
                     </div>
                   </td>
                 </tr>

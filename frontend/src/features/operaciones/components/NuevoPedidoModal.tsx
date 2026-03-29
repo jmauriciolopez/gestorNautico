@@ -43,7 +43,7 @@ export function NuevoPedidoModal({ isOpen, onClose, onSave }: NuevoPedidoModalPr
       });
       onClose();
     } catch (error) {
-      console.error('Error creating pedal:', error);
+      console.error('Error creating pedido:', error);
     } finally {
       setIsSubmitting(false);
     }

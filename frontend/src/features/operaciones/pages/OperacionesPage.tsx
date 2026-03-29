@@ -4,20 +4,29 @@ import { PedidosList } from '../components/PedidosList';
 import { MovimientosList } from '../components/MovimientosList';
 import { NuevoPedidoModal } from '../components/NuevoPedidoModal';
 import { Activity, Plus, Ship, Clock, ChevronRight } from 'lucide-react';
+import { useConfirm } from '../../../shared/context/ConfirmContext';
 
 type Tab = 'pedidos' | 'movimientos';
 
 export default function OperacionesPage() {
   const [activeTab, setActiveTab] = useState<Tab>('pedidos');
   const [isPedidoModalOpen, setIsPedidoModalOpen] = useState(false);
-  const { getPedidos, getMovimientos, deletePedido, updatePedido, createPedido } = useOperaciones();
+  const { getPedidos, getMovimientos, deletePedido, updatePedidoEstado, createPedido } = useOperaciones();
+  const confirm = useConfirm();
 
   const handleUpdateStatus = async (id: number, nuevoEstado: Pedido['estado']) => {
-    await updatePedido.mutateAsync({ id, data: { estado: nuevoEstado } });
+    await updatePedidoEstado.mutateAsync({ id, estado: nuevoEstado });
   };
 
   const handleDeletePedido = async (id: number) => {
-    if (window.confirm('¿Eliminar esta solicitud?')) {
+    const confirmed = await confirm({
+      title: 'Eliminar Solicitud',
+      message: '¿Estás seguro de que deseas eliminar esta solicitud de botada? Esta acción no se puede deshacer.',
+      confirmText: 'Eliminar',
+      variant: 'danger'
+    });
+
+    if (confirmed) {
       await deletePedido.mutateAsync(id);
     }
   };

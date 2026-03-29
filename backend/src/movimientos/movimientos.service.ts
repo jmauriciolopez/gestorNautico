@@ -5,6 +5,7 @@ import { Movimiento } from './movimientos.entity';
 import { EmbarcacionesService } from '../embarcaciones/embarcaciones.service';
 import { EspaciosService } from '../espacios/espacios.service';
 import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
+import { ConfiguracionService } from '../configuracion/configuracion.service';
 
 export interface CreateMovimientoDto {
   embarcacionId: number;
@@ -21,6 +22,7 @@ export class MovimientosService {
     private readonly movimientoRepo: Repository<Movimiento>,
     private readonly embarcacionesService: EmbarcacionesService,
     private readonly espaciosService: EspaciosService,
+    private readonly configuracionService: ConfiguracionService,
   ) {}
 
   findAll() {
@@ -51,9 +53,28 @@ export class MovimientosService {
       ? Number(espacioId)
       : embarcacion.espacio?.id || null;
 
+    // --- CHECK AFTER HOURS (Only for ENTRADA/SUBIDA) ---
+    let fueraHora = false;
+    if (tipo === 'entrada') {
+      const maxHora = await this.configuracionService.getValor(
+        'HORARIO_MAX_SUBIDA',
+        '18:00',
+      );
+      const now = new Date();
+      const currentHHMM =
+        now.getHours().toString().padStart(2, '0') +
+        ':' +
+        now.getMinutes().toString().padStart(2, '0');
+
+      if (currentHHMM > maxHora) {
+        fueraHora = true;
+      }
+    }
+
     const createData = {
       ...rest,
       tipo,
+      fueraHora,
       embarcacion: { id: Number(embarcacionId) },
       espacio: targetEspacioId ? { id: Number(targetEspacioId) } : null,
     };

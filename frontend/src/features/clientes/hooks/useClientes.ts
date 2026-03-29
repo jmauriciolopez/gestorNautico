@@ -11,6 +11,7 @@ export interface Cliente {
   diaFacturacion?: number;
   descuento?: number;
   tipoCuota?: string;
+  tarifaBase?: number;
   responsableFamiliaId?: number | null;
   createdAt: string;
   updatedAt: string;

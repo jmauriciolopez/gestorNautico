@@ -23,6 +23,8 @@ export interface RegistroServicio {
   estado: 'PENDIENTE' | 'EN_PROCESO' | 'COMPLETADO' | 'CANCELADO';
   observaciones?: string;
   costoFinal: number;
+  facturado?: boolean;
+  facturaId?: number;
   embarcacion: {
     id: number;
     nombre: string;

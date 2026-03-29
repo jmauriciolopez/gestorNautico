@@ -11,6 +11,7 @@ import { Rack } from '../racks/rack.entity';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import { NotificacionTipo } from '../notificaciones/notificacion.entity';
 import { Role } from '../users/user.entity';
+import { ConfiguracionService } from '../configuracion/configuracion.service';
 
 @Injectable()
 export class AutomaticBillingService {
@@ -29,6 +30,7 @@ export class AutomaticBillingService {
     private readonly rackRepo: Repository<Rack>,
     private readonly facturasService: FacturasService,
     private readonly notificacionesService: NotificacionesService,
+    private readonly configuracionService: ConfiguracionService,
   ) {}
 
   /**
@@ -88,9 +90,14 @@ export class AutomaticBillingService {
 
       // B. Procesar Cuota (Individual/Familiar)
       if (cliente.tipoCuota === 'INDIVIDUAL') {
+        const montoIndividual =
+          await this.configuracionService.getValorNumerico(
+            'CUOTA_INDIVIDUAL',
+            50,
+          );
         const cargoCuota = this.cargoRepo.create({
           descripcion: 'Cuota de Socio Individual',
-          monto: 50,
+          monto: montoIndividual,
           tipo: TipoCargo.SERVICIOS,
           cliente: { id: cliente.id },
           pagado: false,
@@ -102,9 +109,13 @@ export class AutomaticBillingService {
         cliente.tipoCuota === 'FAMILIAR' &&
         cliente.id === cliente.responsableFamiliaId
       ) {
+        const montoFamiliar = await this.configuracionService.getValorNumerico(
+          'CUOTA_FAMILIAR',
+          120,
+        );
         const cargoCuota = this.cargoRepo.create({
           descripcion: 'Cuota Grupo Familiar',
-          monto: 120,
+          monto: montoFamiliar,
           tipo: TipoCargo.SERVICIOS,
           cliente: { id: cliente.id },
           pagado: false,
@@ -177,7 +188,15 @@ export class AutomaticBillingService {
           factura.cliente.email,
           'Recordatorio de Pago',
           'aviso-deuda',
-          { clienteNombre: factura.cliente.nombre, numero: factura.numero },
+          {
+            clienteNombre: factura.cliente.nombre,
+            numeroFactura: factura.numero,
+            fechaEmision: new Date(factura.fechaEmision).toLocaleDateString(
+              'es-AR',
+            ),
+            montoTotal: Number(factura.total).toLocaleString('es-AR'),
+            paymentLink: `http://localhost:5173/pago-publico?factura=${factura.numero}`,
+          },
         );
       }
     }

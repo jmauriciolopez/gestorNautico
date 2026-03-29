@@ -2,16 +2,28 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Search, Edit, Trash2, Ship, Loader2, MapPin, Activity, LayoutGrid, X } from 'lucide-react';
 import { useEmbarcaciones } from '../hooks/useEmbarcaciones';
+import { useConfirm } from '../../../shared/context/ConfirmContext';
+import { RoleGuard } from '../../../components/auth/RoleGuard';
+import { Role } from '../../../types';
 
 export default function EmbarcacionesList() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const { getEmbarcaciones, deleteEmbarcacion } = useEmbarcaciones();
   const { data: embarcaciones = [], isLoading } = getEmbarcaciones;
+  const confirm = useConfirm();
 
   const handleDelete = async (id: number) => {
-    // Replaced standard confirm with future high-fidelity modal integration
-    await deleteEmbarcacion.mutateAsync(id);
+    const isConfirmed = await confirm({
+      title: 'Eliminar Embarcación',
+      message: '¿Estás seguro de que deseas eliminar esta embarcación del sistema? Esta acción no se puede deshacer.',
+      confirmText: 'Eliminar',
+      variant: 'danger'
+    });
+
+    if (isConfirmed) {
+      await deleteEmbarcacion.mutateAsync(id);
+    }
   };
 
   const filtered = embarcaciones.filter(e =>
@@ -159,13 +171,15 @@ export default function EmbarcacionesList() {
                       >
                         <Edit className="w-4 h-4" />
                       </button>
-                      <button
-                        onClick={() => handleDelete(emb.id)}
-                        className="p-3 bg-[var(--bg-primary)]/60 border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-rose-500 hover:border-rose-500/50 rounded-2xl transition-all active:scale-90 shadow-xl"
-                        disabled={deleteEmbarcacion.isPending}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <RoleGuard allowedRoles={[Role.ADMIN, Role.SUPERADMIN]}>
+                        <button
+                          onClick={() => handleDelete(emb.id)}
+                          className="p-3 bg-[var(--bg-primary)]/60 border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-rose-500 hover:border-rose-500/50 rounded-2xl transition-all active:scale-90 shadow-xl"
+                          disabled={deleteEmbarcacion.isPending}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </RoleGuard>
                     </div>
                   </td>
                 </tr>

@@ -3,14 +3,27 @@ import { Plus, RefreshCw, Receipt, FileText, ChevronRight } from 'lucide-react';
 import { useFacturas } from '../hooks/useFacturas';
 import { FacturasList } from '../components/FacturasList';
 import { NuevaFacturaModal } from '../components/NuevaFacturaModal';
+import { useConfirm } from '../../../shared/context/ConfirmContext';
+import { RoleGuard } from '../../../components/auth/RoleGuard';
+import { Role } from '../../../types';
 
 export default function FacturacionPage() {
   const { getFacturas, updateEstadoFactura } = useFacturas();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const confirm = useConfirm();
 
   const handleUpdateEstado = async (id: number, estado: 'PENDIENTE' | 'PAGADA' | 'ANULADA') => {
-    const label = estado === 'PAGADA' ? 'liquidar' : 'ANULAR';
-    if (window.confirm(`¿Está seguro de que desea ${label} esta factura?`)) {
+    const isLiquidar = estado === 'PAGADA';
+    const label = isLiquidar ? 'Liquidar' : 'Anular';
+    
+    const confirmed = await confirm({
+      title: isLiquidar ? 'Liquidar Factura' : 'Anular Factura',
+      message: `¿Está seguro de que desea ${label} esta factura? Esta acción no se puede deshacer.`,
+      confirmText: isLiquidar ? 'Liquidar' : 'Anular Factura',
+      variant: isLiquidar ? 'primary' : 'danger'
+    });
+
+    if (confirmed) {
       try {
         await updateEstadoFactura.mutateAsync({ id, estado });
       } catch (error) {
@@ -43,13 +56,15 @@ export default function FacturacionPage() {
           >
             <RefreshCw className={`w-5 h-5 ${getFacturas.isFetching ? 'animate-spin' : ''}`} />
           </button>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="bg-indigo-600 hover:bg-indigo-500 text-[var(--text-primary)] px-10 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-2xl shadow-indigo-900/40 transition-all active:scale-95 flex items-center gap-3 group/btn"
-          >
-            <Plus className="w-4 h-4 group-hover/btn:rotate-90 transition-transform" />
-            Nueva Factura
-          </button>
+          <RoleGuard allowedRoles={[Role.ADMIN, Role.SUPERADMIN]}>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="bg-indigo-600 hover:bg-indigo-500 text-[var(--text-primary)] px-10 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-2xl shadow-indigo-900/40 transition-all active:scale-95 flex items-center gap-3 group/btn"
+            >
+              <Plus className="w-4 h-4 group-hover/btn:rotate-90 transition-transform" />
+              Nueva Factura
+            </button>
+          </RoleGuard>
         </div>
       </header>
 

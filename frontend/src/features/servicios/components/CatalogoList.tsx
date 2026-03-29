@@ -1,5 +1,7 @@
 import { Package, Loader2, Pencil, Trash2, ShieldCheck, ShieldAlert } from 'lucide-react';
 import { ServicioCatalogo } from '../hooks/useServicios';
+import { RoleGuard } from '../../../components/auth/RoleGuard';
+import { Role } from '../../../types';
 
 interface CatalogoListProps {
   servicios: ServicioCatalogo[];
@@ -76,24 +78,26 @@ export function CatalogoList({ servicios, isLoading, onDelete, onEdit }: Catalog
                   ${Number(svc.precioBase).toLocaleString()}
                 </td>
                 <td className="px-8 py-5 text-right">
-                  <div className="flex items-center justify-end gap-3 outline-none">
-                    {onEdit && (
-                      <button
-                        onClick={() => onEdit(svc)}
-                        className="p-2 text-slate-600 hover:text-indigo-400 hover:bg-indigo-400/10 rounded-xl transition-all active:scale-90"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                    )}
-                    {onDelete && (
-                      <button
-                        onClick={() => onDelete(svc.id)}
-                        className="p-2 text-[var(--text-secondary)] hover:text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all active:scale-90"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
+                  <RoleGuard allowedRoles={[Role.ADMIN, Role.SUPERADMIN]}>
+                    <div className="flex items-center justify-end gap-3 outline-none">
+                      {onEdit && (
+                        <button
+                          onClick={() => onEdit(svc)}
+                          className="p-2 text-slate-600 hover:text-indigo-400 hover:bg-indigo-400/10 rounded-xl transition-all active:scale-90"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                      )}
+                      {onDelete && (
+                        <button
+                          onClick={() => onDelete(svc.id)}
+                          className="p-2 text-[var(--text-secondary)] hover:text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all active:scale-90"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  </RoleGuard>
                 </td>
               </tr>
             ))
