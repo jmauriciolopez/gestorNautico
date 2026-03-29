@@ -20,9 +20,15 @@ interface MapaRacksProps {
   data: RackMap[];
   embarcacionesLibres: Embarcacion[];
   onAsignar: (embarcacionId: number, espacioId: number) => Promise<void>;
+  is3D?: boolean;
 }
 
-export const MapaRacks: React.FC<MapaRacksProps> = ({ data, embarcacionesLibres, onAsignar }) => {
+export const MapaRacks: React.FC<MapaRacksProps> = ({ 
+  data, 
+  embarcacionesLibres, 
+  onAsignar,
+  is3D = false 
+}) => {
   const navigate = useNavigate();
   const [expandedZona, setExpandedZona] = useState<number | null>(data[0]?.id || null);
   const [isAsignarOpen, setIsAsignarOpen] = useState(false);
@@ -49,7 +55,7 @@ export const MapaRacks: React.FC<MapaRacksProps> = ({ data, embarcacionesLibres,
 
   return (
     <>
-      <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
+    <div className={`space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700 ${is3D ? 'perspective-container' : ''}`}>
       <div className="flex justify-between items-center px-2">
         <div>
           <h2 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight">Mapa Maestro de Racks</h2>
@@ -111,12 +117,12 @@ export const MapaRacks: React.FC<MapaRacksProps> = ({ data, embarcacionesLibres,
                       <span className="text-xs text-[var(--text-secondary)]">{rack.columnas} col x {rack.filas} filas</span>
                     </div>
 
-                    {/* Grid Container with Horizontal Scroll */}
-                    <div className="bg-black/40 p-6 rounded-[2.2rem] border border-[var(--border-primary)]/50 backdrop-blur-sm relative group mb-2 overflow-x-auto custom-scrollbar">
+                    {/* Grid Container with 3D Support */}
+                    <div className={`p-8 rounded-[2.5rem] bg-black/20 border border-white/5 transition-all duration-700 ${is3D ? 'rack-3d-scene rack-3d-active overflow-visible' : 'overflow-x-auto custom-scrollbar'}`}>
                       <div className="min-w-max">
                         {/* Column Headers */}
                          <div 
-                          className="grid gap-3 mb-4 opacity-40 px-1"
+                          className={`grid gap-3 mb-6 px-1 transition-opacity duration-700 ${is3D ? 'opacity-0' : 'opacity-40'}`}
                           style={{
                             gridTemplateColumns: `50px repeat(${rack.columnas}, minmax(0, 1fr))`
                           }}
@@ -142,9 +148,9 @@ export const MapaRacks: React.FC<MapaRacksProps> = ({ data, embarcacionesLibres,
                             return (
                               <React.Fragment key={`row-${p}`}>
                                 {/* Floor Label Indicator */}
-                                <div className="flex flex-col items-center justify-center h-full border-r border-slate-700/40 pr-3 mr-1 sticky left-0 bg-black/20 backdrop-blur-md z-10 border-l border-white/5 rounded-l-xl">
-                                  <span className="text-[10px] font-black text-indigo-500/80 tracking-tighter uppercase leading-none mb-1">Piso</span>
-                                  <span className="text-xl font-black text-[var(--text-primary)] leading-none tabular-nums">{p}</span>
+                                <div className={`flex flex-col items-center justify-center h-full border-r border-white/10 pr-4 mr-2 transition-all duration-700 ${is3D ? 'translate-z-[150px]' : 'sticky left-0 bg-black/20 backdrop-blur-md z-10 border-l border-white/5 rounded-l-xl'}`}>
+                                  <span className="text-[9px] font-black text-indigo-500/60 uppercase tracking-tighter leading-none mb-1">Nivel</span>
+                                  <span className="text-2xl font-black text-[var(--text-primary)] leading-none tabular-nums italic">{p}</span>
                                 </div>
 
                                 {Array.from({ length: rack.columnas }).map((_, cIdx) => {
@@ -161,32 +167,40 @@ export const MapaRacks: React.FC<MapaRacksProps> = ({ data, embarcacionesLibres,
                                           codigo: espacio.numero,
                                           embarcacion: espacio.embarcacion
                                         })}
-                                        className={`w-[110px] h-[110px] rounded-xl border transition-all flex flex-col items-center justify-center gap-1 group/item relative
+                                        className={`w-[110px] h-[110px] rounded-xl border transition-all duration-700 flex flex-col items-center justify-center gap-1 group/item relative cell-3d
                                           ${!espacio 
-                                            ? 'bg-transparent border-dashed border-slate-800/30' 
+                                            ? 'bg-transparent border-dashed border-white/5' 
                                             : espacio.ocupado
-                                              ? `${getBoatSizeClass(espacio.embarcacion?.eslora || 0)} cursor-pointer`
-                                              : 'bg-[var(--bg-secondary)]/50 text-slate-600 border-[var(--border-primary)] hover:border-slate-500 hover:bg-slate-800/50 cursor-pointer'
+                                              ? `${getBoatSizeClass(espacio.embarcacion?.eslora || 0)} cursor-pointer shadow-lg`
+                                              : 'bg-[var(--bg-secondary)]/40 text-slate-600 border-white/10 hover:border-indigo-500/50 hover:bg-indigo-600/10 cursor-pointer'
                                           }
-                                          ${f === 1 && rack.filas > 1 ? 'border-l-2 border-l-indigo-500/20' : ''}
+                                          ${is3D ? `fila-depth-${f}` : ''}
                                         `}
                                       >
+                                        {/* Volumetric panels (visible in 3D) */}
+                                        {is3D && espacio && (
+                                          <>
+                                            <div className="cell-volume-side cell-volume-top" />
+                                            <div className="cell-volume-side cell-volume-left" />
+                                          </>
+                                        )}
+
                                         {!espacio ? (
-                                          <div className="text-[10px] font-mono opacity-10">NULL</div>
+                                          <div className="text-[10px] font-mono opacity-5">N/A</div>
                                         ) : espacio.ocupado ? (
                                           <>
-                                            <Anchor size={20} className={(espacio.embarcacion?.eslora || 0) > 10 ? 'animate-pulse text-white' : 'text-white/80'} />
-                                            <span className="text-[9px] font-black text-center px-1 truncate w-full uppercase tracking-tighter leading-tight">
+                                            <Anchor size={24} className={(espacio.embarcacion?.eslora || 0) > 10 ? 'animate-pulse text-white' : 'text-white/80'} />
+                                            <span className="text-[9px] font-black text-center px-1 truncate w-full uppercase tracking-tighter leading-tight text-white/90">
                                               {espacio.embarcacion?.nombre}
                                             </span>
-                                            <div className="absolute top-1 left-1.5 px-1.5 py-0.5 bg-black/40 rounded text-[8px] font-bold backdrop-blur-sm border border-white/10 uppercase">
+                                            <div className="absolute bottom-1 right-2 px-1.5 py-0.5 bg-black/60 rounded text-[8px] font-black text-indigo-400 backdrop-blur-sm border border-white/10 uppercase">
                                               F{f}
                                             </div>
                                           </>
                                         ) : (
                                           <>
-                                            <span className="text-[10px] font-black opacity-30 tracking-widest">{espacio.numero.split('-').pop()}</span>
-                                            <span className="text-[8px] font-bold opacity-20 uppercase">Fila {f}</span>
+                                            <span className="text-[10px] font-black opacity-20 tracking-widest">{espacio.numero.split('-').pop()}</span>
+                                            <span className="text-[8px] font-bold opacity-10 uppercase">Fila {f}</span>
                                           </>
                                         )}
 

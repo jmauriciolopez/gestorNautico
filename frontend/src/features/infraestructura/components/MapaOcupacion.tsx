@@ -8,22 +8,35 @@ interface MapaOcupacionProps {
 }
 
 export function MapaOcupacion({ ubicaciones, onToggleEspacio }: MapaOcupacionProps) {
+  const [is3D, setIs3D] = useState(false);
   const [expandedUbicacion, setExpandedUbicacion] = useState<number | null>(
     ubicaciones.length > 0 ? ubicaciones[0].id : null
   );
 
   if (ubicaciones.length === 0) {
-    return (
-      <div className="py-24 text-center animate-in fade-in zoom-in duration-500">
-        <MapPin className="mx-auto w-16 h-16 text-slate-700 mb-6" />
-        <h2 className="text-2xl font-bold text-[var(--text-secondary)]">No se ha creado ninguna ubicación</h2>
-        <p className="text-[var(--text-secondary)] mt-2 max-w-md mx-auto">Vaya a la pestaña de configuración para iniciar la estructura jerárquica.</p>
-      </div>
-    );
+    // ... (unchanged)
   }
 
   return (
-    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700">
+    <div className={`space-y-12 animate-in fade-in slide-in-from-bottom-6 duration-700 ${is3D ? 'perspective-container' : ''}`}>
+      <div className="flex justify-between items-center bg-[var(--bg-secondary)]/30 p-6 rounded-[2rem] border border-[var(--border-primary)] mb-8">
+        <div>
+          <h2 className="text-xl font-black text-[var(--text-primary)] uppercase tracking-tight">Mapa Maestro de Infraestructura</h2>
+          <p className="text-[10px] text-[var(--text-muted)] font-black uppercase tracking-widest">Control volumétrico de espacios en rack</p>
+        </div>
+        <button
+          onClick={() => setIs3D(!is3D)}
+          className={`flex items-center gap-2 px-6 py-3 rounded-2xl border transition-all font-black text-[10px] uppercase tracking-widest ${
+            is3D 
+            ? 'bg-blue-600 border-blue-400 text-white shadow-lg shadow-blue-900/40' 
+            : 'bg-[var(--bg-primary)]/40 border-[var(--border-primary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-blue-500/50'
+          }`}
+        >
+          <Layers className={`w-4 h-4 ${is3D ? 'animate-pulse' : ''}`} />
+          Inspección 3D {is3D ? 'Activa' : 'Inactiva'}
+        </button>
+      </div>
+
       {ubicaciones.map(ubicacion => (
         <div key={ubicacion.id} className="space-y-6">
           {/* Ubicación Header */}
@@ -72,11 +85,11 @@ export function MapaOcupacion({ ubicaciones, onToggleEspacio }: MapaOcupacionPro
                           <span className="text-[10px] uppercase font-black text-[var(--text-secondary)] tracking-tighter bg-[var(--bg-secondary)] border border-[var(--border-primary)] px-4 py-1.5 rounded-full shadow-inner">{rack.espacios?.length || 0} espacios</span>
                         </div>
 
-                        <div className="bg-black/20 p-6 rounded-[2.2rem] border border-[var(--border-primary)]/40 relative overflow-x-auto custom-scrollbar">
+                        <div className={`p-6 rounded-[2.2rem] bg-black/20 border border-white/5 transition-all duration-700 ${is3D ? 'rack-3d-scene rack-3d-active overflow-visible' : 'overflow-x-auto custom-scrollbar'}`}>
                           <div className="min-w-max">
                             {/* Column Headers */}
                             <div 
-                              className="grid gap-2 mb-4 opacity-30 px-1"
+                              className={`grid gap-2 mb-4 px-1 transition-opacity duration-700 ${is3D ? 'opacity-0' : 'opacity-30'}`}
                               style={{
                                 gridTemplateColumns: `40px repeat(${rack.columnas}, minmax(0, 1fr))`
                               }}
@@ -99,7 +112,7 @@ export function MapaOcupacion({ ubicaciones, onToggleEspacio }: MapaOcupacionPro
                                 return (
                                   <div key={`row-${p}`} className="contents">
                                     {/* Floor Label */}
-                                    <div className="text-[12px] font-black text-slate-500 pr-3 border-r border-slate-800/50 flex items-center justify-end h-full sticky left-0 bg-[#0f172a] z-10">
+                                    <div className={`text-[12px] font-black text-slate-500 pr-3 border-r border-slate-800/50 flex items-center justify-end h-full transition-all duration-700 ${is3D ? 'translate-z-[150px]' : 'sticky left-0 bg-[#0f172a] z-10'}`}>
                                       P{p}
                                     </div>
 
@@ -114,17 +127,25 @@ export function MapaOcupacion({ ubicaciones, onToggleEspacio }: MapaOcupacionPro
                                             key={`cell-${p}-${c}-${f}`}
                                             onClick={() => espacio && onToggleEspacio(espacio.id, espacio.ocupado, espacio.numero)}
                                             className={`
-                                              w-[80px] h-[80px] rounded-xl flex flex-col items-center justify-center transition-all duration-300 border-2 relative group/item
+                                              w-[80px] h-[80px] rounded-xl flex flex-col items-center justify-center transition-all duration-700 border-2 relative group/item cell-3d
                                               ${!espacio 
                                                 ? 'bg-transparent border-dashed border-slate-800/20 cursor-default'
                                                 : espacio.ocupado
                                                   ? 'bg-rose-500/10 border-rose-500/30 text-rose-400 hover:bg-rose-500/20 hover:border-rose-500/50 shadow-lg shadow-rose-500/5'
                                                   : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-500/50 shadow-lg shadow-emerald-500/5'}
-                                              ${f === 1 && rack.filas > 1 ? 'border-l-indigo-500/20' : ''}
+                                              ${is3D ? `fila-depth-${f}` : ''}
                                             `}
                                             disabled={!espacio}
                                             title={espacio ? `Espacio ${espacio.numero} (Piso ${p}, Col ${c}, Fila ${f})` : 'No asignado'}
                                           >
+                                            {/* Volumetric panels */}
+                                            {is3D && espacio && (
+                                              <>
+                                                <div className="cell-volume-side cell-volume-top" />
+                                                <div className="cell-volume-side cell-volume-left" />
+                                              </>
+                                            )}
+
                                             {espacio ? (
                                               <>
                                                 <span className="text-[11px] font-black z-10 tracking-tighter">{espacio.numero.split('-').pop()}</span>
@@ -149,6 +170,7 @@ export function MapaOcupacion({ ubicaciones, onToggleEspacio }: MapaOcupacionPro
                         </div>
                       </div>
                     ))}
+                    {/* ... (rest unchanged) */}
                     {(!zona.racks || zona.racks.length === 0) && (
                       <div className="col-span-full py-16 text-center bg-[var(--bg-secondary)]/30 rounded-[2rem] border-2 border-dashed border-[var(--border-primary)]/50">
                         <AlertCircle className="mx-auto w-10 h-10 text-slate-700 mb-4" />

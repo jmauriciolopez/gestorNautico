@@ -89,3 +89,73 @@ body {
     @apply tracking-tight;
   }
 }
+
+/* 3D Rack Visualization Utilities */
+.perspective-container {
+  perspective: 1500px;
+  perspective-origin: center center;
+}
+
+.rack-3d-scene {
+  transform-style: preserve-3d;
+  transition: transform 1.2s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.rack-3d-active {
+  transform: rotateX(25deg) rotateY(-18deg) rotateZ(2deg);
+}
+
+.cell-3d {
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.3s ease;
+}
+
+/* Dynamic Depth Layers */
+.fila-depth-1 { transform: translateZ(30px); }
+.fila-depth-2 { transform: translateZ(-40px); }
+.fila-depth-3 { transform: translateZ(-110px); }
+
+/* Volumetric Side Panels */
+.cell-volume-side {
+  position: absolute;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.05), transparent);
+  border: 1px solid rgba(255,255,255,0.08);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+
+.rack-3d-active .cell-volume-side {
+  opacity: 1;
+}
+
+.cell-volume-top {
+  width: 100%;
+  height: 70px;
+  top: 0;
+  left: 0;
+  transform: rotateX(90deg) translateY(-35px);
+  transform-origin: top;
+  background: rgba(255,255,255,0.03);
+}
+
+.cell-volume-left {
+  width: 70px;
+  height: 100%;
+  top: 0;
+  left: 0;
+  transform: rotateY(-90deg) translateX(-35px);
+  transform-origin: left;
+  background: rgba(0,0,0,0.2);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.1);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.2);
+}

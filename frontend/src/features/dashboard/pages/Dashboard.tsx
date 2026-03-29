@@ -39,6 +39,7 @@ const Dashboard: React.FC = () => {
   const [isPagoModalOpen, setIsPagoModalOpen] = useState(false);
   useTheme();
   const navigate = useNavigate();
+  const [is3D, setIs3D] = useState(false);
 
   const embarcaciones = getEmbarcaciones.data || [];
   const embarcacionesLibres = embarcaciones.filter((e: any) => !e.espacioId && e.estado !== 'INACTIVA');
@@ -279,10 +280,23 @@ const Dashboard: React.FC = () => {
             <h3 className="text-2xl font-black text-[var(--text-primary)] tracking-tighter uppercase leading-none">Inventario de Infraestructura</h3>
             <p className="text-[var(--text-secondary)] text-xs font-black uppercase tracking-widest mt-2 ml-0.5">Mapeo topológico de espacios y racks en guarda.</p>
           </div>
-          <div className="flex items-center gap-4 bg-[var(--bg-primary)]/40 px-6 py-3 rounded-2xl border border-[var(--border-primary)]">
-            <div className="flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-indigo-500 shadow-sm shadow-indigo-500/50" />
-              <span className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Estado Nominal</span>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setIs3D(!is3D)}
+              className={`flex items-center gap-2 px-6 py-3 rounded-2xl border transition-all font-black text-[10px] uppercase tracking-widest ${
+                is3D 
+                ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-900/40' 
+                : 'bg-[var(--bg-primary)]/40 border-[var(--border-primary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-indigo-500/50'
+              }`}
+            >
+              <Activity className={`w-4 h-4 ${is3D ? 'animate-pulse' : ''}`} />
+              Vista 3D {is3D ? 'Activa' : 'Inactiva'}
+            </button>
+            <div className="flex items-center gap-4 bg-[var(--bg-primary)]/40 px-6 py-3 rounded-2xl border border-[var(--border-primary)]">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 rounded-full bg-indigo-500 shadow-sm shadow-indigo-500/50" />
+                <span className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Estado Nominal</span>
+              </div>
             </div>
           </div>
         </div>
@@ -298,6 +312,7 @@ const Dashboard: React.FC = () => {
               data={rackMapData || []} 
               embarcacionesLibres={embarcacionesLibres}
               onAsignar={handleAsignarBarco}
+              is3D={is3D}
             />
           )}
         </div>
