@@ -72,26 +72,80 @@ export function MapaOcupacion({ ubicaciones, onToggleEspacio }: MapaOcupacionPro
                           <span className="text-[10px] uppercase font-black text-[var(--text-secondary)] tracking-tighter bg-[var(--bg-secondary)] border border-[var(--border-primary)] px-4 py-1.5 rounded-full shadow-inner">{rack.espacios?.length || 0} espacios</span>
                         </div>
 
-                        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-8 lg:grid-cols-10 gap-3 relative z-10">
-                          {([...(rack.espacios || [])].sort((a, b) => a.id - b.id)).map(espacio => (
-                            <button
-                              key={espacio.id}
-                              onClick={() => onToggleEspacio(espacio.id, espacio.ocupado, espacio.numero)}
-                              className={`
-                                aspect-square rounded-xl flex items-center justify-center transition-all duration-300 border-2 relative group/item
-                                ${espacio.ocupado
-                                  ? 'bg-rose-500/10 border-rose-500/30 text-rose-400 hover:bg-rose-500/20 hover:border-rose-500/50 shadow-lg shadow-rose-500/5'
-                                  : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-500/50 shadow-lg shadow-emerald-500/5'}
-                              `}
-                              title={`Espacio ${espacio.numero}`}
+                        <div className="bg-black/20 p-6 rounded-[2.2rem] border border-[var(--border-primary)]/40 relative overflow-x-auto custom-scrollbar">
+                          <div className="min-w-max">
+                            {/* Column Headers */}
+                            <div 
+                              className="grid gap-2 mb-4 opacity-30 px-1"
+                              style={{
+                                gridTemplateColumns: `40px repeat(${rack.columnas}, minmax(0, 1fr))`
+                              }}
                             >
-                              <span className="text-xs font-black z-10 tracking-tighter">{espacio.numero.split('-')[1] || espacio.numero}</span>
-                              {espacio.ocupado ?
-                                <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse shadow-sm shadow-rose-500/50" /> :
-                                <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-emerald-500/40 rounded-full" />
-                              }
-                            </button>
-                          ))}
+                              <div /> {/* Spacer */}
+                              {Array.from({ length: rack.columnas }).map((_, i) => (
+                                <div key={i} className="text-center text-[10px] font-black uppercase tracking-widest text-slate-400">Col {i + 1}</div>
+                              ))}
+                            </div>
+
+                            <div 
+                              className="grid gap-2 items-center"
+                              style={{
+                                gridTemplateColumns: `40px repeat(${rack.columnas * rack.filas}, 80px)`,
+                                gridTemplateRows: `repeat(${rack.pisos}, 80px)`
+                              }}
+                            >
+                              {Array.from({ length: rack.pisos }).map((_, rIdx) => {
+                                const p = rack.pisos - rIdx; // Piso 1 abajo
+                                return (
+                                  <div key={`row-${p}`} className="contents">
+                                    {/* Floor Label */}
+                                    <div className="text-[12px] font-black text-slate-500 pr-3 border-r border-slate-800/50 flex items-center justify-end h-full sticky left-0 bg-[#0f172a] z-10">
+                                      P{p}
+                                    </div>
+
+                                    {Array.from({ length: rack.columnas }).map((_, cIdx) => {
+                                      const c = cIdx + 1;
+                                      return Array.from({ length: rack.filas }).map((_, fIdx) => {
+                                        const f = fIdx + 1;
+                                        const espacio = rack.espacios.find(e => e.piso === p && e.columna === c && e.fila === f);
+
+                                        return (
+                                          <button
+                                            key={`cell-${p}-${c}-${f}`}
+                                            onClick={() => espacio && onToggleEspacio(espacio.id, espacio.ocupado, espacio.numero)}
+                                            className={`
+                                              w-[80px] h-[80px] rounded-xl flex flex-col items-center justify-center transition-all duration-300 border-2 relative group/item
+                                              ${!espacio 
+                                                ? 'bg-transparent border-dashed border-slate-800/20 cursor-default'
+                                                : espacio.ocupado
+                                                  ? 'bg-rose-500/10 border-rose-500/30 text-rose-400 hover:bg-rose-500/20 hover:border-rose-500/50 shadow-lg shadow-rose-500/5'
+                                                  : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-500/50 shadow-lg shadow-emerald-500/5'}
+                                              ${f === 1 && rack.filas > 1 ? 'border-l-indigo-500/20' : ''}
+                                            `}
+                                            disabled={!espacio}
+                                            title={espacio ? `Espacio ${espacio.numero} (Piso ${p}, Col ${c}, Fila ${f})` : 'No asignado'}
+                                          >
+                                            {espacio ? (
+                                              <>
+                                                <span className="text-[11px] font-black z-10 tracking-tighter">{espacio.numero.split('-').pop()}</span>
+                                                <span className="text-[8px] font-bold opacity-40 uppercase">F{f}</span>
+                                                {espacio.ocupado ?
+                                                  <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse shadow-sm shadow-rose-500/50" /> :
+                                                  <div className="absolute top-1 right-1 w-1.5 h-1.5 bg-emerald-500/40 rounded-full" />
+                                                }
+                                              </>
+                                            ) : (
+                                              <span className="text-[9px] opacity-10 font-mono">N/A</span>
+                                            )}
+                                          </button>
+                                        );
+                                      });
+                                    })}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     ))}

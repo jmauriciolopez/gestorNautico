@@ -8,6 +8,7 @@ import { Role } from './types';
 import AppLayout from './components/layout/AppLayout';
 import { Login } from './features/auth/Login';
 import { ThemeProvider } from './context/ThemeContext';
+import { Toaster } from 'react-hot-toast';
 
 // === Feature Pages ===
 import Dashboard from './features/dashboard/pages/Dashboard';
@@ -49,6 +50,13 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <BrowserRouter>
+          <Toaster 
+            position="top-right"
+            toastOptions={{
+              className: 'dark:bg-slate-900 dark:text-white border border-slate-800',
+              duration: 4000,
+            }}
+          />
           <AuthProvider>
             <Routes>
               <Route path="/login" element={<LoginWrapper />} />

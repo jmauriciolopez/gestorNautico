@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { toast } from 'react-hot-toast';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Save, Loader2, MapPin } from 'lucide-react';
 import { useEmbarcaciones } from '../hooks/useEmbarcaciones';
@@ -82,10 +83,11 @@ export default function EmbarcacionForm() {
       } else {
         await createEmbarcacion.mutateAsync(payload);
       }
+      toast.success(isEditing ? 'Embarcación actualizada' : 'Embarcación registrada');
       navigate('/embarcaciones');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving embarcacion:', error);
-      alert('Hubo un error al guardar la embarcación. Verifique los datos.');
+      toast.error(error.message || 'Error al guardar la embarcación');
     }
   };
 
@@ -218,9 +220,18 @@ export default function EmbarcacionForm() {
                 onClose={() => setIsModalOpen(false)}
                 zonas={zonas}
                 onSelect={(espacioId) => {
-                  setFormData(prev => ({ ...prev, espacioId: espacioId ? String(espacioId) : '' }));
+                  setFormData(prev => ({
+                    ...prev,
+                    espacioId: espacioId ? String(espacioId) : '',
+                    // Si se quita la ubicación, cambiar estado a EN_AGUA automáticamente
+                    estado: espacioId ? prev.estado : 'EN_AGUA'
+                  }));
                 }}
                 currentEspacioId={formData.espacioId ? Number(formData.espacioId) : undefined}
+                boatDimensions={{
+                  eslora: parseFloat(formData.eslora) || 0,
+                  manga: parseFloat(formData.manga) || 0
+                }}
               />
             </div>
 

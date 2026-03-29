@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Caja, EstadoCaja } from './caja.entity';
@@ -50,58 +56,102 @@ export class CajasService {
 
   async abrir(saldoInicial: number) {
     try {
-      this.logger.log(`Intentando abrir caja con saldo inicial: ${saldoInicial}`);
-      
-      const abierta = await this.findAbierta();
-      if (abierta) {
-        throw new ConflictException('Ya existe una caja abierta en el sistema');
-      }
+      this.logger.log(
+        `Intentando abrir caja con saldo inicial: ${saldoInicial}`,
+      );
 
-      const nueva = this.cajaRepo.create({
-        saldoInicial: Number(saldoInicial || 0),
-        estado: EstadoCaja.ABIERTA,
-        fechaApertura: new Date(),
-      });
-      
-      const guardada = await this.cajaRepo.save(nueva);
-      this.logger.log(`Caja aperturada exitosamente con ID: ${guardada.id}`);
+      return await this.cajaRepo.manager.transaction(
+        async (transactionalEntityManager) => {
+          const abierta = await transactionalEntityManager.findOne(Caja, {
+            where: { estado: EstadoCaja.ABIERTA },
+          });
 
-      // Notificar apertura de caja
-      await this.notificacionesService.createForRole(Role.ADMIN, {
-        titulo: 'Apertura de Caja',
-        mensaje: `Se ha abierto una nueva sesión de caja con un saldo inicial de $${saldoInicial}.`,
-        tipo: NotificacionTipo.SISTEMA,
-      });
+          if (abierta) {
+            throw new ConflictException(
+              'Ya existe una caja abierta en el sistema',
+            );
+          }
 
-      return guardada;
-    } catch (error) {
-      this.logger.error(`Error crítico al abrir caja: ${error.message}`, error.stack);
+          const nueva = transactionalEntityManager.create(Caja, {
+            saldoInicial: Number(saldoInicial || 0),
+            estado: EstadoCaja.ABIERTA,
+            fechaApertura: new Date(),
+          });
+
+          const guardada = await transactionalEntityManager.save(Caja, nueva);
+          this.logger.log(
+            `Caja aperturada exitosamente con ID: ${guardada.id}`,
+          );
+
+          // Notificar apertura de caja
+          await this.notificacionesService.createForRole(Role.ADMIN, {
+            titulo: 'Apertura de Caja',
+            mensaje: `Se ha abierto una nueva sesión de caja con un saldo inicial de $${saldoInicial}.`,
+            tipo: NotificacionTipo.SISTEMA,
+          });
+
+          return guardada;
+        },
+      );
+    } catch (error: any) {
+      this.logger.error(
+        `Error crítico al abrir caja: ${error.message}`,
+        error.stack,
+      );
       if (error instanceof ConflictException) throw error;
-      throw new BadRequestException(`No se pudo abrir la caja: ${error.message}`);
+      throw new BadRequestException(
+        `No se pudo abrir la caja: ${error.message}`,
+      );
     }
   }
 
   async cerrar(id: number, saldoFinal: number) {
-    const caja = await this.findOne(id);
-    if (caja.estado === EstadoCaja.CERRADA) {
-      throw new ConflictException('La sesión de caja seleccionada ya se encuentra cerrada');
+    try {
+      return await this.cajaRepo.manager.transaction(
+        async (transactionalEntityManager) => {
+          const caja = await transactionalEntityManager.findOne(Caja, {
+            where: { id },
+          });
+
+          if (!caja)
+            throw new NotFoundException(`Caja con ID ${id} no encontrada`);
+          if (caja.estado === EstadoCaja.CERRADA) {
+            throw new ConflictException(
+              'La sesión de caja seleccionada ya se encuentra cerrada',
+            );
+          }
+
+          caja.estado = EstadoCaja.CERRADA;
+          caja.saldoFinal = Number(saldoFinal || 0);
+          caja.fechaCierre = new Date();
+
+          this.logger.log(
+            `Cerrando caja ID ${id} con saldo final ${saldoFinal}`,
+          );
+          const guardada = await transactionalEntityManager.save(Caja, caja);
+
+          // Notificar cierre de caja
+          await this.notificacionesService.createForRole(Role.ADMIN, {
+            titulo: 'Cierre de Caja',
+            mensaje: `Se ha cerrado la sesión de caja ID ${id} con un saldo final de $${saldoFinal}.`,
+            tipo: NotificacionTipo.EXITO,
+          });
+
+          return guardada;
+        },
+      );
+    } catch (error: any) {
+      this.logger.error(`Error al cerrar caja: ${error.message}`, error.stack);
+      if (
+        error instanceof ConflictException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
+      throw new BadRequestException(
+        `No se pudo cerrar la caja: ${error.message}`,
+      );
     }
-
-    caja.estado = EstadoCaja.CERRADA;
-    caja.saldoFinal = Number(saldoFinal || 0);
-    caja.fechaCierre = new Date();
-    
-    this.logger.log(`Cerrando caja ID ${id} con saldo final ${saldoFinal}`);
-    const guardada = await this.cajaRepo.save(caja);
-
-    // Notificar cierre de caja
-    await this.notificacionesService.createForRole(Role.ADMIN, {
-      titulo: 'Cierre de Caja',
-      mensaje: `Se ha cerrado la sesión de caja ID ${id} con un saldo final de $${saldoFinal}.`,
-      tipo: NotificacionTipo.EXITO,
-    });
-
-    return guardada;
   }
 
   async getResumen(): Promise<CajasResumen | null> {

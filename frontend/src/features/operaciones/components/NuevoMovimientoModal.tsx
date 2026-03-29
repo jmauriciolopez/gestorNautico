@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { X, Ship, ArrowRight, ArrowLeft, MessageSquare, Search, Loader2, AlertCircle, ArrowRightLeft } from 'lucide-react';
+import { X, Ship, ArrowRight, ArrowLeft, Search, Loader2, AlertCircle, ArrowRightLeft } from 'lucide-react';
 import { useEmbarcaciones } from '../../embarcaciones/hooks/useEmbarcaciones';
 
 interface NuevoMovimientoModalProps {

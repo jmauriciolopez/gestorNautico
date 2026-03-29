@@ -13,17 +13,22 @@ import {
 } from 'lucide-react';
 import { RackMap } from '../hooks/useDashboard';
 import { useNavigate } from 'react-router-dom';
+import { AsignarEmbarcacionModal } from '../../infraestructura/components/AsignarEmbarcacionModal';
+import { Embarcacion } from '../../embarcaciones/hooks/useEmbarcaciones';
 
 interface MapaRacksProps {
   data: RackMap[];
+  embarcacionesLibres: Embarcacion[];
+  onAsignar: (embarcacionId: number, espacioId: number) => Promise<void>;
 }
 
-export const MapaRacks: React.FC<MapaRacksProps> = ({ data }) => {
+export const MapaRacks: React.FC<MapaRacksProps> = ({ data, embarcacionesLibres, onAsignar }) => {
   const navigate = useNavigate();
   const [expandedZona, setExpandedZona] = useState<number | null>(data[0]?.id || null);
+  const [isAsignarOpen, setIsAsignarOpen] = useState(false);
   const [selectedEspacio, setSelectedEspacio] = useState<{
-    rackId: number;
     espacioId: number;
+    codigo: string;
     embarcacion?: any;
   } | null>(null);
 
@@ -43,7 +48,8 @@ export const MapaRacks: React.FC<MapaRacksProps> = ({ data }) => {
   };
 
   return (
-    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
+    <>
+      <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
       <div className="flex justify-between items-center px-2">
         <div>
           <h2 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight">Mapa Maestro de Racks</h2>
@@ -105,57 +111,99 @@ export const MapaRacks: React.FC<MapaRacksProps> = ({ data }) => {
                       <span className="text-xs text-[var(--text-secondary)]">{rack.columnas} col x {rack.filas} filas</span>
                     </div>
 
-                    {/* Grid Container */}
-                    <div className="bg-black/40 p-4 rounded-[2rem] border border-[var(--border-primary)]/50 backdrop-blur-sm relative group">
-                      <div
-                        className="grid gap-3"
-                        style={{
-                          gridTemplateColumns: `repeat(${rack.columnas}, minmax(0, 1fr))`,
-                          gridTemplateRows: `repeat(${rack.pisos}, minmax(0, 1fr))`
-                        }}
-                      >
-                        {Array.from({ length: rack.pisos }).map((_, rIdx) => {
-                          const p = rack.pisos - rIdx; // Piso 1 abajo
-                          return Array.from({ length: rack.columnas }).map((_, cIdx) => {
-                            const c = cIdx + 1;
-                            const espacio = rack.espacios.find(e => e.piso === p && e.columna === c);
+                    {/* Grid Container with Horizontal Scroll */}
+                    <div className="bg-black/40 p-6 rounded-[2.2rem] border border-[var(--border-primary)]/50 backdrop-blur-sm relative group mb-2 overflow-x-auto custom-scrollbar">
+                      <div className="min-w-max">
+                        {/* Column Headers */}
+                         <div 
+                          className="grid gap-3 mb-4 opacity-40 px-1"
+                          style={{
+                            gridTemplateColumns: `50px repeat(${rack.columnas}, minmax(0, 1fr))`
+                          }}
+                        >
+                          <div /> {/* Top-left corner spacer */}
+                          {Array.from({ length: rack.columnas }).map((_, i) => (
+                            <div key={i} className="text-center font-black uppercase tracking-widest flex flex-col items-center">
+                              <span className="text-[10px] text-indigo-400">Columna</span>
+                              <span className="text-sm text-[var(--text-primary)]">{i + 1}</span>
+                            </div>
+                          ))}
+                        </div>
 
-                            if (!espacio) return <div key={`empty-${p}-${c}`} className="aspect-square bg-[var(--bg-primary)]/20 rounded-xl border border-dashed border-[var(--border-primary)]/30" />;
-
+                        <div
+                          className="grid gap-3 items-center"
+                          style={{
+                            gridTemplateColumns: `50px repeat(${rack.columnas * rack.filas}, 110px)`,
+                            gridTemplateRows: `repeat(${rack.pisos}, 110px)`
+                          }}
+                        >
+                          {Array.from({ length: rack.pisos }).map((_, rIdx) => {
+                            const p = rack.pisos - rIdx; // Piso 1 abajo
                             return (
-                              <div
-                                key={espacio.id}
-                                onClick={() => setSelectedEspacio({
-                                  rackId: rack.id,
-                                  espacioId: espacio.id,
-                                  embarcacion: espacio.embarcacion
-                                })}
-                                className={`aspect-square rounded-xl border transition-all cursor-pointer flex flex-col items-center justify-center gap-1 group/item relative ${espacio.ocupado
-                                  ? getBoatSizeClass(espacio.embarcacion?.eslora || 0)
-                                  : 'bg-[var(--bg-secondary)]/50 text-slate-600 border-[var(--border-primary)] hover:border-slate-600 hover:bg-slate-800/50'
-                                  }`}
-                              >
-                                {espacio.ocupado ? (
-                                  <>
-                                    <Anchor size={18} className={(espacio.embarcacion?.eslora || 0) > 10 ? 'animate-pulse' : ''} />
-                                    <span className="text-[8px] font-bold text-center px-1 truncate w-full">
-                                      {espacio.embarcacion?.nombre}
-                                    </span>
-                                  </>
-                                ) : (
-                                  <span className="text-[10px] font-mono opacity-40">{espacio.numero.split('-').pop()}</span>
-                                )}
+                              <React.Fragment key={`row-${p}`}>
+                                {/* Floor Label Indicator */}
+                                <div className="flex flex-col items-center justify-center h-full border-r border-slate-700/40 pr-3 mr-1 sticky left-0 bg-black/20 backdrop-blur-md z-10 border-l border-white/5 rounded-l-xl">
+                                  <span className="text-[10px] font-black text-indigo-500/80 tracking-tighter uppercase leading-none mb-1">Piso</span>
+                                  <span className="text-xl font-black text-[var(--text-primary)] leading-none tabular-nums">{p}</span>
+                                </div>
 
-                                {/* Hover Mini Info */}
-                                {espacio.ocupado && (
-                                  <div className="absolute -top-2 -right-2 bg-white text-slate-950 p-1 rounded-full opacity-0 group-hover/item:opacity-100 transition-opacity z-10 shadow-xl">
-                                    <Info size={10} />
-                                  </div>
-                                )}
-                              </div>
+                                {Array.from({ length: rack.columnas }).map((_, cIdx) => {
+                                  const c = cIdx + 1;
+                                  return Array.from({ length: rack.filas }).map((_, fIdx) => {
+                                    const f = fIdx + 1;
+                                    const espacio = rack.espacios.find(e => e.piso === p && e.columna === c && e.fila === f);
+
+                                    return (
+                                      <div
+                                        key={`cell-${p}-${c}-${f}`}
+                                        onClick={() => espacio && setSelectedEspacio({
+                                          espacioId: espacio.id,
+                                          codigo: espacio.numero,
+                                          embarcacion: espacio.embarcacion
+                                        })}
+                                        className={`w-[110px] h-[110px] rounded-xl border transition-all flex flex-col items-center justify-center gap-1 group/item relative
+                                          ${!espacio 
+                                            ? 'bg-transparent border-dashed border-slate-800/30' 
+                                            : espacio.ocupado
+                                              ? `${getBoatSizeClass(espacio.embarcacion?.eslora || 0)} cursor-pointer`
+                                              : 'bg-[var(--bg-secondary)]/50 text-slate-600 border-[var(--border-primary)] hover:border-slate-500 hover:bg-slate-800/50 cursor-pointer'
+                                          }
+                                          ${f === 1 && rack.filas > 1 ? 'border-l-2 border-l-indigo-500/20' : ''}
+                                        `}
+                                      >
+                                        {!espacio ? (
+                                          <div className="text-[10px] font-mono opacity-10">NULL</div>
+                                        ) : espacio.ocupado ? (
+                                          <>
+                                            <Anchor size={20} className={(espacio.embarcacion?.eslora || 0) > 10 ? 'animate-pulse text-white' : 'text-white/80'} />
+                                            <span className="text-[9px] font-black text-center px-1 truncate w-full uppercase tracking-tighter leading-tight">
+                                              {espacio.embarcacion?.nombre}
+                                            </span>
+                                            <div className="absolute top-1 left-1.5 px-1.5 py-0.5 bg-black/40 rounded text-[8px] font-bold backdrop-blur-sm border border-white/10 uppercase">
+                                              F{f}
+                                            </div>
+                                          </>
+                                        ) : (
+                                          <>
+                                            <span className="text-[10px] font-black opacity-30 tracking-widest">{espacio.numero.split('-').pop()}</span>
+                                            <span className="text-[8px] font-bold opacity-20 uppercase">Fila {f}</span>
+                                          </>
+                                        )}
+
+                                        {/* Hover Mini Info */}
+                                        {espacio?.ocupado && (
+                                          <div className="absolute -top-1 -right-1 bg-white text-slate-950 p-1 rounded-full opacity-0 group-hover/item:opacity-100 transition-opacity z-20 shadow-xl scale-90 group-hover/item:scale-100">
+                                            <Info size={12} />
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  });
+                                })}
+                              </React.Fragment>
                             );
-                          });
-                        })}
+                          })}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -238,8 +286,15 @@ export const MapaRacks: React.FC<MapaRacksProps> = ({ data }) => {
                   </button>
                 </div>
               ) : (
-                <div className="p-12 text-center text-[var(--text-secondary)]">
-                  <p>Espacio disponible para nuevas embarcaciones.</p>
+                <div className="p-12 text-center text-[var(--text-secondary)] space-y-6">
+                  <p className="font-medium">Espacio disponible para nuevas embarcaciones.</p>
+                  <button
+                    onClick={() => setIsAsignarOpen(true)}
+                    className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-[var(--text-primary)] font-black rounded-2xl transition-all shadow-xl shadow-indigo-900/20 active:scale-95 flex items-center justify-center gap-3 uppercase tracking-widest text-[10px]"
+                  >
+                    <Anchor className="w-4 h-4" />
+                    Asignar Embarcación
+                  </button>
                 </div>
               )}
             </div>
@@ -247,6 +302,21 @@ export const MapaRacks: React.FC<MapaRacksProps> = ({ data }) => {
         </div>
       )}
     </div>
+
+    {selectedEspacio && (
+      <AsignarEmbarcacionModal
+        isOpen={isAsignarOpen}
+        onClose={() => {
+          setIsAsignarOpen(false);
+          setSelectedEspacio(null);
+        }}
+        espacioId={selectedEspacio.espacioId}
+        codigoEspacio={selectedEspacio.codigo}
+        embarcacionesLibres={embarcacionesLibres}
+        onAsignar={(embarcacionId) => onAsignar(embarcacionId, selectedEspacio.espacioId)}
+      />
+    )}
+    </>
   );
 };
 

@@ -8,7 +8,8 @@ import {
   Ship,
   ClipboardList,
   Wallet,
-  Settings
+  Settings,
+  CreditCard
 } from 'lucide-react';
 import {
   XAxis,
@@ -24,12 +25,37 @@ import { MapaRacks } from '../components/MapaRacks';
 import { useNavigate } from 'react-router-dom';
 import { DashboardSkeleton } from '../components/DashboardSkeleton';
 import { useTheme } from '../../../context/ThemeContext';
+import { useEmbarcaciones } from '../../embarcaciones/hooks/useEmbarcaciones';
+import { useQueryClient } from '@tanstack/react-query';
+import { RegistrarPagoModal } from '../../finanzas/components/RegistrarPagoModal';
+import { useState } from 'react';
+import { toast } from 'react-hot-toast';
 
 const Dashboard: React.FC = () => {
   const { data, isLoading, isError } = useDashboard();
   const { data: rackMapData, isLoading: isMapLoading } = useRackMap();
+  const { getEmbarcaciones, updateEmbarcacion } = useEmbarcaciones();
+  const queryClient = useQueryClient();
+  const [isPagoModalOpen, setIsPagoModalOpen] = useState(false);
   useTheme();
   const navigate = useNavigate();
+
+  const embarcaciones = getEmbarcaciones.data || [];
+  const embarcacionesLibres = embarcaciones.filter((e: any) => !e.espacioId && e.estado !== 'INACTIVA');
+
+  const handleAsignarBarco = async (embarcacionId: number, espacioId: number) => {
+    try {
+      await updateEmbarcacion.mutateAsync({
+        id: embarcacionId,
+        data: { espacioId }
+      });
+      await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      toast.success('Embarcación asignada correctamente');
+    } catch (error: any) {
+      toast.error(error.message || 'Error al asignar la embarcación');
+      console.error('Error al asignar barco desde dashboard:', error.message);
+    }
+  };
 
   if (isLoading) return <DashboardSkeleton />;
 
@@ -51,7 +77,8 @@ const Dashboard: React.FC = () => {
   const stats = data?.stats;
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+    <>
+      <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
       {/* Header Section */}
       <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 bg-[var(--bg-secondary)]/[0.3] p-8 rounded-[2.5rem] border border-[var(--border-primary)] relative overflow-hidden group">
         <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none group-hover:rotate-12 transition-transform duration-1000">
@@ -70,6 +97,13 @@ const Dashboard: React.FC = () => {
             <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest leading-none mb-1">Última Auditoría en Vivo</p>
             <p className="text-sm font-black text-indigo-500 tabular-nums">{new Date().toLocaleTimeString()}</p>
           </div>
+          <button
+            onClick={() => setIsPagoModalOpen(true)}
+            className="bg-emerald-600 hover:bg-emerald-500 text-[var(--text-primary)] px-8 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-2xl shadow-emerald-900/30 transition-all active:scale-95 flex items-center gap-3 group/btn"
+          >
+            <CreditCard className="w-4 h-4 group-hover/btn:scale-110 transition-transform" />
+            Registrar Pago
+          </button>
           <button
             onClick={() => navigate('/operaciones')}
             className="bg-indigo-600 hover:bg-indigo-500 text-[var(--text-primary)] px-8 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-2xl shadow-indigo-900/30 transition-all active:scale-95 flex items-center gap-3 group/btn"
@@ -260,12 +294,24 @@ const Dashboard: React.FC = () => {
               <span className="text-[10px] font-black uppercase tracking-[0.3em] animate-pulse">Sincronizando Topología de Guarda...</span>
             </div>
           ) : (
-            <MapaRacks data={rackMapData || []} />
+            <MapaRacks 
+              data={rackMapData || []} 
+              embarcacionesLibres={embarcacionesLibres}
+              onAsignar={handleAsignarBarco}
+            />
           )}
         </div>
       </section>
+
+      <div className="h-20" /> {/* Spacer */}
     </div>
-  );
+
+    <RegistrarPagoModal 
+      isOpen={isPagoModalOpen}
+      onClose={() => setIsPagoModalOpen(false)}
+    />
+  </>
+);
 };
 
 interface StatCardProps {

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'react-hot-toast';
 import { useUbicaciones } from '../hooks/useUbicaciones';
 import {
   Loader2,
@@ -47,7 +48,9 @@ export default function InfraestructuraPage() {
   const handleCreateUbicacion = async (data: { nombre: string; descripcion?: string }) => {
     try {
       await createUbicacion.mutateAsync(data);
+      toast.success('Ubicación principal creada');
     } catch (error: any) {
+      toast.error(error.message || 'Error al crear la ubicación');
       console.error(error.message);
     }
   };
@@ -55,7 +58,9 @@ export default function InfraestructuraPage() {
   const handleCreateZona = async (data: { nombre: string; ubicacionId: number }) => {
     try {
       await createZona.mutateAsync(data);
+      toast.success('Zona registrada correctamente');
     } catch (error: any) {
+      toast.error(error.message || 'Error al registrar la zona');
       console.error(error.message);
     }
   };
@@ -72,7 +77,9 @@ export default function InfraestructuraPage() {
   }) => {
     try {
       await createRack.mutateAsync(data);
+      toast.success(`Rack ${data.codigo} generado con éxito`);
     } catch (error: any) {
+      toast.error(error.message || 'Error al generar el rack');
       console.error(error.message);
     }
   };
@@ -130,9 +137,11 @@ export default function InfraestructuraPage() {
       await queryClient.invalidateQueries({ queryKey: ['ubicaciones'] });
       await queryClient.invalidateQueries({ queryKey: ['zonas'] });
       await queryClient.invalidateQueries({ queryKey: ['infra-stats'] });
+      toast.success(`Embarcación asignada al espacio ${selectedSpaceState.codigo}`);
       setIsAsignarOpen(false);
       setSelectedSpaceState(null);
     } catch (error: any) {
+      toast.error(error.message || 'Error en la asignación del espacio');
       console.error(error.message);
     }
   };
@@ -141,7 +150,7 @@ export default function InfraestructuraPage() {
     if (!selectedSpaceState) return;
     try {
       if (embarcacionId) {
-        const keepsSpace = nuevoEstado !== 'INACTIVA';
+        const keepsSpace = nuevoEstado === 'EN_CUNA';
 
         await updateEmbarcacion.mutateAsync({
           id: embarcacionId,
@@ -156,9 +165,11 @@ export default function InfraestructuraPage() {
       await queryClient.invalidateQueries({ queryKey: ['ubicaciones'] });
       await queryClient.invalidateQueries({ queryKey: ['zonas'] });
       await queryClient.invalidateQueries({ queryKey: ['infra-stats'] });
+      toast.success('Espacio liberado y actualizado correctamente');
       setIsLiberarOpen(false);
       setSelectedSpaceState(null);
     } catch (error: any) {
+      toast.error(error.message || 'Error al liberar el espacio');
       console.error(error.message);
     }
   };
