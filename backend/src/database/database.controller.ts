@@ -7,7 +7,16 @@ export class SeederController {
 
   @Post('seed')
   async seed() {
-    return this.seederService.seed();
+    try {
+      return await this.seederService.seed();
+    } catch (err: any) {
+      return { 
+        status: 'error', 
+        message: err.message, 
+        stack: err.stack,
+        context: 'SeederController'
+      };
+    }
   }
 
   @Get('health')

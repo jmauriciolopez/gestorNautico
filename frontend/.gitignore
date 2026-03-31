@@ -147,7 +147,7 @@ __pycache__/
 
 # node
 node_modules/
-
+test-results/
 # java
 target/
 

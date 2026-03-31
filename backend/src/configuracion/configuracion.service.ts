@@ -1,10 +1,10 @@
-import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
+import { Injectable, OnApplicationBootstrap, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Configuracion } from './configuracion.entity';
 
 @Injectable()
-export class ConfiguracionService implements OnModuleInit {
+export class ConfiguracionService implements OnApplicationBootstrap {
   private readonly logger = new Logger(ConfiguracionService.name);
 
   constructor(
@@ -12,7 +12,7 @@ export class ConfiguracionService implements OnModuleInit {
     private readonly configRepo: Repository<Configuracion>,
   ) {}
 
-  async onModuleInit() {
+  async onApplicationBootstrap() {
     this.logger.log('Inicializando configuraciones base...');
     const items = [
       {

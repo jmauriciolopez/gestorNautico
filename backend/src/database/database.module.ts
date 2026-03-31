@@ -28,6 +28,8 @@ import { Factura } from '../facturas/factura.entity';
 // Entidades Operativas
 import { Movimiento } from '../movimientos/movimientos.entity';
 import { Pedido } from '../pedidos/pedidos.entity';
+import { ConfiguracionModule } from '../configuracion/configuracion.module';
+import { Configuracion } from '../configuracion/configuracion.entity';
 
 @Module({
   imports: [
@@ -47,7 +49,9 @@ import { Pedido } from '../pedidos/pedidos.entity';
       Factura,
       Movimiento,
       Pedido,
+      Configuracion,
     ]),
+    ConfiguracionModule,
   ],
   providers: [SeederService, InitialDataService],
   controllers: [SeederController],

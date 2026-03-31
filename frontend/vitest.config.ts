@@ -1,20 +1,18 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
+import { playwright } from '@vitest/browser-playwright';
 
 export default defineConfig({
   plugins: [react()],
   test: {
     browser: {
       enabled: true,
-      name: 'chromium',
-      provider: 'playwright',
-      // No necesitamos que sea headless durante el desarrollo si queremos ver, 
-      // pero para CI/CD usualmente sí. Por ahora dejamos default.
+      headless: true, // Forzar headless para el entorno de ejecución
+      provider: playwright(), // Usar el factory como requiere Vitest 4.x
       instances: [
         { browser: 'chromium' },
       ],
     },
     globals: true,
-    environment: 'linkedom', // O 'jsdom', pero 'linkedom' es más rápido y suficiente para tests ligeros
   },
 });
