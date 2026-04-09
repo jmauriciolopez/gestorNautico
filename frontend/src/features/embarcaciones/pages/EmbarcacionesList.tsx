@@ -138,15 +138,18 @@ export default function EmbarcacionesList() {
                   </td>
                   <td className="px-8 py-6">
                     {emb.espacio ? (
-                      <div className="flex flex-col">
-                        <div className="flex items-center gap-2 text-[11px] font-black text-[var(--text-primary)] uppercase tracking-tight">
-                          <MapPin className="w-3.5 h-3.5 text-indigo-500" />
+                      <button
+                        onClick={() => navigate(`/infraestructura?rack=${emb.espacio?.rack?.codigo}`)}
+                        className="flex flex-col group/loc text-left hover:scale-105 transition-transform"
+                      >
+                        <div className="flex items-center gap-2 text-[11px] font-black text-[var(--text-primary)] group-hover/loc:text-indigo-500 uppercase tracking-tight transition-colors">
+                          <MapPin className="w-3.5 h-3.5 text-indigo-500 group-hover/loc:animate-bounce" />
                           <span>{emb.espacio.rack?.zona?.nombre}</span>
                         </div>
-                        <div className="text-[9px] text-[var(--text-secondary)] font-black uppercase tracking-widest mt-0.5 ml-5">
+                        <div className="text-[9px] text-[var(--text-secondary)] font-black uppercase tracking-widest mt-0.5 ml-5 border-b border-dashed border-[var(--border-primary)] group-hover/loc:border-indigo-500 transition-colors">
                           Cod: {emb.espacio.rack?.codigo} • Pos: {emb.espacio.numero}
                         </div>
-                      </div>
+                      </button>
                     ) : (
                       <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-[var(--bg-primary)]/40 border border-[var(--border-primary)]">
                         <Activity className="w-3 h-3 text-[var(--text-secondary)] opacity-30" />

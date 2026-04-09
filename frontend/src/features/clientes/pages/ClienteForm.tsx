@@ -183,8 +183,17 @@ export default function ClienteForm() {
               />
             </div>
 
-            <div className="space-y-3 md:col-span-2">
-              <label htmlFor="tipoCuota" className="block text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest ml-1">Tipo de Cuota</label>
+            <div className="space-y-3">
+              <label className="block text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest ml-1">Tarifa Base Referencial ($)</label>
+              <div className="w-full px-5 py-4 bg-[var(--bg-primary)]/50 border border-[var(--border-primary)] rounded-2xl text-[var(--text-secondary)] font-mono flex items-center justify-between cursor-not-allowed">
+                <span>{cliente?.tarifaBase || '0.00'}</span>
+                <span className="text-[10px] font-black uppercase text-amber-500/50">Solo Informativo</span>
+              </div>
+              <p className="text-[9px] text-[var(--text-secondary)] italic ml-1">Esta tarifa es referencial. La facturación real se calcula según el Rack asignado.</p>
+            </div>
+
+            <div className="space-y-3">
+              <label className="block text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest ml-1">Tipo de Cuota</label>
               <select
                 id="tipoCuota"
                 name="tipoCuota"
@@ -198,6 +207,7 @@ export default function ClienteForm() {
               </select>
             </div>
 
+            {/* TODO: Implementar lógica de selección de Responsable de Familia */}
           </div>
 
           <div className="pt-8 border-t border-[var(--border-primary)]/60">

@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { useUbicaciones } from '../hooks/useUbicaciones';
 import {
@@ -7,7 +8,8 @@ import {
   Map as MapIcon,
   Settings,
   Activity,
-  ChevronRight
+  ChevronRight,
+  Search
 } from 'lucide-react';
 import { InfraestructuraStats } from '../components/InfraestructuraStats';
 import { MapaOcupacion } from '../components/MapaOcupacion';
@@ -38,14 +40,26 @@ export default function InfraestructuraPage() {
 
   const embarcacionesLibres = embarcaciones.filter((e: any) => !e.espacioId && e.estado !== 'INACTIVA');
 
+  const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<'mapa' | 'config'>('mapa');
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Modal states
   const [isAsignarOpen, setIsAsignarOpen] = useState(false);
   const [isLiberarOpen, setIsLiberarOpen] = useState(false);
   const [selectedSpaceState, setSelectedSpaceState] = useState<{ id: number, codigo: string, embarcacionActual?: any } | null>(null);
+  const [is3D, setIs3D] = useState(true);
 
   const queryClient = useQueryClient();
+
+  // Handle URL parameters for navigation
+  useEffect(() => {
+    const rackParam = searchParams.get('rack');
+    if (rackParam) {
+      setActiveTab('mapa');
+      setSearchQuery(rackParam);
+    }
+  }, [searchParams]);
 
   const handleCreateUbicacion = async (data: { nombre: string; descripcion?: string }) => {
     try {
@@ -76,9 +90,10 @@ export default function InfraestructuraPage() {
     alto: number;
     ancho: number;
     largo: number;
+    tarifaBase: number;
   }) => {
     try {
-      await createRack.mutateAsync({ ...data, tarifaBase: 0 });
+      await createRack.mutateAsync(data);
       toast.success(`Rack ${data.codigo} generado con éxito`);
     } catch (error: any) {
       toast.error(error.message || 'Error al generar el rack');
@@ -89,7 +104,9 @@ export default function InfraestructuraPage() {
   const handleUpdateRack = async (id: number, data: any) => {
     try {
       await updateRack.mutateAsync({ id, ...data });
+      toast.success('Rack actualizado correctamente');
     } catch (error: any) {
+      toast.error(error.message || 'Error al actualizar el rack');
       console.error(error.message);
     }
   };
@@ -97,7 +114,9 @@ export default function InfraestructuraPage() {
   const handleDeleteRack = async (id: number) => {
     try {
       await deleteRack.mutateAsync(id);
+      toast.success('Rack eliminado permanentemente');
     } catch (error: any) {
+      toast.error(error.message || 'Error al eliminar el rack');
       console.error(error.message);
     }
   };
@@ -209,20 +228,50 @@ export default function InfraestructuraPage() {
       {/* Main Content Area */}
       <div className="bg-[var(--bg-surface)] backdrop-blur-xl border border-[var(--border-primary)] rounded-[2.5rem] shadow-2xl overflow-hidden relative transition-colors duration-300 min-h-[500px]">
         <div className="p-8 border-b border-[var(--border-primary)] bg-[var(--bg-primary)]/20 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-600/10 flex items-center justify-center border border-indigo-500/20 text-indigo-500">
-              <Activity className="w-5 h-5" />
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-indigo-600/10 flex items-center justify-center border border-indigo-500/20 text-indigo-500">
+                <Activity className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-[var(--text-primary)] uppercase tracking-widest leading-none">
+                  {activeTab === 'mapa' ? 'Libro de Ocupación Estática' : 'Consola de Configuración'}
+                </h3>
+                <p className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-tighter mt-1">Control de topología y espacios de guarda</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-sm font-black text-[var(--text-primary)] uppercase tracking-widest leading-none">
-                {activeTab === 'mapa' ? 'Libro de Ocupación Estática' : 'Consola de Configuración'}
-              </h3>
-              <p className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-tighter mt-1">Control de topología y espacios de guarda</p>
-            </div>
+
+            {activeTab === 'mapa' && (
+              <div className="relative flex-1 min-w-[300px]">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] w-4 h-4" />
+                <input
+                  type="text"
+                  placeholder="Buscar por Rack o Embarcación..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-11 pr-4 py-2.5 bg-[var(--bg-primary)]/40 border border-[var(--border-primary)] rounded-[1.25rem] focus:outline-none focus:border-indigo-500 text-[11px] text-[var(--text-primary)] placeholder-[var(--text-secondary)]/30 font-bold transition-all"
+                />
+              </div>
+            )}
           </div>
-          <div className="flex items-center gap-2 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest">
-            <span>Centro de Control</span>
-            <ChevronRight className="w-4 h-4 opacity-30" />
+          <div className="flex items-center gap-4">
+            {activeTab === 'mapa' && (
+              <button
+                onClick={() => setIs3D(!is3D)}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl border transition-all font-black text-[9px] uppercase tracking-widest ${
+                  is3D 
+                  ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-900/40' 
+                  : 'bg-[var(--bg-primary)]/40 border-[var(--border-primary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-indigo-500/50'
+                }`}
+              >
+                <Activity className={`w-3.5 h-3.5 ${is3D ? 'animate-pulse' : ''}`} />
+                Vista 3D {is3D ? 'Activa' : 'Inactiva'}
+              </button>
+            )}
+            <div className="hidden sm:flex items-center gap-2 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest">
+              <span>Centro de Control</span>
+              <ChevronRight className="w-4 h-4 opacity-30" />
+            </div>
           </div>
         </div>
 
@@ -230,7 +279,8 @@ export default function InfraestructuraPage() {
           {activeTab === 'mapa' ? (
             <MapaOcupacion
               racks={(useUbicacionesQuery.data || []).flatMap(u => u.zonas.flatMap(z => z.racks))}
-              is3D={true}
+              is3D={is3D}
+              highlightedQuery={searchQuery}
             />
           ) : (
             <ConfiguracionZonas

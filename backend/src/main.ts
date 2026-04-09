@@ -7,36 +7,18 @@ import * as cookieParser from 'cookie-parser';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Habilitar cookie-parser para manejar las cookies de autenticación
-  app.use(cookieParser());
-
-  // Configuración de CORS explícita para soportar credentials: true
+  // 1. Configuración de CORS primordial (origin: true refleja el origin del cliente)
   app.enableCors({
-    origin: (
-      origin: string | undefined,
-      callback: (err: Error | null, allow?: boolean) => void,
-    ) => {
-      const allowedOrigins = [
-        'http://localhost:5173',
-        'http://127.0.0.1:5173',
-        'http://localhost:3010',
-      ];
-
-      if (
-        !origin ||
-        allowedOrigins.includes(origin) ||
-        origin.includes('localhost') ||
-        origin.includes('127.0.0.1')
-      ) {
-        callback(null, true);
-      } else {
-        callback(new Error('Origin not allowed by CORS'));
-      }
-    },
+    origin: true,
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    allowedHeaders: 'Content-Type, Accept, Authorization, X-Requested-With',
+    allowedHeaders: 'Content-Type, Accept, Authorization, X-Requested-With, Cookie',
+    exposedHeaders: 'Set-Cookie',
+    optionsSuccessStatus: 204,
   });
+
+  // 2. Habilitar cookie-parser
+  app.use(cookieParser());
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,

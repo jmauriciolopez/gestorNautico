@@ -104,7 +104,7 @@ export function GlobalSearchDropdown({ results, isLoading, hasResults, isActive,
           {results.racks.map((r) => (
             <button
               key={r.id}
-              onClick={() => go('/infraestructura')}
+              onClick={() => go(`/infraestructura?rack=${encodeURIComponent(r.codigo)}`)}
               className="w-full flex items-center gap-4 px-5 py-3.5 hover:bg-violet-600/10 transition-colors group border-b border-[var(--border-primary)]/30 last:border-0 text-left"
             >
               <div className="w-8 h-8 rounded-xl bg-violet-600/10 border border-violet-500/20 flex items-center justify-center shrink-0">

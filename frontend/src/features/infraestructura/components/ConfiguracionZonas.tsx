@@ -136,15 +136,27 @@ export function ConfiguracionZonas({
             Nueva Ubicación (Sede / Puerto)
           </h3>
           <div className="bg-[var(--bg-secondary)]/60 p-8 rounded-3xl border border-[var(--border-primary)] shadow-2xl space-y-6">
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest ml-1">Nombre de Sede</label>
-              <input
-                type="text"
-                value={newUbicacion.nombre}
-                onChange={(e) => setNewUbicacion({ ...newUbicacion, nombre: e.target.value })}
-                placeholder="Ej: Sede Norte, Puerto Bravo"
-                className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-2xl px-5 py-4 text-[var(--text-primary)] placeholder-slate-600 transition-all outline-none"
-              />
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest ml-1">Nombre de Sede</label>
+                <input
+                  type="text"
+                  value={newUbicacion.nombre}
+                  onChange={(e) => setNewUbicacion({ ...newUbicacion, nombre: e.target.value })}
+                  placeholder="Ej: Sede Norte, Puerto Bravo"
+                  className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-2xl px-5 py-4 text-[var(--text-primary)] placeholder-slate-600 transition-all outline-none"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest ml-1">Descripción (Opcional)</label>
+                <input
+                  type="text"
+                  value={newUbicacion.descripcion}
+                  onChange={(e) => setNewUbicacion({ ...newUbicacion, descripcion: e.target.value })}
+                  placeholder="Ej: Predio principal con acceso a rampa"
+                  className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-2xl px-5 py-4 text-[var(--text-primary)] placeholder-slate-600 transition-all outline-none"
+                />
+              </div>
             </div>
             <button
               onClick={handleCreateUbicacion}

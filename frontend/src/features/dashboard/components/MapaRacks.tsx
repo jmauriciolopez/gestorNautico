@@ -451,12 +451,12 @@ export const MapaRacks: React.FC<MapaRacksProps> = ({
                   >
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg"><History size={18} /></div>
-                      <span className="font-semibold text-[var(--text-primary)]">Últimos Pedidos</span>
+                      <span className="font-semibold text-[var(--text-primary)]">Historial de Operaciones</span>
                     </div>
                     <ChevronRight size={18} className="text-[var(--text-secondary)] group-hover:translate-x-1 transition-transform" />
                   </button>
                   <button
-                    onClick={() => navigate('/operaciones')}
+                    onClick={() => navigate(`/operaciones?embarcacion=${selectedEspacio.embarcacion.id}`)}
                     className="flex items-center justify-between w-full p-4 bg-red-500/10 hover:bg-red-500/20 rounded-2xl border border-red-500/20 transition-all group mt-2"
                   >
                     <div className="flex items-center gap-3 text-red-400">

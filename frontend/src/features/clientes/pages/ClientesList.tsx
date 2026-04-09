@@ -101,6 +101,7 @@ export default function ClientesList() {
                 <th className="px-8 py-5 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Razón Social / Identidad</th>
                 <th className="px-8 py-5 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Canales de Contacto</th>
                 <th className="px-8 py-5 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Estado</th>
+                <th className="px-8 py-5 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Cuota</th>
                 <th className="px-8 py-5 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] text-right">Mesa de Auditoría</th>
                 <th className="px-8 py-5"></th>
               </tr>
@@ -142,12 +143,17 @@ export default function ClientesList() {
                       </div>
                     )}
                   </td>
-                  <td className="px-8 py-6 text-right">
+                  <td className="px-8 py-6">
                     <div className="inline-flex items-center gap-2 bg-[var(--bg-primary)]/60 px-3 py-1 rounded-lg border border-[var(--border-primary)] transition-colors duration-300">
-                      <span className="text-[10px] font-mono font-black text-[var(--text-secondary)] tracking-tighter">USR-{cliente.id.toString().padStart(4, '0')}</span>
-                      <ChevronRight className="w-3 h-3 text-[var(--text-secondary)] opacity-30" />
+                      <span className="text-[10px] font-mono font-black text-[var(--text-secondary)] tracking-tighter">{cliente.tipoCuota}</span>
                     </div>
                   </td>
+                  <td className="px-8 py-6 text-right">
+                    <div className="inline-flex items-center gap-2 bg-[var(--bg-primary)]/60 px-3 py-1 rounded-lg border border-[var(--border-primary)] transition-colors duration-300">
+                      <span className="text-[10px] font-mono font-black text-[var(--text-secondary)] tracking-tighter">{cliente.id.toString().padStart(4, '0')}</span>
+                    </div>
+                  </td>
+
                   <td className="px-8 py-6 text-right">
                     <div className="flex items-center justify-end gap-3">
                       <button

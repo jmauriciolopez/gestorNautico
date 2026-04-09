@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Building2, 
   Layers, 
@@ -14,18 +14,21 @@ import { useNavigate } from 'react-router-dom';
 interface MapaOcupacionProps {
   racks: Rack[];
   is3D?: boolean;
+  highlightedQuery?: string;
 }
 
 interface OccupancyRack3DContainerProps {
   rack: Rack;
   is3D: boolean;
   getBoatSizeClass: (eslora: number) => string;
+  highlightedQuery?: string;
 }
 
 const OccupancyRack3DContainer: React.FC<OccupancyRack3DContainerProps> = ({ 
   rack, 
   is3D, 
-  getBoatSizeClass 
+  getBoatSizeClass,
+  highlightedQuery
 }) => {
   const localRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
@@ -104,8 +107,16 @@ const OccupancyRack3DContainer: React.FC<OccupancyRack3DContainerProps> = ({
                                 ${!espacio 
                                   ? 'bg-transparent border-dashed border-white/5 opacity-20' 
                                   : espacio.ocupado
-                                    ? `${getBoatSizeClass(espacio.embarcacion?.eslora || 0)} shadow-lg border-2 z-10`
-                                    : 'bg-slate-800/40 border-white/10 hover:border-indigo-500/50'
+                                    ? `${getBoatSizeClass(espacio.embarcacion?.eslora || 0)} shadow-lg border-2 z-10 ${
+                                        highlightedQuery && espacio.embarcacion?.nombre.toLowerCase().includes(highlightedQuery.toLowerCase())
+                                        ? 'ring-4 ring-yellow-400 ring-offset-4 ring-offset-slate-900 scale-110 z-30 border-yellow-400'
+                                        : 'border-white/10'
+                                      }`
+                                    : `bg-slate-800/40 border-white/10 hover:border-indigo-500/50 ${
+                                        highlightedQuery && rack.codigo.toLowerCase() === highlightedQuery.toLowerCase()
+                                        ? 'border-indigo-500 bg-indigo-500/20 shadow-[0_0_20px_rgba(99,102,241,0.3)]'
+                                        : ''
+                                      }`
                                 }
                               `}
                               style={{
@@ -192,8 +203,16 @@ const OccupancyRack3DContainer: React.FC<OccupancyRack3DContainerProps> = ({
                               ${!espacio 
                                 ? 'bg-transparent border-dashed border-white/5 opacity-10' 
                                 : espacio.ocupado
-                                  ? `${getBoatSizeClass(espacio.embarcacion?.eslora || 0)} shadow-md border-2`
-                                  : 'bg-slate-800/40 border-white/10 hover:border-indigo-500/50'
+                                  ? `${getBoatSizeClass(espacio.embarcacion?.eslora || 0)} shadow-md border-2 ${
+                                      highlightedQuery && espacio.embarcacion?.nombre.toLowerCase().includes(highlightedQuery.toLowerCase())
+                                      ? 'ring-4 ring-yellow-400 z-10 scale-110 border-yellow-400 shadow-[0_0_30px_rgba(250,204,21,0.4)]'
+                                      : 'border-white/10'
+                                    }`
+                                  : `bg-slate-800/40 border-white/10 hover:border-indigo-500/50 ${
+                                      highlightedQuery && rack.codigo.toLowerCase() === highlightedQuery.toLowerCase()
+                                      ? 'border-indigo-500 bg-indigo-500/20'
+                                      : ''
+                                    }`
                               }
                             `}
                           >
@@ -228,8 +247,26 @@ const OccupancyRack3DContainer: React.FC<OccupancyRack3DContainerProps> = ({
   );
 };
 
-export const MapaOcupacion: React.FC<MapaOcupacionProps> = ({ racks, is3D = false }) => {
+export const MapaOcupacion: React.FC<MapaOcupacionProps> = ({ racks, is3D = false, highlightedQuery }) => {
   const navigate = useNavigate();
+  const rackRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+  // Auto-scroll to highlighted rack
+  useEffect(() => {
+    if (highlightedQuery) {
+      const rack = racks.find(r => 
+        r.codigo.toLowerCase() === highlightedQuery.toLowerCase() ||
+        r.espacios.some(e => e.embarcacion?.nombre.toLowerCase().includes(highlightedQuery.toLowerCase()))
+      );
+      
+      if (rack && rackRefs.current[rack.codigo]) {
+        rackRefs.current[rack.codigo]?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center' 
+        });
+      }
+    }
+  }, [highlightedQuery, racks]);
 
   const handleVerDetalle = (codigo: string) => {
     navigate(`/infraestructura/racks/${codigo}`);
@@ -261,7 +298,15 @@ export const MapaOcupacion: React.FC<MapaOcupacionProps> = ({ racks, is3D = fals
         {racks.map(rack => (
           <div 
             key={rack.id} 
-            className="group relative bg-slate-900/20 rounded-[4rem] border border-slate-800/50 p-10 hover:bg-slate-900/40 transition-all duration-500"
+            ref={el => { rackRefs.current[rack.codigo] = el; }}
+            className={`group relative bg-slate-900/20 rounded-[4rem] border p-10 transition-all duration-500 shadow-2xl ${
+              highlightedQuery && (
+                rack.codigo.toLowerCase() === highlightedQuery.toLowerCase() ||
+                rack.espacios.some(e => e.embarcacion?.nombre.toLowerCase().includes(highlightedQuery.toLowerCase()))
+              )
+              ? 'border-indigo-500/50 bg-indigo-500/5 scale-[1.01] ring-1 ring-indigo-500/20'
+              : 'border-slate-800/50 hover:bg-slate-900/40'
+            }`}
           >
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 px-4 gap-6">
               <div className="flex items-center gap-6">
@@ -301,6 +346,7 @@ export const MapaOcupacion: React.FC<MapaOcupacionProps> = ({ racks, is3D = fals
               rack={rack} 
               is3D={is3D} 
               getBoatSizeClass={getBoatSizeClass} 
+              highlightedQuery={highlightedQuery}
             />
 
             {/* Quick Metrics Overlay */}

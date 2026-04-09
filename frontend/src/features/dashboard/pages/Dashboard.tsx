@@ -66,7 +66,7 @@ const Dashboard: React.FC = () => {
         <h2 className="text-rose-500 font-black text-xl mb-2 uppercase tracking-tight">Error de Conexión</h2>
         <p className="text-rose-400/60 text-xs font-bold uppercase tracking-widest">No se pudo recuperar la información del servidor.</p>
         <button
-          onClick={() => window.location.reload()}
+          onClick={() => queryClient.invalidateQueries({ queryKey: ['dashboard'] })}
           className="mt-6 px-6 py-2 bg-rose-600 text-[var(--text-primary)] rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-rose-900/20 active:scale-95 transition-all"
         >
           Reintentar Sincronización
@@ -231,9 +231,13 @@ const Dashboard: React.FC = () => {
               <Activity className="w-6 h-6 text-indigo-500" />
               Situación en Vivo
             </h3>
-            <div className="flex p-1.5 bg-[var(--bg-secondary)]/[0.2] border border-[var(--border-primary)] rounded-xl">
-              <Settings className="w-4 h-4 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors cursor-pointer" />
-            </div>
+            <button 
+              onClick={() => navigate('/configuracion')}
+              className="flex p-1.5 bg-[var(--bg-secondary)]/[0.2] border border-[var(--border-primary)] rounded-xl hover:bg-slate-800 transition-all active:scale-90"
+              title="Configuración"
+            >
+              <Settings className="w-4 h-4 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" />
+            </button>
           </div>
 
           <div className="space-y-4 flex-1 overflow-y-auto pr-3 custom-scrollbar max-h-[420px]">
