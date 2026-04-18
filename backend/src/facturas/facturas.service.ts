@@ -11,6 +11,7 @@ import { CargosService } from '../cargos/cargos.service';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import { Role } from '../users/user.entity';
 import { NotificacionTipo } from '../notificaciones/notificacion.entity';
+import { paginate, PaginationQuery } from '../common/pagination/pagination.helper';
 
 export interface CreateFacturaDto {
   clienteId: number;
@@ -31,8 +32,8 @@ export class FacturasService {
     private readonly notificacionesService: NotificacionesService,
   ) {}
 
-  async findAll() {
-    return this.facturaRepo.find({
+  async findAll(query: PaginationQuery = {}) {
+    return paginate(this.facturaRepo, query, {
       relations: ['cliente', 'cargos'],
       order: { fechaEmision: 'DESC' },
     });

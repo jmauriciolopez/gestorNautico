@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchClient } from '../../../api/fetchClient';
+import { httpClient } from '../../../shared/api/HttpClient';
+import { Paginated, selectData } from '../../../api/pagination';
 
-// --- Catálogo de Servicios ---
 export interface ServicioCatalogo {
   id: number;
   nombre: string;
@@ -13,7 +13,6 @@ export interface ServicioCatalogo {
   updatedAt: string;
 }
 
-// --- Registro de Servicio ---
 export interface RegistroServicio {
   id: number;
   embarcacionId: number;
@@ -25,17 +24,8 @@ export interface RegistroServicio {
   costoFinal: number;
   facturado?: boolean;
   facturaId?: number;
-  embarcacion: {
-    id: number;
-    nombre: string;
-    matricula: string;
-  };
-  servicio: {
-    id: number;
-    nombre: string;
-    precioBase: number;
-    categoria: string;
-  };
+  embarcacion: { id: number; nombre: string; matricula: string };
+  servicio: { id: number; nombre: string; precioBase: number; categoria: string };
   createdAt: string;
   updatedAt: string;
 }
@@ -43,88 +33,56 @@ export interface RegistroServicio {
 export function useServicios() {
   const queryClient = useQueryClient();
 
-  // ===== CATÁLOGO =====
   const getCatalogo = useQuery<ServicioCatalogo[]>({
     queryKey: ['catalogo'],
-    queryFn: () => fetchClient('/catalogo'),
+    queryFn: () => httpClient.get<Paginated<ServicioCatalogo>>('/catalogo'),
+    select: selectData,
   });
 
   const createServicioCatalogo = useMutation({
     mutationFn: (data: Partial<ServicioCatalogo>) =>
-      fetchClient('/catalogo', { method: 'POST', body: data }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['catalogo'] });
-    },
+      httpClient.post('/catalogo', data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['catalogo'] }),
   });
 
   const updateServicioCatalogo = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<ServicioCatalogo> }) =>
-      fetchClient(`/catalogo/${id}`, { method: 'PUT', body: data }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['catalogo'] });
-    },
+      httpClient.put(`/catalogo/${id}`, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['catalogo'] }),
   });
 
   const deleteServicioCatalogo = useMutation({
-    mutationFn: (id: number) =>
-      fetchClient(`/catalogo/${id}`, { method: 'DELETE' }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['catalogo'] });
-    },
+    mutationFn: (id: number) => httpClient.delete(`/catalogo/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['catalogo'] }),
   });
 
-  // ===== REGISTROS =====
   const getRegistros = useQuery<RegistroServicio[]>({
     queryKey: ['registros'],
-    queryFn: () => fetchClient('/registros'),
+    queryFn: () => httpClient.get<RegistroServicio[]>('/registros'),
   });
 
   const createRegistro = useMutation({
     mutationFn: (data: Partial<RegistroServicio> & { embarcacionId: number; servicioId: number }) =>
-      fetchClient('/registros', { method: 'POST', body: data }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['registros'] });
-    },
+      httpClient.post('/registros', data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['registros'] }),
   });
 
   const updateRegistro = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<RegistroServicio> }) =>
-      fetchClient(`/registros/${id}`, { method: 'PUT', body: data }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['registros'] });
-    },
+      httpClient.put(`/registros/${id}`, data),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['registros'] }),
   });
 
   const completeRegistro = useMutation({
     mutationFn: ({ id, costoFinal }: { id: number; costoFinal?: number }) =>
-      fetchClient(`/registros/${id}/completar`, {
-        method: 'PATCH',
-        body: { costoFinal },
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['registros'] });
-    },
+      httpClient.patch(`/registros/${id}/completar`, { costoFinal }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['registros'] }),
   });
 
   const deleteRegistro = useMutation({
-    mutationFn: (id: number) =>
-      fetchClient(`/registros/${id}`, { method: 'DELETE' }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['registros'] });
-    },
+    mutationFn: (id: number) => httpClient.delete(`/registros/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['registros'] }),
   });
 
-  return {
-    // Catálogo
-    getCatalogo,
-    createServicioCatalogo,
-    updateServicioCatalogo,
-    deleteServicioCatalogo,
-    // Registros
-    getRegistros,
-    createRegistro,
-    updateRegistro,
-    completeRegistro,
-    deleteRegistro,
-  };
+  return { getCatalogo, createServicioCatalogo, updateServicioCatalogo, deleteServicioCatalogo, getRegistros, createRegistro, updateRegistro, completeRegistro, deleteRegistro };
 }

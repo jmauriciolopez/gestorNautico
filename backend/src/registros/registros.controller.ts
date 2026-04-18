@@ -24,7 +24,7 @@ export class RegistrosController {
   constructor(private readonly registrosService: RegistrosService) {}
 
   @Get()
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
   findAll(@Query('embarcacionId') embarcacionId?: string) {
     if (embarcacionId) {
       return this.registrosService.findByEmbarcacion(+embarcacionId);
@@ -33,25 +33,25 @@ export class RegistrosController {
   }
 
   @Get(':id')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
   findOne(@Param('id') id: string) {
     return this.registrosService.findOne(+id);
   }
 
   @Post()
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
   create(@Body() data: Partial<RegistroServicio>) {
     return this.registrosService.create(data);
   }
 
   @Put(':id')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
   update(@Param('id') id: string, @Body() data: Partial<RegistroServicio>) {
     return this.registrosService.update(+id, data);
   }
 
   @Patch(':id/completar')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
   complete(@Param('id') id: string, @Body('costoFinal') costoFinal: number) {
     return this.registrosService.complete(+id, costoFinal);
   }

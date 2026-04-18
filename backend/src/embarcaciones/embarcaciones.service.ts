@@ -7,6 +7,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Embarcacion } from './embarcaciones.entity';
 import { Espacio } from '../espacios/espacio.entity';
+import {
+  paginate,
+  PaginationQuery,
+  PaginatedResult,
+} from '../common/pagination/pagination.helper';
+import { CreateEmbarcacionDto } from './dto/create-embarcacion.dto';
+import { UpdateEmbarcacionDto } from './dto/update-embarcacion.dto';
 
 @Injectable()
 export class EmbarcacionesService {
@@ -17,8 +24,10 @@ export class EmbarcacionesService {
     private readonly espacioRepo: Repository<Espacio>,
   ) {}
 
-  async findAll(): Promise<Embarcacion[]> {
-    return this.embarcacionesRepository.find({
+  async findAll(
+    query: PaginationQuery = {},
+  ): Promise<PaginatedResult<Embarcacion>> {
+    return paginate(this.embarcacionesRepository, query, {
       relations: ['cliente', 'espacio', 'espacio.rack', 'espacio.rack.zona'],
       order: { createdAt: 'DESC' },
     });
@@ -65,23 +74,18 @@ export class EmbarcacionesService {
     }
   }
 
-  async create(
-    createEmbarcacionDto: Partial<Embarcacion>,
-  ): Promise<Embarcacion> {
-    // Validar dimensiones antes de crear si se asignó un espacio
-    if (createEmbarcacionDto.espacioId) {
+  async create(dto: CreateEmbarcacionDto): Promise<Embarcacion> {
+    if (dto.espacioId) {
       await this.validarDimensionesUbicacion(
-        createEmbarcacionDto.espacioId,
-        createEmbarcacionDto.eslora || 0,
-        createEmbarcacionDto.manga || 0,
+        dto.espacioId,
+        dto.eslora || 0,
+        dto.manga || 0,
       );
     }
 
-    const nuevaEmbarcacion =
-      this.embarcacionesRepository.create(createEmbarcacionDto);
+    const nuevaEmbarcacion = this.embarcacionesRepository.create(dto);
     const saved = await this.embarcacionesRepository.save(nuevaEmbarcacion);
 
-    // Si se asignó un espacio, marcarlo como ocupado
     if (saved.espacioId) {
       await this.espacioRepo.update(saved.espacioId, { ocupado: true });
     }
@@ -89,22 +93,15 @@ export class EmbarcacionesService {
     return saved;
   }
 
-  async update(
-    id: number,
-    updateEmbarcacionDto: Partial<Embarcacion>,
-  ): Promise<Embarcacion> {
+  async update(id: number, dto: UpdateEmbarcacionDto): Promise<Embarcacion> {
     const embarcacion = await this.findOne(id);
     const anteriorEspacioId = embarcacion.espacio?.id || null;
 
-    // Identificar el futuro estado de la embarcación para validar
-    const nuevaEslora = updateEmbarcacionDto.eslora ?? embarcacion.eslora;
-    const nuevaManga = updateEmbarcacionDto.manga ?? embarcacion.manga;
+    const nuevaEslora = dto.eslora ?? embarcacion.eslora;
+    const nuevaManga = dto.manga ?? embarcacion.manga;
     const nuevoEspacioId =
-      'espacioId' in updateEmbarcacionDto
-        ? updateEmbarcacionDto.espacioId
-        : anteriorEspacioId;
+      'espacioId' in dto ? dto.espacioId : anteriorEspacioId;
 
-    // Validar dimensiones si hay un espacio asignado (nuevo o mantenido)
     if (nuevoEspacioId) {
       await this.validarDimensionesUbicacion(
         nuevoEspacioId,
@@ -113,31 +110,37 @@ export class EmbarcacionesService {
       );
     }
 
-    Object.assign(embarcacion, updateEmbarcacionDto);
+    const setValues: Record<string, unknown> = {};
 
-    // Si explícitamente se manda espacioId como null, limpiar la relación
-    if (
-      'espacioId' in updateEmbarcacionDto &&
-      updateEmbarcacionDto.espacioId === null
-    ) {
-      embarcacion.espacio = null;
-    }
+    if (dto.nombre !== undefined) setValues.nombre = dto.nombre;
+    if (dto.matricula !== undefined) setValues.matricula = dto.matricula;
+    if (dto.marca !== undefined) setValues.marca = dto.marca;
+    if (dto.modelo !== undefined) setValues.modelo = dto.modelo;
+    if (dto.eslora !== undefined) setValues.eslora = dto.eslora;
+    if (dto.manga !== undefined) setValues.manga = dto.manga;
+    if (dto.tipo !== undefined) setValues.tipo = dto.tipo;
+    if (dto.estado !== undefined) setValues.estado = dto.estado;
+    if (dto.descuento !== undefined) setValues.descuento = dto.descuento;
+    if (dto.clienteId !== undefined) setValues.clienteId = dto.clienteId;
+    if ('espacioId' in dto) setValues.espacioId = dto.espacioId;
 
-    const saved = await this.embarcacionesRepository.save(embarcacion);
+    await this.embarcacionesRepository
+      .createQueryBuilder()
+      .update(Embarcacion)
+      .set(setValues)
+      .where('id = :id', { id })
+      .execute();
 
-    // Gestinar cambio de espacio
     if (anteriorEspacioId !== nuevoEspacioId) {
-      // Liberar el anterior
       if (anteriorEspacioId) {
         await this.espacioRepo.update(anteriorEspacioId, { ocupado: false });
       }
-      // Ocupar el nuevo
       if (nuevoEspacioId) {
         await this.espacioRepo.update(nuevoEspacioId, { ocupado: true });
       }
     }
 
-    return saved;
+    return this.findOne(id);
   }
 
   async remove(id: number): Promise<void> {

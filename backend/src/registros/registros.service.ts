@@ -77,7 +77,7 @@ export class RegistrosService {
       clienteId: registro.embarcacion.cliente.id,
       descripcion: `Servicio: ${registro.servicio.nombre} - ${registro.embarcacion.nombre}`,
       monto: registro.costoFinal || registro.servicio.precioBase,
-      fechaEmision: new Date(),
+      fechaEmision: new Date().toISOString().split('T')[0],
       tipo: TipoCargo.SERVICIOS,
       pagado: false,
     });

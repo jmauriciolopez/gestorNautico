@@ -8,6 +8,7 @@ import {
   UseGuards,
   Patch,
   Res,
+  Query,
 } from '@nestjs/common';
 import { FacturasService } from './facturas.service';
 import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
@@ -28,14 +29,14 @@ export class FacturasController {
   ) {}
 
   @Get('next-numero')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
   async getNextNumero() {
     const nextNumero = await this.facturasService.generateNextNumero();
     return { nextNumero };
   }
 
   @Get(':id/pdf')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
   async downloadPdf(@Param('id') id: string, @Res() res: Response) {
     const factura = await this.facturasService.findOne(+id);
     const buffer = await this.pdfService.generateInvoice(factura);
@@ -50,19 +51,19 @@ export class FacturasController {
   }
 
   @Get()
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
-  findAll() {
-    return this.facturasService.findAll();
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+  findAll(@Query('page') page?: number, @Query('limit') limit?: number) {
+    return this.facturasService.findAll({ page, limit });
   }
 
   @Get(':id')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
   findOne(@Param('id') id: string) {
     return this.facturasService.findOne(+id);
   }
 
   @Post()
-  @Roles(Role.SUPERADMIN, Role.ADMIN)
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
   create(
     @Body()
     data: {
@@ -77,13 +78,13 @@ export class FacturasController {
   }
 
   @Patch(':id/estado')
-  @Roles(Role.SUPERADMIN, Role.ADMIN)
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
   updateEstado(@Param('id') id: string, @Body('estado') estado: EstadoFactura) {
     return this.facturasService.updateEstado(+id, estado);
   }
 
   @Delete(':id')
-  @Roles(Role.SUPERADMIN, Role.ADMIN)
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
   remove(@Param('id') id: string) {
     return this.facturasService.remove(+id);
   }

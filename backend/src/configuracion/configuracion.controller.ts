@@ -11,13 +11,13 @@ export class ConfiguracionController {
   constructor(private readonly configService: ConfiguracionService) {}
 
   @Get()
-  @Roles(Role.ADMIN, Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
   async findAll() {
     return this.configService.findAll();
   }
 
   @Put('bulk')
-  @Roles(Role.ADMIN, Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
   async updateMultiple(@Body() updates: Record<string, string>) {
     return this.configService.updateMultiple(updates);
   }

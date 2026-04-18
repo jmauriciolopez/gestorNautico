@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchClient } from '../../../api/fetchClient';
+import { httpClient } from '../../../shared/api/HttpClient';
+import { Paginated, selectData } from '../../../api/pagination';
 import { Cliente } from '../../clientes/hooks/useClientes';
 
 export interface Embarcacion {
@@ -13,35 +14,32 @@ export interface Embarcacion {
   tipo: string;
   estado: string;
   cliente?: Cliente;
-  espacio?: any; // To be defined later
+  espacio?: any;
   espacioId?: number | null;
   descuento?: number;
   createdAt: string;
   updatedAt: string;
 }
 
-
 export const useEmbarcaciones = () => {
   const queryClient = useQueryClient();
 
   const getEmbarcaciones = useQuery({
     queryKey: ['embarcaciones'],
-    queryFn: () => fetchClient<Embarcacion[]>('/embarcaciones'),
+    queryFn: () => httpClient.get<Paginated<Embarcacion>>('/embarcaciones'),
+    select: selectData,
   });
 
   const useEmbarcacion = (id: number) =>
     useQuery({
       queryKey: ['embarcaciones', id],
-      queryFn: () => fetchClient<Embarcacion>(`/embarcaciones/${id}`),
+      queryFn: () => httpClient.get<Embarcacion>(`/embarcaciones/${id}`),
       enabled: !!id,
     });
 
   const createEmbarcacion = useMutation({
-    mutationFn: (newEmbarcacion: Partial<Embarcacion>) =>
-      fetchClient<Embarcacion>('/embarcaciones', {
-        method: 'POST',
-        body: newEmbarcacion,
-      }),
+    mutationFn: (data: Partial<Embarcacion>) =>
+      httpClient.post<Embarcacion>('/embarcaciones', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['embarcaciones'] });
     },
@@ -49,31 +47,24 @@ export const useEmbarcaciones = () => {
 
   const updateEmbarcacion = useMutation({
     mutationFn: ({ id, data }: { id: number; data: Partial<Embarcacion> }) =>
-      fetchClient<Embarcacion>(`/embarcaciones/${id}`, {
-        method: 'PUT',
-        body: data,
-      }),
+      httpClient.put<Embarcacion>(`/embarcaciones/${id}`, data),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['embarcaciones'] });
-      queryClient.invalidateQueries({ queryKey: ['embarcaciones', data.id] });
+      void queryClient.invalidateQueries({ queryKey: ['embarcaciones'], refetchType: 'all' });
+      void queryClient.invalidateQueries({ queryKey: ['embarcaciones', data.id], refetchType: 'all' });
+      void queryClient.invalidateQueries({ queryKey: ['zonas'], refetchType: 'all' });
+      void queryClient.invalidateQueries({ queryKey: ['ubicaciones'], refetchType: 'all' });
+      void queryClient.invalidateQueries({ queryKey: ['infra-stats'], refetchType: 'all' });
+      void queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'all' });
     },
   });
 
   const deleteEmbarcacion = useMutation({
     mutationFn: (id: number) =>
-      fetchClient<void>(`/embarcaciones/${id}`, {
-        method: 'DELETE',
-      }),
+      httpClient.delete(`/embarcaciones/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['embarcaciones'] });
     },
   });
 
-  return {
-    getEmbarcaciones,
-    useEmbarcacion,
-    createEmbarcacion,
-    updateEmbarcacion,
-    deleteEmbarcacion,
-  };
+  return { getEmbarcaciones, useEmbarcacion, createEmbarcacion, updateEmbarcacion, deleteEmbarcacion };
 };

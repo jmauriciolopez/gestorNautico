@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchClient } from '../../../api/fetchClient';
+import { httpClient } from '../../../shared/api/HttpClient';
 
 export interface Ubicacion {
   id: number;
@@ -37,12 +37,7 @@ export interface Espacio {
   columna?: number;
   ocupado: boolean;
   rackId: number;
-  embarcacion?: {
-    id: number;
-    nombre: string;
-    eslora: number;
-    propietario?: string;
-  };
+  embarcacion?: { id: number; nombre: string; eslora: number; propietario?: string };
 }
 
 export interface EstadisticasInfraestructura {
@@ -57,34 +52,28 @@ export const useUbicaciones = () => {
 
   const useUbicacionesQuery = useQuery({
     queryKey: ['ubicaciones'],
-    queryFn: () => fetchClient<Ubicacion[]>('/ubicaciones'),
+    queryFn: () => httpClient.get<Ubicacion[]>('/ubicaciones'),
   });
 
   const useZonas = useQuery({
     queryKey: ['zonas'],
-    queryFn: () => fetchClient<Zona[]>('/zonas'),
+    queryFn: () => httpClient.get<Zona[]>('/zonas'),
   });
 
   const useEstadisticas = useQuery({
     queryKey: ['infra-stats'],
-    queryFn: () => fetchClient<EstadisticasInfraestructura>('/espacios/estadisticas'),
+    queryFn: () => httpClient.get<EstadisticasInfraestructura>('/espacios/estadisticas'),
   });
 
   const createUbicacion = useMutation({
     mutationFn: (data: { nombre: string; descripcion?: string }) =>
-      fetchClient<Ubicacion>('/ubicaciones', {
-        method: 'POST',
-        body: data
-      }),
+      httpClient.post<Ubicacion>('/ubicaciones', data),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['ubicaciones'] }),
   });
 
   const createZona = useMutation({
-    mutationFn: (data: { nombre: string; ubicacionId: number }) => 
-      fetchClient<Zona>('/zonas', {
-        method: 'POST',
-        body: data
-      }),
+    mutationFn: (data: { nombre: string; ubicacionId: number }) =>
+      httpClient.post<Zona>('/zonas', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['zonas'] });
       queryClient.invalidateQueries({ queryKey: ['ubicaciones'] });
@@ -92,21 +81,8 @@ export const useUbicaciones = () => {
   });
 
   const createRack = useMutation({
-    mutationFn: (data: { 
-      zonaId: number; 
-      codigo: string; 
-      pisos: number;
-      filas: number; 
-      columnas: number;
-      alto: number;
-      ancho: number;
-      largo: number;
-      tarifaBase: number;
-    }) =>
-      fetchClient<Rack>('/racks', {
-        method: 'POST',
-        body: data
-      }),
+    mutationFn: (data: { zonaId: number; codigo: string; pisos: number; filas: number; columnas: number; alto: number; ancho: number; largo: number; tarifaBase: number }) =>
+      httpClient.post<Rack>('/racks', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['zonas'] });
       queryClient.invalidateQueries({ queryKey: ['ubicaciones'] });
@@ -115,10 +91,7 @@ export const useUbicaciones = () => {
 
   const updateZona = useMutation({
     mutationFn: ({ id, ...data }: { id: number; nombre: string; ubicacionId: number }) =>
-      fetchClient<Zona>(`/zonas/${id}`, {
-        method: 'PUT',
-        body: data
-      }),
+      httpClient.put<Zona>(`/zonas/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['zonas'] });
       queryClient.invalidateQueries({ queryKey: ['ubicaciones'] });
@@ -126,10 +99,7 @@ export const useUbicaciones = () => {
   });
 
   const deleteZona = useMutation({
-    mutationFn: (id: number) =>
-      fetchClient(`/zonas/${id}`, {
-        method: 'DELETE'
-      }),
+    mutationFn: (id: number) => httpClient.delete(`/zonas/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['zonas'] });
       queryClient.invalidateQueries({ queryKey: ['ubicaciones'] });
@@ -137,22 +107,8 @@ export const useUbicaciones = () => {
   });
 
   const updateRack = useMutation({
-    mutationFn: ({ id, ...data }: { 
-      id: number;
-      zonaId: number; 
-      codigo: string; 
-      pisos: number;
-      filas: number; 
-      columnas: number;
-      alto: number;
-      ancho: number;
-      largo: number;
-      tarifaBase: number;
-    }) =>
-      fetchClient<Rack>(`/racks/${id}`, {
-        method: 'PUT',
-        body: data
-      }),
+    mutationFn: ({ id, ...data }: { id: number; zonaId: number; codigo: string; pisos: number; filas: number; columnas: number; alto: number; ancho: number; largo: number; tarifaBase: number }) =>
+      httpClient.put<Rack>(`/racks/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['zonas'] });
       queryClient.invalidateQueries({ queryKey: ['ubicaciones'] });
@@ -160,10 +116,7 @@ export const useUbicaciones = () => {
   });
 
   const deleteRack = useMutation({
-    mutationFn: (id: number) =>
-      fetchClient(`/racks/${id}`, {
-        method: 'DELETE'
-      }),
+    mutationFn: (id: number) => httpClient.delete(`/racks/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['zonas'] });
       queryClient.invalidateQueries({ queryKey: ['ubicaciones'] });
@@ -172,10 +125,7 @@ export const useUbicaciones = () => {
 
   const updateEspacio = useMutation({
     mutationFn: ({ id, ocupado }: { id: number; ocupado: boolean }) =>
-      fetchClient<Espacio>(`/espacios/${id}`, {
-        method: 'PUT',
-        body: { ocupado }
-      }),
+      httpClient.put<Espacio>(`/espacios/${id}`, { ocupado }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['zonas'] });
       queryClient.invalidateQueries({ queryKey: ['ubicaciones'] });
@@ -183,17 +133,5 @@ export const useUbicaciones = () => {
     },
   });
 
-  return {
-    useUbicacionesQuery,
-    useZonas,
-    useEstadisticas,
-    createUbicacion,
-    createZona,
-    updateZona,
-    deleteZona,
-    createRack,
-    updateRack,
-    deleteRack,
-    updateEspacio,
-  };
+  return { useUbicacionesQuery, useZonas, useEstadisticas, createUbicacion, createZona, updateZona, deleteZona, createRack, updateRack, deleteRack, updateEspacio };
 };

@@ -6,6 +6,7 @@ import { useEmbarcaciones } from '../hooks/useEmbarcaciones';
 import { useClientes } from '../../clientes/hooks/useClientes';
 import { useUbicaciones } from '../../infraestructura/hooks/useUbicaciones';
 import UbicacionPickerModal from '../components/UbicacionPickerModal';
+import { queryClient } from '../../../api/queryClient';
 
 export default function EmbarcacionForm() {
   const navigate = useNavigate();
@@ -87,6 +88,8 @@ export default function EmbarcacionForm() {
         await createEmbarcacion.mutateAsync(payload);
       }
       toast.success(isEditing ? 'Embarcación actualizada' : 'Embarcación registrada');
+      // Esperar que react-query termine de invalidar antes de navegar
+      await queryClient.invalidateQueries({ queryKey: ['embarcaciones'], refetchType: 'all' });
       navigate('/embarcaciones');
     } catch (error: any) {
       console.error('Error saving embarcacion:', error);

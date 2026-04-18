@@ -6,6 +6,7 @@ import { EmbarcacionesService } from '../embarcaciones/embarcaciones.service';
 import { EspaciosService } from '../espacios/espacios.service';
 import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
 import { ConfiguracionService } from '../configuracion/configuracion.service';
+import { paginate, PaginationQuery } from '../common/pagination/pagination.helper';
 
 export interface CreateMovimientoDto {
   embarcacionId: number;
@@ -25,8 +26,8 @@ export class MovimientosService {
     private readonly configuracionService: ConfiguracionService,
   ) {}
 
-  findAll() {
-    return this.movimientoRepo.find({
+  findAll(query: PaginationQuery = {}) {
+    return paginate(this.movimientoRepo, query, {
       relations: ['embarcacion', 'espacio', 'espacio.rack'],
       order: { fecha: 'DESC' },
     });

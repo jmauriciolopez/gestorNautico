@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { CreditCard, Receipt, Wallet, Plus, Activity, ChevronRight } from 'lucide-react';
 import { useFinanzas } from '../hooks/useFinanzas';
 import { CargosList } from '../components/CargosList';
@@ -10,6 +11,7 @@ import { CajaDetalleModal } from '../components/CajaDetalleModal';
 import { NuevoCargoModal } from '../components/NuevoCargoModal';
 import { RegistrarPagoModal } from '../components/RegistrarPagoModal';
 import { Caja } from '../hooks/useFinanzas';
+import type { AxiosError } from 'axios';
 
 export default function FinanzasPage() {
   const [activeTab, setActiveTab] = useState<'cargos' | 'pagos' | 'caja'>('cargos');
@@ -24,15 +26,23 @@ export default function FinanzasPage() {
   const { getCargos, getPagos, getCajaResumen, abrirCaja, cerrarCaja, getCajas } = useFinanzas();
 
   const handleCajaConfirm = async (monto: number) => {
-    if (cajaModalType === 'ABRIR') {
-      await abrirCaja.mutateAsync(monto);
-    } else {
-      const activeCaja = getCajaResumen.data;
-      if (activeCaja) {
-        await cerrarCaja.mutateAsync({ id: activeCaja.id, saldoFinal: monto });
+    try {
+      if (cajaModalType === 'ABRIR') {
+        await abrirCaja.mutateAsync(monto);
+        toast.success('Caja abierta correctamente');
+      } else {
+        const activeCaja = getCajaResumen.data;
+        if (activeCaja) {
+          await cerrarCaja.mutateAsync({ id: activeCaja.id, saldoFinal: monto });
+          toast.success('Caja cerrada correctamente');
+        }
       }
+      setIsCajaModalOpen(false);
+    } catch (err) {
+      const axiosErr = err as AxiosError<{ message: string }>;
+      const msg = axiosErr.response?.data?.message ?? 'Error al operar la caja';
+      toast.error(msg);
     }
-    setIsCajaModalOpen(false);
   };
 
   const handleActionClick = () => {
@@ -74,7 +84,7 @@ export default function FinanzasPage() {
 
       {/* Summary Section */}
       <CajaResumenCard
-        caja={getCajaResumen.data}
+        caja={getCajaResumen.data ? { ...getCajaResumen.data, estado: 'ABIERTA' as const } : undefined}
         isLoading={getCajaResumen.isLoading}
         onAbrir={() => {
           setCajaModalType('ABRIR');

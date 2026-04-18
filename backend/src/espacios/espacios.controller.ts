@@ -7,6 +7,7 @@ import {
   Put,
   Delete,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { EspaciosService } from './espacios.service';
 import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
@@ -22,19 +23,19 @@ export class EspaciosController {
   constructor(private readonly espaciosService: EspaciosService) {}
 
   @Get()
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
-  findAll() {
-    return this.espaciosService.findAll();
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+  findAll(@Query('page') page?: number, @Query('limit') limit?: number) {
+    return this.espaciosService.findAll({ page, limit });
   }
 
   @Get('estadisticas')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
   getEstadisticas() {
     return this.espaciosService.getEstadisticas();
   }
 
   @Get(':id')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
   findOne(@Param('id') id: string) {
     return this.espaciosService.findOne(+id);
   }
@@ -46,7 +47,7 @@ export class EspaciosController {
   }
 
   @Put(':id')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
   update(@Param('id') id: string, @Body() data: Partial<Espacio>) {
     return this.espaciosService.update(+id, data);
   }

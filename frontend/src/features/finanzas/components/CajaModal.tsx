@@ -30,9 +30,8 @@ export function CajaModal({ isOpen, onClose, onConfirm, type, currentBalance = 0
     setIsSubmitting(true);
     try {
       await onConfirm(monto);
-      onClose();
-    } catch (error) {
-      console.error(`Error al ${type === 'ABRIR' ? 'abrir' : 'cerrar'} caja:`, error);
+    } catch {
+      // El error ya fue manejado por el caller con toast
     } finally {
       setIsSubmitting(false);
     }

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { fetchClient } from '../api/fetchClient';
+import { httpClient } from '../shared/api/HttpClient';
 import { useDebounce } from './useDebounce';
 
 export interface SearchResults {
@@ -13,7 +13,7 @@ export function useGlobalSearch(query: string) {
 
   const { data, isLoading, isFetching } = useQuery<SearchResults>({
     queryKey: ['global-search', debouncedQuery],
-    queryFn: () => fetchClient<SearchResults>(`/search?q=${encodeURIComponent(debouncedQuery)}`),
+    queryFn: () => httpClient.get<SearchResults>(`/search?q=${encodeURIComponent(debouncedQuery)}`),
     enabled: debouncedQuery.trim().length >= 2,
     staleTime: 30_000,
     placeholderData: (prev) => prev,
@@ -22,8 +22,7 @@ export function useGlobalSearch(query: string) {
   const hasResults =
     (data?.clientes.length ?? 0) +
     (data?.embarcaciones.length ?? 0) +
-    (data?.racks.length ?? 0) >
-    0;
+    (data?.racks.length ?? 0) > 0;
 
   return {
     results: data ?? { clientes: [], embarcaciones: [], racks: [] },

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Search, Edit, Trash2, Loader2, Users, Receipt, Mail, Phone, ShieldCheck, ShieldAlert, ChevronRight } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Loader2, Users, Receipt, Mail, Phone, ShieldCheck, ShieldAlert, ShieldPlus } from 'lucide-react';
 import { useConfirm } from '../../../shared/context/ConfirmContext';
 import { useClientes } from '../hooks/useClientes';
 import { RoleGuard } from '../../../components/auth/RoleGuard';
@@ -9,7 +9,7 @@ import { Role } from '../../../types';
 export default function ClientesList() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
-  const { getClientes, deleteCliente } = useClientes();
+  const { getClientes, deleteCliente, updateCliente } = useClientes();
   const { data: clientes = [], isLoading } = getClientes;
   const confirm = useConfirm();
 
@@ -23,6 +23,18 @@ export default function ClientesList() {
 
     if (isConfirmed) {
       await deleteCliente.mutateAsync(id);
+    }
+  };
+
+  const handleActivar = async (id: number) => {
+    const isConfirmed = await confirm({
+      title: 'Activar Cliente',
+      message: '¿Deseas reactivar este cliente? Se restaurará su acceso al sistema.',
+      confirmText: 'Activar',
+    });
+
+    if (isConfirmed) {
+      await updateCliente.mutateAsync({ id, data: { activo: true } });
     }
   };
 
@@ -108,8 +120,8 @@ export default function ClientesList() {
             </thead>
             <tbody className="divide-y divide-[var(--border-secondary)] transition-colors duration-300">
               {filteredClientes.map((cliente) => (
-                <tr key={cliente.id} className={`group hover:bg-indigo-500/5 transition-all cursor-default ${!cliente.activo ? 'opacity-40 grayscale pointer-events-none duration-700' : ''}`}>
-                  <td className="px-8 py-6">
+                <tr key={cliente.id} className={`group hover:bg-indigo-500/5 transition-all cursor-default ${!cliente.activo ? 'opacity-50 grayscale duration-700' : ''}`}>
+                  <td className={`px-8 py-6 ${!cliente.activo ? 'pointer-events-none' : ''}`}>
                     <div className="flex flex-col">
                       <div className="font-black text-[var(--text-primary)] group-hover:text-indigo-500 transition-colors uppercase tracking-tight text-base leading-none mb-1.5">{cliente.nombre}</div>
                       <div className="inline-flex items-center gap-2">
@@ -118,7 +130,7 @@ export default function ClientesList() {
                       </div>
                     </div>
                   </td>
-                  <td className="px-8 py-6">
+                  <td className={`px-8 py-6 ${!cliente.activo ? 'pointer-events-none' : ''}`}>
                     <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-2 text-[var(--text-primary)] text-[11px] font-bold">
                         <Mail className="w-3.5 h-3.5 text-indigo-500/60" />
@@ -130,7 +142,7 @@ export default function ClientesList() {
                       </div>
                     </div>
                   </td>
-                  <td className="px-8 py-6">
+                  <td className={`px-8 py-6 ${!cliente.activo ? 'pointer-events-none' : ''}`}>
                     {cliente.activo ? (
                       <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
                         <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
@@ -143,12 +155,12 @@ export default function ClientesList() {
                       </div>
                     )}
                   </td>
-                  <td className="px-8 py-6">
+                  <td className={`px-8 py-6 ${!cliente.activo ? 'pointer-events-none' : ''}`}>
                     <div className="inline-flex items-center gap-2 bg-[var(--bg-primary)]/60 px-3 py-1 rounded-lg border border-[var(--border-primary)] transition-colors duration-300">
                       <span className="text-[10px] font-mono font-black text-[var(--text-secondary)] tracking-tighter">{cliente.tipoCuota}</span>
                     </div>
                   </td>
-                  <td className="px-8 py-6 text-right">
+                  <td className={`px-8 py-6 text-right ${!cliente.activo ? 'pointer-events-none' : ''}`}>
                     <div className="inline-flex items-center gap-2 bg-[var(--bg-primary)]/60 px-3 py-1 rounded-lg border border-[var(--border-primary)] transition-colors duration-300">
                       <span className="text-[10px] font-mono font-black text-[var(--text-secondary)] tracking-tighter">{cliente.id.toString().padStart(4, '0')}</span>
                     </div>
@@ -164,14 +176,25 @@ export default function ClientesList() {
                         <Edit className="w-4 h-4" />
                       </button>
                       <RoleGuard allowedRoles={[Role.ADMIN, Role.SUPERADMIN]}>
-                        <button
-                          onClick={() => handleDelete(cliente.id)}
-                          className="p-3 bg-[var(--bg-primary)]/60 border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-rose-500 hover:border-rose-500/50 rounded-2xl transition-all active:scale-90 shadow-xl"
-                          title="Archivar Registro"
-                          disabled={deleteCliente.isPending}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {cliente.activo ? (
+                          <button
+                            onClick={() => handleDelete(cliente.id)}
+                            className="p-3 bg-[var(--bg-primary)]/60 border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-rose-500 hover:border-rose-500/50 rounded-2xl transition-all active:scale-90 shadow-xl"
+                            title="Archivar Registro"
+                            disabled={deleteCliente.isPending}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleActivar(cliente.id)}
+                            className="p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/20 hover:border-emerald-500/60 rounded-2xl transition-all active:scale-90 shadow-xl"
+                            title="Reactivar Cliente"
+                            disabled={updateCliente.isPending}
+                          >
+                            <ShieldPlus className="w-4 h-4" />
+                          </button>
+                        )}
                       </RoleGuard>
                     </div>
                   </td>

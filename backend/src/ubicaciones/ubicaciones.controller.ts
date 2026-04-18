@@ -22,13 +22,13 @@ export class UbicacionesController {
   constructor(private readonly ubicacionesService: UbicacionesService) {}
 
   @Get()
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
   findAll() {
     return this.ubicacionesService.findAll();
   }
 
   @Get(':id')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
   findOne(@Param('id') id: string) {
     return this.ubicacionesService.findOne(+id);
   }

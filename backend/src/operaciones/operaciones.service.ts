@@ -13,6 +13,7 @@ import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import { Role } from '../users/user.entity';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { paginate, PaginationQuery } from '../common/pagination/pagination.helper';
 
 @Injectable()
 export class OperacionesService {
@@ -117,8 +118,8 @@ export class OperacionesService {
     }
   }
 
-  async findAll() {
-    return this.solicitudRepo.find({
+  async findAll(query: PaginationQuery = {}) {
+    return paginate(this.solicitudRepo, query, {
       relations: ['cliente', 'embarcacion'],
       order: { createdAt: 'DESC' },
     });

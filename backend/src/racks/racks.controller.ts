@@ -22,13 +22,13 @@ export class RacksController {
   constructor(private readonly racksService: RacksService) {}
 
   @Get()
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
   findAll() {
     return this.racksService.findAll();
   }
 
   @Get(':id')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
   findOne(@Param('id') id: string) {
     return this.racksService.findOne(+id);
   }

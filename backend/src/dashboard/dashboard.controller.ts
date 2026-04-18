@@ -11,13 +11,13 @@ export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}
 
   @Get('summary')
-  @Roles(Role.ADMIN, Role.SUPERADMIN)
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
   async getSummary() {
     return this.dashboardService.getSummary();
   }
 
   @Get('rack-map')
-  @Roles(Role.ADMIN, Role.SUPERADMIN, Role.OPERADOR)
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
   async getRackMap() {
     return this.dashboardService.getRackMap();
   }

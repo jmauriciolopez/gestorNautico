@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Espacio } from './espacio.entity';
+import { paginate, PaginationQuery } from '../common/pagination/pagination.helper';
 
 @Injectable()
 export class EspaciosService {
@@ -10,8 +11,8 @@ export class EspaciosService {
     private readonly espacioRepo: Repository<Espacio>,
   ) {}
 
-  findAll() {
-    return this.espacioRepo.find({
+  findAll(query: PaginationQuery = {}) {
+    return paginate(this.espacioRepo, query, {
       relations: ['rack', 'rack.zona', 'rack.zona.ubicacion'],
     });
   }

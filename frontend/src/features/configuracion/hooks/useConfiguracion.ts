@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchClient } from '../../../api/fetchClient';
+import { httpClient } from '../../../shared/api/HttpClient';
 
 export interface Configuracion {
   id: number;
@@ -14,22 +14,16 @@ export const useConfiguracion = () => {
 
   const getConfiguraciones = useQuery({
     queryKey: ['configuracion'],
-    queryFn: () => fetchClient<Configuracion[]>('/configuracion'),
+    queryFn: () => httpClient.get<Configuracion[]>('/configuracion'),
   });
 
   const updateConfiguracion = useMutation({
     mutationFn: (updates: Record<string, string>) =>
-      fetchClient<Configuracion[]>('/configuracion/bulk', {
-        method: 'PUT',
-        body: updates,
-      }),
+      httpClient.put<Configuracion[]>('/configuracion/bulk', updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['configuracion'] });
     },
   });
 
-  return {
-    getConfiguraciones,
-    updateConfiguracion,
-  };
+  return { getConfiguraciones, updateConfiguracion };
 };

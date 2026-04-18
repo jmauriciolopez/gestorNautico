@@ -1,4 +1,4 @@
-import { CheckCircle2, Clock, MoreVertical, CreditCard } from 'lucide-react';
+import { MoreVertical, CreditCard } from 'lucide-react';
 
 export interface Cargo {
   id: number;

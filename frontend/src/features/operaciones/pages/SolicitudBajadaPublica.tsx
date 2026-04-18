@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Anchor, Calendar, Clock, Ship, User, Loader2, CheckCircle2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { fetchClient } from '../../../api/fetchClient';
+import { httpClient } from '../../../shared/api/HttpClient';
 import { useMutation } from '@tanstack/react-query';
 
 export default function SolicitudBajadaPublica() {
@@ -14,10 +14,7 @@ export default function SolicitudBajadaPublica() {
   const [success, setSuccess] = useState(false);
 
   const requestMutation = useMutation({
-    mutationFn: (data: typeof formData) => fetchClient('/operaciones/bajada-publica', {
-      method: 'POST',
-      body: data
-    }),
+    mutationFn: (data: typeof formData) => httpClient.post('/operaciones/bajada-publica', data),
     onSuccess: () => {
       setSuccess(true);
       toast.success('Solicitud enviada correctamente');

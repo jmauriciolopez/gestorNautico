@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { useUbicaciones } from '../hooks/useUbicaciones';
@@ -49,8 +48,6 @@ export default function InfraestructuraPage() {
   const [isLiberarOpen, setIsLiberarOpen] = useState(false);
   const [selectedSpaceState, setSelectedSpaceState] = useState<{ id: number, codigo: string, embarcacionActual?: any } | null>(null);
   const [is3D, setIs3D] = useState(true);
-
-  const queryClient = useQueryClient();
 
   // Handle URL parameters for navigation
   useEffect(() => {
@@ -145,9 +142,6 @@ export default function InfraestructuraPage() {
         id: embarcacionId,
         data: { espacioId: selectedSpaceState.id }
       });
-      await queryClient.invalidateQueries({ queryKey: ['ubicaciones'] });
-      await queryClient.invalidateQueries({ queryKey: ['zonas'] });
-      await queryClient.invalidateQueries({ queryKey: ['infra-stats'] });
       toast.success(`Embarcación asignada al espacio ${selectedSpaceState.codigo}`);
       setIsAsignarOpen(false);
       setSelectedSpaceState(null);
@@ -173,9 +167,6 @@ export default function InfraestructuraPage() {
       } else {
         await updateEspacio.mutateAsync({ id: selectedSpaceState.id, ocupado: false });
       }
-      await queryClient.invalidateQueries({ queryKey: ['ubicaciones'] });
-      await queryClient.invalidateQueries({ queryKey: ['zonas'] });
-      await queryClient.invalidateQueries({ queryKey: ['infra-stats'] });
       toast.success('Espacio liberado y actualizado correctamente');
       setIsLiberarOpen(false);
       setSelectedSpaceState(null);

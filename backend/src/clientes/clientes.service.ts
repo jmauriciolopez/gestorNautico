@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Cliente } from './clientes.entity';
+import { paginate, PaginationQuery, PaginatedResult } from '../common/pagination/pagination.helper';
 
 @Injectable()
 export class ClientesService {
@@ -10,8 +11,8 @@ export class ClientesService {
     private readonly clientesRepository: Repository<Cliente>,
   ) {}
 
-  async findAll(): Promise<Cliente[]> {
-    return this.clientesRepository.find({
+  async findAll(query: PaginationQuery = {}): Promise<PaginatedResult<Cliente>> {
+    return paginate(this.clientesRepository, query, {
       order: { createdAt: 'DESC' },
     });
   }

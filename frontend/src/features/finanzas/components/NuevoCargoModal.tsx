@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { X, Receipt, DollarSign, User, Calendar, Tag } from 'lucide-react';
 import { useClientes } from '../../clientes/hooks/useClientes';
 import { useFinanzas } from '../hooks/useFinanzas';
+import type { AxiosError } from 'axios';
 
 interface NuevoCargoModalProps {
   isOpen: boolean;
@@ -26,22 +28,29 @@ export function NuevoCargoModal({ isOpen, onClose }: NuevoCargoModalProps) {
     e.preventDefault();
     if (!formData.clienteId) return;
 
-    await createCargo.mutateAsync({
-      clienteId: Number(formData.clienteId),
-      descripcion: formData.descripcion,
-      monto: Number(formData.monto),
-      tipo: formData.tipo,
-      fechaEmision: formData.fechaEmision
-    });
-
-    onClose();
-    setFormData({
-      clienteId: '',
-      descripcion: '',
-      monto: '',
-      tipo: 'AMARRE',
-      fechaEmision: new Date().toISOString().split('T')[0]
-    });
+    try {
+      await createCargo.mutateAsync({
+        clienteId: Number(formData.clienteId),
+        descripcion: formData.descripcion,
+        monto: Number(formData.monto),
+        tipo: formData.tipo,
+        fechaEmision: formData.fechaEmision,
+      });
+      toast.success('Cargo emitido correctamente');
+      onClose();
+      setFormData({
+        clienteId: '',
+        descripcion: '',
+        monto: '',
+        tipo: 'AMARRE',
+        fechaEmision: new Date().toISOString().split('T')[0],
+      });
+    } catch (err) {
+      const axiosErr = err as AxiosError<{ message: string | string[] }>;
+      const raw = axiosErr.response?.data?.message;
+      const msg = Array.isArray(raw) ? raw[0] : (raw ?? 'Error al crear el cargo');
+      toast.error(msg);
+    }
   };
 
   return (

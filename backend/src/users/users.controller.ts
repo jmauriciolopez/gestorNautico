@@ -10,6 +10,7 @@ import {
   UseGuards,
   Headers,
   UnauthorizedException,
+  Query,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -44,8 +45,8 @@ export class UsersController {
   @Get()
   @UseGuards(AuthTokenGuard, RolesGuard)
   @Roles(Role.SUPERADMIN)
-  findAll() {
-    return this.usersService.findAll();
+  findAll(@Query('page') page?: number, @Query('limit') limit?: number) {
+    return this.usersService.findAll({ page, limit });
   }
 
   @Get(':id')

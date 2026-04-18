@@ -25,7 +25,7 @@ export class PagosController {
   ) {}
 
   @Get(':id/pdf')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
   async downloadPdf(@Param('id') id: string, @Res() res: Response) {
     const pago = await this.pagosService.findOne(+id);
     const buffer = await this.pdfService.generateReceipt(pago);
@@ -40,25 +40,25 @@ export class PagosController {
   }
 
   @Get()
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
   findAll() {
     return this.pagosService.findAll();
   }
 
   @Get(':id')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
   findOne(@Param('id') id: string) {
     return this.pagosService.findOne(+id);
   }
 
   @Post()
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
   create(@Body() data: CreatePagoDto) {
     return this.pagosService.create(data);
   }
 
   @Delete(':id')
-  @Roles(Role.SUPERADMIN, Role.ADMIN)
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
   remove(@Param('id') id: string) {
     return this.pagosService.remove(+id);
   }

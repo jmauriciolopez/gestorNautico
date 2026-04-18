@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchClient } from '../../../api/fetchClient';
+import { httpClient } from '../../../shared/api/HttpClient';
+import { Paginated, selectData } from '../../../api/pagination';
 
 export interface Factura {
   id: number;
@@ -8,12 +9,8 @@ export interface Factura {
   fechaEmision: string;
   estado: 'PENDIENTE' | 'PAGADA' | 'ANULADA';
   observaciones?: string;
-  cliente: {
-    id: number;
-    nombre: string;
-    dni: string;
-  };
-  cargos?: any[]; // Podríamos tipar esto mejor trayendo la interfaz Cargo
+  cliente: { id: number; nombre: string; dni: string };
+  cargos?: any[];
   createdAt: string;
   updatedAt: string;
 }
@@ -23,31 +20,30 @@ export function useFacturas() {
 
   const getFacturas = useQuery<Factura[]>({
     queryKey: ['facturas'],
-    queryFn: () => fetchClient('/facturas'),
+    queryFn: () => httpClient.get<Paginated<Factura>>('/facturas'),
+    select: selectData,
   });
 
   const getNextNumero = useQuery<{ nextNumero: string }>({
     queryKey: ['facturas', 'next-numero'],
-    queryFn: () => fetchClient<{ nextNumero: string }>('/facturas/next-numero'),
-    enabled: true,
+    queryFn: () => httpClient.get<{ nextNumero: string }>('/facturas/next-numero'),
   });
 
   const useFactura = (id: number) =>
     useQuery<Factura>({
       queryKey: ['facturas', id],
-      queryFn: () => fetchClient(`/facturas/${id}`),
+      queryFn: () => httpClient.get<Factura>(`/facturas/${id}`),
       enabled: !!id,
     });
 
   const createFactura = useMutation({
-    mutationFn: (data: { 
-      clienteId: number; 
-      numero?: string; 
-      fechaEmision: string; 
+    mutationFn: (data: {
+      clienteId: number;
+      numero?: string;
+      fechaEmision: string;
       cargoIds: number[];
       observaciones?: string;
-    }) =>
-      fetchClient('/facturas', { method: 'POST', body: data }),
+    }) => httpClient.post('/facturas', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['facturas'] });
       queryClient.invalidateQueries({ queryKey: ['cargos'] });
@@ -57,29 +53,18 @@ export function useFacturas() {
 
   const updateEstadoFactura = useMutation({
     mutationFn: ({ id, estado }: { id: number; estado: Factura['estado'] }) =>
-      fetchClient(`/facturas/${id}/estado`, {
-        method: 'PATCH',
-        body: { estado },
-      }),
+      httpClient.patch(`/facturas/${id}/estado`, { estado }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['facturas'] });
     },
   });
 
   const deleteFactura = useMutation({
-    mutationFn: (id: number) =>
-      fetchClient(`/facturas/${id}`, { method: 'DELETE' }),
+    mutationFn: (id: number) => httpClient.delete(`/facturas/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['facturas'] });
     },
   });
 
-  return {
-    getFacturas,
-    useFactura,
-    createFactura,
-    updateEstadoFactura,
-    deleteFactura,
-    getNextNumero,
-  };
+  return { getFacturas, useFactura, createFactura, updateEstadoFactura, deleteFactura, getNextNumero };
 }

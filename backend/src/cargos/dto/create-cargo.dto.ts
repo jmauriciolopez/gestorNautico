@@ -3,7 +3,7 @@ import {
   IsString,
   IsOptional,
   IsBoolean,
-  IsDate,
+  IsDateString,
   IsEnum,
 } from 'class-validator';
 import { TipoCargo } from '../cargo.entity';
@@ -19,8 +19,8 @@ export class CreateCargoDto {
   monto: number;
 
   @IsOptional()
-  @IsDate()
-  fechaEmision?: Date;
+  @IsDateString()
+  fechaEmision?: string;
 
   @IsOptional()
   @IsBoolean()

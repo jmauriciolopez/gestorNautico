@@ -7,6 +7,7 @@ import {
   Put,
   Delete,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { CatalogoService } from './catalogo.service';
 import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
@@ -22,13 +23,13 @@ export class CatalogoController {
   constructor(private readonly catalogoService: CatalogoService) {}
 
   @Get()
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
-  findAll() {
-    return this.catalogoService.findAll();
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+  findAll(@Query('page') page?: number, @Query('limit') limit?: number) {
+    return this.catalogoService.findAll({ page, limit });
   }
 
   @Get(':id')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
   findOne(@Param('id') id: string) {
     return this.catalogoService.findOne(+id);
   }

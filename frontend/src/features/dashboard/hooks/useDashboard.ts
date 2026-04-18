@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { fetchClient } from '../../../api/fetchClient';
+import { httpClient } from '../../../shared/api/HttpClient';
 
 export interface DashboardSummary {
   stats: {
@@ -56,13 +56,13 @@ export interface RackMap {
 export const useDashboard = () => {
   return useQuery<DashboardSummary>({
     queryKey: ['dashboard', 'summary'],
-    queryFn: () => fetchClient('/dashboard/summary'),
+    queryFn: () => httpClient.get('/dashboard/summary'),
   });
 };
 
 export const useRackMap = () => {
   return useQuery<RackMap[]>({
     queryKey: ['dashboard', 'rack-map'],
-    queryFn: () => fetchClient('/dashboard/rack-map'),
+    queryFn: () => httpClient.get('/dashboard/rack-map'),
   });
 };

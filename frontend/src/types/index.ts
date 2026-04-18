@@ -1,7 +1,8 @@
 export enum Role {
-    SUPERADMIN = 'SUPERADMIN',
-    ADMIN = 'ADMIN',
-    OPERADOR = 'OPERADOR',
+    SUPERADMIN = 'SUPERADMIN', // Dueño del SaaS
+    ADMIN = 'ADMIN',           // Propietario de la guardería
+    SUPERVISOR = 'SUPERVISOR', // Gestor operativo
+    OPERADOR = 'OPERADOR',     // Trabajo diario básico
 }
 
 export interface User {

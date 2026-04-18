@@ -1,91 +1,140 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@font-face {
-  font-family: 'Outfit';
-  src: url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
-}
-
+/* ─────────────────────────────────────────────
+   DARK MODE (default)
+───────────────────────────────────────────── */
 :root {
-  /* Slate-3D Dark Mode (Default) */
-  --bg-primary: #020617;
-  --bg-secondary: #0f172a;
-  --bg-surface: rgba(15, 23, 42, 0.4);
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #475569;
-  --border-primary: rgba(30, 41, 59, 0.5);
-  --border-secondary: rgba(30, 41, 59, 0.3);
-  --accent-primary: #4f46e5; /* Indigo 600 */
-  --accent-secondary: #0ea5e9; /* Sky 500 */
-  --glass-blur: 12px;
-  --modal-overlay: rgba(2, 6, 23, 0.85);
-  --modal-glass-bg: rgba(15, 23, 42, 0.6);
-  --scrollbar-track: #020617;
-  --scrollbar-thumb: #1e293b;
-  --scrollbar-thumb-hover: #334155;
+  /* Fondos */
+  --bg-primary:        #0a0a0f;
+  --bg-secondary:      #111118;
+  --bg-surface:        #16161f;
+  --bg-card:           #1a1a24;
+  --bg-card-hover:     #1e1e2a;
+
+  /* Texto */
+  --text-primary:      #f0f0f5;
+  --text-secondary:    #8888a0;
+  --text-muted:        #44445a;
+
+  /* Bordes */
+  --border-primary:    rgba(255, 255, 255, 0.07);
+  --border-secondary:  rgba(255, 255, 255, 0.04);
+
+  /* Acentos sistema */
+  --accent-primary:    #6366f1;
+  --accent-secondary:  #8b5cf6;
+
+  /* ── Acentos bento (semánticos) ── */
+  --accent-teal:       #1D9E75;
+  --accent-teal-soft:  rgba(29, 158, 117, 0.12);
+  --accent-teal-line:  linear-gradient(90deg, #1D9E75, #9FE1CB);
+
+  --accent-purple:     #7F77DD;
+  --accent-purple-soft: rgba(127, 119, 221, 0.12);
+  --accent-purple-line: linear-gradient(90deg, #7F77DD, #CECBF6);
+
+  --accent-amber:      #BA7517;
+  --accent-amber-soft: rgba(186, 117, 23, 0.12);
+  --accent-amber-line: linear-gradient(90deg, #BA7517, #FAC775);
+
+  --accent-red:        #E24B4A;
+  --accent-red-soft:   rgba(226, 75, 74, 0.12);
+  --accent-red-line:   linear-gradient(90deg, #E24B4A, #F7C1C1);
+
+  /* Bento layout */
+  --bento-radius:      16px;
+  --bento-gap:         12px;
+
+  /* Glassmorphism */
+  --glass-blur:        12px;
+
+  /* Modales */
+  --modal-overlay:     rgba(0, 0, 0, 0.75);
+  --modal-glass-bg:    rgba(22, 22, 31, 0.95);
+
+  /* Scrollbar */
+  --scrollbar-track:        #0a0a0f;
+  --scrollbar-thumb:        #222230;
+  --scrollbar-thumb-hover:  #333345;
+
   color-scheme: dark;
 }
 
+/* ─────────────────────────────────────────────
+   LIGHT MODE (.light en <html> o <body>)
+───────────────────────────────────────────── */
 :root.light {
-  /* Slate-Silver Light Mode */
-  --bg-primary: #f8fafc;
-  --bg-secondary: #ffffff;
-  --bg-surface: rgba(255, 255, 255, 0.7);
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #94a3b8;
-  --border-primary: rgba(226, 232, 240, 0.8);
-  --border-secondary: rgba(226, 232, 240, 0.5);
-  --accent-primary: #4f46e5;
-  --accent-secondary: #0284c7;
-  --glass-blur: 10px;
-  --scrollbar-track: #f1f5f9;
-  --scrollbar-thumb: #cbd5e1;
-  --scrollbar-thumb-hover: #94a3b8;
-  --modal-overlay: rgba(248, 250, 252, 0.8);
-  --modal-glass-bg: rgba(255, 255, 255, 0.8);
+  /* Fondos */
+  --bg-primary:        #f0f0f6;
+  --bg-secondary:      #ffffff;
+  --bg-surface:        #ffffff;
+  --bg-card:           #ffffff;
+  --bg-card-hover:     #f8f8fc;
+
+  /* Texto */
+  --text-primary:      #0f0f1a;
+  --text-secondary:    #606078;
+  --text-muted:        #a0a0b8;
+
+  /* Bordes */
+  --border-primary:    rgba(0, 0, 0, 0.08);
+  --border-secondary:  rgba(0, 0, 0, 0.04);
+
+  /* Acentos sistema */
+  --accent-primary:    #6366f1;
+  --accent-secondary:  #8b5cf6;
+
+  /* ── Acentos bento (los mismos, funcionan en light) ── */
+  --accent-teal:        #1D9E75;
+  --accent-teal-soft:   rgba(29, 158, 117, 0.10);
+  --accent-teal-line:   linear-gradient(90deg, #1D9E75, #9FE1CB);
+
+  --accent-purple:      #7F77DD;
+  --accent-purple-soft: rgba(127, 119, 221, 0.10);
+  --accent-purple-line: linear-gradient(90deg, #7F77DD, #CECBF6);
+
+  --accent-amber:       #BA7517;
+  --accent-amber-soft:  rgba(186, 117, 23, 0.10);
+  --accent-amber-line:  linear-gradient(90deg, #BA7517, #FAC775);
+
+  --accent-red:         #E24B4A;
+  --accent-red-soft:    rgba(226, 75, 74, 0.10);
+  --accent-red-line:    linear-gradient(90deg, #E24B4A, #F7C1C1);
+
+  /* Bento layout */
+  --bento-radius:      16px;
+  --bento-gap:         12px;
+
+  /* Glassmorphism */
+  --glass-blur:        10px;
+
+  /* Modales */
+  --modal-overlay:     rgba(244, 244, 248, 0.85);
+  --modal-glass-bg:    rgba(255, 255, 255, 0.97);
+
+  /* Scrollbar */
+  --scrollbar-track:        #f4f4f8;
+  --scrollbar-thumb:        #dddde8;
+  --scrollbar-thumb-hover:  #c0c0d0;
+
   color-scheme: light;
 }
 
+/* ─────────────────────────────────────────────
+   BASE
+───────────────────────────────────────────── */
 body {
   margin: 0;
-  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--bg-primary);
   color: var(--text-primary);
   transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-/* Glassmorphism utility */
-.glass {
-  background: var(--bg-surface);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--border-primary);
-  transition: background 0.3s ease, border 0.3s ease;
-}
-
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--scrollbar-track);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--scrollbar-thumb);
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--scrollbar-thumb-hover);
 }
 
 @layer base {
@@ -94,7 +143,145 @@ body {
   }
 }
 
-/* 3D Rack Visualization Utilities */
+/* ─────────────────────────────────────────────
+   GLASSMORPHISM
+───────────────────────────────────────────── */
+.glass {
+  background: var(--bg-surface);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--border-primary);
+  transition: background 0.3s ease, border 0.3s ease;
+}
+
+/* ─────────────────────────────────────────────
+   BENTO CARD BASE
+───────────────────────────────────────────── */
+.bento-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--bento-radius);
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.bento-card:hover {
+  background: var(--bg-card-hover);
+  border-color: rgba(99, 102, 241, 0.18);
+}
+
+/* ─────────────────────────────────────────────
+   BENTO METRIC CARD — accent line top
+   Uso: <div class="bento-card bento-metric accent-teal">
+───────────────────────────────────────────── */
+.bento-metric {
+  position: relative;
+  overflow: hidden;
+}
+
+.bento-metric::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 20px;
+  right: 20px;
+  height: 2px;
+  border-radius: 0 0 2px 2px;
+}
+
+.bento-metric.accent-teal::before   { background: var(--accent-teal-line); }
+.bento-metric.accent-purple::before { background: var(--accent-purple-line); }
+.bento-metric.accent-amber::before  { background: var(--accent-amber-line); }
+.bento-metric.accent-red::before    { background: var(--accent-red-line); }
+
+/* Icon wrapper semántico */
+.bento-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.bento-icon.accent-teal   { background: var(--accent-teal-soft); }
+.bento-icon.accent-purple { background: var(--accent-purple-soft); }
+.bento-icon.accent-amber  { background: var(--accent-amber-soft); }
+.bento-icon.accent-red    { background: var(--accent-red-soft); }
+
+/* Badge de variación */
+.bento-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  position: absolute;
+  top: 16px;
+  right: 16px;
+}
+
+.bento-badge.up   { background: var(--accent-teal-soft);   color: var(--accent-teal); }
+.bento-badge.down { background: var(--accent-red-soft);    color: var(--accent-red); }
+
+/* ─────────────────────────────────────────────
+   BENTO GRID LAYOUT
+───────────────────────────────────────────── */
+.bento-grid {
+  display: grid;
+  gap: var(--bento-gap);
+}
+
+.bento-grid-dashboard {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: auto auto auto;
+  gap: var(--bento-gap);
+}
+
+/* Tamaños de celda */
+.bento-col-1 { grid-column: span 1; }
+.bento-col-2 { grid-column: span 2; }
+.bento-col-3 { grid-column: span 3; }
+.bento-col-4 { grid-column: span 4; }
+.bento-row-2 { grid-row: span 2; }
+
+/* ─────────────────────────────────────────────
+   BENTO DARK ACCENT CARDS
+   (hardcoded, mismos en light y dark — contraste intencional)
+───────────────────────────────────────────── */
+.bento-dark-purple {
+  border-radius: var(--bento-radius);
+  background: linear-gradient(145deg, #1D1A3A 0%, #26215C 60%, #3C3489 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.bento-dark-teal {
+  border-radius: var(--bento-radius);
+  background: linear-gradient(145deg, #063420 0%, #085041 100%);
+}
+
+/* ─────────────────────────────────────────────
+   SCROLLBAR
+───────────────────────────────────────────── */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
+
+.custom-scrollbar::-webkit-scrollbar { height: 6px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+/* ─────────────────────────────────────────────
+   3D RACK VISUALIZATION (sin cambios)
+───────────────────────────────────────────── */
 .perspective-container {
   perspective: 2000px;
   perspective-origin: center 30%;
@@ -110,15 +297,15 @@ body {
 
 .rack-3d-active {
   transform: rotateX(var(--rotate-x)) rotateY(var(--rotate-y)) scale(var(--zoom));
-  box-shadow: 
-    -20px 20px 60px rgba(0,0,0,0.5),
+  box-shadow:
+    -20px 20px 60px rgba(0, 0, 0, 0.5),
     0 0 40px rgba(79, 70, 229, 0.1);
 }
 
 .rack-3d-active:hover {
   --zoom: 1.03;
-  box-shadow: 
-    -40px 40px 80px rgba(0,0,0,0.6),
+  box-shadow:
+    -40px 40px 80px rgba(0, 0, 0, 0.6),
     0 0 60px rgba(79, 70, 229, 0.2);
 }
 
@@ -127,9 +314,6 @@ body {
   transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.3s ease;
 }
 
-/* Depth layers are now handled dynamically via inline styles for infinite floors */
-
-/* Volumetric Side Panels Refinement */
 .cell-volume-side {
   position: absolute;
   pointer-events: none;
@@ -137,9 +321,7 @@ body {
   transition: opacity 0.8s ease, background 0.3s ease;
 }
 
-.rack-3d-active .cell-volume-side {
-  opacity: 1;
-}
+.rack-3d-active .cell-volume-side { opacity: 1; }
 
 .cell-volume-top {
   width: 100%;
@@ -163,7 +345,6 @@ body {
   border: 1px solid rgba(255,255,255,0.05);
 }
 
-/* Floor Structure 3D Pillar */
 .floor-pillar-3d {
   transform-style: preserve-3d;
   background: rgba(255,255,255,0.03);
@@ -171,17 +352,4 @@ body {
   box-shadow: -10px 0 30px rgba(79, 70, 229, 0.1);
 }
 
-.rack-3d-active .floor-pillar-3d {
-  transform: translateZ(160px);
-}
-
-.custom-scrollbar::-webkit-scrollbar {
-  height: 6px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.1);
-  border-radius: 10px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255,255,255,0.2);
-}
+.rack-3d-active .floor-pillar-3d { transform: translateZ(160px); }

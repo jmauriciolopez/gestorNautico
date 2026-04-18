@@ -1,9 +1,10 @@
 import { httpClient } from '../../../shared/api/HttpClient';
 import type { User } from '../../../types';
+import type { Paginated } from '../../../api/pagination';
 
 export const userService = {
     getAll: () =>
-        httpClient.get<User[]>('/users'),
+        httpClient.get<Paginated<User>>('/users').then(res => res.data),
 
     save: (data: Partial<User>, id?: number) => {
         if (id) {

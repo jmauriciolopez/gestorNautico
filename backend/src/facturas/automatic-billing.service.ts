@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThan } from 'typeorm';
+import { Repository, LessThan, Between, Like } from 'typeorm';
 import { Factura, EstadoFactura } from './factura.entity';
 import { FacturasService } from './facturas.service';
 import { Cargo, TipoCargo } from '../cargos/cargo.entity';
@@ -52,6 +52,9 @@ export class AutomaticBillingService {
       `Procesando facturación para ${clientesAFacturar.length} clientes.`,
     );
 
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59);
+
     for (const cliente of clientesAFacturar) {
       this.logger.log(`Procesando Cliente: ${cliente.nombre}`);
       const cargoIds: number[] = [];
@@ -64,6 +67,23 @@ export class AutomaticBillingService {
 
       for (const barco of embarcaciones) {
         if (barco.espacio && barco.espacio.rack) {
+          // VALIDACIÓN: Verificar si ya existe un cargo de amarre para este barco en el mes actual
+          const cargoExistente = await this.cargoRepo.findOne({
+            where: {
+              cliente: { id: cliente.id },
+              tipo: TipoCargo.AMARRE,
+              descripcion: Like(`%${barco.matricula}%`),
+              fechaEmision: Between(startOfMonth, endOfMonth),
+            },
+          });
+
+          if (cargoExistente) {
+            this.logger.warn(
+              `Omisión: El amarre para ${barco.nombre} (${barco.matricula}) ya fue facturado este mes (Cargo ID: ${cargoExistente.id}).`,
+            );
+            continue;
+          }
+
           const rack = barco.espacio.rack;
           const tarifaBase = Number(rack.tarifaBase || 0);
 
@@ -90,39 +110,67 @@ export class AutomaticBillingService {
 
       // B. Procesar Cuota (Individual/Familiar)
       if (cliente.tipoCuota === 'INDIVIDUAL') {
-        const montoIndividual =
-          await this.configuracionService.getValorNumerico(
-            'CUOTA_INDIVIDUAL',
-            50,
-          );
-        const cargoCuota = this.cargoRepo.create({
-          descripcion: 'Cuota de Socio Individual',
-          monto: montoIndividual,
-          tipo: TipoCargo.SERVICIOS,
-          cliente: { id: cliente.id },
-          pagado: false,
-          fechaEmision: new Date(),
+        // VALIDACIÓN: Verificar existencia de cuota individual este mes
+        const cuotaExistente = await this.cargoRepo.findOne({
+          where: {
+            cliente: { id: cliente.id },
+            tipo: TipoCargo.SERVICIOS,
+            descripcion: Like('%Individual%'),
+            fechaEmision: Between(startOfMonth, endOfMonth),
+          },
         });
-        const guardado = await this.cargoRepo.save(cargoCuota);
-        cargoIds.push(guardado.id);
+
+        if (cuotaExistente) {
+          this.logger.warn(`Omisión: Cuota Individual ya facturada para ${cliente.nombre}.`);
+        } else {
+          const montoIndividual =
+            await this.configuracionService.getValorNumerico(
+              'CUOTA_INDIVIDUAL',
+              50,
+            );
+          const cargoCuota = this.cargoRepo.create({
+            descripcion: 'Cuota de Socio Individual',
+            monto: montoIndividual,
+            tipo: TipoCargo.SERVICIOS,
+            cliente: { id: cliente.id },
+            pagado: false,
+            fechaEmision: new Date(),
+          });
+          const guardado = await this.cargoRepo.save(cargoCuota);
+          cargoIds.push(guardado.id);
+        }
       } else if (
         cliente.tipoCuota === 'FAMILIAR' &&
         cliente.id === cliente.responsableFamiliaId
       ) {
-        const montoFamiliar = await this.configuracionService.getValorNumerico(
-          'CUOTA_FAMILIAR',
-          120,
-        );
-        const cargoCuota = this.cargoRepo.create({
-          descripcion: 'Cuota Grupo Familiar',
-          monto: montoFamiliar,
-          tipo: TipoCargo.SERVICIOS,
-          cliente: { id: cliente.id },
-          pagado: false,
-          fechaEmision: new Date(),
+        // VALIDACIÓN: Verificar existencia de cuota familiar este mes
+        const cuotaExistente = await this.cargoRepo.findOne({
+          where: {
+            cliente: { id: cliente.id },
+            tipo: TipoCargo.SERVICIOS,
+            descripcion: Like('%Familiar%'),
+            fechaEmision: Between(startOfMonth, endOfMonth),
+          },
         });
-        const guardado = await this.cargoRepo.save(cargoCuota);
-        cargoIds.push(guardado.id);
+
+        if (cuotaExistente) {
+          this.logger.warn(`Omisión: Cuota Familiar ya facturada para ${cliente.nombre}.`);
+        } else {
+          const montoFamiliar = await this.configuracionService.getValorNumerico(
+            'CUOTA_FAMILIAR',
+            120,
+          );
+          const cargoCuota = this.cargoRepo.create({
+            descripcion: 'Cuota Grupo Familiar',
+            monto: montoFamiliar,
+            tipo: TipoCargo.SERVICIOS,
+            cliente: { id: cliente.id },
+            pagado: false,
+            fechaEmision: new Date(),
+          });
+          const guardado = await this.cargoRepo.save(cargoCuota);
+          cargoIds.push(guardado.id);
+        }
       }
 
       // C. Consolidar con consumos pendientes

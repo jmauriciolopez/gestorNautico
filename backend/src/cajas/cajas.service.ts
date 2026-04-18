@@ -7,6 +7,10 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import {
+  paginate,
+  PaginationQuery,
+} from '../common/pagination/pagination.helper';
 import { Caja, EstadoCaja } from './caja.entity';
 import { MetodoPago } from '../pagos/pago.entity';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
@@ -31,8 +35,8 @@ export class CajasService {
     private readonly notificacionesService: NotificacionesService,
   ) {}
 
-  findAll() {
-    return this.cajaRepo.find({
+  findAll(query: PaginationQuery = {}) {
+    return paginate(this.cajaRepo, query, {
       relations: ['pagos'],
       order: { createdAt: 'DESC' },
     });
@@ -93,15 +97,12 @@ export class CajasService {
           return guardada;
         },
       );
-    } catch (error: any) {
-      this.logger.error(
-        `Error crítico al abrir caja: ${error.message}`,
-        error.stack,
-      );
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : 'Unknown error';
+      const errStack = error instanceof Error ? error.stack : undefined;
+      this.logger.error(`Error crítico al abrir caja: ${errMsg}`, errStack);
       if (error instanceof ConflictException) throw error;
-      throw new BadRequestException(
-        `No se pudo abrir la caja: ${error.message}`,
-      );
+      throw new BadRequestException(`No se pudo abrir la caja: ${errMsg}`);
     }
   }
 
@@ -140,17 +141,17 @@ export class CajasService {
           return guardada;
         },
       );
-    } catch (error: any) {
-      this.logger.error(`Error al cerrar caja: ${error.message}`, error.stack);
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : 'Unknown error';
+      const errStack = error instanceof Error ? error.stack : undefined;
+      this.logger.error(`Error al cerrar caja: ${errMsg}`, errStack);
       if (
         error instanceof ConflictException ||
         error instanceof NotFoundException
       ) {
         throw error;
       }
-      throw new BadRequestException(
-        `No se pudo cerrar la caja: ${error.message}`,
-      );
+      throw new BadRequestException(`No se pudo cerrar la caja: ${errMsg}`);
     }
   }
 

@@ -33,7 +33,7 @@ export default function ConfiguracionPage() {
       await updateConfiguracion.mutateAsync(formData);
       setMessage({ type: 'success', text: 'Configuraciones actualizadas con éxito' });
       setTimeout(() => setMessage(null), 3000);
-    } catch (err) {
+    } catch  {
       setMessage({ type: 'error', text: 'Error al actualizar configuraciones' });
     } finally {
       setIsSaving(false);

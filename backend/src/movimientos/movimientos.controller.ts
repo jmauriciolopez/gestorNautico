@@ -6,6 +6,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { MovimientosService } from './movimientos.service';
 import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
@@ -19,19 +20,19 @@ export class MovimientosController {
   constructor(private readonly movimientosService: MovimientosService) {}
 
   @Get()
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
-  findAll() {
-    return this.movimientosService.findAll();
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+  findAll(@Query('page') page?: number, @Query('limit') limit?: number) {
+    return this.movimientosService.findAll({ page, limit });
   }
 
   @Get(':id')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
   findOne(@Param('id') id: string) {
     return this.movimientosService.findOne(+id);
   }
 
   @Post()
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
   create(@Body() data: any) {
     return this.movimientosService.create(data);
   }

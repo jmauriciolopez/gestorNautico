@@ -3,6 +3,7 @@ import {
   Post,
   Body,
   Get,
+  Query,
   UseGuards,
   HttpStatus,
   HttpCode,
@@ -25,7 +26,10 @@ export class OperacionesController {
 
   @Get('solicitudes')
   @UseGuards(AuthTokenGuard)
-  async findAllSolicitudes() {
-    return this.operacionesService.findAll();
+  async findAllSolicitudes(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    return this.operacionesService.findAll({ page, limit });
   }
 }

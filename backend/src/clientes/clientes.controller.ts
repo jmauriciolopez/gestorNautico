@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { ClientesService } from './clientes.service';
 import { Cliente } from './clientes.entity';
@@ -17,13 +18,13 @@ import { Role } from '../users/user.entity';
 
 @Controller('clientes')
 @UseGuards(AuthTokenGuard, RolesGuard)
-@Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
+@Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
 export class ClientesController {
   constructor(private readonly clientesService: ClientesService) {}
 
   @Get()
-  findAll() {
-    return this.clientesService.findAll();
+  findAll(@Query('page') page?: number, @Query('limit') limit?: number) {
+    return this.clientesService.findAll({ page, limit });
   }
 
   @Get(':id')

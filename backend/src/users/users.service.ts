@@ -9,6 +9,7 @@ import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User, Role } from './user.entity';
+import { paginate, PaginationQuery } from '../common/pagination/pagination.helper';
 
 @Injectable()
 export class UsersService {
@@ -17,11 +18,9 @@ export class UsersService {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  findAll() {
-    return this.userRepository.find({
-      order: {
-        id: 'ASC',
-      },
+  findAll(query: PaginationQuery = {}) {
+    return paginate(this.userRepository, query, {
+      order: { id: 'ASC' },
     });
   }
 

@@ -8,6 +8,7 @@ import {
   UseGuards,
   Req,
   Body,
+  Query,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
@@ -30,9 +31,11 @@ export class NotificacionesController {
   @Get()
   async getMyNotifications(
     @Req() request: RequestWithUser,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
   ): Promise<Notificacion[]> {
     const userId = request.user.sub;
-    return this.notificacionesService.findAllByUser(userId);
+    return this.notificacionesService.findAllByUser(userId, { page, limit });
   }
 
   @Patch(':id/leer')

@@ -1,18 +1,8 @@
 import { Link, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard,
-  Users,
-  Ship,
-  Navigation,
-  CircleDollarSign,
-  Compass,
-  LayoutGrid,
-  Wrench,
-  FileText,
-  X,
-  ShieldCheck,
-  Settings,
-  HelpCircle
+  LayoutDashboard, Users, Ship, Navigation,
+  CircleDollarSign, LayoutGrid, Wrench, FileText,
+  X, ShieldCheck, Settings, HelpCircle, Anchor
 } from 'lucide-react';
 import { useAuth } from '../../features/auth/context/AuthContext';
 import { Role } from '../../types';
@@ -22,133 +12,106 @@ interface SidebarProps {
   onClose: () => void;
 }
 
+const navItems = [
+  // Todos los roles autenticados
+  { name: 'Dashboard',       path: '/',                icon: LayoutDashboard, roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR] },
+  { name: 'Clientes',        path: '/clientes',        icon: Users,           roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR] },
+  { name: 'Embarcaciones',   path: '/embarcaciones',   icon: Ship,            roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR] },
+  { name: 'Operaciones',     path: '/operaciones',     icon: Navigation,      roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR] },
+  { name: 'Servicios',       path: '/servicios',       icon: Wrench,          roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR] },
+  { name: 'Infraestructura', path: '/infraestructura', icon: LayoutGrid,      roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR] },
+  // Supervisor en adelante
+  { name: 'Finanzas',        path: '/finanzas',        icon: CircleDollarSign, roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR] },
+  { name: 'Facturación',     path: '/facturacion',     icon: FileText,         roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR] },
+  // Solo Admin y SuperAdmin
+  { name: 'Configuración',   path: '/configuracion',   icon: Settings,         roles: [Role.SUPERADMIN, Role.ADMIN] },
+  // Solo SuperAdmin
+  { name: 'Usuarios',        path: '/usuarios',        icon: ShieldCheck,      roles: [Role.SUPERADMIN] },
+  // Todos
+  { name: 'Ayuda',           path: '/ayuda',           icon: HelpCircle,       roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR] },
+];
+
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const location = useLocation();
   const { user } = useAuth();
 
-  const isActive = (path: string) => {
-    if (path === '/') return location.pathname === '/';
-    return location.pathname.startsWith(path);
-  };
+  const isActive = (path: string) =>
+    path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
 
-  const navItems = [
-    {
-      name: 'Dashboard',
-      path: '/',
-      icon: <LayoutDashboard className="w-5 h-5" />,
-      allowedRoles: [Role.SUPERADMIN, Role.ADMIN]
-    },
-    {
-      name: 'Clientes',
-      path: '/clientes',
-      icon: <Users className="w-5 h-5" />,
-      allowedRoles: [Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR]
-    },
-    {
-      name: 'Embarcaciones',
-      path: '/embarcaciones',
-      icon: <Ship className="w-5 h-5" />,
-      allowedRoles: [Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR]
-    },
-    {
-      name: 'Operaciones',
-      path: '/operaciones',
-      icon: <Navigation className="w-5 h-5" />,
-      allowedRoles: [Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR]
-    },
-    {
-      name: 'Servicios',
-      path: '/servicios',
-      icon: <Wrench className="w-5 h-5" />,
-      allowedRoles: [Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR]
-    },
-    {
-      name: 'Infraestructura',
-      path: '/infraestructura',
-      icon: <LayoutGrid className="w-5 h-5" />,
-      allowedRoles: [Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR]
-    },
-    {
-      name: 'Finanzas',
-      path: '/finanzas',
-      icon: <CircleDollarSign className="w-5 h-5" />,
-      allowedRoles: [Role.SUPERADMIN, Role.ADMIN]
-    },
-    {
-      name: 'Facturación',
-      path: '/facturacion',
-      icon: <FileText className="w-5 h-5" />,
-      allowedRoles: [Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR]
-    },
-    {
-      name: 'Usuarios',
-      path: '/usuarios',
-      icon: <ShieldCheck className="w-5 h-5" />,
-      allowedRoles: [Role.SUPERADMIN]
-    },
-    {
-      name: 'Configuración',
-      path: '/configuracion',
-      icon: <Settings className="w-5 h-5" />,
-      allowedRoles: [Role.SUPERADMIN, Role.ADMIN]
-    },
-    {
-      name: 'Ayuda',
-      path: '/ayuda',
-      icon: <HelpCircle className="w-5 h-5" />,
-      allowedRoles: [Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR]
-    },
-  ];
-
-  // Filtrar items según rol
-  const filteredItems = navItems.filter(item =>
-    !item.allowedRoles || (user && item.allowedRoles.includes(user.role))
+  const filtered = navItems.filter(item =>
+    !item.roles || (user && item.roles.includes(user.role))
   );
 
   return (
-    <aside className={`
-      fixed inset-y-0 left-0 z-50 w-72 bg-[var(--bg-secondary)]/[0.95] backdrop-blur-2xl border-r border-[var(--border-primary)] text-[var(--text-secondary)] flex flex-col transition-all duration-300 ease-in-out
-      md:relative md:translate-x-0 md:bg-[var(--bg-secondary)]/[0.4]
-      ${isOpen ? 'translate-x-0 outline-none' : '-translate-x-full'}
-    `}>
-      <div className="h-20 flex items-center px-8 gap-4 border-b border-[var(--border-primary)] group select-none relative transition-colors duration-300">
-        <div className="bg-indigo-600 p-2.5 rounded-2xl shadow-xl shadow-indigo-500/20 group-hover:rotate-[15deg] transition-transform duration-500">
-          <Compass className="w-6 h-6 text-[var(--text-primary)]" />
+    <aside
+      className={`
+        fixed inset-y-0 left-0 z-50 flex flex-col
+        md:relative md:translate-x-0
+        transition-transform duration-300 ease-in-out
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}
+      style={{
+        width: 220,
+        background: 'var(--bg-secondary)',
+        borderRight: '1px solid var(--border-primary)',
+      }}
+    >
+      {/* Logo */}
+      <div
+        className="flex items-center gap-3 px-4 py-4"
+        style={{ borderBottom: '1px solid var(--border-primary)', height: 56 }}
+      >
+        <div
+          className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+          style={{ background: 'var(--accent-primary)' }}
+        >
+          <Anchor size={16} color="white" />
         </div>
-        <span className="font-black text-xl tracking-tighter text-[var(--text-primary)] uppercase italic flex-1 flex flex-col leading-none">
-          Gestor <span className="text-indigo-600">Náutico</span>
+        <span className="font-black text-sm tracking-tight" style={{ color: 'var(--text-primary)' }}>
+          Gestor<span style={{ color: 'var(--accent-primary)' }}>Náutico</span>
         </span>
-
         <button
           onClick={onClose}
-          className="md:hidden p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all active:scale-90"
+          className="ml-auto md:hidden p-1 rounded-lg transition-colors"
+          style={{ color: 'var(--text-secondary)' }}
         >
-          <X className="w-6 h-6" />
+          <X size={16} />
         </button>
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-5 py-8 space-y-1.5 custom-scrollbar">
-        {filteredItems.map((item) => (
-          <Link
-            key={item.path}
-            to={item.path}
-            onClick={() => { if (window.innerWidth < 768) onClose(); }}
-            className={`
-              flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-300 group
-              ${isActive(item.path)
-                ? 'bg-indigo-600 text-[var(--text-primary)] shadow-2xl shadow-indigo-900/40'
-                : 'hover:bg-indigo-600/10 hover:text-[var(--text-primary)]'}
-            `}
-          >
-            <span className={`${isActive(item.path) ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)] group-hover:text-indigo-400'} transition-colors duration-300`}>
-              {item.icon}
-            </span>
-            <span className={`text-[11px] font-black uppercase tracking-widest transition-colors ${isActive(item.path) ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`}>{item.name}</span>
-          </Link>
-        ))}
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto custom-scrollbar px-2 py-3 space-y-0.5">
+        {filtered.map(({ name, path, icon: Icon }) => {
+          const active = isActive(path);
+          return (
+            <Link
+              key={path}
+              to={path}
+              onClick={() => { if (window.innerWidth < 768) onClose(); }}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group"
+              style={{
+                background: active ? 'var(--accent-primary)' : 'transparent',
+                color: active ? '#fff' : 'var(--text-secondary)',
+              }}
+              onMouseEnter={e => {
+                if (!active) {
+                  (e.currentTarget as HTMLElement).style.background = 'var(--border-primary)';
+                  (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)';
+                }
+              }}
+              onMouseLeave={e => {
+                if (!active) {
+                  (e.currentTarget as HTMLElement).style.background = 'transparent';
+                  (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)';
+                }
+              }}
+            >
+              <Icon size={16} className="shrink-0" />
+              <span className="text-xs font-semibold tracking-wide">{name}</span>
+            </Link>
+          );
+        })}
       </nav>
-
-
     </aside>
   );
 }

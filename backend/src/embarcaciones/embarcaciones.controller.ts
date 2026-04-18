@@ -7,23 +7,25 @@ import {
   Param,
   Delete,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { EmbarcacionesService } from './embarcaciones.service';
-import { Embarcacion } from './embarcaciones.entity';
 import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../users/user.entity';
+import { CreateEmbarcacionDto } from './dto/create-embarcacion.dto';
+import { UpdateEmbarcacionDto } from './dto/update-embarcacion.dto';
 
 @Controller('embarcaciones')
 @UseGuards(AuthTokenGuard, RolesGuard)
-@Roles(Role.SUPERADMIN, Role.ADMIN, Role.OPERADOR)
+@Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
 export class EmbarcacionesController {
   constructor(private readonly embarcacionesService: EmbarcacionesService) {}
 
   @Get()
-  findAll() {
-    return this.embarcacionesService.findAll();
+  findAll(@Query('page') page?: number, @Query('limit') limit?: number) {
+    return this.embarcacionesService.findAll({ page, limit });
   }
 
   @Get(':id')
@@ -32,16 +34,13 @@ export class EmbarcacionesController {
   }
 
   @Post()
-  create(@Body() createEmbarcacionDto: Partial<Embarcacion>) {
-    return this.embarcacionesService.create(createEmbarcacionDto);
+  create(@Body() dto: CreateEmbarcacionDto) {
+    return this.embarcacionesService.create(dto);
   }
 
   @Put(':id')
-  update(
-    @Param('id') id: string,
-    @Body() updateEmbarcacionDto: Partial<Embarcacion>,
-  ) {
-    return this.embarcacionesService.update(+id, updateEmbarcacionDto);
+  update(@Param('id') id: string, @Body() dto: UpdateEmbarcacionDto) {
+    return this.embarcacionesService.update(+id, dto);
   }
 
   @Delete(':id')

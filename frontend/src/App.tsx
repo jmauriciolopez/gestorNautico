@@ -12,7 +12,7 @@ import { Toaster } from 'react-hot-toast';
 import { ConfirmProvider } from './shared/context/ConfirmContext';
 
 // === Feature Pages ===
-import Dashboard from './features/dashboard/pages/Dashboard';
+import DashboardRouter from './features/dashboard/pages/DashboardRouter';
 import ClientesList from './features/clientes/pages/ClientesList';
 import ClienteForm from './features/clientes/pages/ClienteForm';
 import EmbarcacionesList from './features/embarcaciones/pages/EmbarcacionesList';
@@ -72,9 +72,9 @@ function App() {
                 {/* Rutas Protegidas */}
                 <Route element={<ProtectedRoute />}>
                   <Route path="/" element={<AppLayout />}>
-                    <Route index element={<Dashboard />} />
+                    <Route index element={<DashboardRouter />} />
 
-                    {/* Gestión General (Admin & Operador) */}
+                    {/* Operativo — todos los roles */}
                     <Route path="clientes" element={<ClientesList />} />
                     <Route path="clientes/nuevo" element={<ClienteForm />} />
                     <Route path="clientes/editar/:id" element={<ClienteForm />} />
@@ -86,26 +86,22 @@ function App() {
                     <Route path="operaciones" element={<OperacionesPage />} />
                     <Route path="infraestructura" element={<InfraestructuraPage />} />
                     <Route path="servicios" element={<ServiciosPage />} />
+                    <Route path="ayuda" element={<UserHelp />} />
 
-                    {/* Rutas de Finanzas y Facturación (Solo Admin/SuperAdmin/Operador) */}
-                    <Route element={<ProtectedRoute allowedRoles={[Role.ADMIN, Role.SUPERADMIN]} />}>
+                    {/* Finanzas y Facturación — Supervisor en adelante */}
+                    <Route element={<ProtectedRoute allowedRoles={[Role.ADMIN, Role.SUPERADMIN, Role.SUPERVISOR]} />}>
                       <Route path="finanzas" element={<FinanzasPage />} />
-                    </Route>
-                    <Route element={<ProtectedRoute allowedRoles={[Role.ADMIN, Role.SUPERADMIN, Role.OPERADOR]} />}>
                       <Route path="facturacion" element={<FacturacionPage />} />
                     </Route>
 
-                    {/* Gestión de Usuarios (Solo SuperAdmin) */}
-                    <Route path="ayuda" element={<UserHelp />} />
-
-                    {/* Gestión de Usuarios (Solo SuperAdmin) */}
-                    <Route element={<ProtectedRoute allowedRoles={[Role.SUPERADMIN]} />}>
-                      <Route path="usuarios/*" element={<UsersPage />} />
-                    </Route>
-
-                    {/* Configuración (Solo Admin/SuperAdmin) */}
+                    {/* Configuración — Admin en adelante */}
                     <Route element={<ProtectedRoute allowedRoles={[Role.ADMIN, Role.SUPERADMIN]} />}>
                       <Route path="configuracion" element={<ConfiguracionPage />} />
+                    </Route>
+
+                    {/* Usuarios — solo SuperAdmin */}
+                    <Route element={<ProtectedRoute allowedRoles={[Role.SUPERADMIN]} />}>
+                      <Route path="usuarios/*" element={<UsersPage />} />
                     </Route>
                   </Route>
                 </Route>
