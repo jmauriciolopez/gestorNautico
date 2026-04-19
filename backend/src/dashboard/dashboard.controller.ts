@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { DashboardService } from './dashboard.service';
 import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -14,6 +14,18 @@ export class DashboardController {
   @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
   async getSummary() {
     return this.dashboardService.getSummary();
+  }
+
+  @Get('recaudacion')
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
+  async getRecaudacion(@Query('periodo') periodo: 'dia' | 'semana' | 'mes' = 'mes') {
+    return this.dashboardService.getRecaudacionPorPeriodo(periodo);
+  }
+
+  @Get('deuda')
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
+  async getDeuda(@Query('periodo') periodo: 'dia' | 'semana' | 'mes' | 'vencido' = 'mes') {
+    return this.dashboardService.getDeudaPorPeriodo(periodo);
   }
 
   @Get('rack-map')

@@ -1,8 +1,18 @@
 import { Link, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard, Users, Ship, Navigation,
-  CircleDollarSign, LayoutGrid, Wrench, FileText,
-  X, ShieldCheck, Settings, HelpCircle, Anchor
+  LayoutDashboard,
+  Users,
+  Ship,
+  Navigation,
+  CircleDollarSign,
+  LayoutGrid,
+  Wrench,
+  FileText,
+  X,
+  ShieldCheck,
+  Settings,
+  HelpCircle,
+  Anchor,
 } from 'lucide-react';
 import { useAuth } from '../../features/auth/context/AuthContext';
 import { Role } from '../../types';
@@ -13,22 +23,17 @@ interface SidebarProps {
 }
 
 const navItems = [
-  // Todos los roles autenticados
-  { name: 'Dashboard',       path: '/',                icon: LayoutDashboard, roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR] },
-  { name: 'Clientes',        path: '/clientes',        icon: Users,           roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR] },
-  { name: 'Embarcaciones',   path: '/embarcaciones',   icon: Ship,            roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR] },
-  { name: 'Operaciones',     path: '/operaciones',     icon: Navigation,      roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR] },
-  { name: 'Servicios',       path: '/servicios',       icon: Wrench,          roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR] },
-  { name: 'Infraestructura', path: '/infraestructura', icon: LayoutGrid,      roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR] },
-  // Supervisor en adelante
-  { name: 'Finanzas',        path: '/finanzas',        icon: CircleDollarSign, roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR] },
-  { name: 'Facturación',     path: '/facturacion',     icon: FileText,         roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR] },
-  // Solo Admin y SuperAdmin
-  { name: 'Configuración',   path: '/configuracion',   icon: Settings,         roles: [Role.SUPERADMIN, Role.ADMIN] },
-  // Solo SuperAdmin
-  { name: 'Usuarios',        path: '/usuarios',        icon: ShieldCheck,      roles: [Role.SUPERADMIN] },
-  // Todos
-  { name: 'Ayuda',           path: '/ayuda',           icon: HelpCircle,       roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR] },
+  { name: 'Dashboard', path: '/', icon: LayoutDashboard, roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR] },
+  { name: 'Clientes', path: '/clientes', icon: Users, roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR] },
+  { name: 'Embarcaciones', path: '/embarcaciones', icon: Ship, roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR] },
+  { name: 'Operaciones', path: '/operaciones', icon: Navigation, roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR] },
+  { name: 'Servicios', path: '/servicios', icon: Wrench, roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR] },
+  { name: 'Infraestructura', path: '/infraestructura', icon: LayoutGrid, roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR] },
+  { name: 'Finanzas', path: '/finanzas', icon: CircleDollarSign, roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR] },
+  { name: 'Facturación', path: '/facturacion', icon: FileText, roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR] },
+  { name: 'Configuración', path: '/configuracion', icon: Settings, roles: [Role.SUPERADMIN, Role.ADMIN] },
+  { name: 'Usuarios', path: '/usuarios', icon: ShieldCheck, roles: [Role.SUPERADMIN] },
+  { name: 'Ayuda', path: '/ayuda', icon: HelpCircle, roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR] },
 ];
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
@@ -38,9 +43,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const isActive = (path: string) =>
     path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
 
-  const filtered = navItems.filter(item =>
-    !item.roles || (user && item.roles.includes(user.role))
-  );
+  const filtered = navItems.filter(item => !item.roles || (user && item.roles.includes(user.role)));
+
+  const handleCloseMobile = () => {
+    if (window.innerWidth < 768) onClose();
+  };
 
   return (
     <aside
@@ -51,67 +58,147 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
       `}
       style={{
-        width: 220,
+        width: 248,
         background: 'var(--bg-secondary)',
         borderRight: '1px solid var(--border-primary)',
+        boxShadow: 'var(--shadow-sm)',
       }}
     >
-      {/* Logo */}
       <div
-        className="flex items-center gap-3 px-4 py-4"
-        style={{ borderBottom: '1px solid var(--border-primary)', height: 56 }}
+        className="flex items-center gap-3 px-4"
+        style={{
+          height: 64,
+          borderBottom: '1px solid var(--border-primary)',
+        }}
       >
         <div
-          className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
-          style={{ background: 'var(--accent-primary)' }}
+          className="flex items-center justify-center shrink-0"
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 14,
+            background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
+            boxShadow: 'var(--shadow-xs)',
+          }}
         >
-          <Anchor size={16} color="white" />
+          <Anchor size={18} color="white" />
         </div>
-        <span className="font-black text-sm tracking-tight" style={{ color: 'var(--text-primary)' }}>
-          Gestor<span style={{ color: 'var(--accent-primary)' }}>Náutico</span>
-        </span>
+
+        <div className="min-w-0">
+          <div
+            className="font-extrabold leading-none tracking-tight"
+            style={{
+              color: 'var(--text-primary)',
+              fontSize: 16,
+            }}
+          >
+            Gestor<span style={{ color: 'var(--accent-primary)' }}>Náutico</span>
+          </div>
+          <div
+            className="mt-1"
+            style={{
+              fontSize: 11,
+              lineHeight: 1,
+              color: 'var(--text-muted)',
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+            }}
+          >
+            Panel operativo
+          </div>
+        </div>
+
         <button
           onClick={onClose}
-          className="ml-auto md:hidden p-1 rounded-lg transition-colors"
-          style={{ color: 'var(--text-secondary)' }}
+          className="icon-button ml-auto md:hidden"
+          aria-label="Cerrar menú"
         >
           <X size={16} />
         </button>
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 overflow-y-auto custom-scrollbar px-2 py-3 space-y-0.5">
-        {filtered.map(({ name, path, icon: Icon }) => {
-          const active = isActive(path);
-          return (
-            <Link
-              key={path}
-              to={path}
-              onClick={() => { if (window.innerWidth < 768) onClose(); }}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group"
-              style={{
-                background: active ? 'var(--accent-primary)' : 'transparent',
-                color: active ? '#fff' : 'var(--text-secondary)',
-              }}
-              onMouseEnter={e => {
-                if (!active) {
-                  (e.currentTarget as HTMLElement).style.background = 'var(--border-primary)';
-                  (e.currentTarget as HTMLElement).style.color = 'var(--text-primary)';
-                }
-              }}
-              onMouseLeave={e => {
-                if (!active) {
-                  (e.currentTarget as HTMLElement).style.background = 'transparent';
-                  (e.currentTarget as HTMLElement).style.color = 'var(--text-secondary)';
-                }
-              }}
-            >
-              <Icon size={16} className="shrink-0" />
-              <span className="text-xs font-semibold tracking-wide">{name}</span>
-            </Link>
-          );
-        })}
+      <nav className="flex-1 overflow-y-auto custom-scrollbar px-3 py-3">
+        <div className="space-y-1">
+          {filtered.map(({ name, path, icon: Icon }) => {
+            const active = isActive(path);
+
+            return (
+              <Link
+                key={path}
+                to={path}
+                onClick={handleCloseMobile}
+                className={`nav-item ${active ? 'active' : ''}`}
+                aria-current={active ? 'page' : undefined}
+              >
+                <Icon size={17} className="shrink-0" />
+                <span className="nav-item-label">{name}</span>
+              </Link>
+            );
+          })}
+        </div>
       </nav>
+
+      {user && (
+        <div
+          className="p-3"
+          style={{
+            borderTop: '1px solid var(--border-primary)',
+          }}
+        >
+          <div
+            className="bento-card"
+            style={{
+              padding: 14,
+              background: 'var(--bg-card)',
+            }}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className="flex items-center justify-center shrink-0"
+                style={{
+                  width: 38,
+                  height: 38,
+                  borderRadius: 14,
+                  background: 'var(--accent-primary-soft)',
+                  color: 'var(--accent-primary)',
+                  border: '1px solid color-mix(in srgb, var(--accent-primary) 18%, transparent)',
+                  fontWeight: 700,
+                  fontSize: 13,
+                }}
+              >
+                {user.nombre?.slice(0, 2)?.toUpperCase() || 'US'}
+              </div>
+
+              <div className="min-w-0">
+                <div
+                  className="truncate"
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: 'var(--text-primary)',
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {user.nombre}
+                </div>
+                <div
+                  className="truncate"
+                  style={{
+                    fontSize: 11,
+                    color: 'var(--text-muted)',
+                    lineHeight: 1.3,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                    marginTop: 4,
+                  }}
+                >
+                  {user.role}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 }

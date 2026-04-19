@@ -85,7 +85,7 @@ export default function ServiciosPage() {
           <div>
             <h2 className="text-[2.5rem] font-black text-[var(--text-primary)] leading-tight tracking-tight uppercase">Servicios & Taller</h2>
             <div className="flex items-center gap-4 mt-2">
-              <p className="text-[var(--text-secondary)] text-xs font-black uppercase tracking-[0.2em]">Centro de Operaciones Técnicas Auditadas</p>
+              <p className="text-[var(--text-secondary)] text-xs font-black uppercase tracking-[0.2em]">Centro de Operaciones Técnicas </p>
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-sm shadow-emerald-500/50" />
             </div>
 

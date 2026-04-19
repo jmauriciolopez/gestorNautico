@@ -5,10 +5,6 @@ import { Role } from '../../../types';
 import Dashboard from './Dashboard';
 import DashboardOperativo from './DashboardOperativo';
 
-/**
- * OPERADOR     → siempre ve DashboardOperativo, sin toggle
- * SUPERVISOR / ADMIN / SUPERADMIN → alternan entre ambas vistas
- */
 const DashboardRouter: React.FC = () => {
   const { user } = useAuth();
   const isOperador = user?.role === Role.OPERADOR;
@@ -22,48 +18,65 @@ const DashboardRouter: React.FC = () => {
   }
 
   return (
-    <div>
-
-      {/* ── VIEW TOGGLE (solo roles superiores) ────────────────── */}
+    <div className="space-y-4">
       <div
-        className="flex items-center gap-1 mb-4 w-fit p-1 rounded-xl"
+        className="inline-flex items-center gap-1 p-1 rounded-[14px]"
         style={{
           background: 'var(--bg-card)',
           border: '1px solid var(--border-primary)',
+          boxShadow: 'var(--shadow-xs)',
         }}
       >
         <button
           onClick={() => setView('completo')}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+          className="btn"
           style={{
-            background: view === 'completo'
-              ? 'linear-gradient(135deg, #534AB7, #3C3489)'
-              : 'transparent',
-            color: view === 'completo' ? '#EEEDFE' : 'var(--text-secondary)',
+            minHeight: 36,
+            padding: '0 14px',
+            background:
+              view === 'completo'
+                ? 'var(--accent-primary-soft)'
+                : 'transparent',
+            color:
+              view === 'completo'
+                ? 'var(--accent-primary)'
+                : 'var(--text-secondary)',
+            borderColor:
+              view === 'completo'
+                ? 'color-mix(in srgb, var(--accent-primary) 24%, transparent)'
+                : 'transparent',
           }}
         >
-          <LayoutDashboard size={13} />
+          <LayoutDashboard size={15} />
           Gerencial
         </button>
 
         <button
           onClick={() => setView('operativo')}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+          className="btn"
           style={{
-            background: view === 'operativo'
-              ? 'linear-gradient(135deg, #1D9E75, #0F6E56)'
-              : 'transparent',
-            color: view === 'operativo' ? '#E1F5EE' : 'var(--text-secondary)',
+            minHeight: 36,
+            padding: '0 14px',
+            background:
+              view === 'operativo'
+                ? 'var(--accent-teal-soft)'
+                : 'transparent',
+            color:
+              view === 'operativo'
+                ? 'var(--accent-teal)'
+                : 'var(--text-secondary)',
+            borderColor:
+              view === 'operativo'
+                ? 'color-mix(in srgb, var(--accent-teal) 24%, transparent)'
+                : 'transparent',
           }}
         >
-          <Wrench size={13} />
+          <Wrench size={15} />
           Operativo
         </button>
       </div>
 
-      {/* ── CONTENIDO ───────────────────────────────────────────── */}
       {view === 'completo' ? <Dashboard /> : <DashboardOperativo />}
-
     </div>
   );
 };

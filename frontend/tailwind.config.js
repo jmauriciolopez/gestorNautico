@@ -1,34 +1,52 @@
-// tailwind.config.js
-// Pegá esto en tu configuración de Tailwind para que funcionen los tokens del dashboard
-
-/** @type {import('tailwindcss').Config} */
 export default {
   content: ["./index.html", "./src/**/*.{js,jsx,ts,tsx}"],
-  darkMode: "class", // usa la clase "dark" en el <html> para tu toggle
+  darkMode: "class",
   theme: {
     extend: {
       colors: {
-        // Superficies (se adaptan al tema claro/oscuro via CSS vars)
-        "surface-primary":   "var(--surface-primary)",
-        "surface-secondary": "var(--surface-secondary)",
-        "surface-tertiary":  "var(--surface-tertiary)",
-
-        // Texto
-        "text-primary":   "var(--text-primary)",
-        "text-secondary": "var(--text-secondary)",
-        "text-tertiary":  "var(--text-tertiary)",
-
-        // Bordes
-        "border-subtle": "var(--border-subtle)",
+        bg: {
+          primary: "var(--bg-primary)",
+          secondary: "var(--bg-secondary)",
+          surface: "var(--bg-surface)",
+          card: "var(--bg-card)",
+          hover: "var(--bg-card-hover)",
+          elevated: "var(--bg-elevated)",
+        },
+        text: {
+          primary: "var(--text-primary)",
+          secondary: "var(--text-secondary)",
+          muted: "var(--text-muted)",
+          disabled: "var(--text-disabled)",
+          inverse: "var(--text-inverse)",
+        },
+        border: {
+          primary: "var(--border-primary)",
+          secondary: "var(--border-secondary)",
+          strong: "var(--border-strong)",
+        },
+        accent: {
+          primary: "var(--accent-primary)",
+          secondary: "var(--accent-secondary)",
+          teal: "var(--accent-teal)",
+          purple: "var(--accent-purple)",
+          amber: "var(--accent-amber)",
+          red: "var(--accent-red)",
+        },
       },
       fontFamily: {
-        sans: ["'DM Sans'", "system-ui", "sans-serif"],
-        // Alternativa: 'Geist', 'Plus Jakarta Sans', 'Outfit'
-        // Importá desde Google Fonts en tu index.html:
-        // <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+        sans: ["Outfit", "system-ui", "sans-serif"],
+      },
+      boxShadow: {
+        xs: "var(--shadow-xs)",
+        sm: "var(--shadow-sm)",
+        md: "var(--shadow-md)",
+        lg: "var(--shadow-lg)",
+      },
+      borderRadius: {
+        ui: "12px",
+        card: "18px",
       },
     },
   },
   plugins: [],
 };
-

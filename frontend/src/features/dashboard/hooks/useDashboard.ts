@@ -66,3 +66,20 @@ export const useRackMap = () => {
     queryFn: () => httpClient.get('/dashboard/rack-map'),
   });
 };
+
+export type PeriodoRecaudacion = 'dia' | 'semana' | 'mes';
+export type PeriodoDeuda = 'dia' | 'semana' | 'mes' | 'vencido';
+
+export const useRecaudacion = (periodo: PeriodoRecaudacion) => {
+  return useQuery<{ total: number; periodo: string }>({
+    queryKey: ['dashboard', 'recaudacion', periodo],
+    queryFn: () => httpClient.get(`/dashboard/recaudacion?periodo=${periodo}`),
+  });
+};
+
+export const useDeuda = (periodo: PeriodoDeuda) => {
+  return useQuery<{ total: number; periodo: string; cantidad: number }>({
+    queryKey: ['dashboard', 'deuda', periodo],
+    queryFn: () => httpClient.get(`/dashboard/deuda?periodo=${periodo}`),
+  });
+};

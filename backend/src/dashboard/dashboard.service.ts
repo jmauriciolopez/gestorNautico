@@ -114,6 +114,53 @@ export class DashboardService {
     return series;
   }
 
+  async getRecaudacionPorPeriodo(periodo: 'dia' | 'semana' | 'mes') {
+    const now = new Date();
+    let start: Date;
+
+    if (periodo === 'dia') {
+      start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    } else if (periodo === 'semana') {
+      const day = now.getDay(); // 0=dom
+      start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - day);
+    } else {
+      start = new Date(now.getFullYear(), now.getMonth(), 1);
+    }
+
+    const pagos = await this.pagoRepo.find({
+      where: { fecha: Between(start, now) },
+    });
+
+    const total = pagos.reduce((acc, p) => acc + Number(p.monto || 0), 0);
+    return { total, periodo };
+  }
+
+  async getDeudaPorPeriodo(periodo: 'dia' | 'semana' | 'mes' | 'vencido') {
+    const now = new Date();
+    let start: Date;
+    let end: Date = now;
+
+    if (periodo === 'dia') {
+      start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    } else if (periodo === 'semana') {
+      const day = now.getDay();
+      start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - day);
+    } else if (periodo === 'vencido') {
+      // Vencidos hace más de 1 mes
+      start = new Date(0); // desde siempre
+      end = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+    } else {
+      start = new Date(now.getFullYear(), now.getMonth(), 1);
+    }
+
+    const cargos = await this.cargoRepo.find({
+      where: { pagado: false, fechaVencimiento: Between(start, end) },
+    });
+
+    const total = cargos.reduce((acc, c) => acc + Number(c.monto || 0), 0);
+    return { total, periodo, cantidad: cargos.length };
+  }
+
   async getRackMap() {
     return this.zonaRepo.find({
       relations: [
