@@ -47,7 +47,7 @@ export default function InfraestructuraPage() {
   const [isAsignarOpen, setIsAsignarOpen] = useState(false);
   const [isLiberarOpen, setIsLiberarOpen] = useState(false);
   const [selectedSpaceState, setSelectedSpaceState] = useState<{ id: number, codigo: string, embarcacionActual?: any } | null>(null);
-  const [is3D, setIs3D] = useState(true);
+  const [is3D, setIs3D] = useState(false);
 
   // Handle URL parameters for navigation
   useEffect(() => {

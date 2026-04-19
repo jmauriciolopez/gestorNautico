@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Espacio } from './espacio.entity';
+import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
 import { paginate, PaginationQuery } from '../common/pagination/pagination.helper';
 
 @Injectable()
@@ -9,6 +10,8 @@ export class EspaciosService {
   constructor(
     @InjectRepository(Espacio)
     private readonly espacioRepo: Repository<Espacio>,
+    @InjectRepository(Embarcacion)
+    private readonly embarcacionRepo: Repository<Embarcacion>,
   ) {}
 
   findAll(query: PaginationQuery = {}) {
@@ -39,9 +42,20 @@ export class EspaciosService {
   }
 
   async remove(id: number) {
-    const espacio = await this.espacioRepo.findOne({ where: { id } });
+    const espacio = await this.espacioRepo.findOne({
+      where: { id },
+      relations: ['embarcacion'],
+    });
     if (!espacio)
       throw new NotFoundException(`Espacio con ID ${id} no encontrado`);
+
+    // Desvincular embarcación si tiene una asignada
+    if (espacio.embarcacion) {
+      await this.embarcacionRepo.update(espacio.embarcacion.id, {
+        espacioId: null,
+      });
+    }
+
     return this.espacioRepo.remove(espacio);
   }
 

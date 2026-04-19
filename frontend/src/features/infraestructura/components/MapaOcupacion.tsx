@@ -33,6 +33,21 @@ const OccupancyRack3DContainer: React.FC<OccupancyRack3DContainerProps> = ({
   const localRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
 
+  // Inicializar/resetear variables CSS cuando cambia el modo
+  useEffect(() => {
+    if (!localRef.current) return;
+    if (is3D) {
+      localRef.current.style.setProperty('--rotate-x', '22deg');
+      localRef.current.style.setProperty('--rotate-y', '-12deg');
+      localRef.current.style.setProperty('--zoom', '1');
+    } else {
+      localRef.current.style.removeProperty('--rotate-x');
+      localRef.current.style.removeProperty('--rotate-y');
+      localRef.current.style.removeProperty('--zoom');
+    }
+    setZoom(1);
+  }, [is3D]);
+
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!is3D || !localRef.current) return;
     

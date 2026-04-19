@@ -4,9 +4,10 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Rack } from './rack.entity';
 import { Espacio } from '../espacios/espacio.entity';
+import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
 
 @Injectable()
 export class RacksService {
@@ -15,7 +16,17 @@ export class RacksService {
     private readonly rackRepo: Repository<Rack>,
     @InjectRepository(Espacio)
     private readonly espacioRepo: Repository<Espacio>,
+    @InjectRepository(Embarcacion)
+    private readonly embarcacionRepo: Repository<Embarcacion>,
   ) {}
+
+  /** Desvincula embarcaciones de los espacios dados y luego los elimina */
+  private async desvincularYEliminarEspacios(espacios: Espacio[]) {
+    if (espacios.length === 0) return;
+    const ids = espacios.map((e) => e.id);
+    await this.embarcacionRepo.update({ espacioId: In(ids) }, { espacioId: null });
+    await this.espacioRepo.remove(espacios);
+  }
 
   findAll() {
     return this.rackRepo.find({ relations: ['zona', 'espacios'] });
@@ -85,7 +96,7 @@ export class RacksService {
 
       // Eliminar espacios antiguos
       if (rack.espacios.length > 0) {
-        await this.espacioRepo.remove(rack.espacios);
+        await this.desvincularYEliminarEspacios(rack.espacios);
       }
     }
 
@@ -97,7 +108,7 @@ export class RacksService {
     if (gridChanged || (data.codigo && data.codigo !== rack.codigo)) {
       // Si el código cambió pero la cuadrícula no, igual eliminamos y recreamos para actualizar nombres
       if (!gridChanged && rack.espacios.length > 0) {
-        await this.espacioRepo.remove(rack.espacios);
+        await this.desvincularYEliminarEspacios(rack.espacios);
       }
 
       const pisos = updatedRack.pisos || 1;
