@@ -86,6 +86,8 @@ export const useUbicaciones = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['zonas'] });
       queryClient.invalidateQueries({ queryKey: ['ubicaciones'] });
+      queryClient.refetchQueries({ queryKey: ['zonas'] });
+      queryClient.refetchQueries({ queryKey: ['ubicaciones'] });
     },
   });
 
@@ -112,6 +114,8 @@ export const useUbicaciones = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['zonas'] });
       queryClient.invalidateQueries({ queryKey: ['ubicaciones'] });
+      queryClient.refetchQueries({ queryKey: ['zonas'] });
+      queryClient.refetchQueries({ queryKey: ['ubicaciones'] });
     },
   });
 

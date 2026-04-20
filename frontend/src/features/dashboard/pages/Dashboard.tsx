@@ -235,7 +235,6 @@ const Dashboard: React.FC = () => {
                     style={{ backgroundColor: 'var(--accent-teal)' }}
                   />
                 </span>
-                <span className="badge badge-success">Operación online</span>
               </div>
 
               <h1
@@ -251,19 +250,6 @@ const Dashboard: React.FC = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-              <div
-                className="hidden xl:flex flex-col items-end pr-4 mr-1"
-                style={{ borderRight: '1px solid var(--border-primary)' }}
-              >
-                <span className="section-subtitle mb-1">Última auditoría</span>
-                <span
-                  className="text-ui-lg font-semibold tabular-nums"
-                  style={{ color: 'var(--accent-purple)' }}
-                >
-                  {new Date().toLocaleTimeString()}
-                </span>
-              </div>
-
               <button
                 onClick={() => setIsPagoModalOpen(true)}
                 className="btn"
@@ -298,8 +284,6 @@ const Dashboard: React.FC = () => {
             title="Cartera global de clientes"
             value={stats?.totalClientes ?? 0}
             icon={<Users size={18} style={{ color: 'var(--accent-teal)' }} />}
-            trend="+3.2%"
-            trendUp
             description="Unidades de negocio activas"
           />
 
@@ -316,8 +300,6 @@ const Dashboard: React.FC = () => {
             title="Recaudación"
             value={`${(recaudacionData?.total ?? 0).toLocaleString()}`}
             icon={<Wallet size={18} style={{ color: 'var(--accent-amber)' }} />}
-            trend="+12.5%"
-            trendUp
             description={
               <div className="flex flex-wrap gap-2">
                 {(['dia', 'semana', 'mes'] as PeriodoRecaudacion[]).map((p) => (
@@ -338,8 +320,6 @@ const Dashboard: React.FC = () => {
             title="Cuentas por cobrar"
             value={`${(deudaData?.total ?? 0).toLocaleString()}`}
             icon={<ClipboardList size={18} style={{ color: 'var(--accent-red)' }} />}
-            trend="-0.8%"
-            trendUp={false}
             description={
               <div className="flex flex-wrap gap-2">
                 {(['dia', 'semana', 'mes', 'vencido'] as PeriodoDeuda[]).map((p) => (
@@ -506,11 +486,7 @@ const Dashboard: React.FC = () => {
                         <p className="log-item-title">{notif.titulo}</p>
                         <p className="log-item-text mt-1">{notif.mensaje}</p>
                         <p className="log-item-meta mt-2">
-                          {new Date(notif.createdAt).toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}{' '}
-                          · system_log
+                          · {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
                     </div>
@@ -550,8 +526,6 @@ const Dashboard: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-2.5 flex-wrap">
-              <div className="badge badge-success">Estado nominal</div>
-
               <button
                 onClick={() => setIs3D(!is3D)}
                 className="btn btn-secondary"

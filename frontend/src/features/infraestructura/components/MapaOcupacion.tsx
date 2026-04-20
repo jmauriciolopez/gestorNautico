@@ -331,7 +331,6 @@ export const MapaOcupacion: React.FC<MapaOcupacionProps> = ({ racks, is3D = fals
                 <div>
                   <div className="flex items-center gap-3 mb-1">
                     <h2 className="text-3xl font-black text-[var(--text-primary)] tracking-tight">{rack.codigo}</h2>
-                    <span className="px-3 py-1 bg-slate-800 rounded-full text-[10px] font-black tracking-widest text-indigo-400 uppercase border border-slate-700">Digital Twin</span>
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
@@ -384,13 +383,6 @@ export const MapaOcupacion: React.FC<MapaOcupacionProps> = ({ racks, is3D = fals
               <div className="bg-slate-800/40 p-5 rounded-3xl border border-white/5">
                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Capacidad</p>
                 <span className="text-2xl font-black text-[var(--text-primary)]">{rack.espacios.length}</span>
-              </div>
-              <div className="bg-slate-800/40 p-5 rounded-3xl border border-white/5">
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Estatus</p>
-                <div className="flex items-center gap-2 mt-2">
-                  <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.5)] animate-pulse" />
-                  <span className="text-xs font-black text-green-400 uppercase tracking-tighter">Operativo</span>
-                </div>
               </div>
             </div>
           </div>

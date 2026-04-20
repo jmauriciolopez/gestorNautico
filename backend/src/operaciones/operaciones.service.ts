@@ -5,7 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThan } from 'typeorm';
+import { Repository, LessThan, In, MoreThan } from 'typeorm';
 import { SolicitudBajada, EstadoSolicitud } from './solicitud-bajada.entity';
 import { CreateSolicitudBajadaDto } from './dto/create-solicitud-bajada.dto';
 import { Cliente } from '../clientes/clientes.entity';
@@ -15,6 +15,7 @@ import { Role } from '../users/user.entity';
 import { NotificacionTipo } from '../notificaciones/notificacion.entity';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { paginate, PaginationQuery } from '../common/pagination/pagination.helper';
+import { MovimientosService } from '../movimientos/movimientos.service';
 
 @Injectable()
 export class OperacionesService {
@@ -28,6 +29,7 @@ export class OperacionesService {
     @InjectRepository(Embarcacion)
     private readonly embarcacionRepo: Repository<Embarcacion>,
     private readonly notificacionesService: NotificacionesService,
+    private readonly movimientosService: MovimientosService,
   ) {}
 
   async createPublic(dto: CreateSolicitudBajadaDto): Promise<SolicitudBajada> {
@@ -119,8 +121,22 @@ export class OperacionesService {
     }
   }
 
-  async findAll(query: PaginationQuery = {}) {
+  async findAll(query: PaginationQuery = {}, estado?: EstadoSolicitud) {
+    const oneDayAgo = new Date();
+    oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+
+    const where: any = estado 
+      ? { estado }
+      : [
+          { estado: In([EstadoSolicitud.PENDIENTE, EstadoSolicitud.CONFIRMADA]) },
+          {
+            estado: In([EstadoSolicitud.COMPLETADA, EstadoSolicitud.CANCELADA]),
+            updatedAt: MoreThan(oneDayAgo),
+          },
+        ];
+
     return paginate(this.solicitudRepo, query, {
+      where,
       relations: ['cliente', 'embarcacion'],
       order: { createdAt: 'DESC' },
     });
@@ -134,6 +150,15 @@ export class OperacionesService {
     if (!solicitud) throw new NotFoundException(`Solicitud ${id} no encontrada`);
 
     await this.solicitudRepo.update(id, { estado });
+
+    // Si se completa, generamos el movimiento automático
+    if (estado === EstadoSolicitud.COMPLETADA) {
+      await this.movimientosService.create({
+        embarcacionId: solicitud.embarcacion.id,
+        tipo: 'salida',
+        observaciones: `Generado automáticamente por Solicitud Pública #${solicitud.id}`,
+      });
+    }
 
     const fecha = solicitud.fechaHoraDeseada.toLocaleString('es-AR');
     const barco = solicitud.embarcacion.nombre;

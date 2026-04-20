@@ -4,7 +4,7 @@ import { page } from '@vitest/browser/context';
 describe('Flujo de Embarcaciones', () => {
   beforeAll(async () => {
     // Reset DB
-    await fetch('http://localhost:3002/database/seed', { method: 'POST' });
+    await fetch('http://localhost:4000/database/seed', { method: 'POST' });
     
     // Navegar a la página de embarcaciones
     await page.goto('http://localhost:5173/embarcaciones');

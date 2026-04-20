@@ -7,12 +7,14 @@ import { Cliente } from '../clientes/clientes.entity';
 import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
 import { NotificacionesModule } from '../notificaciones/notificaciones.module';
 import { JwtModule } from '@nestjs/jwt';
+import { MovimientosModule } from '../movimientos/movimientos.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([SolicitudBajada, Cliente, Embarcacion]),
     NotificacionesModule,
     JwtModule, // Needed for AuthTokenGuard
+    MovimientosModule,
   ],
   providers: [OperacionesService],
   controllers: [OperacionesController],

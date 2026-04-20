@@ -3,6 +3,7 @@ import {
   Column,
   PrimaryGeneratedColumn,
   CreateDateColumn,
+  UpdateDateColumn,
   ManyToOne,
 } from 'typeorm';
 import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
@@ -23,4 +24,7 @@ export class Pedido {
 
   @CreateDateColumn()
   createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

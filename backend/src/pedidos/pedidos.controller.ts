@@ -9,6 +9,7 @@ import {
   Patch,
 } from '@nestjs/common';
 import { PedidosService } from './pedidos.service';
+import { UpdatePedidoEstadoDto } from './dto/update-pedido-estado.dto';
 import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -39,8 +40,8 @@ export class PedidosController {
 
   @Patch(':id/estado')
   @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
-  updateEstado(@Param('id') id: string, @Body('estado') estado: string) {
-    return this.pedidosService.updateEstado(+id, estado);
+  updateEstado(@Param('id') id: string, @Body() dto: UpdatePedidoEstadoDto) {
+    return this.pedidosService.updateEstado(+id, dto.estado);
   }
 
   @Delete(':id')

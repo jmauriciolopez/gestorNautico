@@ -35,8 +35,9 @@ export class OperacionesController {
   async findAllSolicitudes(
     @Query('page') page?: number,
     @Query('limit') limit?: number,
+    @Query('estado') estado?: EstadoSolicitud,
   ) {
-    return this.operacionesService.findAll({ page, limit });
+    return this.operacionesService.findAll({ page, limit }, estado);
   }
 
   @Patch('solicitudes/:id/estado')

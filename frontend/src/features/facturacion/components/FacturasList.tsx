@@ -149,7 +149,7 @@ export function FacturasList({ facturas, isLoading, onUpdateEstado }: FacturasLi
                           onClick={async () => {
                             try {
                               const token = localStorage.getItem('token');
-                              const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3002';
+                              const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
                               const response = await fetch(`${baseUrl}/facturas/${factura.id}/pdf`, {
                                 headers: { 'Authorization': `Bearer ${token}` }
                               });

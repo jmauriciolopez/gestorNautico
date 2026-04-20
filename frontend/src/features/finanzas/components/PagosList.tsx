@@ -66,7 +66,7 @@ export function PagosList({ pagos, isLoading }: PagosListProps) {
                       onClick={async () => {
                         try {
                           const token = localStorage.getItem('token');
-                          const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3002';
+                          const baseUrl = import.meta.env.VITE_API_URL ;
                           const response = await fetch(`${baseUrl}/pagos/${pago.id}/pdf`, {
                             headers: { 'Authorization': `Bearer ${token}` }
                           });

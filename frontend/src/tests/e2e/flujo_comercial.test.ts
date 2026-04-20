@@ -4,7 +4,7 @@ import { page } from '@vitest/browser/context';
 describe('Flujo de Operaciones y Finanzas (Cross-module)', () => {
   beforeAll(async () => {
     // 1. Reset DB + Seed
-    await fetch('http://localhost:3002/database/seed', { method: 'POST' });
+    await fetch('http://localhost:4000/database/seed', { method: 'POST' });
     
     // 2. Navegar a Dashboard
     await page.goto('http://localhost:5173/');

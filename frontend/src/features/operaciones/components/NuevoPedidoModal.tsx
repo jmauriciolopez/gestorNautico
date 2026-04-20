@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { X, Anchor, Search, Ship, Calendar, Clock, Loader2, ArrowRight } from 'lucide-react';
+import { X, Anchor, Search, Ship, Calendar, Clock, Loader2, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { useEmbarcaciones } from '../../embarcaciones/hooks/useEmbarcaciones';
 
 interface NuevoPedidoModalProps {
@@ -50,82 +50,97 @@ export function NuevoPedidoModal({ isOpen, onClose, onSave }: NuevoPedidoModalPr
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[var(--bg-primary)]/80 backdrop-blur-md animate-in fade-in duration-300">
-      <div className="bg-[#0f172a] border border-[var(--border-primary)]/60 w-full max-w-lg rounded-[2.5rem] shadow-2xl shadow-blue-900/20 overflow-hidden transform animate-in slide-in-from-bottom-8 duration-500">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[var(--modal-overlay)] backdrop-blur-[12px] animate-in fade-in duration-300">
+      <div className="bg-[var(--modal-glass-bg)] border border-[var(--border-primary)] w-full max-w-xl rounded-[3rem] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.5)] overflow-hidden transform animate-in slide-in-from-bottom-8 duration-500">
 
-        <div className="px-8 pt-8 pb-6 border-b border-[var(--border-primary)]/60 flex justify-between items-start">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
-              <Anchor className="w-6 h-6" />
+        <div className="px-10 pt-10 pb-8 border-b border-[var(--border-primary)] flex justify-between items-start bg-gradient-to-br from-indigo-500/10 to-transparent">
+          <div className="flex items-center gap-5">
+            <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-500 shadow-inner">
+              <Anchor className="w-7 h-7" />
             </div>
             <div>
-              <h3 className="text-xl font-black text-[var(--text-primary)] uppercase tracking-tight">Nueva Operación</h3>
-              <p className="text-xs text-[var(--text-secondary)] font-bold uppercase tracking-widest mt-0.5">Programar movimiento de flota</p>
+              <h3 className="text-2xl font-black text-[var(--text-primary)] uppercase tracking-tight">Programar Servicio</h3>
+              <p className="text-[10px] text-[var(--text-secondary)] font-black uppercase tracking-[0.25em] mt-1 opacity-60">Solicitar lanzamiento / maniobra interna</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-xl text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all">
-            <X className="w-5 h-5" />
+          <button onClick={onClose} className="p-3 hover:bg-[var(--bg-primary)] rounded-full text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all active:scale-90 border border-transparent hover:border-[var(--border-primary)]">
+            <X className="w-6 h-6" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+        <form onSubmit={handleSubmit} className="p-10 space-y-8">
           <div className="space-y-4">
-            <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest flex items-center gap-2">
-              <Ship className="w-3.5 h-3.5" /> 1. Localizar Embarcación
-            </label>
+            <div className="flex items-center justify-between px-2">
+              <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.3em] flex items-center gap-3">
+                <Ship className="w-4 h-4 text-indigo-500" /> 1. Localizar Embarcación
+              </label>
+              {selectedBoatId && (
+                <span className="text-[9px] font-black text-indigo-500 uppercase tracking-widest bg-indigo-500/5 px-3 py-1 rounded-full border border-indigo-500/10 animate-in fade-in zoom-in-95">Identificada</span>
+              )}
+            </div>
 
             {!selectedBoatId ? (
-              <div className="space-y-3">
-                <div className="relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
+              <div className="space-y-4">
+                <div className="relative group">
+                  <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-muted)] group-focus-within:text-indigo-500 transition-colors" />
                   <input
                     type="text"
                     autoFocus
-                    className="w-full bg-[var(--bg-secondary)]/50 border border-[var(--border-primary)] rounded-xl pl-11 pr-5 py-3 text-sm text-[var(--text-primary)] focus:outline-none focus:border-blue-500 transition-colors uppercase font-bold"
+                    className="w-full bg-[var(--bg-secondary)]/50 border border-[var(--border-primary)] rounded-[1.5rem] pl-14 pr-6 py-4 text-sm text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all uppercase font-bold placeholder:opacity-30"
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
                     placeholder="Matrícula o Nombre..."
                   />
                 </div>
-                <div className="flex flex-col gap-2">
+                
+                <div className="max-h-[280px] overflow-y-auto pr-2 space-y-2 custom-scrollbar">
                   {getEmbarcaciones.isLoading ? (
-                    <div className="flex justify-center p-4"><Loader2 className="w-6 h-6 animate-spin text-slate-700" /></div>
-                  ) : (
+                    <div className="py-10 flex flex-col items-center gap-3">
+                      <Loader2 className="w-7 h-7 animate-spin text-indigo-500/40" />
+                      <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Consultando flota...</p>
+                    </div>
+                  ) : filteredEmbarcaciones.length > 0 ? (
                     filteredEmbarcaciones.map(boat => (
                       <button
                         key={boat.id}
                         type="button"
                         onClick={() => setSelectedBoatId(boat.id)}
-                        className="flex items-center justify-between p-4 bg-[var(--bg-secondary)]/30 border border-[var(--border-primary)]/40 rounded-2xl hover:border-blue-500/50 hover:bg-blue-500/5 transition-all group"
+                        className="w-full flex items-center justify-between p-4 bg-[var(--bg-secondary)]/30 border border-[var(--border-primary)]/40 rounded-[1.25rem] hover:border-indigo-500/40 hover:bg-indigo-500/5 transition-all group/item"
                       >
-                        <div className="flex items-center gap-3 text-left">
-                          <Ship className="w-4 h-4 text-slate-600 group-hover:text-blue-400 transition-colors" />
+                        <div className="flex items-center gap-4 text-left">
+                          <div className="w-10 h-10 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-primary)] flex items-center justify-center text-[var(--text-muted)] group-hover/item:text-indigo-500 group-hover/item:border-indigo-500/20 transition-all">
+                            <Ship className="w-5 h-5" />
+                          </div>
                           <div>
-                            <p className="text-sm font-bold text-[var(--text-primary)] group-hover:text-blue-400 transition-colors uppercase">{boat.nombre}</p>
-                            <p className="text-[10px] text-slate-600 font-black tracking-widest mt-0.5">{boat.matricula}</p>
+                            <p className="text-sm font-black text-[var(--text-primary)] group-hover/item:text-indigo-400 transition-colors uppercase leading-none mb-1">{boat.nombre}</p>
+                            <p className="text-[10px] text-[var(--text-muted)] font-black tracking-widest uppercase">{boat.matricula}</p>
                           </div>
                         </div>
-                        <ArrowRight className="w-4 h-4 text-slate-800 group-hover:text-[var(--text-primary)] transition-all transform group-hover:translate-x-1" />
+                        <ArrowRight className="w-5 h-5 text-[var(--text-muted)] group-hover/item:text-indigo-500 transition-all transform group-hover/item:translate-x-1" />
                       </button>
                     ))
+                  ) : (
+                    <div className="py-10 text-center border-2 border-dashed border-[var(--border-primary)] rounded-[2rem] opacity-40">
+                      <p className="text-[10px] font-black uppercase tracking-widest">Sin coincidencias</p>
+                    </div>
                   )}
                 </div>
               </div>
             ) : (
-              <div className="flex items-center justify-between p-4 bg-blue-600/10 border border-blue-500/20 rounded-2xl">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-blue-600/20 flex items-center justify-center text-blue-400">
-                    <Ship className="w-5 h-5" />
+              <div className="flex items-center justify-between p-6 bg-gradient-to-r from-indigo-500/10 to-transparent border border-indigo-500/30 rounded-[2rem] shadow-xl shadow-indigo-900/5 animate-in zoom-in-95 duration-300">
+                <div className="flex items-center gap-5">
+                  <div className="w-14 h-14 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-500 border border-indigo-500/20 shadow-inner">
+                    <Ship className="w-7 h-7" />
                   </div>
                   <div>
-                    <p className="text-sm font-black text-[var(--text-primary)] uppercase">{selectedBoat?.nombre}</p>
-                    <p className="text-[10px] text-blue-400/70 font-black tracking-widest">{selectedBoat?.matricula}</p>
+                    <h4 className="text-lg font-black text-[var(--text-primary)] uppercase tracking-tight">{selectedBoat?.nombre}</h4>
+                    <p className="text-[10px] text-indigo-500 font-black tracking-[0.3em] uppercase">{selectedBoat?.matricula}</p>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setSelectedBoatId(null)}
-                  className="text-[9px] font-black text-blue-400 hover:text-[var(--text-primary)] uppercase tracking-widest px-3 py-1.5 bg-blue-500/10 rounded-lg hover:bg-blue-600 transition-all"
+                  className="px-6 py-2.5 bg-[var(--bg-primary)] border border-indigo-500/20 text-[10px] font-black text-indigo-500 hover:bg-indigo-500 hover:text-white rounded-xl transition-all uppercase tracking-widest"
                 >
                   Cambiar
                 </button>
@@ -133,47 +148,47 @@ export function NuevoPedidoModal({ isOpen, onClose, onSave }: NuevoPedidoModalPr
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest flex items-center gap-2">
-                <Calendar className="w-3.5 h-3.5" /> 2. Fecha
+          <div className="grid grid-cols-2 gap-8">
+            <div className="space-y-3">
+              <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.3em] flex items-center gap-3 px-2">
+                <Calendar className="w-4 h-4 text-indigo-500" /> 2. Fecha
               </label>
               <input
                 type="date"
                 required
-                className="w-full bg-[var(--bg-secondary)]/50 border border-[var(--border-primary)] rounded-xl px-4 py-3 text-sm text-[var(--text-primary)] focus:outline-none focus:border-blue-500 transition-colors font-bold [color-scheme:dark]"
+                className="w-full bg-[var(--bg-secondary)]/50 border border-[var(--border-primary)] rounded-[1.25rem] px-5 py-4 text-sm text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all font-bold"
                 value={fecha}
                 onChange={e => setFecha(e.target.value)}
               />
             </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest flex items-center gap-2">
-                <Clock className="w-3.5 h-3.5" /> 3. Hora
+            <div className="space-y-3">
+              <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.3em] flex items-center gap-3 px-2">
+                <Clock className="w-4 h-4 text-indigo-500" /> 3. Hora
               </label>
               <input
                 type="time"
                 required
-                className="w-full bg-[var(--bg-secondary)]/50 border border-[var(--border-primary)] rounded-xl px-4 py-3 text-sm text-[var(--text-primary)] focus:outline-none focus:border-blue-500 transition-colors font-bold [color-scheme:dark]"
+                className="w-full bg-[var(--bg-secondary)]/50 border border-[var(--border-primary)] rounded-[1.25rem] px-5 py-4 text-sm text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all font-bold"
                 value={hora}
                 onChange={e => setHora(e.target.value)}
               />
             </div>
           </div>
 
-          <div className="flex gap-4 pt-4">
+          <div className="flex flex-col sm:flex-row gap-4 pt-6">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-8 py-3.5 border border-[var(--border-primary)] text-[var(--text-secondary)] font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-slate-800 hover:text-[var(--text-primary)] transition-all"
+              className="flex-1 px-8 py-4 border border-[var(--border-primary)] text-[var(--text-secondary)] font-black text-[10px] uppercase tracking-[0.25em] rounded-2xl hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)] transition-all order-2 sm:order-1"
             >
-              Cerrar
+              Cancelar
             </button>
             <button
               type="submit"
               disabled={isSubmitting || !selectedBoatId}
-              className="flex-[2] px-8 py-3.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-[var(--text-primary)] font-black rounded-xl text-xs uppercase tracking-[0.2em] shadow-xl shadow-blue-900/40 transition-all active:scale-95 flex items-center justify-center gap-2"
+              className="flex-[1.5] px-8 py-4 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-30 text-white font-black rounded-2xl text-[10px] uppercase tracking-[0.3em] shadow-2xl shadow-indigo-900/40 transition-all active:scale-95 flex items-center justify-center gap-3 order-1 sm:order-2"
             >
-              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin text-[var(--text-primary)]" /> : 'Confirmar Registro'}
+              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Confirmar Solicitud <ArrowRight className="w-4 h-4" /></>}
             </button>
           </div>
         </form>

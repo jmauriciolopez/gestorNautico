@@ -7,14 +7,7 @@ import { EspaciosService } from '../espacios/espacios.service';
 import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
 import { ConfiguracionService } from '../configuracion/configuracion.service';
 import { paginate, PaginationQuery } from '../common/pagination/pagination.helper';
-
-export interface CreateMovimientoDto {
-  embarcacionId: number;
-  espacioId?: number;
-  tipo: 'entrada' | 'salida';
-  fecha?: Date;
-  notas?: string;
-}
+import { CreateMovimientoDto } from './dto/create-movimiento.dto';
 
 @Injectable()
 export class MovimientosService {

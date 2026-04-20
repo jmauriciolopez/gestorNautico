@@ -62,6 +62,7 @@ export function useOperaciones() {
       httpClient.patch(`/pedidos/${id}/estado`, { estado }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+      queryClient.invalidateQueries({ queryKey: ['embarcaciones'] });
     },
   });
 
@@ -72,10 +73,10 @@ export function useOperaciones() {
     },
   });
 
-  const getMovimientos = useQuery<Movimiento[]>({
+  const getMovimientos = useQuery({
     queryKey: ['movimientos'],
-    queryFn: () => httpClient.get<Paginated<Movimiento>>('/movimientos'),
-    select: selectData,
+    queryFn: (): Promise<Movimiento[]> =>
+      httpClient.get<Paginated<Movimiento>>('/movimientos?limit=100').then(selectData),
   });
 
   const createMovimiento = useMutation({
@@ -83,6 +84,7 @@ export function useOperaciones() {
       httpClient.post('/movimientos', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['movimientos'] });
+      queryClient.invalidateQueries({ queryKey: ['embarcaciones'] });
     },
   });
 
@@ -92,16 +94,19 @@ export function useOperaciones() {
 export function useSolicitudesBajada() {
   const queryClient = useQueryClient();
 
-  const getSolicitudes = useQuery<SolicitudBajada[]>({
+  const getSolicitudes = useQuery({
     queryKey: ['solicitudes-bajada'],
-    queryFn: () => httpClient.get<Paginated<SolicitudBajada>>('/operaciones/solicitudes'),
-    select: selectData,
+    queryFn: (): Promise<SolicitudBajada[]> =>
+      httpClient.get<Paginated<SolicitudBajada>>('/operaciones/solicitudes?limit=100').then(selectData),
   });
 
   const updateEstado = useMutation({
     mutationFn: ({ id, estado, motivo }: { id: number; estado: SolicitudBajada['estado']; motivo?: string }) =>
       httpClient.patch(`/operaciones/solicitudes/${id}/estado`, { estado, motivo }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['solicitudes-bajada'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['solicitudes-bajada'] });
+      queryClient.invalidateQueries({ queryKey: ['embarcaciones'] });
+    },
   });
 
   return { getSolicitudes, updateEstado };

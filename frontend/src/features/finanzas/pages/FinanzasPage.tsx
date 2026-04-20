@@ -66,7 +66,6 @@ export default function FinanzasPage() {
         <div className="relative z-10">
           <div className="flex items-center gap-2 mb-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-sm shadow-emerald-500/50" />
-            <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em]">Centro de Tesorería Activo</span>
           </div>
           <h1 className="text-[2.5rem] font-black text-[var(--text-primary)] leading-none tracking-tight uppercase">Gestión Financiera</h1>
           <p className="text-[var(--text-secondary)] text-xs font-black uppercase tracking-widest mt-2">Control de flujos, facturación y estados de cuenta auditados.</p>

@@ -4,7 +4,7 @@ import { page } from '@vitest/browser/context';
 describe('Flujo de Clientes (CRUD)', () => {
   beforeAll(async () => {
     // 1. Poblado de datos iniciales en el Backend Real
-    await fetch('http://localhost:3002/database/seed', { method: 'POST' });
+    await fetch('http://localhost:4000/database/seed', { method: 'POST' });
     
     // 2. Navegar a la página de clientes
     await page.goto('http://localhost:5173/clientes');

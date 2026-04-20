@@ -100,7 +100,8 @@ export function ConfiguracionZonas({
     } else {
       await onCreateRack(newRack);
     }
-    setNewRack({ ...newRack, codigo: '', pisos: 1, filas: 1, columnas: 1, tarifaBase: 0 });
+    setNewRack({ zonaId: newRack.zonaId, codigo: '', pisos: 1, filas: 1, columnas: 1, alto: 0, ancho: 0, largo: 0, tarifaBase: 0 });
+    setEditingRackId(null);
   };
 
   const handleEditRack = (rack: any) => {

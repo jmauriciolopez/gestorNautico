@@ -13,6 +13,7 @@ import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../users/user.entity';
+import { CreateMovimientoDto } from './dto/create-movimiento.dto';
 
 @Controller('movimientos')
 @UseGuards(AuthTokenGuard, RolesGuard)
@@ -33,7 +34,7 @@ export class MovimientosController {
 
   @Post()
   @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
-  create(@Body() data: any) {
+  create(@Body() data: CreateMovimientoDto) {
     return this.movimientosService.create(data);
   }
 

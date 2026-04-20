@@ -1,10 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In, MoreThan } from 'typeorm';
 import { Pedido } from './pedidos.entity';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import { Role } from '../users/user.entity';
 import { NotificacionTipo } from '../notificaciones/notificacion.entity';
+import { MovimientosService } from '../movimientos/movimientos.service';
 
 @Injectable()
 export class PedidosService {
@@ -12,10 +13,21 @@ export class PedidosService {
     @InjectRepository(Pedido)
     private readonly pedidoRepo: Repository<Pedido>,
     private readonly notificacionesService: NotificacionesService,
+    private readonly movimientosService: MovimientosService,
   ) {}
 
   findAll() {
+    const oneDayAgo = new Date();
+    oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+
     return this.pedidoRepo.find({
+      where: [
+        { estado: In(['pendiente', 'en_proceso']) },
+        {
+          estado: In(['completado', 'cancelado']),
+          updatedAt: MoreThan(oneDayAgo),
+        },
+      ],
       relations: ['embarcacion', 'embarcacion.cliente'],
       order: { createdAt: 'DESC' },
     });
@@ -58,6 +70,15 @@ export class PedidosService {
   async updateEstado(id: number, estado: string) {
     const pedido = await this.findOne(id);
     await this.pedidoRepo.update(id, { estado });
+
+    // Si se completa, generamos el movimiento automático
+    if (estado === 'completado') {
+      await this.movimientosService.create({
+        embarcacionId: pedido.embarcacion.id,
+        tipo: 'salida',
+        observaciones: `Generado automáticamente por Pedido #${pedido.id}`,
+      });
+    }
 
     // Notificar cambio de estado a roles relevantes
     await this.notificacionesService.createForRole(Role.ADMIN, {

@@ -34,7 +34,6 @@ export default function ReportesPage() {
         <div className="relative z-10">
           <div className="flex items-center gap-2 mb-2">
             <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse shadow-sm shadow-indigo-500/50" />
-            <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em]">Inteligencia Operativa</span>
           </div>
           <h1 className="text-[2.5rem] font-black text-[var(--text-primary)] leading-none tracking-tight uppercase">Reportes</h1>
           <p className="text-[var(--text-secondary)] text-xs font-black uppercase tracking-widest mt-2">Análisis de morosidad y estructura de mensualidades.</p>
@@ -92,8 +91,6 @@ export default function ReportesPage() {
             </div>
           </div>
           <div className="flex items-center gap-2 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest">
-            <span>Datos en tiempo real</span>
-            <ChevronRight className="w-4 h-4 opacity-30" />
           </div>
         </div>
 
