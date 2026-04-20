@@ -56,23 +56,23 @@ export function NuevoServicioModal({ isOpen, onClose, onSave, initialData }: Nue
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[var(--bg-primary)]/80 backdrop-blur-md animate-in fade-in duration-300">
-      <div className="bg-[var(--bg-secondary)] border border-[var(--border-primary)]/60 w-full max-w-lg rounded-[2.5rem] shadow-2xl shadow-indigo-900/10 overflow-hidden transform animate-in slide-in-from-bottom-8 duration-500">
+      <div className="bg-[var(--modal-glass-bg)] backdrop-blur-md border border-[var(--border-strong)] w-full max-w-lg rounded-[3rem] shadow-2xl shadow-indigo-900/10 overflow-hidden transform animate-in slide-in-from-bottom-8 duration-500">
 
         {/* Header */}
-        <div className="px-8 pt-8 pb-6 border-b border-[var(--border-primary)]/60 flex justify-between items-start">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
-              <Package className="w-6 h-6" />
+        <div className="px-10 pt-10 pb-6 border-b border-[var(--border-primary)] flex justify-between items-start bg-gradient-to-br from-indigo-500/10 via-transparent to-transparent">
+          <div className="flex items-center gap-5">
+            <div className="w-14 h-14 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 shadow-inner">
+              <Package className="w-7 h-7" />
             </div>
             <div>
-              <h3 className="text-xl font-black text-[var(--text-primary)] uppercase tracking-tight">
+              <h3 className="text-2xl font-black text-[var(--text-primary)] uppercase tracking-tight">
                 {initialData ? 'Editar Definición' : 'Nuevo Servicio'}
               </h3>
-              <p className="text-xs text-[var(--text-secondary)] font-bold uppercase tracking-widest mt-0.5">Gestión de Catálogo Maestro</p>
+              <p className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-[0.25em] mt-1 opacity-70">Gestión de Catálogo Maestro</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-[var(--bg-primary)] rounded-xl text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all">
-            <X className="w-5 h-5" />
+          <button onClick={onClose} className="p-3 hover:bg-white/5 rounded-2xl text-[var(--text-secondary)] hover:text-white transition-all border border-transparent hover:border-white/10 active:scale-90">
+            <X className="w-6 h-6" />
           </button>
         </div>
 
@@ -95,7 +95,7 @@ export function NuevoServicioModal({ isOpen, onClose, onSave, initialData }: Nue
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest flex items-center gap-2">
-                <DollarSign className="w-3 h-3 text-emerald-500" /> Precio Base
+                <DollarSign className="w-3 h-3 text-indigo-500" /> Precio Base
               </label>
               <input
                 type="number"
@@ -138,35 +138,42 @@ export function NuevoServicioModal({ isOpen, onClose, onSave, initialData }: Nue
 
           <div
             onClick={() => setFormData({ ...formData, activo: !formData.activo })}
-            className={`flex items-center justify-between p-4 rounded-xl border transition-all cursor-pointer ${formData.activo ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-[var(--bg-primary)] border-[var(--border-primary)] opacity-60'
+            className={`flex items-center justify-between p-4 rounded-xl border transition-all cursor-pointer ${formData.activo ? 'bg-indigo-500/5 border-indigo-500/20' : 'bg-[var(--bg-primary)] border-[var(--border-primary)] opacity-60'
               }`}
           >
             <div className="flex items-center gap-3">
-              <div className={`w-5 h-5 rounded flex items-center justify-center transition-all ${formData.activo ? 'bg-emerald-500 text-[var(--text-primary)]' : 'bg-slate-800 text-transparent'
+              <div className={`w-5 h-5 rounded flex items-center justify-center transition-all ${formData.activo ? 'bg-indigo-600 text-[var(--text-primary)]' : 'bg-slate-800 text-transparent'
                 }`}>
                 <CheckCircle2 className="w-3 h-3" />
               </div>
-              <span className={`text-[10px] font-black uppercase tracking-widest ${formData.activo ? 'text-emerald-500' : 'text-[var(--text-secondary)]'}`}>
+              <span className={`text-[10px] font-black uppercase tracking-widest ${formData.activo ? 'text-indigo-400' : 'text-[var(--text-secondary)]'}`}>
                 Servicio Activo
               </span>
             </div>
             <span className="text-[9px] font-bold text-slate-600 uppercase tracking-tighter">Disponible para registros</span>
           </div>
 
-          <div className="flex gap-4 pt-4">
+          <div className="flex flex-col-reverse sm:flex-row gap-4 pt-6">
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-3.5 border border-[var(--border-primary)] text-[var(--text-secondary)] font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-[var(--bg-primary)] hover:text-[var(--text-primary)] transition-all underline-offset-4"
+              className="px-8 py-4 bg-white/5 hover:bg-white/10 text-[var(--text-secondary)] font-bold text-xs uppercase tracking-[0.2em] rounded-2xl transition-all border border-white/5 active:scale-95"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 px-8 py-3.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-[var(--text-primary)] font-black rounded-xl text-xs uppercase tracking-[0.2em] shadow-xl shadow-indigo-900/40 active:scale-95 flex items-center justify-center gap-3 transition-all"
+              className="flex-1 px-8 py-4 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-30 text-white font-black rounded-2xl text-xs uppercase tracking-[0.25em] shadow-xl shadow-indigo-900/40 active:scale-95 flex items-center justify-center gap-3 transition-all group/btn"
             >
-              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin text-[var(--text-primary)]" /> : (initialData ? 'Guardar Cambios' : 'Certificar Servicio')}
+              {isSubmitting ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <>
+                  <CheckCircle2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                  <span>{initialData ? 'Guardar Cambios' : 'Crear Servicio'}</span>
+                </>
+              )}
             </button>
           </div>
         </form>

@@ -16,15 +16,19 @@
 - [x] **Corrección Error 500 Facturación**: Normalización JSON y ruteo en `facturas.controller.ts`.
 - [x] **Auditoría de Placeholders (Cierre final)**: Barrido exhaustivo completado.
 - [x] **Configuración Centralizada**: Implementación de `ConfiguracionService` y panel UI (v1).
-- [x] **Refactorizar Seeder de backend**: Truncado dinámico + CASCADE.
-- [x] **Poblar infraestructura base en Seeder**: Zonas, Racks, Cunas.
+- [x] **Estandarización de Modales**:
+    - [x] Estandarizar modales de Finanzas (Premium Dark)
+    - [x] Estandarizar modales de Operaciones (Mantenimiento / Maniobras)
+    - [x] Estandarizar modales de Infraestructura (Asignación / Liberación)
+    - [x] Estandarizar modales de Servicios (Órdenes / Catálogo)
+    - [x] Corregir imports de icons en todas las modales refactorizadas
+    - [x] Validar que los flujos funcionales sigan operativos
+    - [x] Actualizar documentación y walkthrough
+
 - [ ] **Ejecutar suite de validación Playwright (ayuda_validacion.spec.ts)**:
     - [x] Resolver error de selectores en 'Asignar Ubicación' (Modal vs Select).
     - [ ] Validar flujo de salida/entrada.
     - [ ] Validar facturación de servicios.
-- [ ] **Realizar Build Final y Linting**:
-    - [ ] Backend.
-    - [ ] Frontend.
 - [ ] **Documentar escenarios no cubiertos**: Facturación compartida, stock insumos.
 - [/] **Hito 1: Auditoría y Estabilidad (Centro de Logs)**:
     - [ ] Backend: Desarrollar entidad y servicio de Logs.

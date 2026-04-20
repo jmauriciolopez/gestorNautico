@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { CreditCard, Receipt, Wallet, Plus, Activity, ChevronRight } from 'lucide-react';
+import { CreditCard, Receipt, Wallet, Plus, Activity, ChevronRight, Users } from 'lucide-react';
 import { useFinanzas } from '../hooks/useFinanzas';
 import { CargosList } from '../components/CargosList';
 import { PagosList } from '../components/PagosList';
@@ -10,11 +10,12 @@ import { HistorialCajasList } from '../components/HistorialCajasList';
 import { CajaDetalleModal } from '../components/CajaDetalleModal';
 import { NuevoCargoModal } from '../components/NuevoCargoModal';
 import { RegistrarPagoModal } from '../components/RegistrarPagoModal';
-import { Caja } from '../hooks/useFinanzas';
+import { CuentasCorrientesList } from '../components/CuentasCorrientesList';
+import { Caja, Cargo } from '../hooks/useFinanzas';
 import type { AxiosError } from 'axios';
 
 export default function FinanzasPage() {
-  const [activeTab, setActiveTab] = useState<'cargos' | 'pagos' | 'caja'>('cargos');
+  const [activeTab, setActiveTab] = useState<'cargos' | 'pagos' | 'caja' | 'cuentas'>('cargos');
   const [isCajaModalOpen, setIsCajaModalOpen] = useState(false);
   const [cajaModalType, setCajaModalType] = useState<'ABRIR' | 'CERRAR'>('ABRIR');
   const [selectedCaja, setSelectedCaja] = useState<Caja | null>(null);
@@ -22,6 +23,7 @@ export default function FinanzasPage() {
 
   const [isCargoModalOpen, setIsCargoModalOpen] = useState(false);
   const [isPagoModalOpen, setIsPagoModalOpen] = useState(false);
+  const [selectedCargoToPay, setSelectedCargoToPay] = useState<Cargo | null>(null);
 
   const { getCargos, getPagos, getCajaResumen, abrirCaja, cerrarCaja, getCajas } = useFinanzas();
 
@@ -39,9 +41,7 @@ export default function FinanzasPage() {
       }
       setIsCajaModalOpen(false);
     } catch (err) {
-      const axiosErr = err as AxiosError<{ message: string }>;
-      const msg = axiosErr.response?.data?.message ?? 'Error al operar la caja';
-      toast.error(msg);
+      console.error('Error al operar la caja:', err);
     }
   };
 
@@ -49,6 +49,7 @@ export default function FinanzasPage() {
     if (activeTab === 'cargos') {
       setIsCargoModalOpen(true);
     } else if (activeTab === 'pagos') {
+      setSelectedCargoToPay(null);
       setIsPagoModalOpen(true);
     } else {
       setCajaModalType('ABRIR');
@@ -68,7 +69,7 @@ export default function FinanzasPage() {
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-sm shadow-emerald-500/50" />
           </div>
           <h1 className="text-[2.5rem] font-black text-[var(--text-primary)] leading-none tracking-tight uppercase">Gestión Financiera</h1>
-          <p className="text-[var(--text-secondary)] text-xs font-black uppercase tracking-widest mt-2">Control de flujos, facturación y estados de cuenta auditados.</p>
+          <p className="text-[var(--text-secondary)] text-xs font-black uppercase tracking-widest mt-2">Control de flujos, facturación y estados de cuenta.</p>
         </div>
         <div className="flex items-center gap-4 relative z-10">
           <button
@@ -100,7 +101,8 @@ export default function FinanzasPage() {
         {[
           { id: 'cargos', label: 'Cargos y Facturas', icon: Receipt },
           { id: 'pagos', label: 'Historial de Pagos', icon: CreditCard },
-          { id: 'caja', label: 'Auditoría de Cajas', icon: Wallet }
+          { id: 'caja', label: 'Auditoría de Cajas', icon: Wallet },
+          { id: 'cuentas', label: 'Cuentas Corrientes', icon: Users },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -125,7 +127,7 @@ export default function FinanzasPage() {
             </div>
             <div>
               <h3 className="text-sm font-black text-[var(--text-primary)] uppercase tracking-widest leading-none">
-                {activeTab === 'cargos' ? 'Libro de Cargos' : activeTab === 'pagos' ? 'Libro de Ingresos' : 'Libro de Arqueos'}
+                {activeTab === 'cargos' ? 'Libro de Cargos' : activeTab === 'pagos' ? 'Libro de Ingresos' : activeTab === 'caja' ? 'Libro de Arqueos' : 'Cuentas Corrientes'}
               </h3>
               <p className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-tighter mt-1">Registros procesados por el motor financiero</p>
             </div>
@@ -141,6 +143,7 @@ export default function FinanzasPage() {
             cargos={getCargos.data || []}
             isLoading={getCargos.isLoading}
             onCobrar={(cargo) => {
+              setSelectedCargoToPay(cargo);
               setIsPagoModalOpen(true);
             }}
           />
@@ -163,6 +166,8 @@ export default function FinanzasPage() {
             }}
           />
         )}
+
+        {activeTab === 'cuentas' && <CuentasCorrientesList />}
       </div>
 
       {/* Modals Suite */}
@@ -173,7 +178,11 @@ export default function FinanzasPage() {
 
       <RegistrarPagoModal
         isOpen={isPagoModalOpen}
-        onClose={() => setIsPagoModalOpen(false)}
+        onClose={() => {
+          setIsPagoModalOpen(false);
+          setSelectedCargoToPay(null);
+        }}
+        initialCargo={selectedCargoToPay}
       />
 
       <CajaModal

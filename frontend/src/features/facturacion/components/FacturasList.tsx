@@ -1,8 +1,11 @@
-﻿import { useState } from 'react';
-import { FileText, Loader2, MoreVertical, ExternalLink, ChevronDown, ChevronRight, Anchor } from 'lucide-react';
+import { FileText, Loader2, ExternalLink, ChevronDown, ChevronRight, Anchor, Mail, Edit3, Trash2, CheckCircle, XCircle } from 'lucide-react';
 import { Factura } from '../hooks/useFacturas';
 import { RoleGuard } from '../../../components/auth/RoleGuard';
 import { Role } from '../../../types';
+import { ActionMenu, ActionMenuItem } from '../../../shared/components/ActionMenu';
+import { FacturaDetailModal } from './FacturaDetailModal';
+import { FacturaEditModal } from './FacturaEditModal';
+import { FacturaEmailModal } from './FacturaEmailModal';
 
 interface FacturasListProps {
   facturas: Factura[];
@@ -19,6 +22,8 @@ const TIPO_COLORS: Record<string, string> = {
 
 export function FacturasList({ facturas, isLoading, onUpdateEstado }: FacturasListProps) {
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
+  const [selectedFactura, setSelectedFactura] = useState<Factura | null>(null);
+  const [activeModal, setActiveModal] = useState<'detail' | 'edit' | 'email' | null>(null);
 
   const toggle = (id: number) =>
     setExpanded(prev => {
@@ -127,57 +132,48 @@ export function FacturasList({ facturas, isLoading, onUpdateEstado }: FacturasLi
 
                     <td className="px-6 py-5 text-right" onClick={e => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-2">
-                        {factura.estado === 'PENDIENTE' && onUpdateEstado && (
-                          <RoleGuard allowedRoles={[Role.ADMIN, Role.SUPERADMIN]}>
-                            <div className="flex items-center gap-3 mr-2">
-                              <button
-                                onClick={() => onUpdateEstado(factura.id, 'PAGADA')}
-                                className="bg-emerald-600/10 hover:bg-emerald-600 text-emerald-500 hover:text-white px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all active:scale-95"
-                              >
-                                Liquidar
-                              </button>
-                              <button
-                                onClick={() => onUpdateEstado(factura.id, 'ANULADA')}
-                                className="text-rose-600 hover:text-rose-400 text-[9px] font-black uppercase tracking-widest transition-colors"
-                              >
-                                Anular
-                              </button>
-                            </div>
-                          </RoleGuard>
-                        )}
-                        <button
-                          onClick={async () => {
-                            try {
-                              const token = localStorage.getItem('token');
-                              const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-                              const response = await fetch(`${baseUrl}/facturas/${factura.id}/pdf`, {
-                                headers: { 'Authorization': `Bearer ${token}` }
-                              });
-                              if (!response.ok) throw new Error(`Error ${response.status}`);
-                              const blob = await response.blob();
-                              const url = window.URL.createObjectURL(blob);
-                              const a = document.createElement('a');
-                              a.href = url;
-                              a.download = `factura-${factura.numero}.pdf`;
-                              document.body.appendChild(a);
-                              a.click();
-                              a.remove();
-                              window.URL.revokeObjectURL(url);
-                            } catch (error) {
-                              console.error('Error al descargar PDF:', error);
-                            }
-                          }}
-                          className="p-2 text-slate-700 hover:text-indigo-400 transition-colors"
-                          title="Descargar PDF"
-                        >
-                          <FileText className="w-4 h-4" />
-                        </button>
-                        <button className="p-2 text-slate-700 hover:text-[var(--text-primary)] transition-colors">
-                          <ExternalLink className="w-4 h-4" />
-                        </button>
-                        <button className="p-2 text-slate-700 hover:text-[var(--text-primary)] transition-colors">
-                          <MoreVertical className="w-4 h-4" />
-                        </button>
+                        <ActionMenu
+                          items={[
+                            {
+                              label: 'Ver Detalle',
+                              icon: FileText,
+                              onClick: () => {
+                                setSelectedFactura(factura);
+                                setActiveModal('detail');
+                              }
+                            },
+                            {
+                              label: 'Enviar por Email',
+                              icon: Mail,
+                              onClick: () => {
+                                setSelectedFactura(factura);
+                                setActiveModal('email');
+                              }
+                            },
+                            {
+                              label: 'Editar / Agregar Items',
+                              icon: Edit3,
+                              onClick: () => {
+                                setSelectedFactura(factura);
+                                setActiveModal('edit');
+                              }
+                            },
+                            ...(factura.estado === 'PENDIENTE' ? [
+                              {
+                                label: 'Liquidar Factura',
+                                icon: CheckCircle,
+                                variant: 'success' as const,
+                                onClick: () => onUpdateEstado?.(factura.id, 'PAGADA' as any)
+                              },
+                              {
+                                label: 'Anular Factura',
+                                icon: XCircle,
+                                variant: 'danger' as const,
+                                onClick: () => onUpdateEstado?.(factura.id, 'ANULADA' as any)
+                              }
+                            ] : [])
+                          ]}
+                        />
                       </div>
                     </td>
                   </tr>
@@ -244,6 +240,36 @@ export function FacturasList({ facturas, isLoading, onUpdateEstado }: FacturasLi
           )}
         </tbody>
       </table>
+
+      {/* Acciones Modales */}
+      {activeModal === 'detail' && selectedFactura && (
+        <FacturaDetailModal
+          factura={selectedFactura}
+          onClose={() => setActiveModal(null)}
+          onSendEmail={() => setActiveModal('email')}
+        />
+      )}
+
+      {activeModal === 'edit' && selectedFactura && (
+        <FacturaEditModal
+          factura={selectedFactura}
+          onClose={() => setActiveModal(null)}
+          onSuccess={() => {
+            // Aquí idealemente refrescaríamos la lista. 
+            // Como las props vienen de arriba, confiamos en que el usuario refresque o 
+            // podemos emitir un evento si hubiera un context.
+            window.location.reload(); 
+          }}
+        />
+      )}
+
+      {activeModal === 'email' && selectedFactura && (
+        <FacturaEmailModal
+          factura={selectedFactura}
+          onClose={() => setActiveModal(null)}
+          onSuccess={() => {}}
+        />
+      )}
     </div>
   );
 }

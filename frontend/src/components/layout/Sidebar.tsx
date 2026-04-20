@@ -132,7 +132,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 className={`nav-item ${active ? 'active' : ''}`}
                 aria-current={active ? 'page' : undefined}
               >
-                <Icon size={17} className="shrink-0" />
+                <Icon size={19} className="shrink-0" />
                 <span className="nav-item-label">{name}</span>
               </Link>
             );

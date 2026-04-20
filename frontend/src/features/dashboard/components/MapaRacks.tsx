@@ -78,9 +78,9 @@ const Rack3DContainer: React.FC<Rack3DContainerProps> = ({
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       onWheel={handleWheel}
-      className={`p-12 rounded-[3.5rem] bg-black/30 border border-white/5 transition-all duration-700 ${is3D ? 'rack-3d-scene rack-3d-active overflow-visible mb-12' : 'overflow-x-auto custom-scrollbar'}`}
+      className={`p-12 rounded-[3.5rem] bg-black/30 border border-white/5 transition-all duration-700 ${is3D ? 'rack-3d-scene rack-3d-active overflow-visible mb-12' : 'overflow-hidden'}`}
     >
-      <div className="min-w-max">
+      <div className={is3D ? 'min-w-max' : 'w-full'}>
         {/* Renderizado condicional según modo 2D/3D */}
         {is3D ? (
           /* VISTA 3D: Eje Z = Pisos, Y = Filas, X = Columnas */
@@ -194,7 +194,7 @@ const Rack3DContainer: React.FC<Rack3DContainerProps> = ({
             <div 
               className="grid gap-3 mb-6 px-1 opacity-40 hover:opacity-100 transition-opacity duration-300"
               style={{
-                gridTemplateColumns: `60px repeat(${rack.columnas * rack.filas}, 110px)`
+                gridTemplateColumns: `60px repeat(${rack.columnas * rack.filas}, minmax(0, 1fr))`
               }}
             >
               <div />
@@ -215,7 +215,7 @@ const Rack3DContainer: React.FC<Rack3DContainerProps> = ({
             <div
               className="grid gap-3 items-center"
               style={{
-                gridTemplateColumns: `60px repeat(${rack.columnas * rack.filas}, 110px)`,
+                gridTemplateColumns: `60px repeat(${rack.columnas * rack.filas}, minmax(0, 1fr))`,
                 gridTemplateRows: `repeat(${rack.pisos}, 110px)`
               }}
             >
@@ -243,7 +243,7 @@ const Rack3DContainer: React.FC<Rack3DContainerProps> = ({
                               embarcacion: espacio.embarcacion
                             })}
                             className={`
-                              w-[110px] h-[110px] rounded-xl border transition-all duration-300 flex flex-col items-center justify-center gap-1 group/item relative
+                              h-[110px] w-full rounded-xl border transition-all duration-300 flex flex-col items-center justify-center gap-1 group/item relative
                               ${!espacio 
                                 ? 'bg-transparent border-dashed border-white/5' 
                                 : espacio.ocupado

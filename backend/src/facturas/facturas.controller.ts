@@ -87,6 +87,21 @@ export class FacturasController {
     return this.facturasService.updateEstado(+id, estado, metodoPago as any);
   }
 
+  @Patch(':id')
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
+  update(
+    @Param('id') id: string,
+    @Body() data: { fechaEmision?: string; cargoIds?: number[]; observaciones?: string },
+  ) {
+    return this.facturasService.update(+id, data);
+  }
+
+  @Post(':id/send-email')
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
+  sendEmail(@Param('id') id: string, @Body('email') email?: string) {
+    return this.facturasService.sendEmail(+id, email);
+  }
+
   @Delete(':id')
   @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
   remove(@Param('id') id: string) {

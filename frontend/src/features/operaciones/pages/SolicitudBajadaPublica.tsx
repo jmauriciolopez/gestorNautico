@@ -20,7 +20,7 @@ export default function SolicitudBajadaPublica() {
       toast.success('Solicitud enviada correctamente');
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Error al enviar la solicitud. Verifique los datos.');
+      console.error('Error al enviar la solicitud:', error);
     }
   });
 

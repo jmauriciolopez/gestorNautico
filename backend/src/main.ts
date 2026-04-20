@@ -44,6 +44,13 @@ async function bootstrap() {
       transform: true,
       whitelist: true,
       forbidNonWhitelisted: true,
+      exceptionFactory: (errors) => {
+        const logger = new Logger('ValidationPipe');
+        const errorMessages = errors.flatMap((error) => Object.values(error.constraints || {}));
+        logger.error(`Validation failed: ${errorMessages.join('. ')}`);
+        const { BadRequestException } = require('@nestjs/common');
+        return new BadRequestException(errorMessages);
+      },
     }),
   );
 

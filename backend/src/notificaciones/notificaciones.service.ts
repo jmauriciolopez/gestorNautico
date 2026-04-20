@@ -21,6 +21,7 @@ export class NotificacionesService {
     subject: string,
     template: string,
     context: Record<string, unknown>,
+    attachments?: any[],
   ): Promise<void> {
     try {
       await this.mailerService.sendMail({
@@ -28,6 +29,7 @@ export class NotificacionesService {
         subject,
         template,
         context,
+        attachments,
       });
       console.log(`Email enviado con éxito a ${to}`);
     } catch (error: unknown) {

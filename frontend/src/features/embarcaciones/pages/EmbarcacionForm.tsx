@@ -93,7 +93,6 @@ export default function EmbarcacionForm() {
       navigate('/embarcaciones');
     } catch (error: any) {
       console.error('Error saving embarcacion:', error);
-      toast.error(error.message || 'Error al guardar la embarcación');
     }
   };
 

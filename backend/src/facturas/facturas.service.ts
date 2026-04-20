@@ -7,10 +7,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { Factura, EstadoFactura } from './factura.entity';
 import { Cargo } from '../cargos/cargo.entity';
+import { Cliente } from '../clientes/clientes.entity';
 import { Pago, MetodoPago } from '../pagos/pago.entity';
 import { CargosService } from '../cargos/cargos.service';
 import { CajasService } from '../cajas/cajas.service';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
+import { PdfService } from '../common/pdf/pdf.service';
 import { Role } from '../users/user.entity';
 import { NotificacionTipo } from '../notificaciones/notificacion.entity';
 import { paginate, PaginationQuery } from '../common/pagination/pagination.helper';
@@ -32,9 +34,12 @@ export class FacturasService {
     private readonly cargoRepo: Repository<Cargo>,
     @InjectRepository(Pago)
     private readonly pagoRepo: Repository<Pago>,
+    @InjectRepository(Cliente)
+    private readonly clienteRepo: Repository<Cliente>,
     private readonly cargosService: CargosService,
     private readonly cajasService: CajasService,
     private readonly notificacionesService: NotificacionesService,
+    private readonly pdfService: PdfService,
   ) {}
 
   async findAll(query: PaginationQuery = {}) {
@@ -131,17 +136,20 @@ export class FacturasService {
 
       // 2. Registrar pago en caja activa
       const caja = await this.cajasService.findAbierta();
-      if (caja) {
-        const pago = this.pagoRepo.create({
-          cliente: { id: factura.cliente.id },
-          caja: { id: caja.id },
-          monto: Number(factura.total),
-          fecha: new Date(),
-          metodoPago: metodoPago ?? MetodoPago.EFECTIVO,
-          comprobante: `Liquidación factura ${factura.numero}`,
-        });
-        await this.pagoRepo.save(pago);
+      if (!caja) {
+        throw new BadRequestException(
+          'No hay caja abierta. Abra una caja antes de liquidar una factura.',
+        );
       }
+      const pago = this.pagoRepo.create({
+        cliente: { id: factura.cliente.id },
+        caja: { id: caja.id },
+        monto: Number(factura.total),
+        fecha: new Date(),
+        metodoPago: metodoPago ?? MetodoPago.EFECTIVO,
+        comprobante: `Liquidación factura ${factura.numero}`,
+      });
+      await this.pagoRepo.save(pago);
 
       // 3. Notificar
       await this.notificacionesService.createForRole(Role.OPERADOR, {
@@ -158,5 +166,90 @@ export class FacturasService {
     const factura = await this.findOne(id);
     // Nota: El onDelete: 'SET NULL' se encargará de los cargos en BD
     return this.facturaRepo.remove(factura);
+  }
+
+  async update(id: number, data: { fechaEmision?: string; cargoIds?: number[]; observaciones?: string }) {
+    const factura = await this.findOne(id);
+
+    if (data.fechaEmision) {
+      factura.fechaEmision = new Date(data.fechaEmision);
+    }
+
+    if (data.observaciones !== undefined) {
+      factura.observaciones = data.observaciones;
+    }
+
+    if (data.cargoIds) {
+      // 1. Vincular nuevos cargos
+      // Buscamos cargos que pertenezcan al cliente y no estén en otra factura (o que ya estén en esta)
+      const nuevosCargos = await this.cargoRepo.find({
+        where: { id: In(data.cargoIds), cliente: { id: factura.cliente.id } },
+      });
+
+      if (nuevosCargos.length !== data.cargoIds.length) {
+        throw new BadRequestException('Algunos cargos no son válidos para este cliente');
+      }
+
+      // Desvincular cargos antiguos que no estén en la nueva lista (opcional, pero aquí solo sumamos según el pedido del user)
+      // El usuario pidió "agregar items", así que vamos a asegurar que los recibidos estén vinculados
+      await this.cargoRepo.update(
+        { id: In(data.cargoIds) },
+        { factura: { id: factura.id } }
+      );
+
+      // Recalcular el total basado en todos los cargos vinculados ahora
+      const todosLosCargos = await this.cargoRepo.find({
+        where: { factura: { id: factura.id } }
+      });
+
+      factura.total = todosLosCargos.reduce((sum, c) => sum + Number(c.monto || 0), 0);
+    }
+
+    return this.facturaRepo.save(factura);
+  }
+
+  async sendEmail(id: number, optionalEmail?: string) {
+    const factura = await this.findOne(id);
+    let targetEmail = factura.cliente.email;
+
+    if (optionalEmail) {
+      targetEmail = optionalEmail;
+      // Guardar en el cliente
+      await this.clienteRepo.update(factura.cliente.id, { email: optionalEmail });
+    }
+
+    if (!targetEmail) {
+      throw new BadRequestException('El cliente no tiene email registrado');
+    }
+
+    const buffer = await this.pdfService.generateInvoice(factura);
+
+    await this.notificacionesService.sendEmailNotification(
+      targetEmail,
+      `Factura ${factura.numero} - ${factura.cliente.nombre}`,
+      'factura-v1',
+      {
+        cliente: factura.cliente.nombre,
+        numero: factura.numero,
+        total: factura.total,
+        fecha: new Date(factura.fechaEmision).toLocaleDateString('es-AR'),
+      },
+      [
+        {
+          filename: `factura-${factura.numero}.pdf`,
+          content: buffer,
+        },
+      ],
+    );
+
+    // Auditoría vía Notificación
+    await this.notificacionesService.create({
+      usuarioId: 1, // Sistema/Admin
+      titulo: 'Factura Enviada',
+      mensaje: `La factura ${factura.numero} fue enviada por email a ${targetEmail}.`,
+      tipo: NotificacionTipo.INFO,
+    });
+
+    return { success: true };
   }
 }

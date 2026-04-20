@@ -32,6 +32,11 @@ export class ClientesController {
     return this.clientesService.findOne(+id);
   }
 
+  @Get(':id/cuenta-corriente')
+  getCuentaCorriente(@Param('id') id: string) {
+    return this.clientesService.getCuentaCorriente(+id);
+  }
+
   @Post()
   create(@Body() createClienteDto: Partial<Cliente>) {
     return this.clientesService.create(createClienteDto);

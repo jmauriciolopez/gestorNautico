@@ -174,7 +174,7 @@ const Dashboard: React.FC = () => {
       await updateEmbarcacion.mutateAsync({ id: embarcacionId, data: { espacioId } });
       toast.success('Embarcación asignada correctamente');
     } catch (error: any) {
-      toast.error(error.message || 'Error al asignar la embarcación');
+      console.error('Error al asignar la embarcación:', error);
     }
   };
 

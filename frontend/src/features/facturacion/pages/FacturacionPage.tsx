@@ -72,7 +72,7 @@ export default function FacturacionPage() {
             <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse shadow-sm shadow-indigo-500/50" />
           </div>
           <h1 className="text-[2.5rem] font-black text-[var(--text-primary)] leading-none tracking-tight uppercase">Facturación</h1>
-          <p className="text-[var(--text-secondary)] text-xs font-black uppercase tracking-widest mt-2">Administración de comprobantes fiscales y estados de cuenta auditados.</p>
+          <p className="text-[var(--text-secondary)] text-xs font-black uppercase tracking-widest mt-2">Administración de comprobantes fiscales y estados de cuenta.</p>
         </div>
 
         <div className="flex items-center gap-4 relative z-10">
@@ -160,11 +160,10 @@ export default function FacturacionPage() {
                 <button
                   key={m.value}
                   onClick={() => setMetodoPago(m.value)}
-                  className={`py-3 px-4 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${
-                    metodoPago === m.value
+                  className={`py-3 px-4 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${metodoPago === m.value
                       ? 'bg-emerald-600 border-emerald-500 text-white'
                       : 'bg-[var(--bg-surface)] border-[var(--border-primary)] text-[var(--text-secondary)] hover:border-emerald-500/40'
-                  }`}
+                    }`}
                 >
                   {m.label}
                 </button>

@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import { X, Receipt, DollarSign, User, Calendar, Tag } from 'lucide-react';
+import { X, Receipt, DollarSign, User, Calendar, Tag, Loader2 } from 'lucide-react';
 import { useClientes } from '../../clientes/hooks/useClientes';
 import { useFinanzas } from '../hooks/useFinanzas';
-import type { AxiosError } from 'axios';
+import { useConfiguracion } from '../../configuracion/hooks/useConfiguracion';
 
 interface NuevoCargoModalProps {
   isOpen: boolean;
@@ -13,14 +13,35 @@ interface NuevoCargoModalProps {
 export function NuevoCargoModal({ isOpen, onClose }: NuevoCargoModalProps) {
   const { getClientes } = useClientes();
   const { createCargo } = useFinanzas();
+  const { getConfiguraciones } = useConfiguracion();
+
+  const diasVencimiento = Number(
+    getConfiguraciones.data?.find(c => c.clave === 'DIAS_VENCIMIENTO')?.valor ?? 15
+  );
+
+  const calcVencimiento = (emision: string) => {
+    const d = new Date(emision);
+    d.setDate(d.getDate() + diasVencimiento);
+    return d.toISOString().split('T')[0];
+  };
 
   const [formData, setFormData] = useState({
     clienteId: '',
     descripcion: '',
     monto: '',
     tipo: 'AMARRE' as 'AMARRE' | 'MANTENIMIENTO' | 'SERVICIOS' | 'OTROS',
-    fechaEmision: new Date().toISOString().split('T')[0]
+    fechaEmision: new Date().toISOString().split('T')[0],
+    fechaVencimiento: calcVencimiento(new Date().toISOString().split('T')[0]),
   });
+
+  // Recalcular vencimiento cuando carga la config
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      fechaVencimiento: calcVencimiento(prev.fechaEmision),
+    }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [diasVencimiento]);
 
   if (!isOpen) return null;
 
@@ -35,6 +56,7 @@ export function NuevoCargoModal({ isOpen, onClose }: NuevoCargoModalProps) {
         monto: Number(formData.monto),
         tipo: formData.tipo,
         fechaEmision: formData.fechaEmision,
+        fechaVencimiento: formData.fechaVencimiento,
       });
       toast.success('Cargo emitido correctamente');
       onClose();
@@ -44,31 +66,30 @@ export function NuevoCargoModal({ isOpen, onClose }: NuevoCargoModalProps) {
         monto: '',
         tipo: 'AMARRE',
         fechaEmision: new Date().toISOString().split('T')[0],
+        fechaVencimiento: calcVencimiento(new Date().toISOString().split('T')[0]),
       });
     } catch (err) {
-      const axiosErr = err as AxiosError<{ message: string | string[] }>;
-      const raw = axiosErr.response?.data?.message;
-      const msg = Array.isArray(raw) ? raw[0] : (raw ?? 'Error al crear el cargo');
-      toast.error(msg);
+      console.error('Error al crear el cargo:', err);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--bg-primary)]/80 backdrop-blur-md animate-in fade-in duration-300">
-      <div className="bg-[#0f172a] border border-[var(--border-primary)]/60 w-full max-w-lg rounded-[2.5rem] shadow-2xl shadow-blue-900/20 overflow-hidden">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[var(--bg-primary)]/80 backdrop-blur-md animate-in fade-in duration-300">
+      <div className="bg-[var(--modal-glass-bg)] border border-[var(--border-strong)] w-full max-w-lg rounded-[3rem] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.5)] overflow-hidden transform animate-in slide-in-from-bottom-8 duration-500">
 
-        <div className="px-8 pt-8 pb-6 border-b border-[var(--border-primary)]/60 flex justify-between items-start">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
-              <Receipt className="w-6 h-6" />
+        {/* Header */}
+        <div className="px-10 pt-10 pb-8 border-b border-[var(--border-primary)] flex justify-between items-start bg-gradient-to-br from-indigo-500/10 to-transparent">
+          <div className="flex items-center gap-5">
+            <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-500 shadow-inner">
+              <Receipt className="w-7 h-7" />
             </div>
             <div>
-              <h3 className="text-xl font-black text-[var(--text-primary)] uppercase tracking-tight">Emisión de Cargo</h3>
-              <p className="text-xs text-[var(--text-secondary)] font-bold uppercase tracking-widest mt-0.5">Generar nuevo concepto de cobro</p>
+              <h3 className="text-2xl font-black text-[var(--text-primary)] uppercase tracking-tight">Emisión de Cargo</h3>
+              <p className="text-[10px] text-[var(--text-secondary)] font-black uppercase tracking-[0.25em] mt-1 opacity-60">Generar nuevo concepto de cobro</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-xl text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all">
-            <X className="w-5 h-5" />
+          <button onClick={onClose} className="p-3 hover:bg-[var(--bg-primary)] rounded-full text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all active:scale-90 border border-transparent hover:border-[var(--border-primary)]">
+            <X className="w-6 h-6" />
           </button>
         </div>
 
@@ -79,7 +100,7 @@ export function NuevoCargoModal({ isOpen, onClose }: NuevoCargoModalProps) {
             </label>
             <select
               required
-              className="w-full bg-[var(--bg-secondary)]/50 border border-[var(--border-primary)] rounded-xl px-4 py-3 text-sm text-[var(--text-primary)] focus:outline-none focus:border-blue-500 transition-colors appearance-none"
+              className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-xl px-5 py-3.5 text-sm text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 transition-all font-bold appearance-none cursor-pointer uppercase"
               value={formData.clienteId}
               onChange={(e) => setFormData({ ...formData, clienteId: e.target.value })}
             >
@@ -96,7 +117,7 @@ export function NuevoCargoModal({ isOpen, onClose }: NuevoCargoModalProps) {
                 <Tag className="w-3 h-3" /> Categoría
               </label>
               <select
-                className="w-full bg-[var(--bg-secondary)]/50 border border-[var(--border-primary)] rounded-xl px-4 py-3 text-sm text-[var(--text-primary)] focus:outline-none focus:border-blue-500 transition-colors"
+                className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-xl px-5 py-3.5 text-sm text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 transition-all font-bold appearance-none cursor-pointer uppercase"
                 value={formData.tipo}
                 onChange={(e) => setFormData({ ...formData, tipo: e.target.value as any })}
               >
@@ -114,7 +135,7 @@ export function NuevoCargoModal({ isOpen, onClose }: NuevoCargoModalProps) {
                 required
                 type="number"
                 placeholder="0.00"
-                className="w-full bg-[var(--bg-secondary)]/50 border border-[var(--border-primary)] rounded-xl px-4 py-3 text-sm text-[var(--text-primary)] focus:outline-none focus:border-blue-500 transition-colors"
+                className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-xl px-5 py-3.5 text-sm text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 transition-all font-black tabular-nums"
                 value={formData.monto}
                 onChange={(e) => setFormData({ ...formData, monto: e.target.value })}
               />
@@ -127,9 +148,28 @@ export function NuevoCargoModal({ isOpen, onClose }: NuevoCargoModalProps) {
             </label>
             <input
               type="date"
-              className="w-full bg-[var(--bg-secondary)]/50 border border-[var(--border-primary)] rounded-xl px-4 py-3 text-sm text-[var(--text-primary)] focus:outline-none focus:border-blue-500 transition-colors [color-scheme:dark]"
+              className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-xl px-5 py-3.5 text-sm text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 transition-all font-black [color-scheme:dark]"
               value={formData.fechaEmision}
-              onChange={(e) => setFormData({ ...formData, fechaEmision: e.target.value })}
+              onChange={(e) => {
+                const emision = e.target.value;
+                setFormData({
+                  ...formData,
+                  fechaEmision: emision,
+                  fechaVencimiento: calcVencimiento(emision),
+                });
+              }}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest flex items-center gap-2">
+              <Calendar className="w-3 h-3" /> Fecha de Vencimiento
+            </label>
+            <input
+              type="date"
+              className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-xl px-5 py-3.5 text-sm text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 transition-all font-black [color-scheme:dark]"
+              value={formData.fechaVencimiento}
+              onChange={(e) => setFormData({ ...formData, fechaVencimiento: e.target.value })}
             />
           </div>
 
@@ -141,26 +181,26 @@ export function NuevoCargoModal({ isOpen, onClose }: NuevoCargoModalProps) {
               required
               rows={3}
               placeholder="Detalle del servicio o cargo..."
-              className="w-full bg-[var(--bg-secondary)]/50 border border-[var(--border-primary)] rounded-xl px-4 py-3 text-sm text-[var(--text-primary)] focus:outline-none focus:border-blue-500 transition-colors resize-none"
+              className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-xl px-5 py-3.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]/30 focus:outline-none focus:border-indigo-500 transition-all resize-none font-bold"
               value={formData.descripcion}
               onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
             />
           </div>
 
-          <div className="pt-4 flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-4 pt-6">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-6 py-3 rounded-xl border border-[var(--border-primary)] text-[var(--text-secondary)] font-bold text-xs uppercase tracking-widest hover:bg-slate-800 hover:text-[var(--text-primary)] transition-all underline-offset-4"
+              className="flex-1 px-8 py-4 border border-[var(--border-primary)] text-[var(--text-secondary)] font-black text-[10px] uppercase tracking-[0.25em] rounded-2xl hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)] transition-all order-2 sm:order-1"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={createCargo.isPending}
-              className="flex-1 bg-blue-600 hover:bg-blue-500 text-[var(--text-primary)] px-6 py-3 rounded-xl font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-blue-900/40 transition-all active:scale-95 disabled:opacity-50"
+              className="flex-[1.5] px-8 py-4 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-30 text-white font-black rounded-2xl text-[10px] uppercase tracking-[0.3em] shadow-2xl shadow-indigo-900/40 transition-all active:scale-95 flex items-center justify-center gap-3 order-1 sm:order-2"
             >
-              {createCargo.isPending ? 'Procesando...' : 'Confirmar Cargo'}
+              {createCargo.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Confirmar Cargo'}
             </button>
           </div>
         </form>

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Save, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, Wallet } from 'lucide-react';
 import { useClientes } from '../hooks/useClientes';
+import { CuentaCorrientePanel } from '../components/CuentaCorrientePanel';
 
 export default function ClienteForm() {
   const navigate = useNavigate();
@@ -248,6 +249,22 @@ export default function ClienteForm() {
           </div>
         </form>
       </div>
+
+      {/* Cuenta Corriente — solo en modo edición */}
+      {isEditing && id && (
+        <div className="bg-[var(--bg-secondary)]/40 backdrop-blur-xl rounded-3xl border border-[var(--border-primary)]/60 shadow-2xl p-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center">
+              <Wallet className="w-5 h-5 text-indigo-400" />
+            </div>
+            <div>
+              <h3 className="text-sm font-black text-[var(--text-primary)] uppercase tracking-widest">Cuenta Corriente</h3>
+              <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-widest mt-0.5">Historial de cargos y pagos del cliente</p>
+            </div>
+          </div>
+          <CuentaCorrientePanel clienteId={Number(id)} clienteNombre={cliente?.nombre} />
+        </div>
+      )}
     </div>
   );
 }

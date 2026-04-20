@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { X, Anchor, Search, Ship, Calendar, Clock, Loader2, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { ClipboardCheck, X, Search, Ship, ArrowRight, Anchor, Calendar, Clock, Loader2, Check } from 'lucide-react';
 import { useEmbarcaciones } from '../../embarcaciones/hooks/useEmbarcaciones';
 
 interface NuevoPedidoModalProps {
@@ -50,17 +50,20 @@ export function NuevoPedidoModal({ isOpen, onClose, onSave }: NuevoPedidoModalPr
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[var(--modal-overlay)] backdrop-blur-[12px] animate-in fade-in duration-300">
-      <div className="bg-[var(--modal-glass-bg)] border border-[var(--border-primary)] w-full max-w-xl rounded-[3rem] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.5)] overflow-hidden transform animate-in slide-in-from-bottom-8 duration-500">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[var(--bg-primary)]/80 backdrop-blur-md animate-in fade-in duration-300">
+      <div className="bg-[var(--modal-glass-bg)] border border-[var(--border-primary)] w-full max-w-md rounded-[3rem] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.5)] overflow-hidden transform animate-in slide-in-from-bottom-8 duration-500">
 
+        {/* Header */}
         <div className="px-10 pt-10 pb-8 border-b border-[var(--border-primary)] flex justify-between items-start bg-gradient-to-br from-indigo-500/10 to-transparent">
           <div className="flex items-center gap-5">
-            <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-500 shadow-inner">
-              <Anchor className="w-7 h-7" />
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center border border-indigo-500/20 bg-indigo-500/10 text-indigo-500 shadow-inner">
+              <ClipboardCheck className="w-7 h-7" />
             </div>
             <div>
-              <h3 className="text-2xl font-black text-[var(--text-primary)] uppercase tracking-tight">Programar Servicio</h3>
-              <p className="text-[10px] text-[var(--text-secondary)] font-black uppercase tracking-[0.25em] mt-1 opacity-60">Solicitar lanzamiento / maniobra interna</p>
+              <h3 className="text-2xl font-black text-[var(--text-primary)] uppercase tracking-tight">
+                Orden de Trabajo
+              </h3>
+              <p className="text-[10px] text-[var(--text-secondary)] font-black uppercase tracking-[0.25em] mt-1 opacity-60">Gestión de servicios y taller</p>
             </div>
           </div>
           <button onClick={onClose} className="p-3 hover:bg-[var(--bg-primary)] rounded-full text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all active:scale-90 border border-transparent hover:border-[var(--border-primary)]">
@@ -105,7 +108,7 @@ export function NuevoPedidoModal({ isOpen, onClose, onSave }: NuevoPedidoModalPr
                         key={boat.id}
                         type="button"
                         onClick={() => setSelectedBoatId(boat.id)}
-                        className="w-full flex items-center justify-between p-4 bg-[var(--bg-secondary)]/30 border border-[var(--border-primary)]/40 rounded-[1.25rem] hover:border-indigo-500/40 hover:bg-indigo-500/5 transition-all group/item"
+                        className="w-full flex items-center justify-between p-4 bg-[var(--bg-secondary)]/30 border border-[var(--border-primary)]/40 rounded-[1.25rem] hover:border-violet-500/40 hover:bg-violet-500/5 transition-all group/item"
                       >
                         <div className="flex items-center gap-4 text-left">
                           <div className="w-10 h-10 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-primary)] flex items-center justify-center text-[var(--text-muted)] group-hover/item:text-indigo-500 group-hover/item:border-indigo-500/20 transition-all">
@@ -175,20 +178,24 @@ export function NuevoPedidoModal({ isOpen, onClose, onSave }: NuevoPedidoModalPr
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 pt-6">
+          <div className="flex flex-col sm:flex-row gap-4 pt-4">
             <button
               type="button"
               onClick={onClose}
               className="flex-1 px-8 py-4 border border-[var(--border-primary)] text-[var(--text-secondary)] font-black text-[10px] uppercase tracking-[0.25em] rounded-2xl hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)] transition-all order-2 sm:order-1"
             >
-              Cancelar
+              Cerrar
             </button>
             <button
               type="submit"
-              disabled={isSubmitting || !selectedBoatId}
-              className="flex-[1.5] px-8 py-4 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-30 text-white font-black rounded-2xl text-[10px] uppercase tracking-[0.3em] shadow-2xl shadow-indigo-900/40 transition-all active:scale-95 flex items-center justify-center gap-3 order-1 sm:order-2"
+              disabled={isSubmitting}
+              className="flex-[2] px-8 py-4 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-black rounded-2xl text-[10px] uppercase tracking-[0.3em] shadow-[0_12px_40px_-12px_rgba(99,102,241,0.3)] transition-all active:scale-95 flex items-center justify-center gap-3 order-1 sm:order-2"
             >
-              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Confirmar Solicitud <ArrowRight className="w-4 h-4" /></>}
+              {isSubmitting ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <><Check className="w-4 h-4" /> Emitir Pedido</>
+              )}
             </button>
           </div>
         </form>

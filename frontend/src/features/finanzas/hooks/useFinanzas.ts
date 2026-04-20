@@ -80,6 +80,7 @@ export function useFinanzas() {
       queryClient.invalidateQueries({ queryKey: ['pagos'] });
       queryClient.invalidateQueries({ queryKey: ['cargos'] });
       queryClient.invalidateQueries({ queryKey: ['caja-resumen'] });
+      queryClient.invalidateQueries({ queryKey: ['cajas'] });
     },
   });
 

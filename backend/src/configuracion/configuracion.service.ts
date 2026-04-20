@@ -36,6 +36,11 @@ export class ConfiguracionService implements OnApplicationBootstrap {
         descripcion: 'Email de contacto de la guardería',
       },
       {
+        clave: 'DIAS_VENCIMIENTO',
+        valor: '15',
+        descripcion: 'Días desde la emisión hasta el vencimiento de un cargo',
+      },
+      {
         clave: 'CUOTA_INDIVIDUAL',
         valor: '50',
         descripcion: 'Monto de cuota mensual para socios individuales',

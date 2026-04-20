@@ -43,6 +43,10 @@ export class AutomaticBillingService {
     const today = new Date();
     const todayDay = today.getDate();
 
+    const diasVencimiento = await this.configuracionService.getValorNumerico('DIAS_VENCIMIENTO', 15);
+    const fechaVencimiento = new Date(today);
+    fechaVencimiento.setDate(fechaVencimiento.getDate() + diasVencimiento);
+
     // 1. Buscar clientes que facturan hoy
     const clientesAFacturar = await this.clienteRepo.find({
       where: { diaFacturacion: todayDay, activo: true },
@@ -101,6 +105,7 @@ export class AutomaticBillingService {
               cliente: { id: cliente.id },
               pagado: false,
               fechaEmision: new Date(),
+              fechaVencimiento,
             });
             const guardado = await this.cargoRepo.save(nuevoCargo);
             cargoIds.push(guardado.id);
@@ -135,6 +140,7 @@ export class AutomaticBillingService {
             cliente: { id: cliente.id },
             pagado: false,
             fechaEmision: new Date(),
+            fechaVencimiento,
           });
           const guardado = await this.cargoRepo.save(cargoCuota);
           cargoIds.push(guardado.id);
@@ -167,6 +173,7 @@ export class AutomaticBillingService {
             cliente: { id: cliente.id },
             pagado: false,
             fechaEmision: new Date(),
+            fechaVencimiento,
           });
           const guardado = await this.cargoRepo.save(cargoCuota);
           cargoIds.push(guardado.id);

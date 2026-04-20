@@ -70,16 +70,16 @@ export const NuevaFacturaModal: React.FC<NuevaFacturaModalProps> = ({ isOpen, on
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[var(--bg-primary)]/80 backdrop-blur-md animate-in fade-in duration-300">
-      <div className="bg-[var(--bg-secondary)] border border-[var(--border-primary)]/60 w-full max-w-5xl rounded-[2.5rem] shadow-2xl shadow-indigo-900/10 overflow-hidden transform animate-in slide-in-from-bottom-8 duration-500">
+      <div className="bg-[var(--modal-glass-bg)] border border-[var(--border-strong)] w-full max-w-5xl rounded-[3rem] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.5)] overflow-hidden transform animate-in slide-in-from-bottom-8 duration-500">
 
-        <div className="px-8 pt-8 pb-6 border-b border-[var(--border-primary)]/60 flex justify-between items-start">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
-              <Receipt className="w-6 h-6" />
+        <div className="px-10 pt-10 pb-8 border-b border-[var(--border-primary)] flex justify-between items-start bg-gradient-to-br from-indigo-500/10 to-transparent">
+          <div className="flex items-center gap-5">
+            <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-500 shadow-inner">
+              <Receipt className="w-7 h-7" />
             </div>
             <div>
-              <h3 className="text-xl font-black text-[var(--text-primary)] uppercase tracking-tight">Emisión de Comprobante</h3>
-              <p className="text-xs text-[var(--text-secondary)] font-bold uppercase tracking-widest mt-0.5">Agrupación de cargos y facturación formal</p>
+              <h3 className="text-2xl font-black text-[var(--text-primary)] uppercase tracking-tight">Emisión de Comprobante</h3>
+              <p className="text-[10px] text-[var(--text-secondary)] font-black uppercase tracking-[0.25em] mt-1 opacity-60">Agrupación de cargos y facturación formal</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-[var(--bg-primary)] rounded-xl text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all">
@@ -151,21 +151,21 @@ export const NuevaFacturaModal: React.FC<NuevaFacturaModalProps> = ({ isOpen, on
               </div>
 
               {/* Summary Card */}
-              <div className="bg-indigo-600 p-8 rounded-[2.5rem] text-[var(--text-primary)] shadow-2xl shadow-indigo-900/40 relative overflow-hidden group">
+              <div className="bg-indigo-600 p-10 rounded-[3rem] text-[var(--text-primary)] shadow-2xl shadow-indigo-900/50 relative overflow-hidden group">
                 <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform duration-700">
                   <FileCheck className="w-32 h-32" />
                 </div>
                 <div className="relative z-10">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Total Liquidación</span>
-                    <div className="bg-white/10 px-2 py-0.5 rounded border border-white/20 text-[9px] font-black uppercase tracking-widest">
+                  <div className="flex justify-between items-center mb-4">
+                    <span className="text-[10px] font-black uppercase tracking-[0.25em] opacity-80">Total Liquidación</span>
+                    <div className="bg-white/10 px-2.5 py-1 rounded-lg border border-white/20 text-[9px] font-black uppercase tracking-widest">
                       {cargoIds.length} CONCEPTOS
                     </div>
                   </div>
-                  <div className="text-5xl font-black tracking-tighter tabular-nums">
+                  <div className="text-6xl font-black tracking-tighter tabular-nums">
                     {formatCurrency(totalFactura)}
                   </div>
-                  <p className="mt-4 text-[10px] font-bold text-indigo-200 uppercase tracking-widest italic leading-relaxed">
+                  <p className="mt-5 text-[10px] font-bold text-indigo-100/60 uppercase tracking-widest italic leading-relaxed">
                     Certificado de liquidación interno listo para registro contable.
                   </p>
                 </div>
@@ -250,20 +250,20 @@ export const NuevaFacturaModal: React.FC<NuevaFacturaModalProps> = ({ isOpen, on
           </div>
 
           {/* Combined Actions */}
-          <div className="flex gap-4 pt-8 mt-6 border-t border-[var(--border-primary)]/60 items-center justify-between">
+          <div className="flex flex-col sm:flex-row gap-5 pt-8 mt-6 border-t border-[var(--border-primary)]/60 items-center justify-between">
             <button
               type="button"
               onClick={onClose}
-              className="px-8 py-3.5 border border-[var(--border-primary)] text-[var(--text-secondary)] font-bold text-xs uppercase tracking-widest rounded-xl hover:bg-[var(--bg-primary)] hover:text-[var(--text-primary)] transition-all underline-offset-4"
+              className="w-full sm:w-auto px-10 py-5 border border-[var(--border-primary)] text-[var(--text-secondary)] font-black text-[10px] uppercase tracking-[0.3em] rounded-2xl hover:bg-[var(--bg-secondary)] hover:text-[var(--text-primary)] transition-all order-2 sm:order-1 active:scale-95"
             >
               Cancelar Emisión
             </button>
             <button
               type="submit"
               disabled={isSubmitting || cargoIds.length === 0}
-              className="px-12 py-3.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-30 disabled:cursor-not-allowed text-[var(--text-primary)] font-black rounded-xl text-xs uppercase tracking-[0.2em] shadow-xl shadow-indigo-900/40 active:scale-95 flex items-center justify-center gap-3 transition-all"
+              className="w-full sm:w-auto px-12 py-5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed text-white font-black rounded-2xl text-[10px] uppercase tracking-[0.3em] shadow-xl shadow-indigo-900/40 active:scale-95 flex items-center justify-center gap-3 transition-all order-1 sm:order-2"
             >
-              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin text-[var(--text-primary)]" /> : 'Confirmar y Generar Factura'}
+              {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin text-white" /> : <><FileCheck className="w-5 h-5" /> Confirmar y Generar Factura</>}
             </button>
           </div>
         </form>

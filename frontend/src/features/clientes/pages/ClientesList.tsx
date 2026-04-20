@@ -102,7 +102,7 @@ export default function ClientesList() {
           </div>
           <div className="hidden md:flex items-center gap-3 text-[var(--text-secondary)] text-[10px] font-black uppercase tracking-widest bg-[var(--bg-primary)]/40 px-4 py-2 rounded-xl border border-[var(--border-primary)] transition-colors duration-300">
             <Receipt className="w-3.5 h-3.5" />
-            Accounts: {filteredClientes.length}
+            Clientes: {filteredClientes.length}
           </div>
         </div>
 

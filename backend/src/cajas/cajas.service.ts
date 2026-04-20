@@ -37,7 +37,7 @@ export class CajasService {
 
   findAll(query: PaginationQuery = {}) {
     return paginate(this.cajaRepo, query, {
-      relations: ['pagos'],
+      relations: ['pagos', 'pagos.cliente', 'pagos.cargo'],
       order: { createdAt: 'DESC' },
     });
   }
@@ -45,7 +45,7 @@ export class CajasService {
   async findOne(id: number) {
     const caja = await this.cajaRepo.findOne({
       where: { id },
-      relations: ['pagos'],
+      relations: ['pagos', 'pagos.cliente', 'pagos.cargo'],
     });
     if (!caja) throw new NotFoundException(`Caja con ID ${id} no encontrada`);
     return caja;
@@ -54,7 +54,7 @@ export class CajasService {
   async findAbierta() {
     return this.cajaRepo.findOne({
       where: { estado: EstadoCaja.ABIERTA },
-      relations: ['pagos'],
+      relations: ['pagos', 'pagos.cliente', 'pagos.cargo'],
     });
   }
 

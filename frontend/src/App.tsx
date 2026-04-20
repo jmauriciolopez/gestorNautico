@@ -57,7 +57,7 @@ function App() {
       <ThemeProvider>
         <BrowserRouter>
           <Toaster 
-            position="top-right"
+            position="top-center"
             toastOptions={{
               className: 'dark:bg-slate-900 dark:text-white border border-slate-800',
               duration: 4000,

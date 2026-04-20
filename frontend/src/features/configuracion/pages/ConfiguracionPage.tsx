@@ -95,6 +95,18 @@ export default function ConfiguracionPage() {
                 className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-2xl px-5 py-4 text-[var(--text-primary)] focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all font-bold"
               />
             </div>
+            <div className="space-y-2">
+              <label className="text-[11px] font-black uppercase tracking-widest text-[var(--text-secondary)]">Días hasta vencimiento de cargos</label>
+              <input
+                type="number"
+                min="1"
+                max="90"
+                value={formData['DIAS_VENCIMIENTO'] || ''}
+                onChange={(e) => handleChange('DIAS_VENCIMIENTO', e.target.value)}
+                className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-2xl px-5 py-4 text-[var(--text-primary)] focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all font-bold"
+              />
+              <p className="text-[10px] text-[var(--text-secondary)] italic">Días desde la emisión hasta el vencimiento. Se aplica a cargos automáticos y manuales.</p>
+            </div>
           </div>
         </div>
 

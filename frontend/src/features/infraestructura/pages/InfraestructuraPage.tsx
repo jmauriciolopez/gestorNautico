@@ -63,7 +63,6 @@ export default function InfraestructuraPage() {
       await createUbicacion.mutateAsync(data);
       toast.success('Ubicación principal creada');
     } catch (error: any) {
-      toast.error(error.message || 'Error al crear la ubicación');
       console.error(error.message);
     }
   };
@@ -73,7 +72,6 @@ export default function InfraestructuraPage() {
       await createZona.mutateAsync(data);
       toast.success('Zona registrada correctamente');
     } catch (error: any) {
-      toast.error(error.message || 'Error al registrar la zona');
       console.error(error.message);
     }
   };
@@ -93,7 +91,6 @@ export default function InfraestructuraPage() {
       await createRack.mutateAsync(data);
       toast.success(`Rack ${data.codigo} generado con éxito`);
     } catch (error: any) {
-      toast.error(error.message || 'Error al generar el rack');
       console.error(error.message);
     }
   };
@@ -103,7 +100,6 @@ export default function InfraestructuraPage() {
       await updateRack.mutateAsync({ id, ...data });
       toast.success('Rack actualizado correctamente');
     } catch (error: any) {
-      toast.error(error.message || 'Error al actualizar el rack');
       console.error(error.message);
     }
   };
@@ -113,7 +109,6 @@ export default function InfraestructuraPage() {
       await deleteRack.mutateAsync(id);
       toast.success('Rack eliminado permanentemente');
     } catch (error: any) {
-      toast.error(error.message || 'Error al eliminar el rack');
       console.error(error.message);
     }
   };
@@ -146,7 +141,6 @@ export default function InfraestructuraPage() {
       setIsAsignarOpen(false);
       setSelectedSpaceState(null);
     } catch (error: any) {
-      toast.error(error.message || 'Error en la asignación del espacio');
       console.error(error.message);
     }
   };
@@ -171,7 +165,6 @@ export default function InfraestructuraPage() {
       setIsLiberarOpen(false);
       setSelectedSpaceState(null);
     } catch (error: any) {
-      toast.error(error.message || 'Error al liberar el espacio');
       console.error(error.message);
     }
   };

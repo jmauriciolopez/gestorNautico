@@ -12,13 +12,13 @@ export interface Cargo {
   };
 }
 
-interface CargosListProps {
-  cargos: Cargo[];
-  isLoading: boolean;
-  onCobrar?: (cargo: Cargo) => void;
-}
-
 export function CargosList({ cargos, isLoading, onCobrar }: CargosListProps) {
+  const extractVesselName = (cargo: Cargo) => {
+    if (!cargo.descripcion) return 'GENERAL';
+    const parts = cargo.descripcion.split(/ - |: /);
+    if (parts.length > 1) return parts[1];
+    return cargo.descripcion;
+  };
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-left border-collapse">
@@ -42,8 +42,14 @@ export function CargosList({ cargos, isLoading, onCobrar }: CargosListProps) {
               <tr key={cargo.id} className="group hover:bg-slate-800/30 transition-all cursor-default">
                 <td className="px-8 py-5">
                   <div className="flex flex-col">
-                    <span className="text-sm font-bold text-[var(--text-primary)] group-hover:text-blue-400 transition-colors uppercase tracking-tight">{cargo.cliente?.nombre}</span>
-                    <span className="text-[10px] text-slate-600 font-black uppercase tracking-widest mt-0.5">ID RECEPTOR: {cargo.id}</span>
+                    <span className="text-sm font-bold text-[var(--text-primary)] group-hover:text-blue-400 transition-colors uppercase tracking-tight">
+                      {cargo.cliente?.nombre || 'S/D'}
+                    </span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-[9px] font-black uppercase text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20 tracking-widest">
+                        {extractVesselName(cargo)}
+                      </span>
+                    </div>
                   </div>
                 </td>
                 <td className="px-8 py-5 text-xs text-[var(--text-secondary)] font-medium leading-relaxed max-w-xs">{cargo.descripcion}</td>
@@ -63,8 +69,8 @@ export function CargosList({ cargos, isLoading, onCobrar }: CargosListProps) {
                     </div>
                   )}
                 </td>
-                <td className="px-8 py-5 text-right font-black text-[var(--text-primary)] text-sm">
-                  ${Number(cargo.monto).toLocaleString()}
+                <td className="px-8 py-5 text-right font-black text-[var(--text-primary)] text-sm whitespace-nowrap">
+                  ${Number(cargo.monto).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
                 </td>
                 <td className="px-8 py-5 text-right">
                   {!cargo.pagado ? (

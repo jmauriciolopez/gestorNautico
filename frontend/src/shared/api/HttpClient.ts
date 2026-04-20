@@ -1,5 +1,6 @@
 /// <reference types="vite/client" />
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import { toast } from 'react-hot-toast';
 
 const BASE_URL = import.meta.env.VITE_API_URL  ;
 
@@ -32,15 +33,42 @@ class HttpClient {
             (error) => Promise.reject(error)
         );
 
-        // Interceptor de Respuesta: Manejar 401 (Unauthorized)
+        // Interceptor de Respuesta: Manejar errores globales
         this.instance.interceptors.response.use(
             (response) => response,
             (error) => {
-                if (error.response?.status === 401) {
+                const status = error.response?.status;
+                const data = error.response?.data;
+
+                // 1. Manejar 401 (Unauthorized)
+                if (status === 401) {
                     if (this.unauthorizedCallback) {
                         this.unauthorizedCallback();
                     }
                 }
+
+                // 2. Extraer y mostrar mensaje amigable
+                let messageBody = 'No se pudo completar la operación.';
+                
+                if (data?.message) {
+                    messageBody = Array.isArray(data.message) 
+                        ? data.message[0] // Tomar el primero si hay varios, para no saturar
+                        : data.message;
+                } else if (status) {
+                    switch (status) {
+                        case 400: messageBody = 'La solicitud no es válida.'; break;
+                        case 403: messageBody = 'Acceso denegado.'; break;
+                        case 404: messageBody = 'No encontrado.'; break;
+                        case 500: messageBody = 'Error interno del servidor.'; break;
+                    }
+                }
+
+                // Mostrar Toast único
+                toast.error(messageBody, {
+                    id: 'global-api-error',
+                });
+
+                console.error('[HttpClient Error]', status, data);
                 return Promise.reject(error);
             }
         );

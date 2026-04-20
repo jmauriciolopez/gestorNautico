@@ -65,7 +65,7 @@ const DashboardOperativo: React.FC = () => {
       await updateEmbarcacion.mutateAsync({ id: embarcacionId, data: { espacioId } });
       toast.success('Embarcación asignada');
     } catch (error: any) {
-      toast.error(error.message || 'Error al asignar');
+      console.error('Error al asignar:', error);
     }
   };
 

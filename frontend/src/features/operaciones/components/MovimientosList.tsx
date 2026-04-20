@@ -29,7 +29,7 @@ export function MovimientosList({ movimientos, isLoading }: MovimientosListProps
             <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
             <h3 className="text-2xl font-black text-[var(--text-primary)] uppercase tracking-tight">Bitácora de Maniobras</h3>
           </div>
-          <p className="text-[10px] text-[var(--text-secondary)] font-black uppercase tracking-[0.3em] opacity-60">Registro histórico auditado de movimientos de flota</p>
+          <p className="text-[10px] text-[var(--text-secondary)] font-black uppercase tracking-[0.3em] opacity-60">Registro histórico de movimientos de flota</p>
         </div>
         <div className="flex items-center gap-4">
           <div className="px-6 py-3 bg-amber-500/10 border border-amber-500/20 rounded-[1.25rem] backdrop-blur-md mr-4">
@@ -49,13 +49,12 @@ export function MovimientosList({ movimientos, isLoading }: MovimientosListProps
         {movimientos.map((mov) => (
           <div key={mov.id} className="group relative bg-[var(--bg-secondary)]/20 hover:bg-[var(--bg-secondary)]/40 p-6 rounded-[2.5rem] border border-[var(--border-primary)]/40 hover:border-amber-500/30 transition-all duration-500 flex flex-col md:flex-row md:items-center justify-between gap-6 overflow-hidden">
             <div className={`absolute top-0 left-0 w-1.5 h-full ${mov.tipo === 'entrada' ? 'bg-indigo-600' : 'bg-emerald-600'}`} />
-            
+
             <div className="flex items-center gap-6 relative z-10">
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border-2 transition-all duration-500 ${
-                mov.tipo === 'entrada' 
-                ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400 shadow-[0_0_15px_-5px_rgba(99,102,241,0.3)]' 
-                : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 shadow-[0_0_15px_-5px_rgba(16,185,129,0.3)]'
-              }`}>
+              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border-2 transition-all duration-500 ${mov.tipo === 'entrada'
+                  ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400 shadow-[0_0_15px_-5px_rgba(99,102,241,0.3)]'
+                  : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 shadow-[0_0_15px_-5px_rgba(16,185,129,0.3)]'
+                }`}>
                 {mov.tipo === 'entrada' ? <ArrowRight className="w-6 h-6" /> : <ArrowLeft className="w-6 h-6" />}
               </div>
 
@@ -103,7 +102,7 @@ export function MovimientosList({ movimientos, isLoading }: MovimientosListProps
             </div>
           </div>
         ))}
-        
+
         {movimientos.length === 0 && (
           <div className="py-32 text-center bg-[var(--bg-secondary)]/10 rounded-[3rem] border-2 border-dashed border-[var(--border-primary)]/40">
             <div className="w-24 h-24 rounded-[2.5rem] bg-[var(--bg-secondary)] border border-[var(--border-primary)] flex items-center justify-center mx-auto mb-8 text-[var(--text-muted)] shadow-inner">
