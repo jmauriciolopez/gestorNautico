@@ -10,7 +10,14 @@ export interface Factura {
   estado: 'PENDIENTE' | 'PAGADA' | 'ANULADA';
   observaciones?: string;
   cliente: { id: number; nombre: string; dni: string };
-  cargos?: any[];
+  cargos?: {
+    id: number;
+    descripcion: string;
+    monto: number;
+    tipo: string;
+    pagado: boolean;
+    fechaVencimiento?: string;
+  }[];
   createdAt: string;
   updatedAt: string;
 }
@@ -18,10 +25,10 @@ export interface Factura {
 export function useFacturas() {
   const queryClient = useQueryClient();
 
-  const getFacturas = useQuery<Factura[]>({
+  const getFacturas = useQuery({
     queryKey: ['facturas'],
-    queryFn: () => httpClient.get<Paginated<Factura>>('/facturas'),
-    select: selectData,
+    queryFn: (): Promise<Factura[]> =>
+      httpClient.get<Paginated<Factura>>('/facturas').then(selectData),
   });
 
   const getNextNumero = useQuery<{ nextNumero: string }>({
@@ -52,10 +59,12 @@ export function useFacturas() {
   });
 
   const updateEstadoFactura = useMutation({
-    mutationFn: ({ id, estado }: { id: number; estado: Factura['estado'] }) =>
-      httpClient.patch(`/facturas/${id}/estado`, { estado }),
+    mutationFn: ({ id, estado, metodoPago }: { id: number; estado: Factura['estado']; metodoPago?: string }) =>
+      httpClient.patch(`/facturas/${id}/estado`, { estado, metodoPago }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['facturas'] });
+      queryClient.invalidateQueries({ queryKey: ['pagos'] });
+      queryClient.invalidateQueries({ queryKey: ['caja-resumen'] });
     },
   });
 

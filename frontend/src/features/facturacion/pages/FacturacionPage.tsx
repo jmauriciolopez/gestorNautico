@@ -1,34 +1,62 @@
 import React, { useState } from 'react';
-import { Plus, RefreshCw, Receipt, FileText, ChevronRight } from 'lucide-react';
-import { useFacturas } from '../hooks/useFacturas';
+import { Plus, RefreshCw, Receipt, FileText, ChevronRight, CreditCard } from 'lucide-react';
+import { useFacturas, type Factura } from '../hooks/useFacturas';
 import { FacturasList } from '../components/FacturasList';
 import { NuevaFacturaModal } from '../components/NuevaFacturaModal';
 import { useConfirm } from '../../../shared/context/ConfirmContext';
 import { RoleGuard } from '../../../components/auth/RoleGuard';
 import { Role } from '../../../types';
 
+const METODOS = [
+  { value: 'EFECTIVO', label: 'Efectivo' },
+  { value: 'TRANSFERENCIA', label: 'Transferencia' },
+  { value: 'TARJETA', label: 'Tarjeta' },
+  { value: 'CHEQUE', label: 'Cheque' },
+];
+
 export default function FacturacionPage() {
   const { getFacturas, updateEstadoFactura } = useFacturas();
+  const facturas: Factura[] = (getFacturas.data as Factura[] | undefined) ?? [];
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [metodoPagoModal, setMetodoPagoModal] = useState<{ id: number } | null>(null);
+  const [metodoPago, setMetodoPago] = useState('EFECTIVO');
   const confirm = useConfirm();
 
   const handleUpdateEstado = async (id: number, estado: 'PENDIENTE' | 'PAGADA' | 'ANULADA') => {
-    const isLiquidar = estado === 'PAGADA';
-    const label = isLiquidar ? 'Liquidar' : 'Anular';
-    
-    const confirmed = await confirm({
-      title: isLiquidar ? 'Liquidar Factura' : 'Anular Factura',
-      message: `¿Está seguro de que desea ${label} esta factura? Esta acción no se puede deshacer.`,
-      confirmText: isLiquidar ? 'Liquidar' : 'Anular Factura',
-      variant: isLiquidar ? 'primary' : 'danger'
-    });
+    if (estado === 'PAGADA') {
+      // Mostrar selector de método de pago
+      setMetodoPago('EFECTIVO');
+      setMetodoPagoModal({ id });
+      return;
+    }
 
+    const confirmed = await confirm({
+      title: 'Anular Factura',
+      message: '¿Está seguro de que desea anular esta factura? Esta acción no se puede deshacer.',
+      confirmText: 'Anular Factura',
+      variant: 'danger',
+    });
     if (confirmed) {
       try {
         await updateEstadoFactura.mutateAsync({ id, estado });
       } catch (error) {
-        console.error('Error al actualizar el estado de la factura:', error);
+        console.error('Error al anular la factura:', error);
       }
+    }
+  };
+
+  const handleConfirmarLiquidar = async () => {
+    if (!metodoPagoModal) return;
+    try {
+      await updateEstadoFactura.mutateAsync({
+        id: metodoPagoModal.id,
+        estado: 'PAGADA',
+        metodoPago,
+      });
+    } catch (error) {
+      console.error('Error al liquidar la factura:', error);
+    } finally {
+      setMetodoPagoModal(null);
     }
   };
 
@@ -77,7 +105,7 @@ export default function FacturacionPage() {
             </div>
             <div>
               <p className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest leading-none mb-1">Emitidas MTD</p>
-              <p className="text-3xl font-black text-[var(--text-primary)] tracking-tighter tabular-nums">{getFacturas.data?.length || 0}</p>
+              <p className="text-3xl font-black text-[var(--text-primary)] tracking-tighter tabular-nums">{facturas.length}</p>
             </div>
           </div>
         </div>
@@ -89,7 +117,7 @@ export default function FacturacionPage() {
             <div>
               <p className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest leading-none mb-1">Volumen Total</p>
               <p className="text-3xl font-black text-[var(--text-primary)] tracking-tighter tabular-nums">
-                ${getFacturas.data?.reduce((acc, curr) => acc + (curr.total || 0), 0).toLocaleString()}
+                ${facturas.reduce((acc: number, curr: Factura) => acc + Number(curr.total || 0), 0).toLocaleString()}
               </p>
             </div>
           </div>
@@ -105,7 +133,7 @@ export default function FacturacionPage() {
           </div>
         </div>
         <FacturasList
-          facturas={getFacturas.data || []}
+          facturas={facturas}
           isLoading={getFacturas.isLoading}
           onUpdateEstado={handleUpdateEstado}
         />
@@ -115,6 +143,55 @@ export default function FacturacionPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
       />
+
+      {/* Modal método de pago */}
+      {metodoPagoModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-3xl p-8 w-full max-w-sm shadow-2xl">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-600/10 border border-emerald-500/20 flex items-center justify-center">
+                <CreditCard className="w-5 h-5 text-emerald-400" />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-[var(--text-primary)] uppercase tracking-widest">Liquidar Factura</h3>
+                <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-widest mt-0.5">Seleccioná el método de pago</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 mb-6">
+              {METODOS.map(m => (
+                <button
+                  key={m.value}
+                  onClick={() => setMetodoPago(m.value)}
+                  className={`py-3 px-4 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${
+                    metodoPago === m.value
+                      ? 'bg-emerald-600 border-emerald-500 text-white'
+                      : 'bg-[var(--bg-surface)] border-[var(--border-primary)] text-[var(--text-secondary)] hover:border-emerald-500/40'
+                  }`}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setMetodoPagoModal(null)}
+                className="flex-1 py-3 rounded-2xl border border-[var(--border-primary)] text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmarLiquidar}
+                disabled={updateEstadoFactura.isPending}
+                className="flex-1 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50"
+              >
+                {updateEstadoFactura.isPending ? 'Procesando...' : 'Confirmar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

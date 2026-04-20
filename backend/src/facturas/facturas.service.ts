@@ -7,7 +7,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { Factura, EstadoFactura } from './factura.entity';
 import { Cargo } from '../cargos/cargo.entity';
+import { Pago, MetodoPago } from '../pagos/pago.entity';
 import { CargosService } from '../cargos/cargos.service';
+import { CajasService } from '../cajas/cajas.service';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import { Role } from '../users/user.entity';
 import { NotificacionTipo } from '../notificaciones/notificacion.entity';
@@ -28,7 +30,10 @@ export class FacturasService {
     private readonly facturaRepo: Repository<Factura>,
     @InjectRepository(Cargo)
     private readonly cargoRepo: Repository<Cargo>,
+    @InjectRepository(Pago)
+    private readonly pagoRepo: Repository<Pago>,
     private readonly cargosService: CargosService,
+    private readonly cajasService: CajasService,
     private readonly notificacionesService: NotificacionesService,
   ) {}
 
@@ -113,22 +118,35 @@ export class FacturasService {
     return this.findOne(guardada.id);
   }
 
-  async updateEstado(id: number, estado: EstadoFactura) {
+  async updateEstado(id: number, estado: EstadoFactura, metodoPago?: MetodoPago) {
     const factura = await this.findOne(id);
     await this.facturaRepo.update(id, { estado });
 
-    // SIDE EFFECTS
     if (estado === EstadoFactura.PAGADA) {
-      // Mark all cargos as paid
+      // 1. Marcar cargos como pagados
       const cargoIds = (factura.cargos || []).map((c) => c.id);
       if (cargoIds.length > 0) {
         await this.cargoRepo.update({ id: In(cargoIds) }, { pagado: true });
       }
 
-      // Notify operators
+      // 2. Registrar pago en caja activa
+      const caja = await this.cajasService.findAbierta();
+      if (caja) {
+        const pago = this.pagoRepo.create({
+          cliente: { id: factura.cliente.id },
+          caja: { id: caja.id },
+          monto: Number(factura.total),
+          fecha: new Date(),
+          metodoPago: metodoPago ?? MetodoPago.EFECTIVO,
+          comprobante: `Liquidación factura ${factura.numero}`,
+        });
+        await this.pagoRepo.save(pago);
+      }
+
+      // 3. Notificar
       await this.notificacionesService.createForRole(Role.OPERADOR, {
-        titulo: 'Factura Realizada',
-        mensaje: `La factura ${factura.numero} del cliente ${factura.cliente.nombre} ha sido marcada como PAGADA.`,
+        titulo: 'Factura Liquidada',
+        mensaje: `La factura ${factura.numero} del cliente ${factura.cliente.nombre} fue marcada como PAGADA.`,
         tipo: NotificacionTipo.EXITO,
       });
     }

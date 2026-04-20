@@ -44,9 +44,26 @@ export class RegistrosService {
     });
   }
 
-  create(data: Partial<RegistroServicio>) {
+  async create(data: Partial<RegistroServicio>) {
     const registro = this.registroRepo.create(data);
-    return this.registroRepo.save(registro);
+    const saved = await this.registroRepo.save(registro);
+
+    // Cargar relaciones para la notificación
+    const completo = await this.registroRepo.findOne({
+      where: { id: saved.id },
+      relations: ['embarcacion', 'embarcacion.cliente', 'servicio'],
+    });
+
+    if (completo) {
+      // Notificar a operadores que hay un servicio programado
+      await this.notificacionesService.createForRole(Role.OPERADOR, {
+        titulo: 'Servicio Programado',
+        mensaje: `${completo.servicio?.nombre ?? 'Servicio'} para "${completo.embarcacion?.nombre}" programado para el ${completo.fechaProgramada}.`,
+        tipo: NotificacionTipo.INFO,
+      });
+    }
+
+    return saved;
   }
 
   async update(id: number, data: Partial<RegistroServicio>) {

@@ -1,11 +1,11 @@
-import { expect, test, describe, beforeAll } from 'vitest';
+﻿import { expect, test, describe, beforeAll } from 'vitest';
 import { page } from '@vitest/browser/context';
 
 describe('Ciclo de Vida Maestro - Validación de Ayuda y Negocio', () => {
   
   beforeAll(async () => {
     // 1. Reset DB + Seed para estado limpio
-    await fetch('http://localhost:3000/database/seed', { method: 'POST' });
+    await fetch('http://localhost:3002/database/seed', { method: 'POST' });
     
     // 2. Navegar e iniciar sesión
     await page.goto('http://localhost:5173/login');

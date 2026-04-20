@@ -12,6 +12,7 @@ import { Cliente } from '../clientes/clientes.entity';
 import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import { Role } from '../users/user.entity';
+import { NotificacionTipo } from '../notificaciones/notificacion.entity';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { paginate, PaginationQuery } from '../common/pagination/pagination.helper';
 
@@ -123,5 +124,64 @@ export class OperacionesService {
       relations: ['cliente', 'embarcacion'],
       order: { createdAt: 'DESC' },
     });
+  }
+
+  async updateEstado(id: number, estado: EstadoSolicitud, motivo?: string) {
+    const solicitud = await this.solicitudRepo.findOne({
+      where: { id },
+      relations: ['cliente', 'embarcacion'],
+    });
+    if (!solicitud) throw new NotFoundException(`Solicitud ${id} no encontrada`);
+
+    await this.solicitudRepo.update(id, { estado });
+
+    const fecha = solicitud.fechaHoraDeseada.toLocaleString('es-AR');
+    const barco = solicitud.embarcacion.nombre;
+    const email = solicitud.cliente.email;
+
+    // In-app al cliente no es posible (no tiene usuario), notificamos a ADMIN
+    await this.notificacionesService.createForRole(Role.ADMIN, {
+      titulo: `Solicitud ${estado}`,
+      mensaje: `La bajada de "${barco}" para el ${fecha} fue marcada como ${estado}.`,
+      tipo: estado === EstadoSolicitud.CANCELADA
+        ? NotificacionTipo.ALERTA
+        : NotificacionTipo.EXITO,
+    });
+
+    // Email al cliente según el nuevo estado
+    if (email) {
+      const templates: Partial<Record<EstadoSolicitud, { subject: string; template: string }>> = {
+        [EstadoSolicitud.CONFIRMADA]: {
+          subject: 'Tu bajada fue confirmada — Gestor Náutico',
+          template: 'bajada-confirmada',
+        },
+        [EstadoSolicitud.COMPLETADA]: {
+          subject: 'Tu embarcación ya está en el agua — Gestor Náutico',
+          template: 'bajada-completada',
+        },
+        [EstadoSolicitud.CANCELADA]: {
+          subject: 'Tu solicitud de bajada fue cancelada — Gestor Náutico',
+          template: 'bajada-cancelada',
+        },
+      };
+
+      const tpl = templates[estado];
+      if (tpl) {
+        await this.notificacionesService.sendEmailNotification(
+          email,
+          tpl.subject,
+          tpl.template,
+          {
+            clienteNombre: solicitud.cliente.nombre,
+            barcoNombre: barco,
+            fechaHora: fecha,
+            motivo: motivo ?? '',
+            anio: new Date().getFullYear(),
+          },
+        );
+      }
+    }
+
+    return this.solicitudRepo.findOne({ where: { id }, relations: ['cliente', 'embarcacion'] });
   }
 }

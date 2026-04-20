@@ -1,4 +1,4 @@
-import { CreditCard, Calendar, Hash, ArrowUpRight, FileText } from 'lucide-react';
+﻿import { CreditCard, Calendar, Hash, ArrowUpRight, FileText } from 'lucide-react';
 
 export interface Pago {
   id: number;
@@ -66,11 +66,11 @@ export function PagosList({ pagos, isLoading }: PagosListProps) {
                       onClick={async () => {
                         try {
                           const token = localStorage.getItem('token');
-                          const response = await fetch(`http://localhost:3000/pagos/${pago.id}/pdf`, {
-                            headers: {
-                              'Authorization': `Bearer ${token}`
-                            }
+                          const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3002';
+                          const response = await fetch(`${baseUrl}/pagos/${pago.id}/pdf`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
                           });
+                          if (!response.ok) throw new Error(`Error ${response.status}`);
                           const blob = await response.blob();
                           const url = window.URL.createObjectURL(blob);
                           const a = document.createElement('a');
@@ -79,6 +79,7 @@ export function PagosList({ pagos, isLoading }: PagosListProps) {
                           document.body.appendChild(a);
                           a.click();
                           a.remove();
+                          window.URL.revokeObjectURL(url);
                         } catch (error) {
                           console.error('Error al descargar recibo:', error);
                         }

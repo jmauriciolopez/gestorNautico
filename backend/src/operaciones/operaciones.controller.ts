@@ -3,6 +3,8 @@ import {
   Post,
   Body,
   Get,
+  Patch,
+  Param,
   Query,
   UseGuards,
   HttpStatus,
@@ -10,8 +12,12 @@ import {
 } from '@nestjs/common';
 import { OperacionesService } from './operaciones.service';
 import { CreateSolicitudBajadaDto } from './dto/create-solicitud-bajada.dto';
+import { EstadoSolicitud } from './solicitud-bajada.entity';
 import { Public } from '../auth/decorators/public.decorator';
-import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard'; // For private routes
+import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Role } from '../users/user.entity';
 
 @Controller('operaciones')
 export class OperacionesController {
@@ -31,5 +37,16 @@ export class OperacionesController {
     @Query('limit') limit?: number,
   ) {
     return this.operacionesService.findAll({ page, limit });
+  }
+
+  @Patch('solicitudes/:id/estado')
+  @UseGuards(AuthTokenGuard, RolesGuard)
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+  async updateEstadoSolicitud(
+    @Param('id') id: string,
+    @Body('estado') estado: EstadoSolicitud,
+    @Body('motivo') motivo?: string,
+  ) {
+    return this.operacionesService.updateEstado(+id, estado, motivo);
   }
 }

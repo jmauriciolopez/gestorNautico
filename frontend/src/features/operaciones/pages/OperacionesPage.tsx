@@ -1,17 +1,19 @@
 import { useState } from 'react';
-import { useOperaciones, Pedido } from '../hooks/useOperaciones';
+import { useOperaciones, useSolicitudesBajada, Pedido } from '../hooks/useOperaciones';
 import { PedidosList } from '../components/PedidosList';
 import { MovimientosList } from '../components/MovimientosList';
+import { SolicitudesBajadaList } from '../components/SolicitudesBajadaList';
 import { NuevoPedidoModal } from '../components/NuevoPedidoModal';
-import { Activity, Plus, Ship, Clock, ChevronRight } from 'lucide-react';
+import { Activity, Plus, Ship, Clock, ChevronRight, Anchor } from 'lucide-react';
 import { useConfirm } from '../../../shared/context/ConfirmContext';
 
-type Tab = 'pedidos' | 'movimientos';
+type Tab = 'pedidos' | 'movimientos' | 'bajadas';
 
 export default function OperacionesPage() {
   const [activeTab, setActiveTab] = useState<Tab>('pedidos');
   const [isPedidoModalOpen, setIsPedidoModalOpen] = useState(false);
   const { getPedidos, getMovimientos, deletePedido, updatePedidoEstado, createPedido } = useOperaciones();
+  const { getSolicitudes, updateEstado: updateSolicitudEstado } = useSolicitudesBajada();
   const confirm = useConfirm();
 
   const handleUpdateStatus = async (id: number, nuevoEstado: Pedido['estado']) => {
@@ -67,7 +69,8 @@ export default function OperacionesPage() {
       <div className="flex flex-wrap gap-2 p-2 bg-[var(--bg-secondary)]/[0.5] rounded-[2rem] border border-[var(--border-primary)] w-fit shadow-xl transition-colors duration-300">
         {[
           { id: 'pedidos', label: 'Solicitudes en Cola', icon: Clock },
-          { id: 'movimientos', label: 'Historial de Maniobras', icon: Ship }
+          { id: 'movimientos', label: 'Historial de Maniobras', icon: Ship },
+          { id: 'bajadas', label: 'Bajadas Públicas', icon: Anchor },
         ].map((tab) => (
           <button
             key={tab.id}

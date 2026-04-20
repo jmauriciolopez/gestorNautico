@@ -222,7 +222,7 @@ export default function ClienteForm() {
                 />
               </div>
               <div>
-                <span className="text-base font-bold text-[var(--text-primary)] group-hover:text-blue-400 transition-colors">Estado del Cliente</span>
+                <span className="text-base font-bold text-[var(--text-primary)] group-hover:text-blue-400 transition-colors">Cliente Activo</span>
                 <p className="text-sm text-[var(--text-secondary)] mt-1">
                   Los clientes inactivos no aparecerán en las selecciones rápidas ni facturación automática.
                 </p>

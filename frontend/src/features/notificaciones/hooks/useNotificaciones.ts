@@ -23,7 +23,7 @@ export function useNotificaciones() {
         return [];
       }
     },
-    refetchInterval: 60000,
+    refetchInterval: 30000,
   });
 
   const markAsRead = useMutation({

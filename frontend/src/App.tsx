@@ -26,6 +26,7 @@ import UsersPage from './features/users/pages/UsersPage';
 import SolicitudBajadaPublica from './features/operaciones/pages/SolicitudBajadaPublica';
 import ConfiguracionPage from './features/configuracion/pages/ConfiguracionPage';
 import UserHelp from './features/help/components/UserHelp';
+import ReportesPage from './features/reportes/pages/ReportesPage';
 
 // Componente simple para Login Helper
 const LoginWrapper = () => {
@@ -92,6 +93,7 @@ function App() {
                     <Route element={<ProtectedRoute allowedRoles={[Role.ADMIN, Role.SUPERADMIN, Role.SUPERVISOR]} />}>
                       <Route path="finanzas" element={<FinanzasPage />} />
                       <Route path="facturacion" element={<FacturacionPage />} />
+                      <Route path="reportes" element={<ReportesPage />} />
                     </Route>
 
                     {/* Configuración — Admin en adelante */}

@@ -24,6 +24,16 @@ export interface Movimiento {
   espacio?: { id: number; numero: string; rack?: { id: number; codigo: string } };
 }
 
+export interface SolicitudBajada {
+  id: number;
+  estado: 'PENDIENTE' | 'CONFIRMADA' | 'COMPLETADA' | 'CANCELADA';
+  fechaHoraDeseada: string;
+  observaciones?: string;
+  cliente: { id: number; nombre: string; email: string };
+  embarcacion: { id: number; nombre: string; matricula: string };
+  createdAt: string;
+}
+
 export function useOperaciones() {
   const queryClient = useQueryClient();
 
@@ -77,4 +87,22 @@ export function useOperaciones() {
   });
 
   return { getPedidos, usePedido, createPedido, updatePedidoEstado, deletePedido, getMovimientos, createMovimiento };
+}
+
+export function useSolicitudesBajada() {
+  const queryClient = useQueryClient();
+
+  const getSolicitudes = useQuery<SolicitudBajada[]>({
+    queryKey: ['solicitudes-bajada'],
+    queryFn: () => httpClient.get<Paginated<SolicitudBajada>>('/operaciones/solicitudes'),
+    select: selectData,
+  });
+
+  const updateEstado = useMutation({
+    mutationFn: ({ id, estado, motivo }: { id: number; estado: SolicitudBajada['estado']; motivo?: string }) =>
+      httpClient.patch(`/operaciones/solicitudes/${id}/estado`, { estado, motivo }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['solicitudes-bajada'] }),
+  });
+
+  return { getSolicitudes, updateEstado };
 }

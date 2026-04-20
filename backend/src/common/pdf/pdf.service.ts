@@ -1,17 +1,23 @@
-import { Injectable } from '@nestjs/common';
+﻿import { Injectable } from '@nestjs/common';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const PDFDocument = require('pdfkit-table');
 import { Factura } from '../../facturas/factura.entity';
 import { Pago } from '../../pagos/pago.entity';
+import { ConfiguracionService } from '../../configuracion/configuracion.service';
 
 @Injectable()
 export class PdfService {
-  async generateInvoice(factura: Factura): Promise<Buffer> {
-    const doc = new PDFDocument({
-      size: 'A4',
-      margin: 50,
-    });
+  constructor(private readonly configService: ConfiguracionService) {}
 
+  async generateInvoice(factura: Factura): Promise<Buffer> {
+    const [nombre, direccion, telefono, email] = await Promise.all([
+      this.configService.getValor('NOMBRE_GUARDERIA', 'Gestor Náutico'),
+      this.configService.getValor('DIRECCION', ''),
+      this.configService.getValor('TELEFONO', ''),
+      this.configService.getValor('EMAIL_GUARDERIA', ''),
+    ]);
+
+    const doc = new PDFDocument({ size: 'A4', margin: 50 });
     const buffers: Buffer[] = [];
     doc.on('data', (chunk) => buffers.push(chunk));
 
@@ -19,31 +25,26 @@ export class PdfService {
       doc.on('end', () => resolve(Buffer.concat(buffers)));
       doc.on('error', reject);
 
-      // --- Estilo ---
-      const primaryColor = '#1e293b'; // Slate-800
-      const accentColor = '#3b82f6'; // Blue-500
+      const primaryColor = '#1e293b';
+      const accentColor = '#3b82f6';
 
-      // --- Header ---
+      // Header
       doc
         .fillColor(primaryColor)
         .fontSize(20)
-        .text('GESTOR NÁUTICO', { align: 'right' })
+        .text(nombre.toUpperCase(), { align: 'right' })
         .fontSize(10)
-        .text('Puerto Deportivo Central', { align: 'right' })
-        .text('Av. de la Rivera 456, CP 1000', { align: 'right' })
-        .text('Tel: +54 011 4444-5555', { align: 'right' })
+        .text(direccion, { align: 'right' })
+        .text(`Tel: ${telefono}`, { align: 'right' })
+        .text(email, { align: 'right' })
         .moveDown(2);
 
-      // --- Divider ---
+      // Divider
       doc.moveTo(50, 110).lineTo(545, 110).strokeColor('#e5e7eb').stroke();
 
-      // --- Title & Factura Info ---
+      // Title
       doc.moveDown(2);
-      doc
-        .fillColor(primaryColor)
-        .fontSize(16)
-        .text('FACTURA', { underline: true })
-        .moveDown(0.5);
+      doc.fillColor(primaryColor).fontSize(16).text('FACTURA', { underline: true }).moveDown(0.5);
 
       const infoX = 50;
       const infoY = doc.y;
@@ -51,14 +52,10 @@ export class PdfService {
       doc
         .fontSize(10)
         .text(`Número: ${factura.numero}`, infoX, infoY)
-        .text(
-          `Fecha Emisión: ${new Date(factura.fechaEmision).toLocaleDateString('es-AR')}`,
-          infoX,
-          infoY + 15,
-        )
+        .text(`Fecha Emisión: ${new Date(factura.fechaEmision).toLocaleDateString('es-AR')}`, infoX, infoY + 15)
         .text(`Estado: ${factura.estado}`, infoX, infoY + 30);
 
-      // --- Cliente Info ---
+      // Cliente
       const clientX = 350;
       doc
         .fontSize(12)
@@ -70,46 +67,46 @@ export class PdfService {
 
       doc.moveDown(4);
 
-      // --- Table of Charges ---
+      // Tabla de cargos
       const table = {
         title: 'DETALLE DE CARGOS',
-        headers: ['Descripción', 'Tipo', 'Monto'],
-        rows:
-          factura.cargos?.map((c) => [
-            c.descripcion,
-            c.tipo,
-            `$${Number(c.monto).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`,
-          ]) || [],
+        headers: ['Descripción', 'Tipo', 'Vencimiento', 'Estado', 'Importe'],
+        rows: (factura.cargos ?? []).map((c) => [
+          c.descripcion,
+          c.tipo,
+          c.fechaVencimiento
+            ? new Date(c.fechaVencimiento).toLocaleDateString('es-AR')
+            : '---',
+          c.pagado ? 'Pagado' : 'Pendiente',
+          `$${Number(c.monto).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`,
+        ]),
       };
 
       doc.table(table, {
-        prepareHeader: () => doc.font('Helvetica-Bold').fontSize(10),
-        prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
-          doc.font('Helvetica').fontSize(10);
+        prepareHeader: () => doc.font('Helvetica-Bold').fontSize(9),
+        prepareRow: (_row: any, _col: any, _idx: any) => {
+          doc.font('Helvetica').fontSize(9);
         },
+        columnsSize: [190, 75, 80, 65, 80],
       } as any);
 
-      // --- Totals ---
+      // Total
       doc.moveDown(2);
-      const totalY = doc.y;
       doc
         .fontSize(14)
         .fillColor(accentColor)
         .text(
           `TOTAL A PAGAR: $${Number(factura.total).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`,
-          {
-            align: 'right',
-          },
+          { align: 'right' },
         );
 
-      // --- Footer ---
+      // Footer
       doc
         .fontSize(8)
         .fillColor('#9ca3af')
         .text(
           'Este documento es un comprobante de gestión interna y no tiene validez legal como factura fiscal.',
-          50,
-          750,
+          50, 750,
           { align: 'center', width: 500 },
         );
 
@@ -118,11 +115,9 @@ export class PdfService {
   }
 
   async generateReceipt(pago: Pago): Promise<Buffer> {
-    const doc = new PDFDocument({
-      size: 'A4',
-      margin: 50,
-    });
+    const nombre = await this.configService.getValor('NOMBRE_GUARDERIA', 'Gestor Náutico');
 
+    const doc = new PDFDocument({ size: 'A4', margin: 50 });
     const buffers: Buffer[] = [];
     doc.on('data', (chunk) => buffers.push(chunk));
 
@@ -132,20 +127,15 @@ export class PdfService {
 
       const primaryColor = '#1e293b';
 
-      // Header
       doc
         .fillColor(primaryColor)
         .fontSize(20)
-        .text('GESTOR NÁUTICO', { align: 'right' })
+        .text(nombre.toUpperCase(), { align: 'right' })
         .fontSize(10)
         .text('RECIBO DE PAGO', { align: 'right' })
         .moveDown(2);
 
-      // Info
-      doc
-        .fontSize(16)
-        .text('COMPROBANTE DE PAGO', { underline: true })
-        .moveDown(1);
+      doc.fontSize(16).text('COMPROBANTE DE PAGO', { underline: true }).moveDown(1);
 
       doc
         .fontSize(10)
@@ -155,15 +145,12 @@ export class PdfService {
         .text(`Método: ${pago.metodoPago}`)
         .moveDown(2);
 
-      // Table (Simple row for the amount)
       const table = {
         headers: ['Concepto', 'Monto'],
-        rows: [
-          [
-            pago.cargo?.descripcion || 'Pago General',
-            `$${Number(pago.monto).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`,
-          ],
-        ],
+        rows: [[
+          pago.cargo?.descripcion || 'Pago General',
+          `$${Number(pago.monto).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`,
+        ]],
       };
 
       doc.table(table, {
@@ -176,9 +163,7 @@ export class PdfService {
         .fontSize(14)
         .text(
           `TOTAL PAGADO: $${Number(pago.monto).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`,
-          {
-            align: 'right',
-          },
+          { align: 'right' },
         );
 
       doc.end();

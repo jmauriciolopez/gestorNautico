@@ -13,6 +13,7 @@ import {
   Settings,
   HelpCircle,
   Anchor,
+  BarChart2,
 } from 'lucide-react';
 import { useAuth } from '../../features/auth/context/AuthContext';
 import { Role } from '../../types';
@@ -31,6 +32,7 @@ const navItems = [
   { name: 'Infraestructura', path: '/infraestructura', icon: LayoutGrid, roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR] },
   { name: 'Finanzas', path: '/finanzas', icon: CircleDollarSign, roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR] },
   { name: 'Facturación', path: '/facturacion', icon: FileText, roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR] },
+  { name: 'Reportes', path: '/reportes', icon: BarChart2, roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR] },
   { name: 'Configuración', path: '/configuracion', icon: Settings, roles: [Role.SUPERADMIN, Role.ADMIN] },
   { name: 'Usuarios', path: '/usuarios', icon: ShieldCheck, roles: [Role.SUPERADMIN] },
   { name: 'Ayuda', path: '/ayuda', icon: HelpCircle, roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR] },

@@ -16,6 +16,26 @@ export class ConfiguracionService implements OnApplicationBootstrap {
     this.logger.log('Inicializando configuraciones base...');
     const items = [
       {
+        clave: 'NOMBRE_GUARDERIA',
+        valor: 'Gestor Náutico',
+        descripcion: 'Nombre de la guardería náutica',
+      },
+      {
+        clave: 'DIRECCION',
+        valor: 'Av. de la Rivera 456, CP 1000',
+        descripcion: 'Dirección física de la guardería',
+      },
+      {
+        clave: 'TELEFONO',
+        valor: '+54 011 4444-5555',
+        descripcion: 'Teléfono de contacto',
+      },
+      {
+        clave: 'EMAIL_GUARDERIA',
+        valor: 'info@gestornautico.com',
+        descripcion: 'Email de contacto de la guardería',
+      },
+      {
         clave: 'CUOTA_INDIVIDUAL',
         valor: '50',
         descripcion: 'Monto de cuota mensual para socios individuales',

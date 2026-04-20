@@ -79,8 +79,12 @@ export class FacturasController {
 
   @Patch(':id/estado')
   @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
-  updateEstado(@Param('id') id: string, @Body('estado') estado: EstadoFactura) {
-    return this.facturasService.updateEstado(+id, estado);
+  updateEstado(
+    @Param('id') id: string,
+    @Body('estado') estado: EstadoFactura,
+    @Body('metodoPago') metodoPago?: string,
+  ) {
+    return this.facturasService.updateEstado(+id, estado, metodoPago as any);
   }
 
   @Delete(':id')
