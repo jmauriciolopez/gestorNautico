@@ -63,7 +63,15 @@ export function PedidosList({ pedidos, isLoading, onUpdateStatus, onDeletePedido
                   </div>
                   <div className="flex items-center gap-2.5 text-[10px] text-[var(--text-secondary)] font-black uppercase tracking-widest bg-[var(--bg-primary)]/40 px-3 py-1.5 rounded-xl border border-[var(--border-primary)]/40">
                     <Clock className="w-3.5 h-3.5 text-indigo-500" />
-                    {new Date(pedido.fechaProgramada).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {(() => {
+                      const fecha = new Date(pedido.fechaProgramada);
+                      const hoy = new Date();
+                      const manana = new Date(hoy); manana.setDate(hoy.getDate() + 1);
+                      const hora = fecha.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                      if (fecha.toDateString() === hoy.toDateString()) return `Hoy ${hora}`;
+                      if (fecha.toDateString() === manana.toDateString()) return `Mañana ${hora}`;
+                      return fecha.toLocaleDateString('es-AR', { day: '2-digit', month: 'short' }) + ' ' + hora;
+                    })()}
                   </div>
                 </div>
               </div>

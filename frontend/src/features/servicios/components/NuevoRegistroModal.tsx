@@ -257,7 +257,7 @@ export function NuevoRegistroModal({ isOpen, onClose, onSave, initialData }: Nue
               ) : (
                 <>
                   <CheckCircle2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                  <span>{initialData ? 'Actualizar Orden' : 'Emitir Orden Técnico'}</span>
+                  <span>{initialData ? 'Actualizar Orden' : 'Cerar Orden'}</span>
                 </>
               )}
             </button>

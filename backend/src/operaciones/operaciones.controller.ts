@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { OperacionesService } from './operaciones.service';
 import { CreateSolicitudBajadaDto } from './dto/create-solicitud-bajada.dto';
+import { UpdateEstadoSolicitudDto } from './dto/update-estado-solicitud.dto';
 import { EstadoSolicitud } from './solicitud-bajada.entity';
 import { Public } from '../auth/decorators/public.decorator';
 import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
@@ -45,9 +46,8 @@ export class OperacionesController {
   @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
   async updateEstadoSolicitud(
     @Param('id') id: string,
-    @Body('estado') estado: EstadoSolicitud,
-    @Body('motivo') motivo?: string,
+    @Body() dto: UpdateEstadoSolicitudDto,
   ) {
-    return this.operacionesService.updateEstado(+id, estado, motivo);
+    return this.operacionesService.updateEstado(+id, dto.estado, dto.motivo);
   }
 }

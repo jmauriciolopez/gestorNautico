@@ -1,6 +1,8 @@
 import { useState, useMemo, useEffect } from 'react';
-import { ArrowLeftRight, X, Search, Ship, ArrowRight, Loader2, AlertCircle, ArrowLeft, Check, ArrowLeftRight as ArrowLeftRightIcon } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { ArrowLeftRight as ArrowLeftRightIcon, X, Search, Ship, ArrowRight, Loader2, AlertCircle, ArrowLeft, Check } from 'lucide-react';
 import { useEmbarcaciones } from '../../embarcaciones/hooks/useEmbarcaciones';
+import { toast } from 'react-hot-toast';
 
 interface NuevoMovimientoModalProps {
   isOpen: boolean;
@@ -48,24 +50,30 @@ export function NuevoMovimientoModal({ isOpen, onClose, onSuccess }: NuevoMovimi
       await onSuccess({
         embarcacionId: selectedId,
         tipo,
-        observaciones
+        observaciones,
       });
       setSelectedId(null);
       setSearchTerm('');
       setObservaciones('');
       onClose();
-    } catch (error) {
+    } catch (error: any) {
+      const msg = error?.message || 'Error al registrar la maniobra. Intente nuevamente.';
+      toast.error(msg);
       console.error('Error recording movement:', error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-[var(--modal-overlay)] backdrop-blur-md animate-in fade-in duration-300">
-      <div className="bg-[var(--modal-glass-bg)] border border-[var(--border-primary)] w-full max-w-lg rounded-[3rem] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.5)] overflow-hidden transform animate-in slide-in-from-bottom-8 duration-500">
+  return createPortal(
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-6">
+      <div
+        className="absolute inset-0 bg-[var(--modal-overlay)] backdrop-blur-md"
+        onClick={onClose}
+      />
+      <div className="bg-[var(--bg-surface)] border border-[var(--border-primary)] w-full max-w-lg rounded-[3rem] shadow-2xl overflow-hidden relative z-10">
 
-        {/* Header Standard Premium */}
+        {/* Header */}
         <div className="px-12 pt-12 pb-8 border-b border-[var(--border-primary)] flex justify-between items-start bg-gradient-to-br from-indigo-500/10 to-transparent">
           <div className="flex items-center gap-6">
             <div className="w-16 h-16 rounded-[1.5rem] flex items-center justify-center border border-indigo-500/20 bg-indigo-500/10 text-indigo-500 shadow-inner">
@@ -78,8 +86,8 @@ export function NuevoMovimientoModal({ isOpen, onClose, onSuccess }: NuevoMovimi
               <p className="text-[10px] text-[var(--text-secondary)] font-black uppercase tracking-[0.25em] mt-1.5 opacity-60">Logística y movimientos internos</p>
             </div>
           </div>
-          <button 
-            onClick={onClose} 
+          <button
+            onClick={onClose}
             className="p-3 hover:bg-[var(--bg-primary)] rounded-full text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all active:scale-90 border border-transparent hover:border-[var(--border-strong)]"
           >
             <X className="w-6 h-6" />
@@ -99,7 +107,7 @@ export function NuevoMovimientoModal({ isOpen, onClose, onSuccess }: NuevoMovimi
             </div>
 
             {!selectedId ? (
-              <div className="space-y-4 animate-in fade-in duration-500">
+              <div className="space-y-4">
                 <div className="relative group">
                   <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-muted)] group-focus-within:text-indigo-500 transition-colors" />
                   <input
@@ -120,23 +128,23 @@ export function NuevoMovimientoModal({ isOpen, onClose, onSuccess }: NuevoMovimi
                     </div>
                   ) : filteredEmbarcaciones.length > 0 ? (
                     filteredEmbarcaciones.map(boat => (
-                        <button
-                          key={boat.id}
-                          type="button"
-                          onClick={() => setSelectedId(boat.id)}
-                          className="w-full flex items-center justify-between p-5 bg-[var(--bg-secondary)]/30 border border-[var(--border-primary)]/40 rounded-[1.75rem] hover:border-indigo-500/40 hover:bg-indigo-500/5 transition-all group/item text-left"
-                        >
-                          <div className="flex items-center gap-4">
-                            <div className="w-11 h-11 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-primary)] flex items-center justify-center text-[var(--text-muted)] group-hover/item:text-indigo-500 group-hover/item:border-indigo-500/20 transition-all shadow-inner">
-                              <Ship className="w-5 h-5" />
-                            </div>
-                            <div>
-                              <p className="font-black text-[var(--text-primary)] group-hover/item:text-indigo-400 text-sm uppercase leading-none mb-1">{boat.nombre}</p>
-                              <p className="text-[10px] text-[var(--text-muted)] font-black tracking-widest uppercase">{boat.matricula}</p>
-                            </div>
+                      <button
+                        key={boat.id}
+                        type="button"
+                        onClick={() => setSelectedId(boat.id)}
+                        className="w-full flex items-center justify-between p-5 bg-[var(--bg-secondary)]/30 border border-[var(--border-primary)]/40 rounded-[1.75rem] hover:border-indigo-500/40 hover:bg-indigo-500/5 transition-all group/item text-left"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-11 h-11 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-primary)] flex items-center justify-center text-[var(--text-muted)] group-hover/item:text-indigo-500 group-hover/item:border-indigo-500/20 transition-all shadow-inner">
+                            <Ship className="w-5 h-5" />
                           </div>
-                          <ArrowRight className="w-5 h-5 text-[var(--text-muted)] group-hover/item:text-indigo-500 transition-all transform group-hover/item:translate-x-1" />
-                        </button>
+                          <div>
+                            <p className="font-black text-[var(--text-primary)] group-hover/item:text-indigo-400 text-sm uppercase leading-none mb-1">{boat.nombre}</p>
+                            <p className="text-[10px] text-[var(--text-muted)] font-black tracking-widest uppercase">{boat.matricula}</p>
+                          </div>
+                        </div>
+                        <ArrowRight className="w-5 h-5 text-[var(--text-muted)] group-hover/item:text-indigo-500 transition-all transform group-hover/item:translate-x-1" />
+                      </button>
                     ))
                   ) : (
                     <div className="py-16 text-center border-2 border-dashed border-[var(--border-primary)]/40 rounded-[2.5rem]">
@@ -146,7 +154,7 @@ export function NuevoMovimientoModal({ isOpen, onClose, onSuccess }: NuevoMovimi
                 </div>
               </div>
             ) : (
-              <div className="flex items-center justify-between p-7 bg-gradient-to-r from-indigo-600/10 to-transparent border border-indigo-500/30 rounded-[2.5rem] shadow-xl shadow-indigo-900/5 animate-in zoom-in-95 duration-500">
+              <div className="flex items-center justify-between p-7 bg-gradient-to-r from-indigo-600/10 to-transparent border border-indigo-500/30 rounded-[2.5rem] shadow-xl shadow-indigo-900/5">
                 <div className="flex items-center gap-6">
                   <div className="w-16 h-16 bg-indigo-600/20 rounded-[1.25rem] flex items-center justify-center text-indigo-500 border border-indigo-500/20 shadow-inner">
                     <Ship className="w-8 h-8" />
@@ -167,7 +175,7 @@ export function NuevoMovimientoModal({ isOpen, onClose, onSuccess }: NuevoMovimi
             )}
           </div>
 
-          {/* 2. Dirección de Maniobra */}
+          {/* 2. Tipo de Maniobra */}
           <div className="space-y-6">
             <div className="flex items-center justify-between px-2">
               <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.3em]">2. Tipo de Maniobra</label>
@@ -186,7 +194,7 @@ export function NuevoMovimientoModal({ isOpen, onClose, onSuccess }: NuevoMovimi
                 className={`group flex flex-col items-center justify-center p-8 rounded-[2.5rem] border transition-all duration-500 ${tipo === 'entrada'
                   ? 'bg-indigo-600 border-indigo-500 text-white shadow-[0_20px_50px_-12px_rgba(79,70,229,0.5)] translate-y-[-4px]'
                   : 'bg-[var(--bg-secondary)]/40 border-[var(--border-primary)] text-[var(--text-muted)] hover:border-indigo-500/40 hover:bg-indigo-500/5'
-                  } ${selectedBoat?.estado === 'EN_CUNA' ? 'opacity-20 cursor-not-allowed grayscale' : ''}`}
+                } ${selectedBoat?.estado === 'EN_CUNA' ? 'opacity-20 cursor-not-allowed grayscale' : ''}`}
               >
                 <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 transition-all duration-500 ${tipo === 'entrada' ? 'bg-white/20 text-white' : 'bg-[var(--bg-primary)] border border-[var(--border-primary)] group-hover:border-indigo-500/30'}`}>
                   <ArrowRight className="w-7 h-7" />
@@ -197,12 +205,12 @@ export function NuevoMovimientoModal({ isOpen, onClose, onSuccess }: NuevoMovimi
 
               <button
                 type="button"
-                disabled={selectedBoat && selectedBoat.estado !== 'EN_CUNA'}
+                disabled={selectedBoat != null && selectedBoat.estado !== 'EN_CUNA'}
                 onClick={() => setTipo('salida')}
                 className={`group flex flex-col items-center justify-center p-8 rounded-[2.5rem] border transition-all duration-500 ${tipo === 'salida'
                   ? 'bg-emerald-600 border-emerald-500 text-white shadow-[0_20px_50px_-12px_rgba(16,185,129,0.5)] translate-y-[-4px]'
                   : 'bg-[var(--bg-secondary)]/40 border-[var(--border-primary)] text-[var(--text-muted)] hover:border-emerald-500/40 hover:bg-emerald-500/5'
-                  } ${selectedBoat && selectedBoat.estado !== 'EN_CUNA' ? 'opacity-20 cursor-not-allowed grayscale' : ''}`}
+                } ${selectedBoat != null && selectedBoat.estado !== 'EN_CUNA' ? 'opacity-20 cursor-not-allowed grayscale' : ''}`}
               >
                 <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 transition-all duration-500 ${tipo === 'salida' ? 'bg-white/20 text-white' : 'bg-[var(--bg-primary)] border border-[var(--border-primary)] group-hover:border-emerald-500/30'}`}>
                   <ArrowLeft className="w-7 h-7" />
@@ -217,7 +225,7 @@ export function NuevoMovimientoModal({ isOpen, onClose, onSuccess }: NuevoMovimi
           <div className="space-y-6">
             <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.3em] px-2">3. Notas de Navegación</label>
             <textarea
-              rows={4}
+              rows={3}
               value={observaciones}
               onChange={(e) => setObservaciones(e.target.value)}
               placeholder="Anotaciones para la bitácora..."
@@ -239,15 +247,15 @@ export function NuevoMovimientoModal({ isOpen, onClose, onSuccess }: NuevoMovimi
               disabled={isSubmitting || !selectedId}
               className="flex-[2] px-8 py-5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed text-white font-black rounded-2xl text-[10px] uppercase tracking-[0.3em] shadow-xl shadow-indigo-900/40 transition-all active:scale-95 flex items-center justify-center gap-3 order-1 sm:order-2"
             >
-              {isSubmitting ? (
-                <Loader2 className="w-5 h-5 animate-spin text-white" />
-              ) : (
-                <><Check className="w-5 h-5" /> Registrar Maniobra</>
-              )}
+              {isSubmitting
+                ? <Loader2 className="w-5 h-5 animate-spin text-white" />
+                : <><Check className="w-5 h-5" /> Registrar Maniobra</>
+              }
             </button>
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
