@@ -220,13 +220,18 @@ export class AutomaticBillingService {
   @Cron(CronExpression.EVERY_DAY_AT_9AM)
   async checkOverdueInvoices() {
     this.logger.log('Iniciando auditoría diaria de deudas...');
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const now = new Date();
+
+    // Busca facturas PENDIENTES cuya fechaVencimiento ya pasó
+    // (usa fechaVencimiento de los cargos asociados como proxy)
+    // Alternativa simplificada: facturas emitidas hace más de 15 días sin pagar
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - 15);
 
     const overdueInvoices = await this.facturaRepo.find({
       where: {
         estado: EstadoFactura.PENDIENTE,
-        fechaEmision: LessThan(sevenDaysAgo),
+        fechaEmision: LessThan(cutoffDate),
       },
       relations: ['cliente'],
     });
@@ -239,6 +244,7 @@ export class AutomaticBillingService {
       });
 
       if (factura.cliente.email) {
+        const baseUrl = process.env.PUBLIC_URL || 'https://app.gestornautico.com';
         await this.notificacionesService.sendEmailNotification(
           factura.cliente.email,
           'Recordatorio de Pago',
@@ -250,7 +256,7 @@ export class AutomaticBillingService {
               'es-AR',
             ),
             montoTotal: Number(factura.total).toLocaleString('es-AR'),
-            paymentLink: `http://localhost:5173/pago-publico?factura=${factura.numero}`,
+            paymentLink: `${baseUrl}/pago-publico?factura=${factura.numero}`,
           },
         );
       }

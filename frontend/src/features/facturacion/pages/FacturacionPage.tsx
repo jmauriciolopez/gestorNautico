@@ -1,63 +1,21 @@
-import React, { useState } from 'react';
-import { Plus, RefreshCw, Receipt, FileText, ChevronRight, CreditCard } from 'lucide-react';
-import { useFacturas, type Factura } from '../hooks/useFacturas';
+import { useState } from 'react';
+import { Plus, RefreshCw, Receipt, FileText, ChevronRight } from 'lucide-react';
+import { useFacturas } from '../hooks/useFacturas';
 import { FacturasList } from '../components/FacturasList';
 import { NuevaFacturaModal } from '../components/NuevaFacturaModal';
-import { useConfirm } from '../../../shared/context/ConfirmContext';
 import { RoleGuard } from '../../../components/auth/RoleGuard';
 import { Role } from '../../../types';
-
-const METODOS = [
-  { value: 'EFECTIVO', label: 'Efectivo' },
-  { value: 'TRANSFERENCIA', label: 'Transferencia' },
-  { value: 'TARJETA', label: 'Tarjeta' },
-  { value: 'CHEQUE', label: 'Cheque' },
-];
+import { useQueryClient } from '@tanstack/react-query';
 
 export default function FacturacionPage() {
-  const { getFacturas, updateEstadoFactura } = useFacturas();
-  const facturas: Factura[] = (getFacturas.data as Factura[] | undefined) ?? [];
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [metodoPagoModal, setMetodoPagoModal] = useState<{ id: number } | null>(null);
-  const [metodoPago, setMetodoPago] = useState('EFECTIVO');
-  const confirm = useConfirm();
+  const queryClient = useQueryClient();
 
-  const handleUpdateEstado = async (id: number, estado: 'PENDIENTE' | 'PAGADA' | 'ANULADA') => {
-    if (estado === 'PAGADA') {
-      // Mostrar selector de método de pago
-      setMetodoPago('EFECTIVO');
-      setMetodoPagoModal({ id });
-      return;
-    }
+  // useFacturas ya no tiene getFacturas — FacturasList gestiona sus propios datos
+  const { } = useFacturas();
 
-    const confirmed = await confirm({
-      title: 'Anular Factura',
-      message: '¿Está seguro de que desea anular esta factura? Esta acción no se puede deshacer.',
-      confirmText: 'Anular Factura',
-      variant: 'danger',
-    });
-    if (confirmed) {
-      try {
-        await updateEstadoFactura.mutateAsync({ id, estado });
-      } catch (error) {
-        console.error('Error al anular la factura:', error);
-      }
-    }
-  };
-
-  const handleConfirmarLiquidar = async () => {
-    if (!metodoPagoModal) return;
-    try {
-      await updateEstadoFactura.mutateAsync({
-        id: metodoPagoModal.id,
-        estado: 'PAGADA',
-        metodoPago,
-      });
-    } catch (error) {
-      console.error('Error al liquidar la factura:', error);
-    } finally {
-      setMetodoPagoModal(null);
-    }
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['facturas'] });
   };
 
   return (
@@ -77,11 +35,11 @@ export default function FacturacionPage() {
 
         <div className="flex items-center gap-4 relative z-10">
           <button
-            onClick={() => getFacturas.refetch()}
+            onClick={handleRefresh}
             className="p-3.5 text-[var(--text-secondary)] hover:text-indigo-400 transition-all bg-[var(--bg-primary)]/40 border border-[var(--border-primary)] rounded-2xl hover:border-indigo-500/40 active:scale-90"
             title="Sincronizar Panel"
           >
-            <RefreshCw className={`w-5 h-5 ${getFacturas.isFetching ? 'animate-spin' : ''}`} />
+            <RefreshCw className="w-5 h-5" />
           </button>
           <RoleGuard allowedRoles={[Role.ADMIN, Role.SUPERADMIN]}>
             <button
@@ -95,99 +53,36 @@ export default function FacturacionPage() {
         </div>
       </header>
 
-      {/* Metrics Row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-[var(--bg-surface)] p-8 rounded-[2.5rem] border border-[var(--border-primary)] shadow-xl transition-colors duration-300">
-          <div className="flex items-center gap-6">
-            <div className="w-14 h-14 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shadow-lg">
-              <Receipt className="w-7 h-7" />
+      {/* Main Data Grid — FacturasList gestiona sus propios datos y métricas */}
+      <main className="bg-[var(--bg-surface)] backdrop-blur-xl rounded-[2.5rem] border border-[var(--border-primary)] shadow-2xl overflow-hidden transition-colors duration-300 group/grid min-h-[500px]">
+        <div className="p-8 border-b border-[var(--border-primary)] bg-[var(--bg-primary)]/20 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-indigo-600/10 flex items-center justify-center border border-indigo-500/20 text-indigo-500">
+              <Receipt className="w-5 h-5" />
             </div>
             <div>
-              <p className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest leading-none mb-1">Emitidas MTD</p>
-              <p className="text-3xl font-black text-[var(--text-primary)] tracking-tighter tabular-nums">{facturas.length}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-[var(--bg-surface)] p-8 rounded-[2.5rem] border border-[var(--border-primary)] shadow-xl transition-colors duration-300">
-          <div className="flex items-center gap-6">
-            <div className="w-14 h-14 rounded-2xl bg-emerald-600/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shadow-lg">
-              <FileText className="w-7 h-7" />
-            </div>
-            <div>
-              <p className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest leading-none mb-1">Volumen Total</p>
-              <p className="text-3xl font-black text-[var(--text-primary)] tracking-tighter tabular-nums">
-                ${facturas.reduce((acc: number, curr: Factura) => acc + Number(curr.total || 0), 0).toLocaleString()}
+              <h3 className="text-sm font-black text-[var(--text-primary)] uppercase tracking-[0.2em] leading-none">
+                Registro Maestro de Comprobantes
+              </h3>
+              <p className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-tighter mt-1">
+                Facturas emitidas ordenadas por fecha
               </p>
             </div>
           </div>
-        </div>
-      </div>
-
-      <main className="bg-[var(--bg-surface)] backdrop-blur-xl rounded-[2.5rem] border border-[var(--border-primary)] shadow-2xl overflow-hidden transition-colors duration-300 group/grid min-h-[500px]">
-        <div className="p-8 border-b border-[var(--border-primary)] bg-[var(--bg-primary)]/20 flex items-center justify-between">
-          <h3 className="text-sm font-black text-[var(--text-primary)] uppercase tracking-[0.2em] leading-none">Registro Maestro de Comprobantes</h3>
           <div className="flex items-center gap-2 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest">
+            <span>Vista Detallada</span>
+            <ChevronRight className="w-4 h-4 opacity-30" />
           </div>
         </div>
-        <FacturasList
-          facturas={facturas}
-          isLoading={getFacturas.isLoading}
-          onUpdateEstado={handleUpdateEstado}
-        />
+
+        {/* FacturasList es autónomo: maneja query, paginación, liquidar, anular, eliminar */}
+        <FacturasList />
       </main>
 
       <NuevaFacturaModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
       />
-
-      {/* Modal método de pago */}
-      {metodoPagoModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-3xl p-8 w-full max-w-sm shadow-2xl">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-600/10 border border-emerald-500/20 flex items-center justify-center">
-                <CreditCard className="w-5 h-5 text-emerald-400" />
-              </div>
-              <div>
-                <h3 className="text-sm font-black text-[var(--text-primary)] uppercase tracking-widest">Liquidar Factura</h3>
-                <p className="text-[10px] text-[var(--text-secondary)] uppercase tracking-widest mt-0.5">Seleccioná el método de pago</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 mb-6">
-              {METODOS.map(m => (
-                <button
-                  key={m.value}
-                  onClick={() => setMetodoPago(m.value)}
-                  className={`py-3 px-4 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${metodoPago === m.value
-                      ? 'bg-emerald-600 border-emerald-500 text-white'
-                      : 'bg-[var(--bg-surface)] border-[var(--border-primary)] text-[var(--text-secondary)] hover:border-emerald-500/40'
-                    }`}
-                >
-                  {m.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => setMetodoPagoModal(null)}
-                className="flex-1 py-3 rounded-2xl border border-[var(--border-primary)] text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleConfirmarLiquidar}
-                disabled={updateEstadoFactura.isPending}
-                className="flex-1 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50"
-              >
-                {updateEstadoFactura.isPending ? 'Procesando...' : 'Confirmar'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

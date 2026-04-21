@@ -17,13 +17,7 @@ import { Role } from '../users/user.entity';
 import { NotificacionTipo } from '../notificaciones/notificacion.entity';
 import { paginate, PaginationQuery } from '../common/pagination/pagination.helper';
 
-export interface CreateFacturaDto {
-  clienteId: number;
-  numero?: string;
-  fechaEmision: string;
-  cargoIds: number[];
-  observaciones?: string;
-}
+import { CreateFacturaDto } from './dto/create-factura.dto';
 
 @Injectable()
 export class FacturasService {
@@ -258,8 +252,7 @@ export class FacturasService {
     );
 
     // Auditoría vía Notificación
-    await this.notificacionesService.create({
-      usuarioId: 1, // Sistema/Admin
+    await this.notificacionesService.createForRole(Role.ADMIN, {
       titulo: 'Factura Enviada',
       mensaje: `La factura ${factura.numero} fue enviada por email a ${targetEmail}.`,
       tipo: NotificacionTipo.INFO,

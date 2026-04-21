@@ -15,10 +15,10 @@ import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../users/user.entity';
-import { EstadoFactura } from './factura.entity';
-
 import { Response } from 'express';
 import { PdfService } from '../common/pdf/pdf.service';
+import { CreateFacturaDto, UpdateFacturaDto } from './dto/create-factura.dto';
+import { UpdateEstadoFacturaDto, SendEmailFacturaDto } from './dto/update-estado-factura.dto';
 
 @Controller('facturas')
 @UseGuards(AuthTokenGuard, RolesGuard)
@@ -64,16 +64,7 @@ export class FacturasController {
 
   @Post()
   @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
-  create(
-    @Body()
-    data: {
-      clienteId: number;
-      numero?: string;
-      fechaEmision: string;
-      cargoIds: number[];
-      observaciones?: string;
-    },
-  ) {
+  create(@Body() data: CreateFacturaDto) {
     return this.facturasService.create(data);
   }
 
@@ -81,25 +72,21 @@ export class FacturasController {
   @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
   updateEstado(
     @Param('id') id: string,
-    @Body('estado') estado: EstadoFactura,
-    @Body('metodoPago') metodoPago?: string,
+    @Body() dto: UpdateEstadoFacturaDto,
   ) {
-    return this.facturasService.updateEstado(+id, estado, metodoPago as any);
+    return this.facturasService.updateEstado(+id, dto.estado, dto.metodoPago);
   }
 
   @Patch(':id')
   @Roles(Role.SUPERADMIN, Role.ADMIN)
-  update(
-    @Param('id') id: string,
-    @Body() data: { fechaEmision?: string; cargoIds?: number[]; observaciones?: string },
-  ) {
+  update(@Param('id') id: string, @Body() data: UpdateFacturaDto) {
     return this.facturasService.update(+id, data);
   }
 
   @Post(':id/send-email')
   @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
-  sendEmail(@Param('id') id: string, @Body('email') email?: string) {
-    return this.facturasService.sendEmail(+id, email);
+  sendEmail(@Param('id') id: string, @Body() dto: SendEmailFacturaDto) {
+    return this.facturasService.sendEmail(+id, dto.email);
   }
 
   @Delete(':id')
