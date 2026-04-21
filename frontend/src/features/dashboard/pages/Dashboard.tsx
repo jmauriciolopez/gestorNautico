@@ -23,17 +23,15 @@ import {
 import {
   useDashboard,
   useRackMap,
-  useRecaudacion,
-  useDeuda,
   type PeriodoRecaudacion,
   type PeriodoDeuda,
 } from '../hooks/useDashboard';
 import { MapaRacks } from '../components/MapaRacks';
 import { useNavigate } from 'react-router-dom';
 import { DashboardSkeleton } from '../components/DashboardSkeleton';
-import { useEmbarcaciones } from '../../embarcaciones/hooks/useEmbarcaciones';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { RegistrarPagoModal } from '../../finanzas/components/RegistrarPagoModal';
+import { httpClient } from '../../../shared/api/HttpClient';
 import { toast } from 'react-hot-toast';
 
 interface StatCardProps {
@@ -151,32 +149,55 @@ const ToggleChip = ({
 const Dashboard: React.FC = () => {
   const { data, isLoading, isError } = useDashboard();
   const { data: rackMapData, isLoading: isMapLoading } = useRackMap();
-  const { getEmbarcaciones, updateEmbarcacion } = useEmbarcaciones();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+
+  // Mutation para asignar (reemplaza useEmbarcaciones para ser atómico)
+  const updateEmbarcacion = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: any }) => 
+      httpClient.put(`/embarcaciones/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['embarcaciones'] });
+    }
+  });
 
   const [isPagoModalOpen, setIsPagoModalOpen] = useState(false);
   const [is3D, setIs3D] = useState(false);
   const [periodoRecaudacion, setPeriodoRecaudacion] = useState<PeriodoRecaudacion>('mes');
   const [periodoDeuda, setPeriodoDeuda] = useState<PeriodoDeuda>('mes');
 
-  const { data: recaudacionData } = useRecaudacion(periodoRecaudacion);
-  const { data: deudaData } = useDeuda(periodoDeuda);
-
-  const embarcaciones = getEmbarcaciones.data || [];
-  const embarcacionesLibres = useMemo(
-    () => embarcaciones.filter((e: any) => !e.espacioId && e.estado !== 'INACTIVA'),
-    [embarcaciones]
-  );
-
   const handleAsignarBarco = async (embarcacionId: number, espacioId: number) => {
     try {
       await updateEmbarcacion.mutateAsync({ id: embarcacionId, data: { espacioId } });
       toast.success('Embarcación asignada correctamente');
     } catch (error: any) {
-      console.error('Error al asignar la embarcación:', error);
+      toast.error(error?.response?.data?.message || 'Error al asignar la embarcación');
     }
   };
+
+  const stats = data?.stats;
+  const embarcacionesLibres = useMemo(() => data?.embarcacionesLibres || [], [data]);
+
+  // Valores de recaudación con fallback al total global si faltan detalles
+  const recaudacionValor = useMemo(() => {
+    const detalles = stats?.finanzas?.detalles?.recaudacion;
+    if (detalles && typeof detalles[periodoRecaudacion] === 'number') {
+      return detalles[periodoRecaudacion];
+    }
+    // Fallback al total global si estamos en periodo mes y faltan detalles
+    return periodoRecaudacion === 'mes' ? (stats?.finanzas?.recaudacionTotal ?? 0) : 0;
+  }, [stats, periodoRecaudacion]);
+
+  // Valores de deuda con fallback al total global if faltan detalles
+  const deudaValor = useMemo(() => {
+    const detalles = stats?.finanzas?.detalles?.deuda;
+    if (detalles && detalles[periodoDeuda]) {
+      return detalles[periodoDeuda].total;
+    }
+    // Fallback al total global si estamos en periodo mes
+    return periodoDeuda === 'mes' ? (stats?.finanzas?.deudaTotal ?? 0) : 0;
+  }, [stats, periodoDeuda]);
 
   if (isLoading) return <DashboardSkeleton />;
 
@@ -211,7 +232,6 @@ const Dashboard: React.FC = () => {
     );
   }
 
-  const stats = data?.stats;
 
   return (
     <>
@@ -298,7 +318,7 @@ const Dashboard: React.FC = () => {
           <StatCard
             accent="amber"
             title="Recaudación"
-            value={`${(recaudacionData?.total ?? 0).toLocaleString()}`}
+            value={`${(recaudacionValor).toLocaleString()}`}
             icon={<Wallet size={18} style={{ color: 'var(--accent-amber)' }} />}
             description={
               <div className="flex flex-wrap gap-2">
@@ -318,7 +338,7 @@ const Dashboard: React.FC = () => {
           <StatCard
             accent="red"
             title="Cuentas por cobrar"
-            value={`${(deudaData?.total ?? 0).toLocaleString()}`}
+            value={`${(deudaValor).toLocaleString()}`}
             icon={<ClipboardList size={18} style={{ color: 'var(--accent-red)' }} />}
             description={
               <div className="flex flex-wrap gap-2">

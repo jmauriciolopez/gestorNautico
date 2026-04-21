@@ -13,10 +13,20 @@ export interface DashboardSummary {
     finanzas: {
       recaudacionTotal: number;
       deudaTotal: number;
+      detalles: {
+        recaudacion: { dia: number; semana: number; mes: number };
+        deuda: {
+          dia: { total: number; cantidad: number };
+          semana: { total: number; cantidad: number };
+          mes: { total: number; cantidad: number };
+          vencido: { total: number; cantidad: number };
+        };
+      };
     };
   };
   actividadReciente: any[];
   notificacionesRecientes: any[];
+  embarcacionesLibres: any[];
   graficos: {
     finanzas: { mes: string; monto: number }[];
   };
