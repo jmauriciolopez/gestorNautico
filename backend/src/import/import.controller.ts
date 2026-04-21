@@ -1,7 +1,6 @@
 import {
   Controller,
   Post,
-  Body,
   UseInterceptors,
   UploadedFile,
   BadRequestException,
@@ -16,7 +15,7 @@ export class ImportController {
   @Post('clientes')
   @UseInterceptors(FileInterceptor('file'))
   async importClientes(
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFile() file: any,
   ): Promise<ImportResult> {
     if (!file) {
       throw new BadRequestException('No se ha proporcionado ningún archivo');
@@ -29,7 +28,7 @@ export class ImportController {
   @Post('embarcaciones')
   @UseInterceptors(FileInterceptor('file'))
   async importEmbarcaciones(
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFile() file: any,
   ): Promise<ImportResult> {
     if (!file) {
       throw new BadRequestException('No se ha proporcionado ningún archivo');

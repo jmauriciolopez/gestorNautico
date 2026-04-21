@@ -16,22 +16,22 @@ export interface ClienteImportRow {
   dni: string;
   email?: string;
   telefono?: string;
-  activo?: boolean;
-  diaFacturacion?: number;
-  descuento?: number;
-  tipoCuota?: 'INDIVIDUAL' | 'FAMILIAR' | 'NINGUNA';
+  activo?: string;
+  diafacturacion?: string;
+  descuento?: string;
+  tipecuota?: string;
 }
 
 export interface EmbarcacionImportRow {
   nombre: string;
   matricula: string;
-  dniDueno: string;
+  dnidueno: string;
   marca?: string;
   modelo?: string;
-  eslora?: number;
-  manga?: number;
+  eslora?: string;
+  manga?: string;
   tipo?: string;
-  estado?: 'EN_CUNA' | 'EN_AGUA' | 'MANTENIMIENTO' | 'INACTIVA';
+  estado?: string;
 }
 
 @Injectable()
@@ -108,15 +108,19 @@ export class ImportService {
             where: { dni: row.dni },
           });
 
+          const activo = row.activo === 'true' || row.activo === '1';
+          const diaFacturacion = row.diafacturacion ? parseInt(row.diafacturacion, 10) : 1;
+          const descuento = row.descuento ? parseFloat(row.descuento) : 0;
+
           if (existingCliente) {
             await this.clienteRepo.update(existingCliente.id, {
               nombre: row.nombre,
               email: row.email || existingCliente.email,
               telefono: row.telefono || existingCliente.telefono,
-              activo: row.activo !== undefined ? row.activo === true || row.activo === 'true' : existingCliente.activo,
-              diaFacturacion: row.diaFacturacion || existingCliente.diaFacturacion,
-              descuento: row.descuento || existingCliente.descuento,
-              tipoCuota: row.tipoCuota || existingCliente.tipoCuota,
+              activo: row.activo !== undefined ? activo : existingCliente.activo,
+              diaFacturacion: row.diafacturacion ? diaFacturacion : existingCliente.diaFacturacion,
+              descuento: row.descuento ? descuento : existingCliente.descuento,
+              tipoCuota: row.tipecuota || existingCliente.tipoCuota,
             });
             result.updated++;
           } else {
@@ -125,18 +129,18 @@ export class ImportService {
               dni: row.dni,
               email: row.email || null,
               telefono: row.telefono || null,
-              activo: row.ativo !== undefined ? row.activo === true || row.activo === 'true' : true,
-              diaFacturacion: row.diaFacturacion || 1,
-              descuento: row.descuento || 0,
-              tipoCuota: row.tipoCuota || 'NINGUNA',
+              activo: row.activo !== undefined ? activo : true,
+              diaFacturacion: row.diafacturacion ? diaFacturacion : 1,
+              descuento: row.descuento ? descuento : 0,
+              tipoCuota: row.tipecuota || 'NINGUNA',
             });
             result.created++;
           }
-        } catch (err) {
+        } catch (err: any) {
           result.errors.push(`Error procesando cliente ${row.dni}: ${err.message}`);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       result.success = false;
       result.errors.push(`Error al procesar archivo: ${error.message}`);
     }
@@ -166,7 +170,7 @@ export class ImportService {
       for (const row of data) {
         try {
           if (!row.nombre || !row.matricula || !row.dnidueno) {
-            result.errors.push(`Fila omitida: falta nombre, matricula o dniDueno - ${JSON.stringify(row)}`);
+            result.errors.push(`Fila omitida: falta nombre, matricula o dnidueno - ${JSON.stringify(row)}`);
             continue;
           }
 
@@ -175,7 +179,7 @@ export class ImportService {
           });
 
           if (!cliente) {
-            result.errors.push(`Cliente con DNI ${row.dnidueno} no encontrado para embarcación ${row.nombre}`);
+            result.errors.push(`Cliente con DNI ${row.dnidueno} no encontrado para embarcacion ${row.nombre}`);
             continue;
           }
 
@@ -183,13 +187,16 @@ export class ImportService {
             where: { matricula: row.matricula },
           });
 
+          const eslora = row.eslora ? parseFloat(row.eslora) : undefined;
+          const manga = row.manga ? parseFloat(row.manga) : undefined;
+
           if (existingEmbarcacion) {
             await this.embarcacionRepo.update(existingEmbarcacion.id, {
               nombre: row.nombre,
               marca: row.marca || existingEmbarcacion.marca,
               modelo: row.modelo || existingEmbarcacion.modelo,
-              eslora: row.eslora || existingEmbarcacion.eslora,
-              manga: row.manga || existingEmbarcacion.manga,
+              eslora: eslora || existingEmbarcacion.eslora,
+              manga: manga || existingEmbarcacion.manga,
               tipo: row.tipo || existingEmbarcacion.tipo,
               estado: row.estado || existingEmbarcacion.estado,
               clienteId: cliente.id,
@@ -201,19 +208,19 @@ export class ImportService {
               matricula: row.matricula,
               marca: row.marca || null,
               modelo: row.modelo || null,
-              eslora: row.eslora || null,
-              manga: row.manga || null,
+              eslora: eslora || null,
+              manga: manga || null,
               tipo: row.tipo || 'Lancha',
               estado: row.estado || 'EN_CUNA',
               clienteId: cliente.id,
             });
             result.created++;
           }
-        } catch (err) {
-          result.errors.push(`Error procesando embarcación ${row.matricula}: ${err.message}`);
+        } catch (err: any) {
+          result.errors.push(`Error procesando embarcacion ${row.matricula}: ${err.message}`);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       result.success = false;
       result.errors.push(`Error al procesar archivo: ${error.message}`);
     }
