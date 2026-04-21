@@ -183,28 +183,30 @@ export default function InfraestructuraPage() {
   const stats = useEstadisticas.data || { total: 0, ocupados: 0, libres: 0, porcentajeOcupacion: 0 };
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="space-y-8 p-3 md:p-6 animate-in fade-in slide-in-from-bottom-4 duration-700 overflow-x-hidden">
       {/* Header & Stats Section */}
       <InfraestructuraStats stats={stats} />
 
       {/* Navigation Tabs */}
-      <div className="flex flex-wrap gap-2 p-2 bg-[var(--bg-secondary)]/[0.5] rounded-[2rem] border border-[var(--border-primary)] w-fit shadow-xl transition-colors duration-300">
+      <div className="flex gap-2 p-2 bg-[var(--bg-secondary)]/[0.5] rounded-[2rem] border border-[var(--border-primary)] w-fit shadow-xl transition-colors duration-300 overflow-x-auto">
         <button
           onClick={() => setActiveTab('mapa')}
-          className={`flex items-center gap-3 px-8 py-3 rounded-[1.25rem] text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'mapa' ? 'bg-indigo-600 text-[var(--text-primary)] shadow-2xl shadow-indigo-900/40' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)]/40'
+          className={`flex items-center gap-2 md:gap-3 px-4 md:px-8 py-3 rounded-[1.25rem] text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'mapa' ? 'bg-indigo-600 text-[var(--text-primary)] shadow-2xl shadow-indigo-900/40' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)]/40'
             }`}
         >
           <MapIcon size={16} />
-          Mapa de Ocupación
+          <span className="hidden sm:inline">Mapa de Ocupación</span>
+          <span className="sm:hidden">Mapa</span>
         </button>
         <RoleGuard allowedRoles={[Role.ADMIN, Role.SUPERADMIN]}>
           <button
             onClick={() => setActiveTab('config')}
-            className={`flex items-center gap-3 px-8 py-3 rounded-[1.25rem] text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'config' ? 'bg-indigo-600 text-[var(--text-primary)] shadow-2xl shadow-indigo-900/40' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)]/40'
+            className={`flex items-center gap-2 md:gap-3 px-4 md:px-8 py-3 rounded-[1.25rem] text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'config' ? 'bg-indigo-600 text-[var(--text-primary)] shadow-2xl shadow-indigo-900/40' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)]/40'
               }`}
           >
             <Settings size={16} />
-            Parámetros Globales
+            <span className="hidden sm:inline">Parámetros Globales</span>
+            <span className="sm:hidden">Config</span>
           </button>
         </RoleGuard>
       </div>

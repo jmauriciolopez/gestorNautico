@@ -419,10 +419,10 @@ export class DashboardService {
       .createQueryBuilder('p')
       .leftJoin('p.cargo', 'c')
       .select(
-        'AVG(EXTRACT(DAY FROM (p.fecha::timestamp - c.fechaEmision::timestamp)))',
+        'AVG(EXTRACT(DAY FROM (p.fecha::timestamp - c."fechaEmision"::timestamp)))',
         'avg_days',
       )
-      .where('c.fechaEmision IS NOT NULL')
+      .where('c."fechaEmision" IS NOT NULL')
       .getRawOne<{ avg_days: string }>();
 
     return {

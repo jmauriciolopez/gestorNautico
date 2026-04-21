@@ -124,18 +124,18 @@ export class ClientesService {
         .select('SUM(c.monto)', 'total')
         .addSelect('COUNT(c.id)', 'cantidad')
         .addSelect('COUNT(c.id) FILTER (WHERE c.pagado = false)', 'impagos')
-        .where('c.clienteId = :id', { id })
+        .where('c.cliente_id = :id', { id })
         .getRawOne<{ total: string; cantidad: string; impagos: string }>(),
       this.pagoRepository
         .createQueryBuilder('p')
         .select('SUM(p.monto)', 'total')
         .addSelect('MAX(p.fecha)', 'ultimaFecha')
-        .where('p.clienteId = :id', { id })
+        .where('p.cliente_id = :id', { id })
         .getRawOne<{ total: string; ultimaFecha: string }>(),
       this.cargoRepository
         .createQueryBuilder('c')
         .select('SUM(c.monto)', 'total')
-        .where('c.clienteId = :id', { id })
+        .where('c.cliente_id = :id', { id })
         .andWhere('c.pagado = false')
         .andWhere('c.fechaVencimiento < NOW()')
         .getRawOne<{ total: string }>(),

@@ -53,7 +53,7 @@ export default function EmbarcacionesList() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="space-y-8 p-3 md:p-6 animate-in fade-in slide-in-from-bottom-4 duration-700 overflow-x-hidden">
       {/* Premium Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 bg-[var(--bg-secondary)]/[0.3] p-10 rounded-[2.5rem] border border-[var(--border-primary)] shadow-2xl relative overflow-hidden group transition-colors duration-300">
         <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none group-hover:scale-110 transition-transform duration-1000">
@@ -177,18 +177,18 @@ export default function EmbarcacionesList() {
                       {emb.estado.replace('_', ' ')}
                     </span>
                   </td>
-                  <td className="px-8 py-6 text-right">
-                    <div className="flex items-center justify-end gap-3">
+                  <td className="px-4 md:px-8 py-6 text-right">
+                    <div className="flex items-center justify-end gap-2 md:gap-3">
                       <button
                         onClick={() => navigate(`/embarcaciones/editar/${emb.id}`)}
-                        className="p-3 bg-[var(--bg-primary)]/60 border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-indigo-500 hover:border-indigo-500/50 rounded-2xl transition-all active:scale-90 shadow-xl"
+                        className="p-2 md:p-3 bg-[var(--bg-primary)]/60 border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-indigo-500 hover:border-indigo-500/50 rounded-xl md:rounded-2xl transition-all active:scale-90 shadow-xl"
                       >
                         <Edit className="w-4 h-4" />
                       </button>
                       <RoleGuard allowedRoles={[Role.ADMIN, Role.SUPERADMIN]}>
                         <button
                           onClick={() => handleDelete(emb.id)}
-                          className="p-3 bg-[var(--bg-primary)]/60 border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-rose-500 hover:border-rose-500/50 rounded-2xl transition-all active:scale-90 shadow-xl"
+                          className="p-2 md:p-3 bg-[var(--bg-primary)]/60 border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-rose-500 hover:border-rose-500/50 rounded-xl md:rounded-2xl transition-all active:scale-90 shadow-xl"
                           disabled={deleteEmbarcacion.isPending}
                         >
                           <Trash2 className="w-4 h-4" />

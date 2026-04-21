@@ -10,6 +10,7 @@ import {
   Wallet,
   Settings,
   CreditCard,
+  TrendingUp,
 } from 'lucide-react';
 import {
   XAxis,
@@ -27,6 +28,7 @@ import {
   type PeriodoDeuda,
 } from '../hooks/useDashboard';
 import { MapaRacks } from '../components/MapaRacks';
+import { DashboardGerencial } from '../../reportes/components/DashboardGerencial';
 import { useNavigate } from 'react-router-dom';
 import { DashboardSkeleton } from '../components/DashboardSkeleton';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
@@ -565,7 +567,7 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className="min-h-[460px] relative">
+<div className="min-h-[460px] relative">
             {isMapLoading ? (
               <div
                 className="h-[460px] rounded-[20px] flex flex-col items-center justify-center gap-5"
@@ -592,6 +594,24 @@ const Dashboard: React.FC = () => {
               />
             )}
           </div>
+        </section>
+
+        {/* Dashboard Gerencial - Métricas Avanzadas */}
+        <section className="space-y-4">
+          <div className="bento-card p-5 md:p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500">
+                <TrendingUp className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="section-title">Inteligencia de Negocio</p>
+                <p className="text-ui-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+                  Métricas avanzadas y análisis predictivo
+                </p>
+              </div>
+            </div>
+          </div>
+          <DashboardGerencial />
         </section>
 
         <div className="h-8" />

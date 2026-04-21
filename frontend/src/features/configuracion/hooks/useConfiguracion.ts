@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { httpClient } from '../../../shared/api/HttpClient';
+import { Paginated } from '../../../api/pagination';
 
 export interface Configuracion {
   id: number;
@@ -14,12 +15,12 @@ export const useConfiguracion = () => {
 
   const getConfiguraciones = useQuery({
     queryKey: ['configuracion'],
-    queryFn: () => httpClient.get<Configuracion[]>('/configuracion'),
+    queryFn: () => httpClient.get<Paginated<Configuracion>>('/configuracion'),
   });
 
   const updateConfiguracion = useMutation({
     mutationFn: (updates: Record<string, string>) =>
-      httpClient.put<Configuracion[]>('/configuracion/bulk', updates),
+      httpClient.put<Paginated<Configuracion>>('/configuracion/bulk', updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['configuracion'] });
     },

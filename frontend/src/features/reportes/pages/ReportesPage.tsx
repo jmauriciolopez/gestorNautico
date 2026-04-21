@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { BarChart2, AlertTriangle, TrendingDown, Activity, RefreshCw } from 'lucide-react';
+import { AlertTriangle, TrendingDown, RefreshCw } from 'lucide-react';
 import { useClientesMorosos, useMensualidades } from '../hooks/useReportes';
 import { ClientesMorososList } from '../components/ClientesMorososList';
 import { MensualidadesTable } from '../components/MensualidadesTable';
-import { DashboardGerencial } from '../components/DashboardGerencial';
 import { useQueryClient } from '@tanstack/react-query';
 
-type Tab = 'morosos' | 'mensualidades' | 'gerencial';
+type Tab = 'morosos' | 'mensualidades';
 
 export default function ReportesPage() {
   const [activeTab, setActiveTab] = useState<Tab>('morosos');
@@ -22,7 +21,6 @@ export default function ReportesPage() {
   const tabs = [
     { id: 'morosos' as Tab, label: 'Clientes Morosos', icon: AlertTriangle, count: morosos.data?.length },
     { id: 'mensualidades' as Tab, label: 'Mensualidades', icon: TrendingDown, count: mensualidades.data?.length },
-    { id: 'gerencial' as Tab, label: 'Dashboard Gerencial', icon: BarChart2 },
   ];
 
   return (

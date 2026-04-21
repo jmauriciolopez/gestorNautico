@@ -4,21 +4,21 @@ import { useConfiguracion } from '../hooks/useConfiguracion';
 
 export default function ConfiguracionPage() {
   const { getConfiguraciones, updateConfiguracion } = useConfiguracion();
-  const { data: configs, isLoading } = getConfiguraciones;
+  const { data: configsData, isLoading } = getConfiguraciones;
   
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
   useEffect(() => {
-    if (configs) {
+    if (configsData?.data) {
       const initialData: Record<string, string> = {};
-      configs.forEach(c => {
+      configsData.data.forEach(c => {
         initialData[c.clave] = c.valor;
       });
       setFormData(initialData);
     }
-  }, [configs]);
+  }, [configsData]);
 
   const handleChange = (clave: string, valor: string) => {
     setFormData(prev => ({ ...prev, [clave]: valor }));

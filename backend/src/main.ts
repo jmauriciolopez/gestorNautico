@@ -21,8 +21,10 @@ async function bootstrap() {
   const { httpAdapter } = app.get(HttpAdapterHost);
   app.useGlobalFilters(new BeepExceptionFilter(httpAdapter));
 
-  const allowedOrigins = process.env.CORS_ORIGIN?.split(',') ?? [
+  const allowedOrigins = process.env.CORS_ORIGIN?.split(',').map(o => o.trim()) ?? [
     'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'http://localhost:3000'
   ];
 
   logger.log(`Allowed origins: [${allowedOrigins.join(', ')}]`);

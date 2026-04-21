@@ -59,7 +59,7 @@ export default function ClientesList() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="space-y-8 p-3 md:p-6 animate-in fade-in slide-in-from-bottom-4 duration-700 overflow-x-hidden">
       {/* Premium Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 bg-[var(--bg-secondary)]/[0.3] p-10 rounded-[2.5rem] border border-[var(--border-primary)] shadow-2xl relative overflow-hidden group transition-colors duration-300">
         <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none group-hover:scale-110 transition-transform duration-1000">
@@ -120,7 +120,7 @@ export default function ClientesList() {
                 <th className="px-8 py-5 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Canales de Contacto</th>
                 <th className="px-8 py-5 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Estado</th>
                 <th className="px-8 py-5 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Cuota</th>
-                <th className="px-8 py-5 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] text-right">Mesa de Auditoría</th>
+                {/* <th className="px-8 py-5 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] text-right">Mesa de Auditoría</th> */}
                 <th className="px-8 py-5"></th>
               </tr>
             </thead>
@@ -166,17 +166,17 @@ export default function ClientesList() {
                       <span className="text-[10px] font-mono font-black text-[var(--text-secondary)] tracking-tighter">{cliente.tipoCuota}</span>
                     </div>
                   </td>
-                  <td className={`px-8 py-6 text-right ${!cliente.activo ? 'pointer-events-none' : ''}`}>
+                  {/* <td className={`px-8 py-6 text-right ${!cliente.activo ? 'pointer-events-none' : ''}`}>
                     <div className="inline-flex items-center gap-2 bg-[var(--bg-primary)]/60 px-3 py-1 rounded-lg border border-[var(--border-primary)] transition-colors duration-300">
                       <span className="text-[10px] font-mono font-black text-[var(--text-secondary)] tracking-tighter">{cliente.id.toString().padStart(4, '0')}</span>
                     </div>
-                  </td>
+                  </td> */}
 
-                  <td className="px-8 py-6 text-right">
-                    <div className="flex items-center justify-end gap-3">
+                  <td className="px-4 md:px-8 py-6 text-right">
+                    <div className="flex items-center justify-end gap-2 md:gap-3">
                       <button
                         onClick={() => navigate(`/clientes/editar/${cliente.id}`)}
-                        className="p-3 bg-[var(--bg-primary)]/60 border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-indigo-400 hover:border-indigo-500/50 rounded-2xl transition-all active:scale-90 shadow-xl"
+                        className="p-2 md:p-3 bg-[var(--bg-primary)]/60 border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-indigo-400 hover:border-indigo-500/50 rounded-xl md:rounded-2xl transition-all active:scale-90 shadow-xl"
                         title="Editar Expediente"
                       >
                         <Edit className="w-4 h-4" />
@@ -185,7 +185,7 @@ export default function ClientesList() {
                         {cliente.activo ? (
                           <button
                             onClick={() => handleDelete(cliente.id)}
-                            className="p-3 bg-[var(--bg-primary)]/60 border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-rose-500 hover:border-rose-500/50 rounded-2xl transition-all active:scale-90 shadow-xl"
+                            className="p-2 md:p-3 bg-[var(--bg-primary)]/60 border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-rose-500 hover:border-rose-500/50 rounded-xl md:rounded-2xl transition-all active:scale-90 shadow-xl"
                             title="Archivar Registro"
                             disabled={deleteCliente.isPending}
                           >
@@ -194,7 +194,7 @@ export default function ClientesList() {
                         ) : (
                           <button
                             onClick={() => handleActivar(cliente.id)}
-                            className="p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/20 hover:border-emerald-500/60 rounded-2xl transition-all active:scale-90 shadow-xl"
+                            className="p-2 md:p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/20 hover:border-emerald-500/60 rounded-xl md:rounded-2xl transition-all active:scale-90 shadow-xl"
                             title="Reactivar Cliente"
                             disabled={updateCliente.isPending}
                           >
