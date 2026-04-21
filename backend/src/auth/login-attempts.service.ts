@@ -17,9 +17,11 @@ export class LoginAttemptsService {
   private readonly cooldownPeriod: number;
 
   constructor(private readonly configService: ConfigService) {
-    this.maxAttempts = this.configService.get<number>('LOGIN_MAX_ATTEMPTS') || 5;
+    this.maxAttempts =
+      this.configService.get<number>('LOGIN_MAX_ATTEMPTS') || 5;
     this.lockoutDuration =
-      this.configService.get<number>('LOGIN_LOCKOUT_DURATION') || 15 * 60 * 1000;
+      this.configService.get<number>('LOGIN_LOCKOUT_DURATION') ||
+      15 * 60 * 1000;
     this.cooldownPeriod =
       this.configService.get<number>('LOGIN_COOLDOWN_PERIOD') || 30 * 60 * 1000;
   }
@@ -109,7 +111,10 @@ export class LoginAttemptsService {
 
   private calculateLockoutDuration(failedAttempts: number): number {
     const baseLockout = this.lockoutDuration;
-    const multiplier = Math.min(Math.floor(failedAttempts / this.maxAttempts), 4);
+    const multiplier = Math.min(
+      Math.floor(failedAttempts / this.maxAttempts),
+      4,
+    );
     return baseLockout * (multiplier + 1);
   }
 

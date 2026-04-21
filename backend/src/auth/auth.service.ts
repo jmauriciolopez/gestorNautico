@@ -20,7 +20,10 @@ export class AuthService {
     private readonly loginAttemptsService: LoginAttemptsService,
   ) {}
 
-  async login(loginDto: LoginDto, ip: string = 'unknown'): Promise<AuthResponse> {
+  async login(
+    loginDto: LoginDto,
+    ip: string = 'unknown',
+  ): Promise<AuthResponse> {
     const identifier = loginDto.nombre;
 
     this.loginAttemptsService.check(identifier, ip);
@@ -31,7 +34,7 @@ export class AuthService {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
-    let isPasswordValid = await bcrypt.compare(loginDto.password, user.clave);
+    const isPasswordValid = await bcrypt.compare(loginDto.password, user.clave);
 
     if (!isPasswordValid) {
       this.loginAttemptsService.recordFailure(identifier, ip);
