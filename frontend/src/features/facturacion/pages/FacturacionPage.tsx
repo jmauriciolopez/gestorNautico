@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, RefreshCw, Receipt, FileText, Search, FileCheck, AlertCircle, Trash2 } from 'lucide-react';
+import { Plus, RefreshCw, Receipt, FileText, Search, FileCheck, AlertCircle, Trash2, Calendar } from 'lucide-react';
 import { useFacturasStats } from '../hooks/useFacturas';
 import { FacturasList } from '../components/FacturasList';
 import { NuevaFacturaModal } from '../components/NuevaFacturaModal';
@@ -86,7 +86,7 @@ export default function FacturacionPage() {
           >
             <RefreshCw className={`w-5 h-5 ${statsLoading ? 'animate-spin' : ''}`} />
           </button>
-          
+
           <RoleGuard allowedRoles={[Role.ADMIN, Role.SUPERADMIN]}>
             <button
               onClick={() => setIsModalOpen(true)}

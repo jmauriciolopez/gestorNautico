@@ -19,7 +19,8 @@ export default function EmbarcacionForm() {
 
   const embarcacionQuery = useEmbarcacion(Number(id));
   const { data: embarcacion, isLoading: isFetchingEmb } = embarcacionQuery;
-  const { data: clientes = [], isLoading: isFetchingClientes } = getClientes;
+  const { data: clientesData, isLoading: isFetchingClientes } = getClientes;
+  const clientes = clientesData?.data || [];
   const { data: zonas = [], isLoading: isFetchingZonas } = useZonas;
   const [isModalOpen, setIsModalOpen] = useState(false);
 

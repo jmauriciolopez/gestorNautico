@@ -42,7 +42,7 @@ const DashboardOperativo: React.FC = () => {
   const { getEmbarcaciones, updateEmbarcacion } = useEmbarcaciones();
   const { getMovimientos } = useOperaciones();
 
-  const embarcaciones = getEmbarcaciones.data || [];
+  const embarcaciones = getEmbarcaciones.data?.data || [];
   const movimientos = getMovimientos.data || [];
 
   const enCuna = embarcaciones.filter((e) => e.estado === 'EN_CUNA').length;

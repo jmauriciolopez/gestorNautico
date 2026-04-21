@@ -39,8 +39,8 @@ export function NuevoRegistroModal({ isOpen, onClose, onSave, initialData }: Nue
   }, [initialData, isOpen]);
 
   useEffect(() => {
-    if (!initialData && selectedServiceId && getCatalogo.data) {
-      const service = getCatalogo.data.find(s => s.id === selectedServiceId);
+    if (!initialData && selectedServiceId && getCatalogo.data?.data) {
+      const service = getCatalogo.data.data.find(s => s.id === selectedServiceId);
       if (service) {
         setCostoFinal(Number(service.precioBase));
       }
@@ -186,7 +186,7 @@ export function NuevoRegistroModal({ isOpen, onClose, onSave, initialData }: Nue
                 disabled={initialData !== null && initialData !== undefined}
               >
                 <option value="" disabled>Seleccionar concepto...</option>
-                {getCatalogo.data?.filter(s => s.activo).map(svc => (
+                {getCatalogo.data?.data?.filter(s => s.activo).map(svc => (
                   <option key={svc.id} value={svc.id}>{svc.nombre} - ${Number(svc.precioBase).toLocaleString()}</option>
                 ))}
               </select>

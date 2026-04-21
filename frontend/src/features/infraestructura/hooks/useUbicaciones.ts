@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { httpClient } from '../../../shared/api/HttpClient';
+import { Paginated, selectData } from '../../../api/pagination';
 
 export interface Ubicacion {
   id: number;

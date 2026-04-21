@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FileText, X, History, Download, Mail, User, Clock, Info, CheckCircle2, AlertCircle, Anchor, Hash, DollarSign, BadgeCheck, Receipt } from 'lucide-react';
+import { FileText, X, History, Download, Mail, User, Clock, Info, CheckCircle2, AlertCircle, Anchor, Hash, DollarSign, BadgeCheck, Receipt, ChevronRight } from 'lucide-react';
 
 interface FacturaDetailModalProps {
   factura: any;
@@ -40,7 +40,7 @@ export const FacturaDetailModal: React.FC<FacturaDetailModalProps> = ({ factura,
     if (activeTab === 'audit') {
       fetchAuditLogs();
     }
-}, [activeTab, fetchAuditLogs]);
+  }, [activeTab, fetchAuditLogs]);
 
   const downloadPdf = async () => {
     try {
@@ -64,6 +64,28 @@ export const FacturaDetailModal: React.FC<FacturaDetailModalProps> = ({ factura,
   const isEmitida = factura.estado === 'EMITIDA' || factura.estado === 'PENDIENTE';
   const stateBg = isEmitida ? 'bg-[var(--accent-amber-soft)]' : 'bg-[var(--accent-teal-soft)]';
   const stateText = isEmitida ? 'text-[var(--accent-amber)]' : 'text-[var(--accent-teal)]';
+
+  const getEmbarcacionName = () => {
+    if (factura.embarcacion?.nombre) return factura.embarcacion.nombre;
+    if (factura.cliente?.embarcaciones?.[0]?.nombre) return factura.cliente.embarcaciones[0].nombre;
+    
+    const cargoConBarco = factura.cargos?.find((c: any) => c.descripcion?.includes(' - '));
+    if (cargoConBarco) {
+      const parts = cargoConBarco.descripcion.split(' - ');
+      return parts[parts.length - 1].trim();
+    }
+    
+    return 'N/A';
+  };
+
+  const getCleanDescription = (desc: string) => {
+    if (!desc) return '';
+    if (desc.includes(' - ')) {
+      const parts = desc.split(' - ');
+      return parts.slice(0, -1).join(' - ').trim();
+    }
+    return desc;
+  };
 
   return createPortal(
     <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
@@ -114,7 +136,7 @@ export const FacturaDetailModal: React.FC<FacturaDetailModalProps> = ({ factura,
             {[
               { label: 'Total', value: `$ ${Number(factura.total).toLocaleString('es-AR')}`, icon: DollarSign, color: 'var(--accent-primary)' },
               { label: 'Cliente', value: factura.cliente?.nombre || '—', icon: User, color: 'var(--accent-purple)' },
-              { label: 'Embarcación', value: factura.embarcacion?.nombre || factura.cliente?.embarcaciones?.[0]?.nombre || 'N/A', icon: Anchor, color: 'var(--accent-teal)' },
+              { label: 'Embarcación', value: getEmbarcacionName(), icon: Anchor, color: 'var(--accent-teal)' },
               { label: 'Conceptos', value: `${factura.cargos?.length || 0} ítem${(factura.cargos?.length || 0) !== 1 ? 's' : ''}`, icon: Hash, color: 'var(--accent-amber)' },
             ].map(({ label, value, icon: Icon, color }) => (
               <div key={label} className="bg-[var(--bg-primary)] border border-[var(--border-secondary)] rounded-2xl px-5 py-4 flex items-center gap-3">
@@ -138,11 +160,10 @@ export const FacturaDetailModal: React.FC<FacturaDetailModalProps> = ({ factura,
               <button
                 key={key}
                 onClick={() => setActiveTab(key)}
-                className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                  activeTab === key
+                className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === key
                     ? 'bg-[var(--accent-primary)] text-white shadow-lg'
                     : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]'
-                }`}
+                  }`}
               >
                 <Icon className="w-3.5 h-3.5" />
                 {label}
@@ -185,7 +206,7 @@ export const FacturaDetailModal: React.FC<FacturaDetailModalProps> = ({ factura,
                           <tr key={cargo.id ?? idx} className="hover:bg-[var(--bg-secondary)]/30 transition-colors group">
                             <td className="px-7 py-4">
                               <p className="text-xs font-black text-[var(--text-primary)] uppercase tracking-tight group-hover:text-[var(--accent-primary)] transition-colors">
-                                {cargo.descripcion}
+                                {getCleanDescription(cargo.descripcion)}
                               </p>
                               {cargo.observaciones && (
                                 <p className="text-[9px] text-[var(--text-muted)] font-medium mt-0.5 italic">{cargo.observaciones}</p>
@@ -266,15 +287,14 @@ export const FacturaDetailModal: React.FC<FacturaDetailModalProps> = ({ factura,
                   <div className="relative pl-8 space-y-6 before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-[var(--border-secondary)]">
                     {auditLogs.map((log) => (
                       <div key={log.id} className="relative">
-                        <div className={`absolute -left-[30px] top-1.5 p-1.5 rounded-full z-10 border-4 border-[var(--bg-surface)] shadow-lg ${
-                          log.tipo === 'EXITO' ? 'bg-[var(--success)]' :
-                          log.tipo === 'INFO' ? 'bg-[var(--info)]' : 'bg-[var(--text-disabled)]'
-                        }`}>
+                        <div className={`absolute -left-[30px] top-1.5 p-1.5 rounded-full z-10 border-4 border-[var(--bg-surface)] shadow-lg ${log.tipo === 'EXITO' ? 'bg-[var(--success)]' :
+                            log.tipo === 'INFO' ? 'bg-[var(--info)]' : 'bg-[var(--text-disabled)]'
+                          }`}>
                           {log.tipo === 'EXITO'
                             ? <CheckCircle2 className="w-3 h-3 text-white" />
                             : log.tipo === 'ERROR'
-                            ? <AlertCircle className="w-3 h-3 text-white" />
-                            : <Clock className="w-3 h-3 text-white" />}
+                              ? <AlertCircle className="w-3 h-3 text-white" />
+                              : <Clock className="w-3 h-3 text-white" />}
                         </div>
                         <div className="bg-[var(--bg-secondary)]/40 p-6 rounded-3xl border border-[var(--border-secondary)] hover:border-[var(--border-primary)] transition-all group">
                           <div className="flex items-center justify-between mb-2">

@@ -35,7 +35,7 @@ export default function InfraestructuraPage() {
   } = useUbicaciones();
 
   const { getEmbarcaciones, updateEmbarcacion } = useEmbarcaciones();
-  const embarcaciones = getEmbarcaciones.data || [];
+  const embarcaciones = getEmbarcaciones.data?.data || [];
 
   const embarcacionesLibres = embarcaciones.filter((e: any) => !e.espacioId && e.estado !== 'INACTIVA');
 

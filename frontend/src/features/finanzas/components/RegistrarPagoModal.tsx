@@ -120,7 +120,7 @@ export function RegistrarPagoModal({ isOpen, onClose, initialCargo }: RegistrarP
                 onChange={(e) => setFormData({ ...formData, clienteId: e.target.value, cargoId: '' })}
               >
                 <option value="">Seleccionar Propietario...</option>
-                {getClientes.data?.map(c => (
+                {getClientes.data?.data?.map(c => (
                   <option key={c.id} value={c.id}>{c.nombre}</option>
                 ))}
               </select>

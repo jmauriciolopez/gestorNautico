@@ -5,7 +5,7 @@ import { CuentaCorrientePanel } from '../../clientes/components/CuentaCorrienteP
 
 export function CuentasCorrientesList() {
   const { getClientes } = useClientes();
-  const clientes = (getClientes.data || []).filter(c => c.activo);
+  const clientes = (getClientes.data?.data || []).filter(c => c.activo);
   const [search, setSearch] = useState('');
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
