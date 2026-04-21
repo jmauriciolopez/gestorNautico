@@ -25,7 +25,7 @@ export default function FinanzasPage() {
   const [isPagoModalOpen, setIsPagoModalOpen] = useState(false);
   const [selectedCargoToPay, setSelectedCargoToPay] = useState<Cargo | null>(null);
 
-  const { getCargos, getPagos, getCajaResumen, abrirCaja, cerrarCaja, getCajas } = useFinanzas();
+  const { getCajaResumen, abrirCaja, cerrarCaja, getCajas } = useFinanzas();
 
   const handleCajaConfirm = async (monto: number) => {
     try {
@@ -40,7 +40,9 @@ export default function FinanzasPage() {
         }
       }
       setIsCajaModalOpen(false);
-    } catch (err) {
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || 'Error al operar la caja';
+      toast.error(msg);
       console.error('Error al operar la caja:', err);
     }
   };
@@ -140,8 +142,6 @@ export default function FinanzasPage() {
 
         {activeTab === 'cargos' && (
           <CargosList
-            cargos={getCargos.data || []}
-            isLoading={getCargos.isLoading}
             onCobrar={(cargo) => {
               setSelectedCargoToPay(cargo);
               setIsPagoModalOpen(true);
@@ -149,12 +149,7 @@ export default function FinanzasPage() {
           />
         )}
 
-        {activeTab === 'pagos' && (
-          <PagosList
-            pagos={getPagos.data || []}
-            isLoading={getPagos.isLoading}
-          />
-        )}
+        {activeTab === 'pagos' && <PagosList />}
 
         {activeTab === 'caja' && (
           <HistorialCajasList

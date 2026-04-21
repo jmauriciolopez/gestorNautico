@@ -4,17 +4,8 @@ import { Repository } from 'typeorm';
 import { Pago } from './pago.entity';
 import { CajasService } from '../cajas/cajas.service';
 import { CargosService } from '../cargos/cargos.service';
-
-export interface CreatePagoDto {
-  clienteId: number;
-  cargoId?: number;
-  cajaId?: number;
-  monto: number;
-  metodo: string;
-  fecha?: Date;
-  referencia?: string;
-  notas?: string;
-}
+import { CreatePagoDto } from './dto/create-pago.dto';
+import { paginate, PaginationQuery } from '../common/pagination/pagination.helper';
 
 @Injectable()
 export class PagosService {
@@ -25,8 +16,8 @@ export class PagosService {
     private readonly cargosService: CargosService,
   ) {}
 
-  findAll() {
-    return this.pagoRepo.find({
+  findAll(query: PaginationQuery = {}) {
+    return paginate(this.pagoRepo, query, {
       relations: ['cliente', 'cargo', 'caja'],
       order: { fecha: 'DESC' },
     });
@@ -42,7 +33,7 @@ export class PagosService {
   }
 
   async create(data: CreatePagoDto) {
-    const { clienteId, cargoId, cajaId, ...rest } = data;
+    const { clienteId, cargoId, cajaId, metodo, referencia, notas, ...rest } = data;
 
     // 1. Obtener una caja abierta
     const caja = cajaId
@@ -55,6 +46,8 @@ export class PagosService {
     // 2. Crear el pago
     const nuevoPago = this.pagoRepo.create({
       ...rest,
+      metodoPago: metodo as any,
+      comprobante: referencia,
       cliente: { id: Number(clienteId) },
       cargo: cargoId ? { id: Number(cargoId) } : null,
       caja: caja,
@@ -72,7 +65,7 @@ export class PagosService {
 
   async remove(id: number) {
     const pago = await this.findOne(id);
-    // Si tenía un cargo, quizás deberíamos revertir el estado pagado (opcional según lógica de negocio)
+    // Si tenía un cargo, revertimos el estado pagado
     if (pago.cargo) {
       await this.cargosService.setPagado(pago.cargo.id, false);
     }

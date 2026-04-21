@@ -7,8 +7,10 @@ import {
   Delete,
   UseGuards,
   Res,
+  Query,
 } from '@nestjs/common';
-import { PagosService, CreatePagoDto } from './pagos.service';
+import { PagosService } from './pagos.service';
+import { CreatePagoDto } from './dto/create-pago.dto';
 import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -41,8 +43,11 @@ export class PagosController {
 
   @Get()
   @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
-  findAll() {
-    return this.pagosService.findAll();
+  findAll(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    return this.pagosService.findAll({ page, limit });
   }
 
   @Get(':id')

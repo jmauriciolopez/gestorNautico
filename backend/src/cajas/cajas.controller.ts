@@ -13,6 +13,7 @@ import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../users/user.entity';
+import { AbrirCajaDto, CerrarCajaDto } from './dto/caja-operacion.dto';
 
 @Controller('cajas')
 @UseGuards(AuthTokenGuard, RolesGuard)
@@ -39,14 +40,14 @@ export class CajasController {
 
   @Post('abrir')
   @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
-  abrir(@Body('saldoInicial') saldoInicial: number) {
-    return this.cajasService.abrir(saldoInicial);
+  abrir(@Body() dto: AbrirCajaDto) {
+    return this.cajasService.abrir(dto.saldoInicial ?? 0);
   }
 
   @Patch(':id/cerrar')
   @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
-  cerrar(@Param('id') id: string, @Body('saldoFinal') saldoFinal: number) {
-    return this.cajasService.cerrar(+id, saldoFinal);
+  cerrar(@Param('id') id: string, @Body() dto: CerrarCajaDto) {
+    return this.cajasService.cerrar(+id, dto.saldoFinal);
   }
 
   @Get(':id')

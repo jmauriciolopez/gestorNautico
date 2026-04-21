@@ -1,35 +1,25 @@
-import React, { useState } from 'react';
-import { CreditCard, FileText, CheckCircle, ExternalLink } from 'lucide-react';
+import { useState } from 'react';
+import { CreditCard, FileText, CheckCircle, ExternalLink, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { ActionMenu } from '../../../shared/components/ActionMenu';
 import { CargoDetailModal } from './CargoDetailModal';
+import { useCargosPaginados, Cargo } from '../hooks/useFinanzas';
 
-export interface Cargo {
-  id: number;
-  descripcion: string;
-  monto: number;
-  fechaEmision: string;
-  pagado: boolean;
-  tipo?: string;
-  observaciones?: string;
-  facturaId?: number;
-  factura?: any;
-  embarcacion?: any;
-  cliente: {
-    id: number;
-    nombre: string;
-    embarcaciones?: any[];
-  };
-}
+const PAGE_SIZE = 20;
 
 interface CargosListProps {
-  cargos: Cargo[];
-  isLoading: boolean;
   onCobrar?: (cargo: Cargo) => void;
 }
 
-export function CargosList({ cargos, isLoading, onCobrar }: CargosListProps) {
+export function CargosList({ onCobrar }: CargosListProps) {
+  const [page, setPage] = useState(1);
   const [selectedCargo, setSelectedCargo] = useState<Cargo | null>(null);
+
+  const { query } = useCargosPaginados(page, PAGE_SIZE);
+  const { data, isLoading, isFetching } = query;
+  const cargos: Cargo[] = data?.data ?? [];
+  const totalPages = data?.totalPages ?? 1;
+  const total = data?.total ?? 0;
 
   const extractVesselName = (cargo: Cargo) => {
     if (!cargo.descripcion) return 'GENERAL';
@@ -40,7 +30,7 @@ export function CargosList({ cargos, isLoading, onCobrar }: CargosListProps) {
 
   return (
     <>
-      <div className="overflow-x-auto">
+      <div className={`overflow-x-auto transition-opacity duration-200 ${isFetching && !isLoading ? 'opacity-60' : 'opacity-100'}`}>
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="border-b border-[var(--border-primary)]/60 bg-[var(--bg-secondary)]/20">
@@ -54,9 +44,20 @@ export function CargosList({ cargos, isLoading, onCobrar }: CargosListProps) {
           </thead>
           <tbody className="divide-y divide-[var(--border-secondary)]">
             {isLoading ? (
-              <tr><td colSpan={6} className="px-8 py-20 text-center text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)]/20">Sincronizando registros...</td></tr>
+              <tr>
+                <td colSpan={6} className="px-8 py-24 text-center">
+                  <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+                    <span className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">Sincronizando registros...</span>
+                  </div>
+                </td>
+              </tr>
             ) : cargos.length === 0 ? (
-              <tr><td colSpan={6} className="px-8 py-20 text-center text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)]/20">No se detectaron cargos pendientes.</td></tr>
+              <tr>
+                <td colSpan={6} className="px-8 py-20 text-center text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)]/20">
+                  No se detectaron cargos pendientes.
+                </td>
+              </tr>
             ) : (
               cargos.map((cargo) => (
                 <tr
@@ -132,7 +133,49 @@ export function CargosList({ cargos, isLoading, onCobrar }: CargosListProps) {
         </table>
       </div>
 
-      {/* Modal de Detalle */}
+      {/* Paginación */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-8 py-5 border-t border-[var(--border-secondary)]">
+          <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">
+            Página {page} de {totalPages} · {total} cargos
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              disabled={page <= 1 || isFetching}
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card-hover)] transition-all disabled:opacity-30 disabled:cursor-not-allowed active:scale-95"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              <span className="text-[10px] font-black uppercase tracking-widest">Anterior</span>
+            </button>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+                const p = totalPages <= 7 ? i + 1
+                  : page <= 4 ? i + 1
+                  : page >= totalPages - 3 ? totalPages - 6 + i
+                  : page - 3 + i;
+                return (
+                  <button key={p} onClick={() => setPage(p)} disabled={isFetching}
+                    className={`w-9 h-9 rounded-xl text-[10px] font-black transition-all active:scale-90 ${p === page
+                      ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/30'
+                      : 'bg-[var(--bg-elevated)] border border-[var(--border-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card-hover)]'
+                    }`}
+                  >{p}</button>
+                );
+              })}
+            </div>
+            <button
+              disabled={page >= totalPages || isFetching}
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card-hover)] transition-all disabled:opacity-30 disabled:cursor-not-allowed active:scale-95"
+            >
+              <span className="text-[10px] font-black uppercase tracking-widest">Siguiente</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {selectedCargo && (
         <CargoDetailModal
           cargo={selectedCargo}

@@ -156,23 +156,28 @@ export class CajasService {
   }
 
   async getResumen(): Promise<CajasResumen | null> {
-    const cajaAbierta = await this.findAbierta();
+    const cajaAbierta = await this.cajaRepo.findOne({
+      where: { estado: EstadoCaja.ABIERTA },
+    });
     if (!cajaAbierta) return null;
 
-    const totalRecaudado = (cajaAbierta.pagos || []).reduce(
-      (sum, p) => sum + Number(p.monto || 0),
-      0,
-    );
-
-    const totalEfectivo = (cajaAbierta.pagos || [])
-      .filter((p) => p.metodoPago === MetodoPago.EFECTIVO)
-      .reduce((sum, p) => sum + Number(p.monto || 0), 0);
+    // Aggregate in SQL — no loading all pagos into memory
+    const agg = await this.cajaRepo.manager
+      .createQueryBuilder()
+      .select('COALESCE(SUM(p.monto), 0)', 'totalRecaudado')
+      .addSelect(
+        `COALESCE(SUM(CASE WHEN p.metodoPago = '${MetodoPago.EFECTIVO}' THEN p.monto ELSE 0 END), 0)`,
+        'totalEfectivo',
+      )
+      .from('pagos', 'p')
+      .where('p.caja_id = :cajaId', { cajaId: cajaAbierta.id })
+      .getRawOne<{ totalRecaudado: string; totalEfectivo: string }>();
 
     return {
       id: cajaAbierta.id,
       saldoInicial: Number(cajaAbierta.saldoInicial || 0),
-      totalRecaudado,
-      totalEfectivo,
+      totalRecaudado: Number(agg?.totalRecaudado || 0),
+      totalEfectivo: Number(agg?.totalEfectivo || 0),
       fechaApertura: cajaAbierta.fechaApertura,
     };
   }

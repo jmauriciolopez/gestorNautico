@@ -42,23 +42,32 @@ export interface Caja {
   pagos?: Pago[];
 }
 
-export function useCargos(clienteId?: number, soloSinFacturar: boolean = false) {
-  return useQuery<Cargo[]>({
-    queryKey: ['cargos', { clienteId, soloSinFacturar }],
-    queryFn: () => {
-      const params = new URLSearchParams();
-      if (clienteId) params.append('clienteId', clienteId.toString());
+const CARGOS_PAGE_SIZE = 20;
+const PAGOS_PAGE_SIZE = 20;
+
+/** Paginated cargos hook — self-contained for components that manage their own pagination */
+export function useCargosPaginados(
+  page: number,
+  limit = CARGOS_PAGE_SIZE,
+  clienteId?: number,
+  soloSinFacturar = false,
+) {
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
+    queryKey: ['cargos', page, limit, { clienteId, soloSinFacturar }],
+    queryFn: (): Promise<Paginated<Cargo>> => {
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: String(limit),
+      });
+      if (clienteId) params.append('clienteId', String(clienteId));
       if (soloSinFacturar) params.append('soloSinFacturar', 'true');
       return httpClient.get<Paginated<Cargo>>(`/cargos?${params.toString()}`);
     },
-    select: selectData,
+    placeholderData: (prev) => prev,
+    staleTime: 30_000,
   });
-}
-
-export function useFinanzas() {
-  const queryClient = useQueryClient();
-
-  const getCargos = useCargos();
 
   const createCargo = useMutation({
     mutationFn: (data: Partial<Cargo> & { clienteId: number }) =>
@@ -68,10 +77,59 @@ export function useFinanzas() {
     },
   });
 
-  const getPagos = useQuery<Pago[]>({
-    queryKey: ['pagos'],
-    queryFn: () => httpClient.get<Pago[]>('/pagos'),
+  const deleteCargo = useMutation({
+    mutationFn: (id: number) => httpClient.delete(`/cargos/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cargos'] });
+    },
   });
+
+  return { query, createCargo, deleteCargo };
+}
+
+/** Paginated pagos hook — self-contained */
+export function usePagosPaginados(page: number, limit = PAGOS_PAGE_SIZE) {
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
+    queryKey: ['pagos', page, limit],
+    queryFn: (): Promise<Paginated<Pago>> =>
+      httpClient.get<Paginated<Pago>>(`/pagos?page=${page}&limit=${limit}`),
+    placeholderData: (prev) => prev,
+    staleTime: 30_000,
+  });
+
+  const createPago = useMutation({
+    mutationFn: (data: Partial<Pago> & { clienteId: number; cargoId?: number; cajaId?: number }) =>
+      httpClient.post('/pagos', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pagos'] });
+      queryClient.invalidateQueries({ queryKey: ['cargos'] });
+      queryClient.invalidateQueries({ queryKey: ['caja-resumen'] });
+      queryClient.invalidateQueries({ queryKey: ['cajas'] });
+    },
+  });
+
+  return { query, createPago };
+}
+
+/** Keep backward-compat for useCargos (used in FacturaEditModal etc.) */
+export function useCargos(clienteId?: number, soloSinFacturar: boolean = false) {
+  return useQuery<Cargo[]>({
+    queryKey: ['cargos', { clienteId, soloSinFacturar }],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (clienteId) params.append('clienteId', clienteId.toString());
+      if (soloSinFacturar) params.append('soloSinFacturar', 'true');
+      params.append('limit', '200'); // explicit large limit for select pickers
+      return httpClient.get<Paginated<Cargo>>(`/cargos?${params.toString()}`);
+    },
+    select: selectData,
+  });
+}
+
+export function useFinanzas() {
+  const queryClient = useQueryClient();
 
   const createPago = useMutation({
     mutationFn: (data: Partial<Pago> & { clienteId: number; cargoId?: number; cajaId?: number }) =>
@@ -109,9 +167,8 @@ export function useFinanzas() {
 
   const getCajas = useQuery<Caja[]>({
     queryKey: ['cajas'],
-    queryFn: () => httpClient.get<Paginated<Caja>>('/cajas'),
-    select: selectData,
+    queryFn: () => httpClient.get<Paginated<Caja>>('/cajas').then(selectData),
   });
 
-  return { getCargos, createCargo, getPagos, createPago, getCajaResumen, abrirCaja, cerrarCaja, getCajas };
+  return { createPago, getCajaResumen, abrirCaja, cerrarCaja, getCajas };
 }
