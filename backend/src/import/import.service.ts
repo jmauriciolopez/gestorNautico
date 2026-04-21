@@ -200,10 +200,10 @@ export class ImportService {
               tipo: row.tipo || existingEmbarcacion.tipo,
               estado: row.estado || existingEmbarcacion.estado,
               clienteId: cliente.id,
-            });
+            } as any);
             result.updated++;
           } else {
-            await this.embarcacionRepo.save({
+            const nueva = this.embarcacionRepo.create({
               nombre: row.nombre,
               matricula: row.matricula,
               marca: row.marca || null,
@@ -214,6 +214,7 @@ export class ImportService {
               estado: row.estado || 'EN_CUNA',
               clienteId: cliente.id,
             });
+            await this.embarcacionRepo.save(nueva);
             result.created++;
           }
         } catch (err: any) {
