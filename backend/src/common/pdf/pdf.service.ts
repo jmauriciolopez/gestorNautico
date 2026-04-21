@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import PDFDocument from 'pdfkit-table';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const PDFDocument = require('pdfkit-table');
 import { Factura } from '../../facturas/factura.entity';
 import { Pago } from '../../pagos/pago.entity';
 import { ConfiguracionService } from '../../configuracion/configuracion.service';

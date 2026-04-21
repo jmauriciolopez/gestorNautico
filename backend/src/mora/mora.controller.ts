@@ -58,7 +58,9 @@ export class MoraController {
   }
 
   @Get('factura/:id')
-  async calcularMora(@Param('id', ParseIntPipe) id: number): Promise<MoraResultado> {
+  async calcularMora(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<MoraResultado> {
     return this.moraService.calcularMora(id);
   }
 

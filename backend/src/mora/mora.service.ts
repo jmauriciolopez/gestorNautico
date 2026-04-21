@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThanOrEqual, Not, In } from 'typeorm';
+import { Repository, Not } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Factura, EstadoFactura } from '../facturas/factura.entity';
 import { ConfiguracionService } from '../configuracion/configuracion.service';
@@ -68,7 +68,8 @@ export class MoraService {
       };
     }
 
-    const { tasaInteres, tasaRecargo, diasGracia } = await this.getConfiguracion();
+    const { tasaInteres, tasaRecargo, diasGracia } =
+      await this.getConfiguracion();
 
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
@@ -89,10 +90,11 @@ export class MoraService {
 
     const interesMoratorio =
       diasConInteres > 0
-        ? montoBase * ((tasaInteres / 100) / 30) * diasConInteres
+        ? montoBase * (tasaInteres / 100 / 30) * diasConInteres
         : 0;
 
-    const recargo = diasAtraso > diasGracia ? montoBase * (tasaRecargo / 100) : 0;
+    const recargo =
+      diasAtraso > diasGracia ? montoBase * (tasaRecargo / 100) : 0;
 
     const totalMora = Number((interesMoratorio + recargo).toFixed(2));
     const totalAPagar = Number((montoBase + totalMora).toFixed(2));
@@ -120,7 +122,8 @@ export class MoraService {
       throw new Error('Solo se puede aplicar mora a facturas pendientes');
     }
 
-    const { tasaInteres, tasaRecargo, diasGracia } = await this.getConfiguracion();
+    const { tasaInteres, tasaRecargo, diasGracia } =
+      await this.getConfiguracion();
 
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
@@ -141,10 +144,11 @@ export class MoraService {
 
     const interesMoratorio =
       diasConInteres > 0
-        ? montoBase * ((tasaInteres / 100) / 30) * diasConInteres
+        ? montoBase * (tasaInteres / 100 / 30) * diasConInteres
         : 0;
 
-    const recargo = diasAtraso > diasGracia ? montoBase * (tasaRecargo / 100) : 0;
+    const recargo =
+      diasAtraso > diasGracia ? montoBase * (tasaRecargo / 100) : 0;
 
     const totalMora = Number((interesMoratorio + recargo).toFixed(2));
 
@@ -191,7 +195,8 @@ export class MoraService {
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
 
-    const { tasaInteres, tasaRecargo, diasGracia } = await this.getConfiguracion();
+    const { tasaInteres, tasaRecargo, diasGracia } =
+      await this.getConfiguracion();
 
     let aplicadas = 0;
 
@@ -202,7 +207,7 @@ export class MoraService {
       fechaVencimiento.setHours(0, 0, 0, 0);
 
       const diffTime = hoy.getTime() - fechaVencimiento.getTime();
-      let diasAtraso = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const diasAtraso = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
       if (diasAtraso <= diasGracia) continue;
 
@@ -214,14 +219,16 @@ export class MoraService {
 
       const montoBase = Number(factura.total);
       const interesMoratorio =
-        montoBase * ((tasaInteres / 100) / 30) * (diasAtraso - diasGracia);
+        montoBase * (tasaInteres / 100 / 30) * (diasAtraso - diasGracia);
       const recargo = montoBase * (tasaRecargo / 100);
 
       const interesAcumulado = Number(factura.interesMoratorio || 0);
       const recargoAcumulado = Number(factura.recargo || 0);
 
       await this.facturaRepo.update(factura.id, {
-        interesMoratorio: Number((interesAcumulado + interesMoratorio).toFixed(2)),
+        interesMoratorio: Number(
+          (interesAcumulado + interesMoratorio).toFixed(2),
+        ),
         recargo: Math.max(recargoAcumulado, Number(recargo.toFixed(2))),
         fechaAplicacionMora: new Date(),
       });
@@ -232,7 +239,9 @@ export class MoraService {
       );
     }
 
-    this.logger.log(`Aplicación automática de mora completada. ${aplicadas} facturas actualizadas.`);
+    this.logger.log(
+      `Aplicación automática de mora completada. ${aplicadas} facturas actualizadas.`,
+    );
     return aplicadas;
   }
 

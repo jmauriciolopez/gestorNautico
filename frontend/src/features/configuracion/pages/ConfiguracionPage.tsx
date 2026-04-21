@@ -49,7 +49,7 @@ export default function ConfiguracionPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="max-w-4xl mx-auto space-y-8 p-3 md:p-6 animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-x-hidden">
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-black tracking-tight text-[var(--text-primary)] uppercase italic">
           Configuración <span className="text-indigo-500">del Sistema</span>

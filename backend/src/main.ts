@@ -3,9 +3,23 @@ import { ValidationPipe, Logger, BadRequestException } from '@nestjs/common';
 import { AppModule } from './app.module';
 import * as cookieParser from 'cookie-parser';
 
+import { HttpAdapterHost, BaseExceptionFilter } from '@nestjs/core';
+import { ExceptionFilter, Catch, ArgumentsHost } from '@nestjs/common';
+
+@Catch()
+export class BeepExceptionFilter extends BaseExceptionFilter {
+  catch(exception: unknown, host: ArgumentsHost) {
+    process.stdout.write('\x07'); // Terminal beep
+    super.catch(exception, host);
+  }
+}
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const logger = new Logger('CORS');
+
+  const { httpAdapter } = app.get(HttpAdapterHost);
+  app.useGlobalFilters(new BeepExceptionFilter(httpAdapter));
 
   const allowedOrigins = process.env.CORS_ORIGIN?.split(',') ?? [
     'http://localhost:5173',
@@ -45,6 +59,7 @@ async function bootstrap() {
       whitelist: true,
       forbidNonWhitelisted: true,
       exceptionFactory: (errors) => {
+        process.stdout.write('\x07'); // Beep on validation errors too
         const logger = new Logger('ValidationPipe');
         const errorMessages = errors.flatMap((error) =>
           Object.values(error.constraints || {}),

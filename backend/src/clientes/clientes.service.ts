@@ -4,6 +4,7 @@ import { ILike, Repository } from 'typeorm';
 import { Cliente } from './clientes.entity';
 import { Cargo } from '../cargos/cargo.entity';
 import { Pago } from '../pagos/pago.entity';
+import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
 import {
   paginate,
   PaginationQuery,
@@ -19,6 +20,8 @@ export class ClientesService {
     private readonly cargoRepository: Repository<Cargo>,
     @InjectRepository(Pago)
     private readonly pagoRepository: Repository<Pago>,
+    @InjectRepository(Embarcacion)
+    private readonly embarcacionRepository: Repository<Embarcacion>,
   ) {}
 
   async findAll(
@@ -26,29 +29,69 @@ export class ClientesService {
   ): Promise<PaginatedResult<Cliente>> {
     const { search, ...pagination } = query;
 
+    const baseOptions = {
+      order: { createdAt: 'DESC' } as const,
+    };
+
     if (search) {
-      // For searching multiple fields, we use an array of objects (OR logic)
       return paginate(this.clientesRepository, pagination, {
+        ...baseOptions,
         where: [
           { nombre: ILike(`%${search}%`) },
           { dni: ILike(`%${search}%`) },
           { email: ILike(`%${search}%`) },
         ],
-        order: { createdAt: 'DESC' },
       });
     }
 
-    return paginate(this.clientesRepository, pagination, {
-      order: { createdAt: 'DESC' },
-    });
+    return paginate(this.clientesRepository, pagination, baseOptions);
   }
 
-  async findOne(id: number): Promise<Cliente> {
+  async findAllWithTarifaBase(
+    query: PaginationQuery & { search?: string } = {},
+  ): Promise<PaginatedResult<Cliente & { tarifaBase?: number }>> {
+    const result = await this.findAll(query);
+    
+    const clientesWithTarifa = await Promise.all(
+      result.data.map(async (cliente) => {
+        const embarcacion = await this.embarcacionRepository.findOne({
+          where: { cliente: { id: cliente.id } },
+          relations: ['espacio', 'espacio.rack'],
+        });
+
+        const tarifaBase = embarcacion?.espacio?.rack?.tarifaBase 
+          ? Number(embarcacion.espacio.rack.tarifaBase) 
+          : 0;
+
+        return { ...cliente, tarifaBase };
+      })
+    );
+
+    return {
+      ...result,
+      data: clientesWithTarifa,
+    };
+  }
+
+  async findOne(id: number): Promise<Cliente & { tarifaBase?: number }> {
     const cliente = await this.clientesRepository.findOne({ where: { id } });
     if (!cliente) {
       throw new NotFoundException(`Cliente con ID ${id} no encontrado`);
     }
-    return cliente;
+
+    const embarcacion = await this.embarcacionRepository.findOne({
+      where: { cliente: { id } },
+      relations: ['espacio', 'espacio.rack'],
+    });
+
+    const tarifaBase = embarcacion?.espacio?.rack?.tarifaBase 
+      ? Number(embarcacion.espacio.rack.tarifaBase) 
+      : 0;
+
+    return {
+      ...cliente,
+      tarifaBase,
+    };
   }
 
   async create(createClienteDto: Partial<Cliente>): Promise<Cliente> {

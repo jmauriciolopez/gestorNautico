@@ -78,7 +78,7 @@ const Rack3DContainer: React.FC<Rack3DContainerProps> = ({
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       onWheel={handleWheel}
-      className={`p-12 rounded-[3.5rem] bg-black/30 border border-white/5 transition-all duration-700 ${is3D ? 'rack-3d-scene rack-3d-active overflow-visible mb-12' : 'overflow-hidden'}`}
+      className={`px-4 py-8 md:p-12 rounded-[2rem] md:rounded-[3.5rem] bg-black/30 border border-white/5 transition-all duration-700 ${is3D ? 'rack-3d-scene rack-3d-active overflow-visible mb-12' : 'overflow-x-auto custom-scrollbar'}`}
     >
       <div className={is3D ? 'min-w-max' : 'w-full'}>
         {/* Renderizado condicional según modo 2D/3D */}
@@ -191,41 +191,35 @@ const Rack3DContainer: React.FC<Rack3DContainerProps> = ({
           /* VISTA 2D: Eje Y = Pisos (1 abajo), Eje X = (Columnas x Filas) */
           <>
             {/* 2D Column Headers Flattened */}
-            <div 
-              className="grid gap-3 mb-6 px-1 opacity-40 hover:opacity-100 transition-opacity duration-300"
+            <div
+              className="grid gap-3 items-center w-full"
               style={{
-                gridTemplateColumns: `60px repeat(${rack.columnas * rack.filas}, minmax(0, 1fr))`
+                gridTemplateColumns: `min-content repeat(${rack.columnas * rack.filas}, minmax(80px, 1fr))`,
               }}
             >
-              <div />
+              {/* Header Row */}
+              <div className="h-full" />
               {Array.from({ length: rack.filas }).map((_, fIdx) => {
                 const f = fIdx + 1;
                 return Array.from({ length: rack.columnas }).map((_, cIdx) => {
                   const c = cIdx + 1;
                   return (
-                    <div key={`head-${f}-${c}`} className="text-center font-black uppercase tracking-tighter flex flex-col items-center">
+                    <div key={`head-${f}-${c}`} className="text-center font-black uppercase tracking-tighter flex flex-col items-center opacity-40 hover:opacity-100 transition-opacity">
                       <span className="text-[8px] text-indigo-500">F{f} C{c}</span>
-                      <span className="text-[10px] text-[var(--text-primary)]">Espacio</span>
+                      <span className="text-[10px] text-[var(--text-primary)] truncate max-w-full">Espacio</span>
                     </div>
                   );
                 });
               })}
-            </div>
 
-            <div
-              className="grid gap-3 items-center"
-              style={{
-                gridTemplateColumns: `60px repeat(${rack.columnas * rack.filas}, minmax(0, 1fr))`,
-                gridTemplateRows: `repeat(${rack.pisos}, 110px)`
-              }}
-            >
+              {/* Floor Rows */}
               {Array.from({ length: rack.pisos }).map((_, pRevIdx) => {
-                const p = rack.pisos - pRevIdx; // Piso 1 en la fila inferior del grid
+                const p = rack.pisos - pRevIdx;
                 return (
                   <React.Fragment key={`piso-row-${p}`}>
-                    <div className="flex flex-col items-center justify-center h-full border-r border-white/10 pr-4 mr-2 sticky left-0 bg-black/40 backdrop-blur-xl z-20 border-l border-white/5 rounded-l-xl shadow-2xl">
-                      <span className="text-[9px] font-black text-indigo-400 uppercase tracking-tighter leading-none mb-1">Piso</span>
-                      <span className="text-2xl font-black text-[var(--text-primary)] leading-none tabular-nums">{p}</span>
+                    <div className="flex flex-col items-center justify-center h-[110px] border-r border-white/10 px-2 md:px-4 sticky left-0 bg-black/60 backdrop-blur-xl z-20 border-l border-white/5 rounded-l-xl shadow-2xl min-w-[50px] md:min-w-[60px]">
+                      <span className="text-[8px] md:text-[9px] font-black text-indigo-400 uppercase tracking-tighter leading-none mb-1">Piso</span>
+                      <span className="text-xl md:text-2xl font-black text-[var(--text-primary)] leading-none tabular-nums">{p}</span>
                     </div>
 
                     {Array.from({ length: rack.filas }).map((_, fIdx) => {
@@ -265,7 +259,6 @@ const Rack3DContainer: React.FC<Rack3DContainerProps> = ({
                                 <span className="text-[10px] font-black opacity-20 tracking-widest">{espacio.numero.split('-').pop()}</span>
                             )}
                             
-                            {/* Metadata mini labels in 2D */}
                             {espacio && (
                               <div className="absolute top-1 left-1 flex gap-1 items-center opacity-0 group-hover:opacity-100 transition-opacity">
                                 <span className="text-[6px] bg-black/60 px-1 rounded text-indigo-300 font-black">F{f}C{c}</span>
@@ -319,14 +312,14 @@ export const MapaRacks: React.FC<MapaRacksProps> = ({
   return (
     <>
     <div className={`space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700 ${is3D ? 'perspective-container' : ''}`}>
-      <div className="flex justify-between items-center px-2">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 px-2">
         <div>
           <h2 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight">Mapa Maestro de Racks</h2>
           <p className="text-[var(--text-secondary)] text-sm mt-1">Visualización técnica de ocupación por zona y dimensiones.</p>
         </div>
 
         {/* Legend */}
-        <div className="flex gap-4 items-center bg-slate-800/30 px-5 py-2.5 rounded-2xl border border-slate-700/50">
+        <div className="flex flex-wrap gap-4 items-center bg-slate-800/30 px-5 py-2.5 rounded-2xl border border-slate-700/50 w-fit">
           <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mr-2">Leyenda Eslora:</span>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-[var(--accent-teal-soft)] border border-[var(--accent-teal)]/30" />
@@ -368,9 +361,9 @@ export const MapaRacks: React.FC<MapaRacksProps> = ({
             </button>
 
             {expandedZona === zona.id && (
-              <div className="p-8 pt-0 grid grid-cols-1 xl:grid-cols-2 gap-10 animate-in slide-in-from-top-4 duration-500">
+              <div className="p-8 pt-0 grid grid-cols-1 gap-10 animate-in slide-in-from-top-4 duration-500">
                 {zona.racks.map(rack => (
-                  <div key={rack.id} className="space-y-4">
+                  <div key={rack.id} className="space-y-4 min-w-0 w-full overflow-hidden">
                     <div className="flex justify-between items-end">
                       <div className="flex items-center gap-3">
                         <span className="bg-blue-600 text-[var(--text-primary)] text-[10px] font-black px-2 py-1 rounded">RACK</span>

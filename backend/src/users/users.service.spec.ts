@@ -81,7 +81,7 @@ describe('UsersService', () => {
         clave: 'abc',
         nombre: 'New',
       };
-      const result = await service.create(dto as CreateUserDto);
+      const result = await service.create(dto);
       expect(mockRepository.save).toHaveBeenCalled();
       expect(result.id).toBe(1);
     });

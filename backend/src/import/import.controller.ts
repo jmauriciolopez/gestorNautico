@@ -8,6 +8,18 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ImportService, ImportResult } from './import.service';
 
+interface MulterFile {
+  fieldname: string;
+  originalname: string;
+  encoding: string;
+  mimetype: string;
+  size: number;
+  destination: string;
+  filename: string;
+  path: string;
+  buffer: Buffer;
+}
+
 @Controller('import')
 export class ImportController {
   constructor(private readonly importService: ImportService) {}
@@ -15,9 +27,9 @@ export class ImportController {
   @Post('clientes')
   @UseInterceptors(FileInterceptor('file'))
   async importClientes(
-    @UploadedFile() file: any,
+    @UploadedFile() file: MulterFile,
   ): Promise<ImportResult> {
-    if (!file) {
+    if (!file || !file.buffer) {
       throw new BadRequestException('No se ha proporcionado ningún archivo');
     }
 
@@ -28,9 +40,9 @@ export class ImportController {
   @Post('embarcaciones')
   @UseInterceptors(FileInterceptor('file'))
   async importEmbarcaciones(
-    @UploadedFile() file: any,
+    @UploadedFile() file: MulterFile,
   ): Promise<ImportResult> {
-    if (!file) {
+    if (!file || !file.buffer) {
       throw new BadRequestException('No se ha proporcionado ningún archivo');
     }
 

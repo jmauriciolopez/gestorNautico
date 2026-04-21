@@ -6,7 +6,6 @@ import {
   Get,
   UseGuards,
   Req,
-  Ip,
 } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { AuthTokenGuard } from './guards/AuthTokenGuard';

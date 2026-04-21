@@ -17,9 +17,9 @@ export interface ClienteImportRow {
   email?: string;
   telefono?: string;
   activo?: string;
-  diafacturacion?: string;
+  diaFacturacion?: string;
   descuento?: string;
-  tipecuota?: string;
+  tipoCuota?: string;
 }
 
 export interface EmbarcacionImportRow {
@@ -72,7 +72,7 @@ export class ImportService {
     return rows.map((row) => {
       const obj: Record<string, string> = {};
       headers.forEach((header, index) => {
-        obj[header.toLowerCase().trim()] = row[index] || '';
+        obj[header.trim()] = row[index] || '';
       });
       return obj as T;
     });
@@ -89,18 +89,25 @@ export class ImportService {
     try {
       const lines = this.parseCSV(csvContent);
       if (lines.length < 2) {
-        result.errors.push('El archivo CSV debe tener al menos una fila de datos');
+        result.errors.push(
+          'El archivo CSV debe tener al menos una fila de datos',
+        );
         result.success = false;
         return result;
       }
 
-      const headers = lines[0].map((h) => h.toLowerCase().trim());
-      const data = this.mapCSVToObjects<ClienteImportRow>(headers, lines.slice(1));
+      const headers = lines[0].map((h) => h.trim());
+      const data = this.mapCSVToObjects<ClienteImportRow>(
+        headers,
+        lines.slice(1),
+      );
 
       for (const row of data) {
         try {
           if (!row.nombre || !row.dni) {
-            result.errors.push(`Fila omitida: falta nombre o dni - ${JSON.stringify(row)}`);
+            result.errors.push(
+              `Fila omitida: falta nombre o dni - ${JSON.stringify(row)}`,
+            );
             continue;
           }
 
@@ -109,7 +116,9 @@ export class ImportService {
           });
 
           const activo = row.activo === 'true' || row.activo === '1';
-          const diaFacturacion = row.diafacturacion ? parseInt(row.diafacturacion, 10) : 1;
+          const diaFacturacion = row.diaFacturacion
+            ? parseInt(row.diaFacturacion, 10)
+            : 1;
           const descuento = row.descuento ? parseFloat(row.descuento) : 0;
 
           if (existingCliente) {
@@ -117,10 +126,13 @@ export class ImportService {
               nombre: row.nombre,
               email: row.email || existingCliente.email,
               telefono: row.telefono || existingCliente.telefono,
-              activo: row.activo !== undefined ? activo : existingCliente.activo,
-              diaFacturacion: row.diafacturacion ? diaFacturacion : existingCliente.diaFacturacion,
+              activo:
+                row.activo !== undefined ? activo : existingCliente.activo,
+              diaFacturacion: row.diaFacturacion
+                ? diaFacturacion
+                : existingCliente.diaFacturacion,
               descuento: row.descuento ? descuento : existingCliente.descuento,
-              tipoCuota: row.tipecuota || existingCliente.tipoCuota,
+              tipoCuota: row.tipoCuota || existingCliente.tipoCuota,
             });
             result.updated++;
           } else {
@@ -130,19 +142,23 @@ export class ImportService {
               email: row.email || null,
               telefono: row.telefono || null,
               activo: row.activo !== undefined ? activo : true,
-              diaFacturacion: row.diafacturacion ? diaFacturacion : 1,
+              diaFacturacion: row.diaFacturacion ? diaFacturacion : 1,
               descuento: row.descuento ? descuento : 0,
-              tipoCuota: row.tipecuota || 'NINGUNA',
+              tipoCuota: row.tipoCuota || 'NINGUNA',
             });
             result.created++;
           }
-        } catch (err: any) {
-          result.errors.push(`Error procesando cliente ${row.dni}: ${err.message}`);
+        } catch (err: unknown) {
+          const message =
+            err instanceof Error ? err.message : 'Error desconocido';
+          result.errors.push(`Error procesando cliente ${row.dni}: ${message}`);
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       result.success = false;
-      result.errors.push(`Error al procesar archivo: ${error.message}`);
+      const message =
+        error instanceof Error ? error.message : 'Error desconocido';
+      result.errors.push(`Error al procesar archivo: ${message}`);
     }
 
     return result;
@@ -159,18 +175,25 @@ export class ImportService {
     try {
       const lines = this.parseCSV(csvContent);
       if (lines.length < 2) {
-        result.errors.push('El archivo CSV debe tener al menos una fila de datos');
+        result.errors.push(
+          'El archivo CSV debe tener al menos una fila de datos',
+        );
         result.success = false;
         return result;
       }
 
-      const headers = lines[0].map((h) => h.toLowerCase().trim());
-      const data = this.mapCSVToObjects<EmbarcacionImportRow>(headers, lines.slice(1));
+      const headers = lines[0].map((h) => h.trim());
+      const data = this.mapCSVToObjects<EmbarcacionImportRow>(
+        headers,
+        lines.slice(1),
+      );
 
       for (const row of data) {
         try {
           if (!row.nombre || !row.matricula || !row.dnidueno) {
-            result.errors.push(`Fila omitida: falta nombre, matricula o dnidueno - ${JSON.stringify(row)}`);
+            result.errors.push(
+              `Fila omitida: falta nombre, matricula o dnidueno - ${JSON.stringify(row)}`,
+            );
             continue;
           }
 
@@ -179,7 +202,9 @@ export class ImportService {
           });
 
           if (!cliente) {
-            result.errors.push(`Cliente con DNI ${row.dnidueno} no encontrado para embarcacion ${row.nombre}`);
+            result.errors.push(
+              `Cliente con DNI ${row.dnidueno} no encontrado para embarcacion ${row.nombre}`,
+            );
             continue;
           }
 
@@ -200,7 +225,7 @@ export class ImportService {
               tipo: row.tipo || existingEmbarcacion.tipo,
               estado: row.estado || existingEmbarcacion.estado,
               clienteId: cliente.id,
-            } as any);
+            });
             result.updated++;
           } else {
             const nueva = this.embarcacionRepo.create({
@@ -217,13 +242,19 @@ export class ImportService {
             await this.embarcacionRepo.save(nueva);
             result.created++;
           }
-        } catch (err: any) {
-          result.errors.push(`Error procesando embarcacion ${row.matricula}: ${err.message}`);
+        } catch (err: unknown) {
+          const message =
+            err instanceof Error ? err.message : 'Error desconocido';
+          result.errors.push(
+            `Error procesando embarcacion ${row.matricula}: ${message}`,
+          );
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       result.success = false;
-      result.errors.push(`Error al procesar archivo: ${error.message}`);
+      const message =
+        error instanceof Error ? error.message : 'Error desconocido';
+      result.errors.push(`Error al procesar archivo: ${message}`);
     }
 
     return result;

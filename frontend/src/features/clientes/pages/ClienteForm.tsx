@@ -77,7 +77,7 @@ export default function ClienteForm() {
   const isPending = createCliente.isPending || updateCliente.isPending;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 p-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="max-w-4xl mx-auto space-y-8 p-3 md:p-6 animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-x-hidden">
       <div className="flex items-center gap-6">
         <Link to="/clientes" className="p-3 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-2xl hover:bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all active:scale-95 shadow-lg">
           <ArrowLeft className="w-5 h-5" />

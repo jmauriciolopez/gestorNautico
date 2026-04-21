@@ -206,7 +206,7 @@ export default function EmbarcacionesList() {
                         <Ship className="w-10 h-10" />
                       </div>
                       <p className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] max-w-xs mx-auto">
-                        No se detectaron unidades registradas bajo criterios de búsqueda estipulados.
+                        No se encontraron unidades con los criterios de búsqueda.
                       </p>
                     </div>
                   </td>

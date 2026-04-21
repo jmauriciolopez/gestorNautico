@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsOrder } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Cliente } from '../clientes/clientes.entity';
 import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
 import { Movimiento } from '../movimientos/movimientos.entity';
@@ -128,13 +128,8 @@ export class DashboardService {
     const raw = await this.pagoRepo
       .createQueryBuilder('p')
       .select([
-        'CASE',
-        "  WHEN p.fecha >= :monthStart THEN 'mes'",
-        "  WHEN p.fecha >= :weekStart THEN 'semana'",
-        "  WHEN p.fecha >= :dayStart THEN 'dia'",
-        "  ELSE 'pasado'",
-        'END',
-        'SUM(p.monto)',
+        "CASE WHEN p.fecha >= :monthStart THEN 'mes' WHEN p.fecha >= :weekStart THEN 'semana' WHEN p.fecha >= :dayStart THEN 'dia' ELSE 'pasado' END as case",
+        'SUM(p.monto) as sum',
       ])
       .where('p.fecha >= :monthStart', { monthStart })
       .setParameter('weekStart', weekStart)
@@ -169,15 +164,9 @@ export class DashboardService {
     const raw = await this.cargoRepo
       .createQueryBuilder('c')
       .select([
-        'CASE',
-        "  WHEN c.fechaVencimiento < :vencidoEnd THEN 'vencido'",
-        "  WHEN c.fechaVencimiento >= :monthStart THEN 'mes'",
-        "  WHEN c.fechaVencimiento >= :weekStart THEN 'semana'",
-        "  WHEN c.fechaVencimiento >= :dayStart THEN 'dia'",
-        "  ELSE 'pasado'",
-        'END',
-        'SUM(c.monto)',
-        'COUNT(c.id)',
+        "CASE WHEN c.fechaVencimiento < :vencidoEnd THEN 'vencido' WHEN c.fechaVencimiento >= :monthStart THEN 'mes' WHEN c.fechaVencimiento >= :weekStart THEN 'semana' WHEN c.fechaVencimiento >= :dayStart THEN 'dia' ELSE 'pasado' END as case",
+        'SUM(c.monto) as sum',
+        'COUNT(c.id) as count',
       ])
       .where('c.pagado = false')
       .andWhere('c.fechaVencimiento < :monthStart', { monthStart })
@@ -209,17 +198,17 @@ export class DashboardService {
     const raw = await this.pagoRepo
       .createQueryBuilder('p')
       .select([
-        "TO_CHAR(p.fecha, 'YYYY-MM') as to_char",
-        "TO_CHAR(p.fecha, 'Mon', 'es_AR') as to_char_1",
+        "TO_CHAR(p.fecha, 'YYYY-MM') as mes_key",
+        "TO_CHAR(p.fecha, 'Mon') as mes_label",
         'SUM(p.monto) as sum',
       ])
       .where('p.fecha >= :start', { start: startWindow })
-      .groupBy("TO_CHAR(p.fecha, 'YYYY-MM')")
-      .orderBy("TO_CHAR(p.fecha, 'YYYY-MM')", 'ASC')
-      .getRawMany<{ to_char: string; to_char_1: string; sum: string }>();
+      .groupBy("mes_key, mes_label")
+      .orderBy("mes_key", 'ASC')
+      .getRawMany<{ mes_key: string; mes_label: string; sum: string }>();
 
     // Rellenar meses sin movimientos con 0
-    const seriesMap = new Map(raw.map((r) => [r.to_char, Number(r.sum || 0)]));
+    const seriesMap = new Map(raw.map((r) => [r.mes_key, Number(r.sum || 0)]));
     const result: { mes: string; monto: number }[] = [];
 
     for (let i = 5; i >= 0; i--) {
@@ -307,10 +296,10 @@ export class DashboardService {
             columna: 'ASC',
           },
         },
-      } as FindOptionsOrder<Zona>,
+      },
     });
   }
-  
+
   async getOccupancyMetrics() {
     const [totalEspacios, ocupados] = await Promise.all([
       this.espacioRepo.count(),
@@ -327,10 +316,10 @@ export class DashboardService {
       relations: ['racks', 'racks.espacios'],
     });
 
-    const ocupacionPorZona = porZona.map(zona => {
-      const espacios = zona.racks.flatMap(r => r.espacios);
+    const ocupacionPorZona = porZona.map((zona) => {
+      const espacios = zona.racks.flatMap((r) => r.espacios);
       const total = espacios.length;
-      const ocupados = espacios.filter(e => e.ocupado).length;
+      const ocupados = espacios.filter((e) => e.ocupado).length;
       return {
         zona: zona.nombre,
         total,
@@ -344,7 +333,8 @@ export class DashboardService {
         totalEspacios,
         ocupados,
         libres: totalEspacios - ocupados,
-        porcentajeOcupacion: totalEspacios > 0 ? (ocupados / totalEspacios) * 100 : 0,
+        porcentajeOcupacion:
+          totalEspacios > 0 ? (ocupados / totalEspacios) * 100 : 0,
         metrosLinealesOcupados: Number(metrosOcupadosRes?.total || 0),
       },
       porZona: ocupacionPorZona,
@@ -353,7 +343,11 @@ export class DashboardService {
 
   async getHistoricalProfitability(months: number = 12) {
     const now = new Date();
-    const startDate = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1);
+    const startDate = new Date(
+      now.getFullYear(),
+      now.getMonth() - (months - 1),
+      1,
+    );
 
     // Ingresos por categoría y mes
     const rawIngresos = await this.pagoRepo
@@ -361,26 +355,34 @@ export class DashboardService {
       .leftJoin('p.cargo', 'c')
       .select([
         "TO_CHAR(p.fecha, 'YYYY-MM') as mes_key",
-        "c.tipo as tipo",
+        'c.tipo as tipo',
         'SUM(p.monto) as total',
       ])
       .where('p.fecha >= :start', { start: startDate })
-      .groupBy("TO_CHAR(p.fecha, 'YYYY-MM'), c.tipo")
-      .orderBy("mes_key", 'ASC')
+      .groupBy("mes_key, c.tipo")
+      .orderBy('mes_key', 'ASC')
       .getRawMany<{ mes_key: string; tipo: TipoCargo; total: string }>();
 
     // Procesar datos para Recharts
-    const dataByMonth = new Map<string, any>();
-    
+    type MonthData = {
+      name: string;
+      total: number;
+      [key: string]: string | number;
+    };
+    const dataByMonth = new Map<string, MonthData>();
+
     // Inicializar meses
     for (let i = months - 1; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      const label = d.toLocaleString('es-AR', { month: 'short', year: '2-digit' });
+      const label = d.toLocaleString('es-AR', {
+        month: 'short',
+        year: '2-digit',
+      });
       dataByMonth.set(key, { name: label, total: 0 });
     }
 
-    rawIngresos.forEach(row => {
+    rawIngresos.forEach((row) => {
       const monthData = dataByMonth.get(row.mes_key);
       if (monthData) {
         const tipo = row.tipo || 'OTROS';
@@ -397,15 +399,15 @@ export class DashboardService {
       .createQueryBuilder('m')
       .select([
         "TO_CHAR(m.fecha, 'ID') as dow", // 1-7
-        "EXTRACT(HOUR FROM m.fecha) as hora",
+        'EXTRACT(HOUR FROM m.fecha) as hora',
         'COUNT(m.id) as cantidad',
       ])
-      .groupBy("dow, hora")
-      .orderBy("dow", 'ASC')
-      .addOrderBy("hora", 'ASC')
+      .groupBy('dow, hora')
+      .orderBy('dow', 'ASC')
+      .addOrderBy('hora', 'ASC')
       .getRawMany<{ dow: string; hora: string; cantidad: string }>();
 
-    return raw.map(r => ({
+    return raw.map((r) => ({
       dia: Number(r.dow),
       hora: Number(r.hora),
       cantidad: Number(r.cantidad),
@@ -416,7 +418,10 @@ export class DashboardService {
     const raw = await this.pagoRepo
       .createQueryBuilder('p')
       .leftJoin('p.cargo', 'c')
-      .select('AVG(EXTRACT(DAY FROM (p.fecha::timestamp - c.fechaEmision::timestamp)))', 'avg_days')
+      .select(
+        'AVG(EXTRACT(DAY FROM (p.fecha::timestamp - c.fechaEmision::timestamp)))',
+        'avg_days',
+      )
       .where('c.fechaEmision IS NOT NULL')
       .getRawOne<{ avg_days: string }>();
 
@@ -462,9 +467,14 @@ export class DashboardService {
       .groupBy('cl.id, cl.nombre')
       .orderBy('total_pagado', 'DESC')
       .limit(10)
-      .getRawMany<{ id: string; nombre: string; total_pagado: string; cantidad_pagos: string }>();
+      .getRawMany<{
+        id: string;
+        nombre: string;
+        total_pagado: string;
+        cantidad_pagos: string;
+      }>();
 
-    return raw.map(r => ({
+    return raw.map((r) => ({
       id: Number(r.id),
       nombre: r.nombre,
       total: Number(r.total_pagado),

@@ -48,7 +48,7 @@ export function NuevoRegistroModal({ isOpen, onClose, onSave, initialData }: Nue
   }, [selectedServiceId, getCatalogo.data, initialData]);
 
   const filteredEmbarcaciones = useMemo(() => {
-    const boats = getEmbarcaciones.data || [];
+    const boats = getEmbarcaciones.data?.data || [];
     if (!searchTerm) return boats.slice(0, 5);
     return boats.filter(b =>
       b.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -56,7 +56,7 @@ export function NuevoRegistroModal({ isOpen, onClose, onSave, initialData }: Nue
     ).slice(0, 5);
   }, [getEmbarcaciones.data, searchTerm]);
 
-  const selectedBoat = getEmbarcaciones.data?.find(b => b.id === selectedBoatId);
+  const selectedBoat = getEmbarcaciones.data?.data?.find(b => b.id === selectedBoatId);
 
   if (!isOpen) return null;
 
