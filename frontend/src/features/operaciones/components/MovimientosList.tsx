@@ -1,20 +1,26 @@
 import { useState } from 'react';
-import { Ship, MapPin, Loader2, Plus, Calendar, ArrowRight, ArrowLeft, History, FileText, Trash2 } from 'lucide-react';
-import { Movimiento, useOperaciones } from '../hooks/useOperaciones';
+import {
+  Ship, MapPin, Loader2, Plus, Calendar, ArrowRight, ArrowLeft,
+  History, FileText, Trash2, ChevronLeft, ChevronRight,
+} from 'lucide-react';
+import { Movimiento, useMovimientosPaginados } from '../hooks/useOperaciones';
 import { NuevoMovimientoModal } from './NuevoMovimientoModal';
 import { ActionMenu } from '../../../shared/components/ActionMenu';
 import { useConfirm } from '../../../shared/context/ConfirmContext';
 
-interface MovimientosListProps {
-  movimientos: Movimiento[];
-  isLoading: boolean;
-}
+const PAGE_SIZE = 20;
 
-export function MovimientosList({ movimientos, isLoading }: MovimientosListProps) {
+export function MovimientosList() {
+  const [page, setPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<number | null>(null);
-  const { createMovimiento } = useOperaciones();
   const confirm = useConfirm();
+
+  const { query, createMovimiento } = useMovimientosPaginados(page, PAGE_SIZE);
+  const { data, isLoading, isFetching } = query;
+  const movimientos: Movimiento[] = data?.data ?? [];
+  const totalPages = data?.totalPages ?? 1;
+  const total = data?.total ?? 0;
 
   const handleDelete = async (mov: Movimiento) => {
     const confirmed = await confirm({
@@ -31,6 +37,9 @@ export function MovimientosList({ movimientos, isLoading }: MovimientosListProps
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` },
         });
+        // Restar una página si quedó vacía
+        if (movimientos.length === 1 && page > 1) setPage(p => p - 1);
+        else query.refetch();
       } catch (e) {
         console.error(e);
       }
@@ -39,26 +48,35 @@ export function MovimientosList({ movimientos, isLoading }: MovimientosListProps
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 bg-[var(--bg-secondary)]/20">
+      <div className="flex flex-col items-center justify-center py-20">
         <Loader2 className="w-10 h-10 text-amber-500 animate-spin" />
-        <p className="mt-4 text-[var(--text-secondary)] font-black uppercase text-[10px] tracking-widest">Auditando Bitácora Histórica...</p>
+        <p className="mt-4 text-[var(--text-secondary)] font-black uppercase text-[10px] tracking-widest">
+          Auditando Bitácora Histórica...
+        </p>
       </div>
     );
   }
 
   return (
     <div className="p-12 space-y-10">
+      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-[var(--border-primary)]/40 pb-10">
         <div>
           <div className="flex items-center gap-3 mb-2">
             <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-            <h3 className="text-2xl font-black text-[var(--text-primary)] uppercase tracking-tight">Bitácora de Maniobras</h3>
+            <h3 className="text-2xl font-black text-[var(--text-primary)] uppercase tracking-tight">
+              Bitácora de Maniobras
+            </h3>
           </div>
-          <p className="text-[10px] text-[var(--text-secondary)] font-black uppercase tracking-[0.3em] opacity-60">Registro histórico de movimientos de flota</p>
+          <p className="text-[10px] text-[var(--text-secondary)] font-black uppercase tracking-[0.3em] opacity-60">
+            Registro histórico de movimientos de flota
+          </p>
         </div>
         <div className="flex items-center gap-4">
-          <div className="px-6 py-3 bg-amber-500/10 border border-amber-500/20 rounded-[1.25rem] backdrop-blur-md mr-4">
-            <span className="text-[11px] font-black text-amber-500 uppercase tracking-[0.2em]">{movimientos.length} REGISTROS</span>
+          <div className="px-6 py-3 bg-amber-500/10 border border-amber-500/20 rounded-[1.25rem] backdrop-blur-md">
+            <span className="text-[11px] font-black text-amber-500 uppercase tracking-[0.2em]">
+              {total} REGISTROS
+            </span>
           </div>
           <button
             onClick={() => setIsModalOpen(true)}
@@ -70,16 +88,22 @@ export function MovimientosList({ movimientos, isLoading }: MovimientosListProps
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4">
+      {/* Lista */}
+      <div className={`grid grid-cols-1 gap-4 transition-opacity duration-200 ${isFetching ? 'opacity-60 pointer-events-none' : 'opacity-100'}`}>
         {movimientos.map((mov) => (
-          <div key={mov.id} className="group relative bg-[var(--bg-secondary)]/20 hover:bg-[var(--bg-secondary)]/40 rounded-[2.5rem] border border-[var(--border-primary)]/40 hover:border-amber-500/30 transition-all duration-500 overflow-hidden">
+          <div
+            key={mov.id}
+            className="group relative bg-[var(--bg-secondary)]/20 hover:bg-[var(--bg-secondary)]/40 rounded-[2.5rem] border border-[var(--border-primary)]/40 hover:border-amber-500/30 transition-all duration-500 overflow-hidden"
+          >
             <div className={`absolute top-0 left-0 w-1.5 h-full ${mov.tipo === 'entrada' ? 'bg-indigo-600' : 'bg-emerald-600'}`} />
 
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 p-6 pl-8 relative z-10">
+              {/* Info */}
               <div className="flex items-center gap-6">
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border-2 transition-all duration-500 ${mov.tipo === 'entrada'
-                  ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400'
-                  : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border-2 shrink-0 ${
+                  mov.tipo === 'entrada'
+                    ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400'
+                    : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
                 }`}>
                   {mov.tipo === 'entrada' ? <ArrowRight className="w-6 h-6" /> : <ArrowLeft className="w-6 h-6" />}
                 </div>
@@ -93,24 +117,24 @@ export function MovimientosList({ movimientos, isLoading }: MovimientosListProps
                       {mov.embarcacion?.matricula}
                     </span>
                   </div>
-                  <div className="flex flex-wrap items-center gap-5">
+                  <div className="flex flex-wrap items-center gap-4">
                     <div className="flex items-center gap-2 text-[10px] text-[var(--text-muted)] font-black uppercase tracking-widest bg-[var(--bg-primary)]/40 px-3 py-1.5 rounded-xl border border-[var(--border-primary)]/40">
                       <Calendar className="w-3.5 h-3.5 text-amber-500" />
                       {new Date(mov.fecha).toLocaleString('es-AR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                     </div>
                     <div className="flex items-center gap-2 text-[10px] font-black uppercase px-3 py-1.5 rounded-xl border border-[var(--border-primary)]/40 bg-[var(--bg-primary)]/40">
                       <MapPin className="w-3.5 h-3.5 text-amber-500" />
-                      {mov.espacio ? (
-                        <span className="text-amber-500">{mov.espacio.rack?.codigo || 'R'}-{mov.espacio.numero}</span>
-                      ) : (
-                        <span className="text-emerald-500">Sector Agua</span>
-                      )}
+                      {mov.espacio
+                        ? <span className="text-amber-500">{mov.espacio.rack?.codigo || 'R'}-{mov.espacio.numero}</span>
+                        : <span className="text-emerald-500">Sector Agua</span>
+                      }
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 self-end md:self-center">
+              {/* Actions */}
+              <div className="flex items-center gap-3 self-end md:self-center shrink-0">
                 {mov.observaciones && (
                   <button
                     onClick={() => setExpandedId(expandedId === mov.id ? null : mov.id)}
@@ -142,8 +166,12 @@ export function MovimientosList({ movimientos, isLoading }: MovimientosListProps
             {expandedId === mov.id && mov.observaciones && (
               <div className="px-8 pb-6 border-t border-[var(--border-secondary)] ml-6">
                 <div className="bg-[var(--bg-secondary)]/40 border border-[var(--border-secondary)] rounded-2xl px-5 py-4 mt-4">
-                  <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] mb-2">Anotaciones de Bitácora</p>
-                  <p className="text-sm text-[var(--text-secondary)] font-medium italic leading-relaxed">{mov.observaciones}</p>
+                  <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] mb-2">
+                    Anotaciones de Bitácora
+                  </p>
+                  <p className="text-sm text-[var(--text-secondary)] font-medium italic leading-relaxed">
+                    {mov.observaciones}
+                  </p>
                 </div>
               </div>
             )}
@@ -156,10 +184,70 @@ export function MovimientosList({ movimientos, isLoading }: MovimientosListProps
               <History className="w-12 h-12 opacity-20" />
             </div>
             <h4 className="text-[var(--text-primary)] font-black text-xl uppercase tracking-tight">Sin Actividad</h4>
-            <p className="text-[var(--text-secondary)] text-xs font-black uppercase tracking-[0.25em] mt-3 opacity-60">La bitácora de movimientos se encuentra vacía.</p>
+            <p className="text-[var(--text-secondary)] text-xs font-black uppercase tracking-[0.25em] mt-3 opacity-60">
+              La bitácora de movimientos se encuentra vacía.
+            </p>
           </div>
         )}
       </div>
+
+      {/* Paginación */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between pt-6 border-t border-[var(--border-secondary)]">
+          <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">
+            Página {page} de {totalPages} · {total} registros
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              disabled={page <= 1 || isFetching}
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card-hover)] transition-all disabled:opacity-30 disabled:cursor-not-allowed active:scale-95"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              <span className="text-[10px] font-black uppercase tracking-widest">Anterior</span>
+            </button>
+
+            {/* Páginas */}
+            <div className="flex items-center gap-1">
+              {Array.from({ length: Math.min(totalPages, 7) }, (_, i) => {
+                let p: number;
+                if (totalPages <= 7) {
+                  p = i + 1;
+                } else if (page <= 4) {
+                  p = i + 1;
+                } else if (page >= totalPages - 3) {
+                  p = totalPages - 6 + i;
+                } else {
+                  p = page - 3 + i;
+                }
+                return (
+                  <button
+                    key={p}
+                    onClick={() => setPage(p)}
+                    disabled={isFetching}
+                    className={`w-9 h-9 rounded-xl text-[10px] font-black transition-all active:scale-90 ${
+                      p === page
+                        ? 'bg-amber-500 text-white shadow-lg shadow-amber-900/30'
+                        : 'bg-[var(--bg-elevated)] border border-[var(--border-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card-hover)]'
+                    }`}
+                  >
+                    {p}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              disabled={page >= totalPages || isFetching}
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--bg-elevated)] border border-[var(--border-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card-hover)] transition-all disabled:opacity-30 disabled:cursor-not-allowed active:scale-95"
+            >
+              <span className="text-[10px] font-black uppercase tracking-widest">Siguiente</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       <NuevoMovimientoModal
         isOpen={isModalOpen}
@@ -167,6 +255,7 @@ export function MovimientosList({ movimientos, isLoading }: MovimientosListProps
         onSuccess={async (data) => {
           await createMovimiento.mutateAsync(data);
           setIsModalOpen(false);
+          setPage(1); // Volver a la primera página para ver el registro recién creado
         }}
       />
     </div>

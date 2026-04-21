@@ -91,6 +91,32 @@ export function useOperaciones() {
   return { getPedidos, usePedido, createPedido, updatePedidoEstado, deletePedido, getMovimientos, createMovimiento };
 }
 
+const MOVIMIENTOS_PAGE_SIZE = 20;
+
+export function useMovimientosPaginados(page: number, limit = MOVIMIENTOS_PAGE_SIZE) {
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
+    queryKey: ['movimientos', page, limit],
+    queryFn: (): Promise<Paginated<Movimiento>> =>
+      httpClient.get<Paginated<Movimiento>>(`/movimientos?page=${page}&limit=${limit}`),
+    placeholderData: (prev) => prev,
+    staleTime: 30_000,
+  });
+
+  const createMovimiento = useMutation({
+    mutationFn: (data: Partial<Movimiento> & { embarcacionId: number; espacioId?: number }) =>
+      httpClient.post('/movimientos', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['movimientos'] });
+      queryClient.invalidateQueries({ queryKey: ['embarcaciones'] });
+    },
+  });
+
+  return { query, createMovimiento };
+}
+
+
 export function useSolicitudesBajada() {
   const queryClient = useQueryClient();
 

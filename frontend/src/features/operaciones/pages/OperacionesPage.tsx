@@ -12,7 +12,7 @@ type Tab = 'pedidos' | 'movimientos' | 'bajadas';
 export default function OperacionesPage() {
   const [activeTab, setActiveTab] = useState<Tab>('pedidos');
   const [isPedidoModalOpen, setIsPedidoModalOpen] = useState(false);
-  const { getPedidos, getMovimientos, deletePedido, updatePedidoEstado, createPedido } = useOperaciones();
+  const { getPedidos, deletePedido, updatePedidoEstado, createPedido } = useOperaciones();
   const { getSolicitudes, updateEstado: updateSolicitudEstado } = useSolicitudesBajada();
   const confirm = useConfirm();
 
@@ -140,10 +140,7 @@ export default function OperacionesPage() {
             />
           )}
           {activeTab === 'movimientos' && (
-            <MovimientosList
-              movimientos={getMovimientos.data || []}
-              isLoading={getMovimientos.isLoading}
-            />
+            <MovimientosList />
           )}
           {activeTab === 'bajadas' && (
             <SolicitudesBajadaList
