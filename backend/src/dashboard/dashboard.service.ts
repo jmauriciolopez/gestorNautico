@@ -391,4 +391,84 @@ export class DashboardService {
 
     return Array.from(dataByMonth.values());
   }
+
+  async getDemandPeaks() {
+    const raw = await this.movRepo
+      .createQueryBuilder('m')
+      .select([
+        "TO_CHAR(m.fecha, 'ID') as dow", // 1-7
+        "EXTRACT(HOUR FROM m.fecha) as hora",
+        'COUNT(m.id) as cantidad',
+      ])
+      .groupBy("dow, hora")
+      .orderBy("dow", 'ASC')
+      .addOrderBy("hora", 'ASC')
+      .getRawMany<{ dow: string; hora: string; cantidad: string }>();
+
+    return raw.map(r => ({
+      dia: Number(r.dow),
+      hora: Number(r.hora),
+      cantidad: Number(r.cantidad),
+    }));
+  }
+
+  async getAverageCollectionTime() {
+    const raw = await this.pagoRepo
+      .createQueryBuilder('p')
+      .leftJoin('p.cargo', 'c')
+      .select('AVG(EXTRACT(DAY FROM (p.fecha::timestamp - c.fechaEmision::timestamp)))', 'avg_days')
+      .where('c.fechaEmision IS NOT NULL')
+      .getRawOne<{ avg_days: string }>();
+
+    return {
+      promedioDias: Math.round(Number(raw?.avg_days || 0)),
+    };
+  }
+
+  async getRevenuePerMeter() {
+    const [revenueRes, esloraRes] = await Promise.all([
+      this.pagoRepo
+        .createQueryBuilder('p')
+        .select('SUM(p.monto)', 'total')
+        .where("p.fecha >= DATE_TRUNC('month', CURRENT_DATE)")
+        .getRawOne<{ total: string }>(),
+      this.barcoRepo
+        .createQueryBuilder('b')
+        .select('SUM(b.eslora)', 'total')
+        .where('b.espacioId IS NOT NULL')
+        .getRawOne<{ total: string }>(),
+    ]);
+
+    const revenue = Number(revenueRes?.total || 0);
+    const eslora = Number(esloraRes?.total || 1); // Avoid division by zero
+
+    return {
+      revenueTotalMes: revenue,
+      esloraTotalOcupada: eslora,
+      arpu: Number((revenue / eslora).toFixed(2)),
+    };
+  }
+
+  async getTopVIPClients() {
+    const raw = await this.pagoRepo
+      .createQueryBuilder('p')
+      .leftJoin('p.cliente', 'cl')
+      .select([
+        'cl.id as id',
+        'cl.nombre as nombre',
+        'SUM(p.monto) as total_pagado',
+        'COUNT(p.id) as cantidad_pagos',
+      ])
+      .groupBy('cl.id, cl.nombre')
+      .orderBy('total_pagado', 'DESC')
+      .limit(10)
+      .getRawMany<{ id: string; nombre: string; total_pagado: string; cantidad_pagos: string }>();
+
+    return raw.map(r => ({
+      id: Number(r.id),
+      nombre: r.nombre,
+      total: Number(r.total_pagado),
+      pagos: Number(r.cantidad_pagos),
+    }));
+  }
 }

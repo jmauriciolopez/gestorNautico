@@ -51,3 +51,27 @@ export const useProfitabilityHistory = () =>
     queryKey: ['dashboard', 'gerencial', 'rentabilidad'],
     queryFn: () => httpClient.get('/dashboard/gerencial/rentabilidad'),
   });
+
+export const useDemandPeaks = () =>
+  useQuery({
+    queryKey: ['dashboard', 'gerencial', 'picos-demanda'],
+    queryFn: () => httpClient.get('/dashboard/gerencial/picos-demanda'),
+  });
+
+export const useCollectionTime = () =>
+  useQuery({
+    queryKey: ['dashboard', 'gerencial', 'tiempo-cobro'],
+    queryFn: () => httpClient.get('/dashboard/gerencial/tiempo-cobro'),
+  });
+
+export const useARPU = () =>
+  useQuery({
+    queryKey: ['dashboard', 'gerencial', 'arpu'],
+    queryFn: () => httpClient.get('/dashboard/gerencial/arpu'),
+  });
+
+export const useVIPClients = () =>
+  useQuery({
+    queryKey: ['dashboard', 'gerencial', 'vip-clients'],
+    queryFn: () => httpClient.get('/dashboard/gerencial/vip-clients'),
+  });

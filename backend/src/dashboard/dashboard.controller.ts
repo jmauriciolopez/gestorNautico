@@ -49,4 +49,28 @@ export class DashboardController {
   async getHistoricalProfitability() {
     return this.dashboardService.getHistoricalProfitability();
   }
+
+  @Get('gerencial/picos-demanda')
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
+  async getDemandPeaks() {
+    return this.dashboardService.getDemandPeaks();
+  }
+
+  @Get('gerencial/tiempo-cobro')
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
+  async getAverageCollectionTime() {
+    return this.dashboardService.getAverageCollectionTime();
+  }
+
+  @Get('gerencial/arpu')
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
+  async getRevenuePerMeter() {
+    return this.dashboardService.getRevenuePerMeter();
+  }
+
+  @Get('gerencial/vip-clients')
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
+  async getTopVIPClients() {
+    return this.dashboardService.getTopVIPClients();
+  }
 }
