@@ -7,7 +7,10 @@ import { Movimiento } from '../movimientos/movimientos.entity';
 import { Cargo } from '../cargos/cargo.entity';
 import { Pago } from '../pagos/pago.entity';
 import { Zona } from '../zonas/zona.entity';
+import { Espacio } from '../espacios/espacio.entity';
+import { Rack } from '../racks/rack.entity';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
+import { TipoCargo } from '../cargos/cargo.entity';
 
 @Injectable()
 export class DashboardService {
@@ -24,6 +27,10 @@ export class DashboardService {
     private readonly pagoRepo: Repository<Pago>,
     @InjectRepository(Zona)
     private readonly zonaRepo: Repository<Zona>,
+    @InjectRepository(Espacio)
+    private readonly espacioRepo: Repository<Espacio>,
+    @InjectRepository(Rack)
+    private readonly rackRepo: Repository<Rack>,
     private readonly notificacionesService: NotificacionesService,
   ) {}
 
@@ -302,5 +309,86 @@ export class DashboardService {
         },
       } as FindOptionsOrder<Zona>,
     });
+  }
+  
+  async getOccupancyMetrics() {
+    const [totalEspacios, ocupados] = await Promise.all([
+      this.espacioRepo.count(),
+      this.espacioRepo.count({ where: { ocupado: true } }),
+    ]);
+
+    const metrosOcupadosRes = await this.barcoRepo
+      .createQueryBuilder('b')
+      .select('SUM(b.eslora)', 'total')
+      .where('b.espacioId IS NOT NULL')
+      .getRawOne<{ total: string }>();
+
+    const porZona = await this.zonaRepo.find({
+      relations: ['racks', 'racks.espacios'],
+    });
+
+    const ocupacionPorZona = porZona.map(zona => {
+      const espacios = zona.racks.flatMap(r => r.espacios);
+      const total = espacios.length;
+      const ocupados = espacios.filter(e => e.ocupado).length;
+      return {
+        zona: zona.nombre,
+        total,
+        ocupados,
+        porcentaje: total > 0 ? (ocupados / total) * 100 : 0,
+      };
+    });
+
+    return {
+      global: {
+        totalEspacios,
+        ocupados,
+        libres: totalEspacios - ocupados,
+        porcentajeOcupacion: totalEspacios > 0 ? (ocupados / totalEspacios) * 100 : 0,
+        metrosLinealesOcupados: Number(metrosOcupadosRes?.total || 0),
+      },
+      porZona: ocupacionPorZona,
+    };
+  }
+
+  async getHistoricalProfitability(months: number = 12) {
+    const now = new Date();
+    const startDate = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1);
+
+    // Ingresos por categoría y mes
+    const rawIngresos = await this.pagoRepo
+      .createQueryBuilder('p')
+      .leftJoin('p.cargo', 'c')
+      .select([
+        "TO_CHAR(p.fecha, 'YYYY-MM') as mes_key",
+        "c.tipo as tipo",
+        'SUM(p.monto) as total',
+      ])
+      .where('p.fecha >= :start', { start: startDate })
+      .groupBy("TO_CHAR(p.fecha, 'YYYY-MM'), c.tipo")
+      .orderBy("mes_key", 'ASC')
+      .getRawMany<{ mes_key: string; tipo: TipoCargo; total: string }>();
+
+    // Procesar datos para Recharts
+    const dataByMonth = new Map<string, any>();
+    
+    // Inicializar meses
+    for (let i = months - 1; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const label = d.toLocaleString('es-AR', { month: 'short', year: '2-digit' });
+      dataByMonth.set(key, { name: label, total: 0 });
+    }
+
+    rawIngresos.forEach(row => {
+      const monthData = dataByMonth.get(row.mes_key);
+      if (monthData) {
+        const tipo = row.tipo || 'OTROS';
+        monthData[tipo] = Number(row.total || 0);
+        monthData.total += Number(row.total || 0);
+      }
+    });
+
+    return Array.from(dataByMonth.values());
   }
 }

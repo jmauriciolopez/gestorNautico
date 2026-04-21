@@ -3,9 +3,10 @@ import { BarChart2, AlertTriangle, TrendingDown, Activity, RefreshCw } from 'luc
 import { useClientesMorosos, useMensualidades } from '../hooks/useReportes';
 import { ClientesMorososList } from '../components/ClientesMorososList';
 import { MensualidadesTable } from '../components/MensualidadesTable';
+import { DashboardGerencial } from '../components/DashboardGerencial';
 import { useQueryClient } from '@tanstack/react-query';
 
-type Tab = 'morosos' | 'mensualidades';
+type Tab = 'morosos' | 'mensualidades' | 'gerencial';
 
 export default function ReportesPage() {
   const [activeTab, setActiveTab] = useState<Tab>('morosos');
@@ -21,6 +22,7 @@ export default function ReportesPage() {
   const tabs = [
     { id: 'morosos' as Tab, label: 'Clientes Morosos', icon: AlertTriangle, count: morosos.data?.length },
     { id: 'mensualidades' as Tab, label: 'Mensualidades', icon: TrendingDown, count: mensualidades.data?.length },
+    { id: 'gerencial' as Tab, label: 'Dashboard Gerencial', icon: BarChart2 },
   ];
 
   return (
@@ -81,12 +83,16 @@ export default function ReportesPage() {
             </div>
             <div>
               <h3 className="text-sm font-black text-[var(--text-primary)] uppercase tracking-widest leading-none">
-                {activeTab === 'morosos' ? 'Cartera Morosa' : 'Cuadro de Mensualidades con Descuentos'}
+                {activeTab === 'morosos' ? 'Cartera Morosa' : 
+                 activeTab === 'mensualidades' ? 'Cuadro de Mensualidades con Descuentos' : 
+                 'Inteligencia de Negocio y Ocupación'}
               </h3>
               <p className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-tighter mt-1">
                 {activeTab === 'morosos'
                   ? 'Clientes con cargos vencidos sin pagar'
-                  : 'Tarifa base → descuentos → valor final por embarcación'}
+                  : activeTab === 'mensualidades'
+                  ? 'Tarifa base → descuentos → valor final por embarcación'
+                  : 'Análisis de rentabilidad histórica y métricas de ocupación avanzada'}
               </p>
             </div>
           </div>
@@ -99,6 +105,9 @@ export default function ReportesPage() {
         )}
         {activeTab === 'mensualidades' && (
           <MensualidadesTable data={mensualidades.data ?? []} isLoading={mensualidades.isLoading} />
+        )}
+        {activeTab === 'gerencial' && (
+          <DashboardGerencial />
         )}
       </div>
     </div>

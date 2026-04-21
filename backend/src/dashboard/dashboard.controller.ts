@@ -37,4 +37,16 @@ export class DashboardController {
   async getRackMap() {
     return this.dashboardService.getRackMap();
   }
+
+  @Get('gerencial/ocupacion')
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
+  async getOccupancyMetrics() {
+    return this.dashboardService.getOccupancyMetrics();
+  }
+
+  @Get('gerencial/rentabilidad')
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
+  async getHistoricalProfitability() {
+    return this.dashboardService.getHistoricalProfitability();
+  }
 }
