@@ -6,7 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { Factura, EstadoFactura } from './factura.entity';
-import { Cargo } from '../cargos/cargo.entity';
+import { Cargo, TipoCargo } from '../cargos/cargo.entity';
 import { Cliente } from '../clientes/clientes.entity';
 import { Pago, MetodoPago } from '../pagos/pago.entity';
 import { CargosService } from '../cargos/cargos.service';
@@ -172,7 +172,7 @@ export class FacturasService {
     fechaEmision?: string; 
     cargoIds?: number[]; 
     observaciones?: string;
-    nuevosCargos?: { descripcion: string; monto: number; tipo: string }[] 
+    nuevosCargos?: { descripcion: string; monto: number; tipo: TipoCargo }[] 
   }) {
     const factura = await this.findOne(id);
 
@@ -191,7 +191,8 @@ export class FacturasService {
           ...nc,
           cliente: { id: factura.cliente.id },
           factura: { id: factura.id },
-          pagado: false
+          pagado: false,
+          fechaEmision: factura.fechaEmision || new Date()
         });
         await this.cargoRepo.save(nuevo);
       }

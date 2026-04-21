@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Mail, X, Send, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Mail, X, Send, AlertCircle, CheckCircle2, Loader2, ChevronRight } from 'lucide-react';
 
 interface FacturaEmailModalProps {
   factura: any;
@@ -55,101 +56,134 @@ export const FacturaEmailModal: React.FC<FacturaEmailModalProps> = ({ factura, o
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+  return createPortal(
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="absolute inset-0 bg-[var(--modal-overlay)] backdrop-blur-md"
+      />
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden"
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        className="w-full max-w-md bg-[var(--bg-surface)] border border-[var(--border-primary)] rounded-[2.5rem] shadow-2xl overflow-hidden relative z-10"
       >
         <div className="px-8 pt-8 pb-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className="p-3 rounded-2xl bg-indigo-500/10 text-indigo-400">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-4">
+              <div className="p-4 rounded-3xl bg-[var(--accent-primary-soft)] text-[var(--accent-primary)] border border-[var(--accent-primary-ring)] shadow-sm">
                 <Mail className="w-6 h-6" />
               </div>
               <div>
-                <h2 className="text-xl font-black text-white uppercase tracking-tight">Enviar Factura</h2>
-                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Factura N° {factura.numero}</p>
+                <h2 className="text-xl font-black text-[var(--text-primary)] uppercase tracking-tight">Enviar Factura</h2>
+                <p className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-widest mt-1">Factura N° {factura.numero}</p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-slate-500 hover:text-white transition-colors"
+              className="p-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card-hover)] rounded-xl transition-all"
             >
               <X className="w-6 h-6" />
             </button>
           </div>
 
-          {status === 'success' ? (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="py-8 text-center"
-            >
-              <div className="inline-flex p-4 rounded-full bg-emerald-500/10 text-emerald-500 mb-4 border border-emerald-500/20">
-                <CheckCircle2 className="w-10 h-10" />
-              </div>
-              <p className="text-sm font-black text-white uppercase tracking-widest">Enviado con Éxito</p>
-              <p className="text-[10px] text-slate-500 font-bold mt-2">La factura ha sido enviada al cliente.</p>
-            </motion.div>
-          ) : (
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">
-                  Email del Cliente
-                </label>
-                <div className="relative group">
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="ejemplo@correo.com"
-                    className="w-full bg-slate-800/50 border border-slate-700/50 focus:border-indigo-500/50 rounded-2xl px-5 py-4 text-sm text-white placeholder:text-slate-600 outline-none transition-all group-hover:bg-slate-800"
-                  />
+          <AnimatePresence mode="wait">
+            {status === 'success' ? (
+              <motion.div
+                key="success"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="py-12 text-center"
+              >
+                <div className="inline-flex p-6 rounded-full bg-[var(--accent-teal-soft)] text-[var(--accent-teal)] mb-6 border border-[var(--accent-teal-soft)] shadow-sm">
+                  <CheckCircle2 className="w-12 h-12" />
+                </div>
+                <h3 className="text-lg font-black text-[var(--text-primary)] uppercase tracking-widest">¡Enviado con Éxito!</h3>
+                <p className="text-[10px] text-[var(--text-muted)] font-bold mt-2 uppercase tracking-tight">La factura ha sido procesada y enviada.</p>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="form"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="space-y-8"
+              >
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] ml-1">
+                    Email de Destino
+                  </label>
+                  <div className="relative group">
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="ejemplo@correo.com"
+                      className="w-full bg-[var(--bg-secondary)]/50 border border-[var(--border-primary)] focus:border-[var(--accent-primary)] rounded-2xl px-6 py-5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-disabled)] outline-none transition-all group-hover:bg-[var(--bg-secondary)] font-mono"
+                    />
+                    {!factura.cliente?.email && email && (
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                        <span className="text-[9px] font-black text-[var(--accent-amber)] uppercase tracking-widest bg-[var(--accent-amber-soft)] px-2 py-1 rounded-lg border border-[var(--accent-amber-soft)]">
+                          Nuevo
+                        </span>
+                      </div>
+                    )}
+                  </div>
                   {!factura.cliente?.email && (
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                      <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest bg-amber-500/10 px-2 py-1 rounded-lg border border-amber-500/20">
-                        Nuevo
-                      </span>
-                    </div>
+                    <p className="text-[9px] text-[var(--text-disabled)] font-bold ml-1 italic leading-relaxed">
+                      * El email será guardado automáticamente en el registro del cliente al completar el envío.
+                    </p>
                   )}
                 </div>
-                {!factura.cliente?.email && (
-                  <p className="text-[9px] text-slate-500 font-bold ml-1 italic">
-                    * El email será guardado automáticamente en la ficha del cliente.
-                  </p>
-                )}
-              </div>
 
-              {status === 'error' && (
-                <div className="flex items-center gap-3 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500">
-                  <AlertCircle className="w-5 h-5 shrink-0" />
-                  <p className="text-[10px] font-bold uppercase tracking-widest">{errorMessage}</p>
+                {status === 'error' && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center gap-3 p-4 rounded-2xl bg-[var(--accent-red-soft)] border border-[var(--accent-red-soft)] text-[var(--accent-red)]"
+                  >
+                    <AlertCircle className="w-5 h-5 shrink-0" />
+                    <p className="text-[10px] font-bold uppercase tracking-widest">{errorMessage}</p>
+                  </motion.div>
+                )}
+
+                <div className="pt-2">
+                  <button
+                    disabled={isSending}
+                    onClick={handleSend}
+                    className="w-full py-5 bg-[var(--accent-primary)] hover:brightness-110 disabled:opacity-50 text-white rounded-[1.5rem] font-black uppercase tracking-[0.2em] transition-all active:scale-95 shadow-xl shadow-indigo-600/20 flex items-center justify-center gap-4 group"
+                  >
+                    {isSending ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <span>Procesando...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-5 h-5 group-hover:skew-x-12 transition-transform" />
+                        <span>Enviar Comprobante</span>
+                      </>
+                    )}
+                  </button>
                 </div>
-              )}
-
-              <button
-                disabled={isSending}
-                onClick={handleSend}
-                className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:hover:bg-indigo-600 text-white rounded-2xl font-black uppercase tracking-[0.2em] transition-all active:scale-95 shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-3"
-              >
-                {isSending ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>Enviando...</span>
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-5 h-5" />
-                    <span>Enviar Ahora</span>
-                  </>
-                )}
-              </button>
-            </div>
-          )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+        
+        <div className="px-8 py-6 bg-[var(--bg-secondary)]/50 border-t border-[var(--border-secondary)] flex justify-center">
+           <button
+            onClick={onClose}
+            className="flex items-center gap-2 text-[9px] font-black text-[var(--text-disabled)] uppercase tracking-widest hover:text-[var(--text-muted)] transition-colors"
+          >
+            Volver al listado
+            <ChevronRight className="w-3 h-3" />
+          </button>
         </div>
       </motion.div>
-    </div>
+    </div>,
+    document.body
   );
 };

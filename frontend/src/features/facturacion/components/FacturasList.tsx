@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import { FileText, Loader2, ExternalLink, ChevronDown, ChevronRight, Anchor, Mail, Edit3, Trash2, CheckCircle, XCircle } from 'lucide-react';
 import { Factura } from '../hooks/useFacturas';
 import { RoleGuard } from '../../../components/auth/RoleGuard';
@@ -52,7 +53,7 @@ export function FacturasList({ facturas, isLoading, onUpdateEstado }: FacturasLi
             <th className="px-6 py-5 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Emisión</th>
             <th className="px-6 py-5 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Estado</th>
             <th className="px-6 py-5 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] text-right">Total</th>
-            <th className="px-6 py-5" />
+            <th className="px-6 py-5 sticky right-0 bg-[var(--bg-surface)] backdrop-blur-md z-20 border-b border-[var(--border-secondary)]" />
           </tr>
         </thead>
         <tbody>
@@ -130,7 +131,10 @@ export function FacturasList({ facturas, isLoading, onUpdateEstado }: FacturasLi
                       ${Number(factura.total).toLocaleString()}
                     </td>
 
-                    <td className="px-6 py-5 text-right" onClick={e => e.stopPropagation()}>
+                    <td 
+                      className="px-6 py-5 text-right sticky right-0 bg-[var(--bg-surface)] group-hover:bg-[var(--bg-card-hover)] backdrop-blur-md z-10 shadow-[-12px_0_8px_-8px_var(--border-primary)] transition-colors" 
+                      onClick={e => e.stopPropagation()}
+                    >
                       <div className="flex items-center justify-end gap-2">
                         <ActionMenu
                           items={[
