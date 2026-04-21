@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Save, Loader2, Clock, CircleDollarSign, Info } from 'lucide-react';
+import { Save, Loader2, Clock, CircleDollarSign, Info, AlertTriangle } from 'lucide-react';
 import { useConfiguracion } from '../hooks/useConfiguracion';
 
 export default function ConfiguracionPage() {
@@ -106,6 +106,57 @@ export default function ConfiguracionPage() {
                 className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-2xl px-5 py-4 text-[var(--text-primary)] focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all font-bold"
               />
               <p className="text-[10px] text-[var(--text-secondary)] italic">Días desde la emisión hasta el vencimiento. Se aplica a cargos automáticos y manuales.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Sección Mora */}
+        <div className="bg-[var(--bg-secondary)]/[0.4] border border-[var(--border-primary)] rounded-3xl p-8 backdrop-blur-xl shadow-2xl">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 bg-red-500/10 rounded-xl">
+              <AlertTriangle className="w-5 h-5 text-red-400" />
+            </div>
+            <h2 className="text-lg font-black uppercase tracking-widest text-[var(--text-primary)]">Mora e Intereses</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="space-y-2">
+              <label className="text-[11px] font-black uppercase tracking-widest text-[var(--text-secondary)]">Tasa Interés Mensual (%)</label>
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                max="100"
+                value={formData['MORA_TASA_INTERES'] || ''}
+                onChange={(e) => handleChange('MORA_TASA_INTERES', e.target.value)}
+                className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-2xl px-5 py-4 text-[var(--text-primary)] focus:ring-2 focus:ring-red-500/50 outline-none transition-all font-bold"
+              />
+              <p className="text-[10px] text-[var(--text-secondary)] italic">Porcentaje de interés mensual por atraso.</p>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[11px] font-black uppercase tracking-widest text-[var(--text-secondary)]">Tasa Recargo (%)</label>
+              <input
+                type="number"
+                step="0.1"
+                min="0"
+                max="100"
+                value={formData['MORA_TASA_RECARGO'] || ''}
+                onChange={(e) => handleChange('MORA_TASA_RECARGO', e.target.value)}
+                className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-2xl px-5 py-4 text-[var(--text-primary)] focus:ring-2 focus:ring-red-500/50 outline-none transition-all font-bold"
+              />
+              <p className="text-[10px] text-[var(--text-secondary)] italic">Recargo fijo por pago fuera de término.</p>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[11px] font-black uppercase tracking-widest text-[var(--text-secondary)]">Días de Gracia</label>
+              <input
+                type="number"
+                min="0"
+                max="30"
+                value={formData['MORA_DIAS_GRACIA'] || ''}
+                onChange={(e) => handleChange('MORA_DIAS_GRACIA', e.target.value)}
+                className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-2xl px-5 py-4 text-[var(--text-primary)] focus:ring-2 focus:ring-red-500/50 outline-none transition-all font-bold"
+              />
+              <p className="text-[10px] text-[var(--text-secondary)] italic">Días sin interés ni recargo después del vencimiento.</p>
             </div>
           </div>
         </div>

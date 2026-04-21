@@ -25,6 +25,7 @@ import { SearchModule } from './search/search.module';
 import { PdfModule } from './common/pdf/pdf.module';
 import { ConfiguracionModule } from './configuracion/configuracion.module';
 import { ReportesModule } from './reportes/reportes.module';
+import { MoraModule } from './mora/mora.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/adapters/handlebars.adapter';
@@ -106,6 +107,7 @@ import { join } from 'path';
     SearchModule,
     PdfModule,
     ReportesModule,
+    MoraModule,
   ],
 })
 export class AppModule {}

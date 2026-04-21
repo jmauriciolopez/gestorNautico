@@ -65,6 +65,21 @@ export class ConfiguracionService implements OnApplicationBootstrap {
         valor: '18:00',
         descripcion: 'Horario límite para subida/hoisting de las embarcaciones',
       },
+      {
+        clave: 'MORA_TASA_INTERES',
+        valor: '3',
+        descripcion: 'Tasa de interés moratorio mensual (%)',
+      },
+      {
+        clave: 'MORA_TASA_RECARGO',
+        valor: '10',
+        descripcion: 'Tasa de recargo por retraso (%)',
+      },
+      {
+        clave: 'MORA_DIAS_GRACIA',
+        valor: '5',
+        descripcion: 'Días de gracia antes de aplicar intereses',
+      },
     ];
 
     for (const item of items) {

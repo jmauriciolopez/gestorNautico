@@ -48,6 +48,15 @@ export class Factura {
   @Column({ type: 'text', nullable: true })
   observaciones: string;
 
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  interesMoratorio: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  recargo: number;
+
+  @Column({ type: 'date', nullable: true })
+  fechaAplicacionMora: Date;
+
   @OneToMany(() => Cargo, (cargo) => cargo.factura)
   cargos: Cargo[];
 
