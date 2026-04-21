@@ -168,7 +168,12 @@ export class FacturasService {
     return this.facturaRepo.remove(factura);
   }
 
-  async update(id: number, data: { fechaEmision?: string; cargoIds?: number[]; observaciones?: string }) {
+  async update(id: number, data: { 
+    fechaEmision?: string; 
+    cargoIds?: number[]; 
+    observaciones?: string;
+    nuevosCargos?: { descripcion: string; monto: number; tipo: string }[] 
+  }) {
     const factura = await this.findOne(id);
 
     if (data.fechaEmision) {
@@ -179,32 +184,41 @@ export class FacturasService {
       factura.observaciones = data.observaciones;
     }
 
+    // 1. Crear nuevos cargos si vienen
+    if (data.nuevosCargos && data.nuevosCargos.length > 0) {
+      for (const nc of data.nuevosCargos) {
+        const nuevo = this.cargoRepo.create({
+          ...nc,
+          cliente: { id: factura.cliente.id },
+          factura: { id: factura.id },
+          pagado: false
+        });
+        await this.cargoRepo.save(nuevo);
+      }
+    }
+
+    // 2. Vincular cargos existentes si vienen
     if (data.cargoIds) {
-      // 1. Vincular nuevos cargos
-      // Buscamos cargos que pertenezcan al cliente y no estén en otra factura (o que ya estén en esta)
-      const nuevosCargos = await this.cargoRepo.find({
+      const cargosExistentes = await this.cargoRepo.find({
         where: { id: In(data.cargoIds), cliente: { id: factura.cliente.id } },
       });
 
-      if (nuevosCargos.length !== data.cargoIds.length) {
+      if (cargosExistentes.length !== data.cargoIds.length) {
         throw new BadRequestException('Algunos cargos no son válidos para este cliente');
       }
 
-      // Desvincular cargos antiguos que no estén en la nueva lista (opcional, pero aquí solo sumamos según el pedido del user)
-      // El usuario pidió "agregar items", así que vamos a asegurar que los recibidos estén vinculados
       await this.cargoRepo.update(
         { id: In(data.cargoIds) },
         { factura: { id: factura.id } }
       );
-
-      // Recalcular el total basado en todos los cargos vinculados ahora
-      const todosLosCargos = await this.cargoRepo.find({
-        where: { factura: { id: factura.id } }
-      });
-
-      factura.total = todosLosCargos.reduce((sum, c) => sum + Number(c.monto || 0), 0);
     }
 
+    // 3. Recalcular el total basado en TODOS los cargos vinculados
+    const todosLosCargos = await this.cargoRepo.find({
+      where: { factura: { id: factura.id } }
+    });
+
+    factura.total = todosLosCargos.reduce((sum, c) => sum + Number(c.monto || 0), 0);
     return this.facturaRepo.save(factura);
   }
 

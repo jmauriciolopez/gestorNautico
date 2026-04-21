@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-presence';
+import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, X, History, Download, Mail, Calendar, User, CreditCard, ChevronRight, Clock, Info, CheckCircle2, AlertCircle } from 'lucide-react';
 
 interface FacturaDetailModalProps {

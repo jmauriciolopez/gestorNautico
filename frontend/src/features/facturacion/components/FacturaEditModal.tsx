@@ -12,9 +12,11 @@ export const FacturaEditModal: React.FC<FacturaEditModalProps> = ({ factura, onC
   const [fecha, setFecha] = useState(new Date(factura.fechaEmision).toISOString().split('T')[0]);
   const [observaciones, setObservaciones] = useState(factura.observaciones || '');
   const [pendingCargos, setPendingCargos] = useState<any[]>([]);
-  const [selectedCargoIds, setSelectedCargoIds] = useState<number[]>([]);
-  const [isSaving, setIsSaving] = useState(false);
   const [isLoadingCargos, setIsLoadingCargos] = useState(true);
+  
+  // Estado para nuevos cargos creados al vuelo
+  const [nuevosCargos, setNuevosCargos] = useState<{ descripcion: string; monto: number; tipo: string }[]>([]);
+  const [newItem, setNewItem] = useState({ descripcion: '', monto: '', tipo: 'OTROS' });
 
   useEffect(() => {
     fetchPendingCargos();
@@ -54,7 +56,8 @@ export const FacturaEditModal: React.FC<FacturaEditModalProps> = ({ factura, onC
         body: JSON.stringify({
           fechaEmision: fecha,
           observaciones,
-          cargoIds: [...(factura.cargos?.map((c: any) => c.id) || []), ...selectedCargoIds]
+          cargoIds: [...(factura.cargos?.map((c: any) => c.id) || []), ...selectedCargoIds],
+          nuevosCargos: nuevosCargos.map(nc => ({ ...nc, monto: Number(nc.monto) }))
         })
       });
 
@@ -68,6 +71,16 @@ export const FacturaEditModal: React.FC<FacturaEditModalProps> = ({ factura, onC
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const addNewItemRow = () => {
+    if (!newItem.descripcion || !newItem.monto) return;
+    setNuevosCargos(prev => [...prev, { ...newItem, monto: Number(newItem.monto) }]);
+    setNewItem({ descripcion: '', monto: '', tipo: 'OTROS' });
+  };
+
+  const removeNewItem = (index: number) => {
+    setNuevosCargos(prev => prev.filter((_, i) => i !== index));
   };
 
   const toggleCargo = (id: number) => {
@@ -133,12 +146,70 @@ export const FacturaEditModal: React.FC<FacturaEditModalProps> = ({ factura, onC
             </div>
           </div>
 
-          {/* Agregar Items */}
+          {/* Nuevos Items manuales */}
+          <div className="space-y-4">
+            <h3 className="text-xs font-black text-white uppercase tracking-[0.2em] flex items-center gap-2">
+              <Plus className="w-4 h-4 text-emerald-400" />
+              Nuevos Items de Servicio
+            </h3>
+            
+            <div className="grid grid-cols-[1fr,120px,120px,40px] gap-2">
+              <input
+                placeholder="Descripción del servicio..."
+                value={newItem.descripcion}
+                onChange={e => setNewItem(prev => ({ ...prev, descripcion: e.target.value }))}
+                className="bg-slate-800/50 border border-slate-700/50 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-indigo-500/50"
+              />
+              <select
+                value={newItem.tipo}
+                onChange={e => setNewItem(prev => ({ ...prev, tipo: e.target.value }))}
+                className="bg-slate-800/50 border border-slate-700/50 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-indigo-500/50"
+              >
+                <option value="MANTENIMIENTO">Mantenim.</option>
+                <option value="SERVICIOS">Servicios</option>
+                <option value="OTROS">Otros</option>
+              </select>
+              <input
+                type="number"
+                placeholder="Monto"
+                value={newItem.monto}
+                onChange={e => setNewItem(prev => ({ ...prev, monto: e.target.value }))}
+                className="bg-slate-800/50 border border-slate-700/50 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-indigo-500/50"
+              />
+              <button
+                onClick={addNewItemRow}
+                className="flex items-center justify-center rounded-xl bg-indigo-600 text-white hover:bg-indigo-500 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+
+            {nuevosCargos.length > 0 && (
+              <div className="space-y-2">
+                {nuevosCargos.map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-3 bg-white/5 border border-white/5 rounded-xl">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-black text-white uppercase">{item.descripcion}</span>
+                      <span className="text-[8px] text-slate-500 font-bold uppercase">{item.tipo}</span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className="text-xs font-black text-emerald-400">$ {item.monto.toLocaleString()}</span>
+                      <button onClick={() => removeNewItem(idx)} className="text-slate-600 hover:text-rose-500 transition-colors">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Vincular Cargos Existentes (ya implementado arriba pero lo dejamos como segunda opción) */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-black text-white uppercase tracking-[0.2em] flex items-center gap-2">
                 <Plus className="w-4 h-4 text-indigo-400" />
-                Vincular Cargos Adicionales
+                Vincular Pendientes Existentes
               </h3>
             </div>
 
