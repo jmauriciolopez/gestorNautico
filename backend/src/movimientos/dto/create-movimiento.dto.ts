@@ -1,4 +1,11 @@
-import { IsString, IsNumber, IsOptional, IsIn, IsNotEmpty, IsDate } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsIn,
+  IsNotEmpty,
+  IsDate,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateMovimientoDto {

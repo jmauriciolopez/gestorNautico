@@ -6,6 +6,7 @@ import {
   Get,
   UseGuards,
   Req,
+  IP,
 } from '@nestjs/common';
 import { Response, Request } from 'express';
 import { AuthTokenGuard } from './guards/AuthTokenGuard';
@@ -26,9 +27,11 @@ export class AuthController {
   @Post('login')
   async login(
     @Body() loginDto: LoginDto,
+    @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
   ): Promise<AuthResponse> {
-    const authData = await this.authService.login(loginDto);
+    const ip = request.ip || request.headers['x-forwarded-for'] as string || 'unknown';
+    const authData = await this.authService.login(loginDto, ip);
 
     const isProd = this.configService.get<string>('NODE_ENV') === 'production';
     response.cookie('token', authData.accessToken, {

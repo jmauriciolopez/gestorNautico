@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { toast } from 'react-hot-toast';
 import { CreditCard, Receipt, Wallet, Plus, Activity, ChevronRight, Users } from 'lucide-react';
 import { useFinanzas } from '../hooks/useFinanzas';
 import { CargosList } from '../components/CargosList';
@@ -12,7 +11,6 @@ import { NuevoCargoModal } from '../components/NuevoCargoModal';
 import { RegistrarPagoModal } from '../components/RegistrarPagoModal';
 import { CuentasCorrientesList } from '../components/CuentasCorrientesList';
 import { Caja, Cargo } from '../hooks/useFinanzas';
-import type { AxiosError } from 'axios';
 
 export default function FinanzasPage() {
   const [activeTab, setActiveTab] = useState<'cargos' | 'pagos' | 'caja' | 'cuentas'>('cargos');

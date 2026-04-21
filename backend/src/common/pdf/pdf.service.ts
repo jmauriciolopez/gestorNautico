@@ -1,6 +1,5 @@
-﻿import { Injectable } from '@nestjs/common';
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const PDFDocument = require('pdfkit-table');
+import { Injectable } from '@nestjs/common';
+import PDFDocument from 'pdfkit-table';
 import { Factura } from '../../facturas/factura.entity';
 import { Pago } from '../../pagos/pago.entity';
 import { ConfiguracionService } from '../../configuracion/configuracion.service';
@@ -19,7 +18,7 @@ export class PdfService {
 
     const doc = new PDFDocument({ size: 'A4', margin: 50 });
     const buffers: Buffer[] = [];
-    doc.on('data', (chunk) => buffers.push(chunk));
+    doc.on('data', (chunk: Buffer) => buffers.push(chunk));
 
     return new Promise((resolve, reject) => {
       doc.on('end', () => resolve(Buffer.concat(buffers)));
@@ -28,7 +27,6 @@ export class PdfService {
       const primaryColor = '#1e293b';
       const accentColor = '#3b82f6';
 
-      // Header
       doc
         .fillColor(primaryColor)
         .fontSize(20)
@@ -39,12 +37,14 @@ export class PdfService {
         .text(email, { align: 'right' })
         .moveDown(2);
 
-      // Divider
       doc.moveTo(50, 110).lineTo(545, 110).strokeColor('#e5e7eb').stroke();
 
-      // Title
       doc.moveDown(2);
-      doc.fillColor(primaryColor).fontSize(16).text('FACTURA', { underline: true }).moveDown(0.5);
+      doc
+        .fillColor(primaryColor)
+        .fontSize(16)
+        .text('FACTURA', { underline: true })
+        .moveDown(0.5);
 
       const infoX = 50;
       const infoY = doc.y;
@@ -52,10 +52,13 @@ export class PdfService {
       doc
         .fontSize(10)
         .text(`Número: ${factura.numero}`, infoX, infoY)
-        .text(`Fecha Emisión: ${new Date(factura.fechaEmision).toLocaleDateString('es-AR')}`, infoX, infoY + 15)
+        .text(
+          `Fecha Emisión: ${new Date(factura.fechaEmision).toLocaleDateString('es-AR')}`,
+          infoX,
+          infoY + 15,
+        )
         .text(`Estado: ${factura.estado}`, infoX, infoY + 30);
 
-      // Cliente
       const clientX = 350;
       doc
         .fontSize(12)
@@ -67,7 +70,6 @@ export class PdfService {
 
       doc.moveDown(4);
 
-      // Tabla de cargos
       const table = {
         title: 'DETALLE DE CARGOS',
         headers: ['Descripción', 'Tipo', 'Vencimiento', 'Estado', 'Importe'],
@@ -82,15 +84,12 @@ export class PdfService {
         ]),
       };
 
-      doc.table(table, {
+      void doc.table(table, {
         prepareHeader: () => doc.font('Helvetica-Bold').fontSize(9),
-        prepareRow: (_row: any, _col: any, _idx: any) => {
-          doc.font('Helvetica').fontSize(9);
-        },
+        prepareRow: () => doc.font('Helvetica').fontSize(9),
         columnsSize: [190, 75, 80, 65, 80],
-      } as any);
+      });
 
-      // Total
       doc.moveDown(2);
       doc
         .fontSize(14)
@@ -100,13 +99,13 @@ export class PdfService {
           { align: 'right' },
         );
 
-      // Footer
       doc
         .fontSize(8)
         .fillColor('#9ca3af')
         .text(
           'Este documento es un comprobante de gestión interna y no tiene validez legal como factura fiscal.',
-          50, 750,
+          50,
+          750,
           { align: 'center', width: 500 },
         );
 
@@ -115,15 +114,18 @@ export class PdfService {
   }
 
   async generateReceipt(pago: Pago): Promise<Buffer> {
-    const nombre = await this.configService.getValor('NOMBRE_GUARDERIA', 'Gestor Náutico');
+    const nombre = await this.configService.getValor(
+      'NOMBRE_GUARDERIA',
+      'Gestor Náutico',
+    );
 
     const doc = new PDFDocument({ size: 'A4', margin: 50 });
     const buffers: Buffer[] = [];
-    doc.on('data', (chunk) => buffers.push(chunk));
+    doc.on('data', (chunk: Buffer) => buffers.push(chunk));
 
     return new Promise((resolve, reject) => {
-      doc.on('end', () => resolve(Buffer.concat(buffers)));
-      doc.on('error', reject);
+      void doc.on('end', () => resolve(Buffer.concat(buffers)));
+      void doc.on('error', reject);
 
       const primaryColor = '#1e293b';
 
@@ -135,7 +137,10 @@ export class PdfService {
         .text('RECIBO DE PAGO', { align: 'right' })
         .moveDown(2);
 
-      doc.fontSize(16).text('COMPROBANTE DE PAGO', { underline: true }).moveDown(1);
+      doc
+        .fontSize(16)
+        .text('COMPROBANTE DE PAGO', { underline: true })
+        .moveDown(1);
 
       doc
         .fontSize(10)
@@ -147,16 +152,19 @@ export class PdfService {
 
       const table = {
         headers: ['Concepto', 'Monto'],
-        rows: [[
-          pago.cargo?.descripcion || 'Pago General',
-          `$${Number(pago.monto).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`,
-        ]],
+        rows: [
+          [
+            pago.cargo?.descripcion || 'Pago General',
+            `$${Number(pago.monto).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`,
+          ],
+        ],
       };
 
-      doc.table(table, {
-        prepareHeader: () => doc.font('Helvetica-Bold').fontSize(10),
-        prepareRow: () => doc.font('Helvetica').fontSize(10),
-      } as any);
+      void doc.table(table, {
+        prepareHeader: () => doc.font('Helvetica-Bold').fontSize(9),
+        prepareRow: () => doc.font('Helvetica').fontSize(9),
+        columnsSize: [190, 75, 80, 65, 80],
+      });
 
       doc.moveDown(2);
       doc

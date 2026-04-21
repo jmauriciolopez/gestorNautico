@@ -18,7 +18,10 @@ import { Role } from '../users/user.entity';
 import { Response } from 'express';
 import { PdfService } from '../common/pdf/pdf.service';
 import { CreateFacturaDto, UpdateFacturaDto } from './dto/create-factura.dto';
-import { UpdateEstadoFacturaDto, SendEmailFacturaDto } from './dto/update-estado-factura.dto';
+import {
+  UpdateEstadoFacturaDto,
+  SendEmailFacturaDto,
+} from './dto/update-estado-factura.dto';
 
 @Controller('facturas')
 @UseGuards(AuthTokenGuard, RolesGuard)
@@ -50,10 +53,31 @@ export class FacturasController {
     res.end(buffer);
   }
 
+  @Get('stats')
+  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+  async getStats(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.facturasService.getStats(startDate, endDate);
+  }
+
   @Get()
   @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
-  findAll(@Query('page') page?: number, @Query('limit') limit?: number) {
-    return this.facturasService.findAll({ page, limit });
+  findAll(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('search') search?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.facturasService.findAll({
+      page,
+      limit,
+      search,
+      startDate,
+      endDate,
+    });
   }
 
   @Get(':id')
@@ -70,10 +94,7 @@ export class FacturasController {
 
   @Patch(':id/estado')
   @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
-  updateEstado(
-    @Param('id') id: string,
-    @Body() dto: UpdateEstadoFacturaDto,
-  ) {
+  updateEstado(@Param('id') id: string, @Body() dto: UpdateEstadoFacturaDto) {
     return this.facturasService.updateEstado(+id, dto.estado, dto.metodoPago);
   }
 

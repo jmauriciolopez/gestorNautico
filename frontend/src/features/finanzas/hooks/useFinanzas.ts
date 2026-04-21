@@ -128,7 +128,7 @@ export function useCargos(clienteId?: number, soloSinFacturar: boolean = false) 
   });
 }
 
-export function useFinanzas() {
+export function useFinanzas(options: { pageCajas?: number; limitCajas?: number } = {}) {
   const queryClient = useQueryClient();
 
   const createPago = useMutation({
@@ -166,8 +166,13 @@ export function useFinanzas() {
   });
 
   const getCajas = useQuery<Caja[]>({
-    queryKey: ['cajas'],
-    queryFn: () => httpClient.get<Paginated<Caja>>('/cajas').then(selectData),
+    queryKey: ['cajas', options.pageCajas, options.limitCajas],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (options.pageCajas) params.append('page', String(options.pageCajas));
+      if (options.limitCajas) params.append('limit', String(options.limitCajas));
+      return httpClient.get<Paginated<Caja>>(`/cajas?${params.toString()}`).then(selectData);
+    },
   });
 
   return { createPago, getCajaResumen, abrirCaja, cerrarCaja, getCajas };

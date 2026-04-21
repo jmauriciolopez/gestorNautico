@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Edit3, X, Save, Plus, Loader2, Calendar, FileText, CheckCircle2, ChevronRight, Trash2, Package, Clock, AlertCircle } from 'lucide-react';
+import { Edit3, X, Save, Plus, Loader2, FileText, CheckCircle2, Trash2 } from 'lucide-react';
 
 interface FacturaEditModalProps {
   factura: any;
@@ -13,7 +13,7 @@ export const FacturaEditModal: React.FC<FacturaEditModalProps> = ({ factura, onC
   const [fecha, setFecha] = useState(() => {
     try {
       return factura.fechaEmision ? new Date(factura.fechaEmision).toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
-    } catch (e) {
+    } catch {
       return new Date().toISOString().split('T')[0];
     }
   });
@@ -26,11 +26,7 @@ export const FacturaEditModal: React.FC<FacturaEditModalProps> = ({ factura, onC
   const [selectedCargoIds, setSelectedCargoIds] = useState<number[]>(factura.cargos?.map((c: any) => c.id) || []);
   const [isSaving, setIsSaving] = useState(false);
 
-  useEffect(() => {
-    fetchPendingCargos();
-  }, []);
-
-  const fetchPendingCargos = async () => {
+  const fetchPendingCargos = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
@@ -47,7 +43,11 @@ export const FacturaEditModal: React.FC<FacturaEditModalProps> = ({ factura, onC
     } finally {
       setIsLoadingCargos(false);
     }
-  };
+  }, [factura.cliente.id]);
+
+  useEffect(() => {
+    fetchPendingCargos();
+  }, [fetchPendingCargos]);
 
   const calculateTotal = () => {
     const existingTotal = pendingCargos
@@ -76,7 +76,7 @@ export const FacturaEditModal: React.FC<FacturaEditModalProps> = ({ factura, onC
           fechaEmision: fecha,
           observaciones,
           cargoIds: selectedCargoIds,
-          nuevosCargos: nuevosCargos.map(({ id, ...rest }) => ({ ...rest, monto: Number(rest.monto) }))
+          nuevosCargos: nuevosCargos.map(({ monto }) => ({ monto: Number(monto) }))
         })
       });
 

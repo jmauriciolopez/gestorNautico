@@ -1,4 +1,4 @@
-import { X, Receipt, Clock, CreditCard, ChevronRight, History } from 'lucide-react';
+import { X, Receipt, Clock, CreditCard, History } from 'lucide-react';
 import { Caja } from '../hooks/useFinanzas';
 
 interface CajaDetalleModalProps {

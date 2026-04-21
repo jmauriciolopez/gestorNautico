@@ -8,6 +8,11 @@ import { In, Repository } from 'typeorm';
 import { Rack } from './rack.entity';
 import { Espacio } from '../espacios/espacio.entity';
 import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
+import {
+  paginate,
+  PaginationQuery,
+  PaginatedResult,
+} from '../common/pagination/pagination.helper';
 
 @Injectable()
 export class RacksService {
@@ -24,12 +29,17 @@ export class RacksService {
   private async desvincularYEliminarEspacios(espacios: Espacio[]) {
     if (espacios.length === 0) return;
     const ids = espacios.map((e) => e.id);
-    await this.embarcacionRepo.update({ espacioId: In(ids) }, { espacioId: null });
+    await this.embarcacionRepo.update(
+      { espacioId: In(ids) },
+      { espacioId: null },
+    );
     await this.espacioRepo.remove(espacios);
   }
 
-  findAll() {
-    return this.rackRepo.find({ relations: ['zona', 'espacios'] });
+  async findAll(query: PaginationQuery = {}): Promise<PaginatedResult<Rack>> {
+    return paginate(this.rackRepo, query, {
+      relations: ['zona', 'espacios'],
+    });
   }
 
   async findOne(id: number) {

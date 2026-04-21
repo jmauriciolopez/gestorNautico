@@ -5,7 +5,14 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThan, In, MoreThan } from 'typeorm';
+import {
+  Repository,
+  LessThan,
+  In,
+  MoreThan,
+  FindOptionsWhere,
+  FindManyOptions,
+} from 'typeorm';
 import { SolicitudBajada, EstadoSolicitud } from './solicitud-bajada.entity';
 import { CreateSolicitudBajadaDto } from './dto/create-solicitud-bajada.dto';
 import { Cliente } from '../clientes/clientes.entity';
@@ -14,7 +21,10 @@ import { NotificacionesService } from '../notificaciones/notificaciones.service'
 import { Role } from '../users/user.entity';
 import { NotificacionTipo } from '../notificaciones/notificacion.entity';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { paginate, PaginationQuery } from '../common/pagination/pagination.helper';
+import {
+  paginate,
+  PaginationQuery,
+} from '../common/pagination/pagination.helper';
 import { MovimientosService } from '../movimientos/movimientos.service';
 
 @Injectable()
@@ -125,21 +135,27 @@ export class OperacionesService {
     const oneDayAgo = new Date();
     oneDayAgo.setDate(oneDayAgo.getDate() - 1);
 
-    const where: any = estado 
+    const where:
+      | FindOptionsWhere<SolicitudBajada>
+      | FindOptionsWhere<SolicitudBajada>[] = estado
       ? { estado }
       : [
-          { estado: In([EstadoSolicitud.PENDIENTE, EstadoSolicitud.CONFIRMADA]) },
+          {
+            estado: In([EstadoSolicitud.PENDIENTE, EstadoSolicitud.CONFIRMADA]),
+          },
           {
             estado: In([EstadoSolicitud.COMPLETADA, EstadoSolicitud.CANCELADA]),
             updatedAt: MoreThan(oneDayAgo),
           },
         ];
 
-    return paginate(this.solicitudRepo, query, {
+    const options: FindManyOptions<SolicitudBajada> = {
       where,
       relations: ['cliente', 'embarcacion'],
       order: { createdAt: 'DESC' },
-    });
+    };
+
+    return paginate(this.solicitudRepo, query, options);
   }
 
   async updateEstado(id: number, estado: EstadoSolicitud, motivo?: string) {
@@ -147,7 +163,8 @@ export class OperacionesService {
       where: { id },
       relations: ['cliente', 'embarcacion'],
     });
-    if (!solicitud) throw new NotFoundException(`Solicitud ${id} no encontrada`);
+    if (!solicitud)
+      throw new NotFoundException(`Solicitud ${id} no encontrada`);
 
     await this.solicitudRepo.update(id, { estado });
 
@@ -168,14 +185,17 @@ export class OperacionesService {
     await this.notificacionesService.createForRole(Role.ADMIN, {
       titulo: `Solicitud ${estado}`,
       mensaje: `La bajada de "${barco}" para el ${fecha} fue marcada como ${estado}.`,
-      tipo: estado === EstadoSolicitud.CANCELADA
-        ? NotificacionTipo.ALERTA
-        : NotificacionTipo.EXITO,
+      tipo:
+        estado === EstadoSolicitud.CANCELADA
+          ? NotificacionTipo.ALERTA
+          : NotificacionTipo.EXITO,
     });
 
     // Email al cliente según el nuevo estado
     if (email) {
-      const templates: Partial<Record<EstadoSolicitud, { subject: string; template: string }>> = {
+      const templates: Partial<
+        Record<EstadoSolicitud, { subject: string; template: string }>
+      > = {
         [EstadoSolicitud.CONFIRMADA]: {
           subject: 'Tu bajada fue confirmada — Gestor Náutico',
           template: 'bajada-confirmada',
@@ -207,6 +227,9 @@ export class OperacionesService {
       }
     }
 
-    return this.solicitudRepo.findOne({ where: { id }, relations: ['cliente', 'embarcacion'] });
+    return this.solicitudRepo.findOne({
+      where: { id },
+      relations: ['cliente', 'embarcacion'],
+    });
   }
 }

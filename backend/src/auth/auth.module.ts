@@ -4,6 +4,7 @@ import { AuthController } from './auth.controller';
 import { UsersModule } from '../users/users.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { LoginAttemptsService } from './login-attempts.service';
 
 @Global()
 @Module({
@@ -24,7 +25,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
   ],
 
   controllers: [AuthController],
-  providers: [AuthService],
-  exports: [AuthService, JwtModule],
+  providers: [AuthService, LoginAttemptsService],
+  exports: [AuthService, JwtModule, LoginAttemptsService],
 })
 export class AuthModule {}

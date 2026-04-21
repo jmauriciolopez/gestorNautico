@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { ClipboardCheck, X, Search, Ship, ArrowRight, Anchor, Calendar, Clock, Loader2, Check } from 'lucide-react';
+import { ClipboardCheck, X, Search, Ship, ArrowRight, Calendar, Clock, Loader2, Check } from 'lucide-react';
 import { useEmbarcaciones } from '../../embarcaciones/hooks/useEmbarcaciones';
 
 interface NuevoPedidoModalProps {

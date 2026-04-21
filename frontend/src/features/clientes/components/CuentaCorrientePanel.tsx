@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Wallet, TrendingDown, AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, Anchor, CreditCard } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, Anchor, CreditCard } from 'lucide-react';
 import { useCuentaCorriente } from '../hooks/useCuentaCorriente';
 
 interface Props {
@@ -7,7 +7,7 @@ interface Props {
   clienteNombre?: string;
 }
 
-export function CuentaCorrientePanel({ clienteId, clienteNombre }: Props) {
+export function CuentaCorrientePanel({ clienteId }: Props) {
   const { data, isLoading } = useCuentaCorriente(clienteId);
   const [showMovimientos, setShowMovimientos] = useState(false);
 

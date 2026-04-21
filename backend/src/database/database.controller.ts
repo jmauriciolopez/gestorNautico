@@ -9,12 +9,13 @@ export class SeederController {
   async seed() {
     try {
       return await this.seederService.seed();
-    } catch (err: any) {
-      return { 
-        status: 'error', 
-        message: err.message, 
-        stack: err.stack,
-        context: 'SeederController'
+    } catch (err: unknown) {
+      const error = err as Error;
+      return {
+        status: 'error',
+        message: error.message,
+        stack: error.stack,
+        context: 'SeederController',
       };
     }
   }

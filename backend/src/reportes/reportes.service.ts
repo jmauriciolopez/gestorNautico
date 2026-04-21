@@ -23,16 +23,19 @@ export class ReportesService {
     });
 
     // Agrupar por cliente
-    const map = new Map<number, {
-      clienteId: number;
-      nombre: string;
-      email: string;
-      telefono: string;
-      totalDeuda: number;
-      cantidadCargos: number;
-      diasMaxAtraso: number;
-      fechaVencimientoMasAntigua: Date;
-    }>();
+    const map = new Map<
+      number,
+      {
+        clienteId: number;
+        nombre: string;
+        email: string;
+        telefono: string;
+        totalDeuda: number;
+        cantidadCargos: number;
+        diasMaxAtraso: number;
+        fechaVencimientoMasAntigua: Date;
+      }
+    >();
 
     for (const cargo of cargosVencidos) {
       const dias = Math.floor(
@@ -43,8 +46,12 @@ export class ReportesService {
         existing.totalDeuda += Number(cargo.monto);
         existing.cantidadCargos += 1;
         if (dias > existing.diasMaxAtraso) existing.diasMaxAtraso = dias;
-        if (new Date(cargo.fechaVencimiento) < existing.fechaVencimientoMasAntigua) {
-          existing.fechaVencimientoMasAntigua = new Date(cargo.fechaVencimiento);
+        if (
+          new Date(cargo.fechaVencimiento) < existing.fechaVencimientoMasAntigua
+        ) {
+          existing.fechaVencimientoMasAntigua = new Date(
+            cargo.fechaVencimiento,
+          );
         }
       } else {
         map.set(cargo.cliente.id, {
@@ -60,7 +67,9 @@ export class ReportesService {
       }
     }
 
-    return Array.from(map.values()).sort((a, b) => b.diasMaxAtraso - a.diasMaxAtraso);
+    return Array.from(map.values()).sort(
+      (a, b) => b.diasMaxAtraso - a.diasMaxAtraso,
+    );
   }
 
   async getMensualidadesConDescuentos() {
@@ -70,9 +79,9 @@ export class ReportesService {
     });
 
     return embarcaciones
-      .filter(e => e.cliente && e.espacio?.rack)
-      .map(e => {
-        const tarifaBase = Number(e.espacio!.rack!.tarifaBase);
+      .filter((e) => e.cliente && e.espacio?.rack)
+      .map((e) => {
+        const tarifaBase = Number(e.espacio.rack.tarifaBase);
         const descCliente = Number(e.cliente.descuento ?? 0);
         const descEmbarcacion = Number(e.descuento ?? 0);
         const montoDescCliente = tarifaBase * (descCliente / 100);
@@ -88,8 +97,8 @@ export class ReportesService {
           embarcacionNombre: e.nombre,
           matricula: e.matricula,
           descuentoEmbarcacion: descEmbarcacion,
-          rack: e.espacio!.rack!.codigo,
-          espacio: e.espacio!.numero,
+          rack: e.espacio.rack.codigo,
+          espacio: e.espacio.numero,
           tarifaBase,
           montoDescCliente: +montoDescCliente.toFixed(2),
           montoDescEmbarcacion: +montoDescEmbarcacion.toFixed(2),

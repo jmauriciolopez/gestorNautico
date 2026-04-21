@@ -1,4 +1,10 @@
-import { IsString, IsNumber, IsOptional, Min, IsNotEmpty } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  Min,
+  IsNotEmpty,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateRackDto {

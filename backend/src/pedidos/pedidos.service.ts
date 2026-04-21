@@ -6,6 +6,11 @@ import { NotificacionesService } from '../notificaciones/notificaciones.service'
 import { Role } from '../users/user.entity';
 import { NotificacionTipo } from '../notificaciones/notificacion.entity';
 import { MovimientosService } from '../movimientos/movimientos.service';
+import {
+  paginate,
+  PaginationQuery,
+  PaginatedResult,
+} from '../common/pagination/pagination.helper';
 
 @Injectable()
 export class PedidosService {
@@ -16,11 +21,11 @@ export class PedidosService {
     private readonly movimientosService: MovimientosService,
   ) {}
 
-  findAll() {
+  async findAll(query: PaginationQuery = {}): Promise<PaginatedResult<Pedido>> {
     const oneDayAgo = new Date();
     oneDayAgo.setDate(oneDayAgo.getDate() - 1);
 
-    return this.pedidoRepo.find({
+    return paginate(this.pedidoRepo, query, {
       where: [
         { estado: In(['pendiente', 'en_proceso']) },
         {

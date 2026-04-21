@@ -1,16 +1,33 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Search, Edit, Trash2, Ship, Loader2, MapPin, Activity, LayoutGrid, X } from 'lucide-react';
-import { useEmbarcaciones } from '../hooks/useEmbarcaciones';
+import { useEmbarcaciones, Embarcacion } from '../hooks/useEmbarcaciones';
 import { useConfirm } from '../../../shared/context/ConfirmContext';
 import { RoleGuard } from '../../../components/auth/RoleGuard';
 import { Role } from '../../../types';
+import { PaginationControls } from '../../../shared/components/PaginationControls';
+
+import { useDebounce } from '../../../hooks/useDebounce';
 
 export default function EmbarcacionesList() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
-  const { getEmbarcaciones, deleteEmbarcacion } = useEmbarcaciones();
-  const { data: embarcaciones = [], isLoading } = getEmbarcaciones;
+  const [page, setPage] = useState(1);
+  const debouncedSearch = useDebounce(search, 300);
+
+  // Reset to page 1 when search changes
+  React.useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
+
+  const { getEmbarcaciones, deleteEmbarcacion } = useEmbarcaciones({
+    page,
+    search: debouncedSearch,
+  });
+
+  const { isLoading, data } = getEmbarcaciones;
+  const embarcaciones = data?.data || [];
+  const meta = data?.meta;
   const confirm = useConfirm();
 
   const handleDelete = async (id: number) => {
@@ -25,12 +42,6 @@ export default function EmbarcacionesList() {
       await deleteEmbarcacion.mutateAsync(id);
     }
   };
-
-  const filtered = embarcaciones.filter(e =>
-    e.nombre.toLowerCase().includes(search.toLowerCase()) ||
-    e.matricula.toLowerCase().includes(search.toLowerCase()) ||
-    e.cliente?.nombre?.toLowerCase().includes(search.toLowerCase())
-  );
 
   if (isLoading) {
     return (
@@ -91,7 +102,7 @@ export default function EmbarcacionesList() {
           </div>
           <div className="hidden md:flex items-center gap-3 text-[var(--text-secondary)] text-[10px] font-black uppercase tracking-widest bg-[var(--bg-primary)]/40 px-4 py-2 rounded-xl border border-[var(--border-primary)] transition-colors duration-300">
             <LayoutGrid className="w-3.5 h-3.5" />
-            Total: {filtered.length}
+            Total: {meta?.total || 0}
           </div>
         </div>
 
@@ -108,7 +119,7 @@ export default function EmbarcacionesList() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border-secondary)] transition-colors duration-300">
-              {filtered.map((emb) => (
+              {embarcaciones.map((emb: Embarcacion) => (
                 <tr key={emb.id} className={`group hover:bg-indigo-500/5 transition-all cursor-default ${emb.estado === 'INACTIVA' ? 'opacity-40 grayscale' : ''}`}>
                   <td className="px-8 py-6">
                     <div className="flex items-center gap-5">
@@ -187,7 +198,7 @@ export default function EmbarcacionesList() {
                   </td>
                 </tr>
               ))}
-              {filtered.length === 0 && (
+              {embarcaciones.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-8 py-32 text-center bg-[var(--bg-primary)]/10">
                     <div className="flex flex-col items-center gap-6">
@@ -204,6 +215,16 @@ export default function EmbarcacionesList() {
             </tbody>
           </table>
         </div>
+
+        {meta && (
+          <PaginationControls
+            currentPage={page}
+            totalPages={meta.totalPages}
+            onPageChange={setPage}
+            totalItems={meta.total}
+            pageSize={meta.limit}
+          />
+        )}
       </div>
     </div>
   );

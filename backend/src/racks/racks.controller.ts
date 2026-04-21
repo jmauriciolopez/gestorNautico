@@ -7,6 +7,7 @@ import {
   Put,
   Delete,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { RacksService } from './racks.service';
 import { CreateRackDto } from './dto/create-rack.dto';
@@ -16,8 +17,6 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../users/user.entity';
 
-import { Rack } from './rack.entity';
-
 @Controller('racks')
 @UseGuards(AuthTokenGuard, RolesGuard)
 export class RacksController {
@@ -25,8 +24,8 @@ export class RacksController {
 
   @Get()
   @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
-  findAll() {
-    return this.racksService.findAll();
+  findAll(@Query('page') page?: number, @Query('limit') limit?: number) {
+    return this.racksService.findAll({ page, limit });
   }
 
   @Get(':id')

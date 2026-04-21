@@ -7,6 +7,7 @@ import {
   Put,
   Delete,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { UbicacionesService } from './ubicaciones.service';
 import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
@@ -23,8 +24,8 @@ export class UbicacionesController {
 
   @Get()
   @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
-  findAll() {
-    return this.ubicacionesService.findAll();
+  findAll(@Query('page') page?: number, @Query('limit') limit?: number) {
+    return this.ubicacionesService.findAll({ page, limit });
   }
 
   @Get(':id')

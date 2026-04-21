@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { httpClient } from '../../../shared/api/HttpClient';
-import { Paginated, selectData } from '../../../api/pagination';
+import { Paginated } from '../../../api/pagination';
 
 export interface Cliente {
   id: number;
@@ -18,14 +18,23 @@ export interface Cliente {
   updatedAt: string;
 }
 
-export const useClientes = () => {
+export const useClientes = (options: { page?: number; limit?: number; search?: string } = {}) => {
   const queryClient = useQueryClient();
 
   const getClientes = useQuery({
-    queryKey: ['clientes'],
-    queryFn: () => httpClient.get<Paginated<Cliente>>('/clientes'),
-    select: selectData,
+    queryKey: ['clientes', options.page, options.limit, options.search],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (options.page) params.append('page', String(options.page));
+      if (options.limit) params.append('limit', String(options.limit));
+      if (options.search) params.append('search', options.search);
+      return httpClient.get<Paginated<Cliente>>(`/clientes?${params.toString()}`);
+    },
   });
+
+  // Derived data for backward compatibility in components using { data: clientes = [] } = getClientes
+  const clientes = getClientes.data?.data || [];
+  const meta = getClientes.data?.meta;
 
   const useCliente = (id: number) =>
     useQuery({
@@ -59,5 +68,5 @@ export const useClientes = () => {
     },
   });
 
-  return { getClientes, useCliente, createCliente, updateCliente, deleteCliente };
+  return { getClientes, clientes, meta, deleteCliente, updateCliente, createCliente, useCliente };
 };

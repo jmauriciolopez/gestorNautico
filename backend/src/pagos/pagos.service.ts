@@ -5,7 +5,10 @@ import { Pago } from './pago.entity';
 import { CajasService } from '../cajas/cajas.service';
 import { CargosService } from '../cargos/cargos.service';
 import { CreatePagoDto } from './dto/create-pago.dto';
-import { paginate, PaginationQuery } from '../common/pagination/pagination.helper';
+import {
+  paginate,
+  PaginationQuery,
+} from '../common/pagination/pagination.helper';
 
 @Injectable()
 export class PagosService {
@@ -33,7 +36,7 @@ export class PagosService {
   }
 
   async create(data: CreatePagoDto) {
-    const { clienteId, cargoId, cajaId, metodo, referencia, notas, ...rest } = data;
+    const { clienteId, cargoId, cajaId, metodo, referencia, ...rest } = data;
 
     // 1. Obtener una caja abierta
     const caja = cajaId
@@ -46,7 +49,7 @@ export class PagosService {
     // 2. Crear el pago
     const nuevoPago = this.pagoRepo.create({
       ...rest,
-      metodoPago: metodo as any,
+      metodoPago: metodo,
       comprobante: referencia,
       cliente: { id: Number(clienteId) },
       cargo: cargoId ? { id: Number(cargoId) } : null,

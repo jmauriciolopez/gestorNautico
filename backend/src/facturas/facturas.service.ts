@@ -2,25 +2,40 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import {
+  Between,
+  ILike,
+  LessThanOrEqual,
+  MoreThanOrEqual,
+  Repository,
+  In,
+  FindManyOptions,
+  FindOptionsWhere,
+} from 'typeorm';
 import { Factura, EstadoFactura } from './factura.entity';
 import { Cargo, TipoCargo } from '../cargos/cargo.entity';
-import { Cliente } from '../clientes/clientes.entity';
 import { Pago, MetodoPago } from '../pagos/pago.entity';
+import { Cliente } from '../clientes/clientes.entity';
+import { Role } from '../users/user.entity';
+import { NotificacionTipo } from '../notificaciones/notificacion.entity';
 import { CargosService } from '../cargos/cargos.service';
 import { CajasService } from '../cajas/cajas.service';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import { PdfService } from '../common/pdf/pdf.service';
-import { Role } from '../users/user.entity';
-import { NotificacionTipo } from '../notificaciones/notificacion.entity';
-import { paginate, PaginationQuery } from '../common/pagination/pagination.helper';
-
 import { CreateFacturaDto } from './dto/create-factura.dto';
+import {
+  paginate,
+  PaginationQuery,
+  PaginatedResult,
+} from '../common/pagination/pagination.helper';
 
 @Injectable()
 export class FacturasService {
+  private readonly logger = new Logger(FacturasService.name);
+
   constructor(
     @InjectRepository(Factura)
     private readonly facturaRepo: Repository<Factura>,
@@ -36,11 +51,53 @@ export class FacturasService {
     private readonly pdfService: PdfService,
   ) {}
 
-  async findAll(query: PaginationQuery = {}) {
-    return paginate(this.facturaRepo, query, {
+  async findAll(
+    query: PaginationQuery & {
+      search?: string;
+      startDate?: string;
+      endDate?: string;
+    } = {},
+  ): Promise<PaginatedResult<Factura>> {
+    const { search, startDate, endDate, ...pagination } = query;
+    const options: FindManyOptions<Factura> = {
       relations: ['cliente', 'cargos'],
       order: { fechaEmision: 'DESC' },
-    });
+      where: {},
+    };
+
+    // Filtros de Búsqueda (Número o Cliente)
+    if (search) {
+      options.where = [
+        { numero: ILike(`%${search}%`) },
+        { cliente: { nombre: ILike(`%${search}%`) } },
+      ];
+    }
+
+    // Filtros de Fecha (se aplican a ambos casos del OR si hay búsqueda, o al objeto general)
+    if (startDate || endDate) {
+      const dateFilter: FindOptionsWhere<Factura> = {};
+      if (startDate && endDate) {
+        dateFilter.fechaEmision = Between(
+          new Date(startDate),
+          new Date(endDate),
+        );
+      } else if (startDate) {
+        dateFilter.fechaEmision = MoreThanOrEqual(new Date(startDate));
+      } else if (endDate) {
+        dateFilter.fechaEmision = LessThanOrEqual(new Date(endDate));
+      }
+
+      if (Array.isArray(options.where)) {
+        options.where = options.where.map((cond) => ({
+          ...cond,
+          ...dateFilter,
+        }));
+      } else {
+        options.where = { ...options.where, ...dateFilter };
+      }
+    }
+
+    return paginate(this.facturaRepo, pagination, options);
   }
 
   async findOne(id: number) {
@@ -87,19 +144,72 @@ export class FacturasService {
       0,
     );
 
-    // 3. Generar número si no viene
-    const finalNumero = numero || (await this.generateNextNumero());
+    // Calculo de fecha de vencimiento consolidada
+    let finalFechaVencimiento = data.fechaVencimiento
+      ? new Date(data.fechaVencimiento)
+      : null;
 
-    // 4. Crear factura
-    const nueva = this.facturaRepo.create({
-      ...rest,
-      numero: finalNumero,
-      total,
-      cliente: { id: clienteId },
-      estado: EstadoFactura.PENDIENTE,
-    });
+    if (!finalFechaVencimiento) {
+      // Tomar el vencimiento más lejano de los cargos
+      const vencimientos = cargos
+        .map((c) => c.fechaVencimiento)
+        .filter((v) => !!v)
+        .map((v) => new Date(v).getTime());
 
-    const guardada = await this.facturaRepo.save(nueva);
+      if (vencimientos.length > 0) {
+        finalFechaVencimiento = new Date(Math.max(...vencimientos));
+      } else {
+        // Fallback: 15 días después de emisión
+        const fallback = new Date(data.fechaEmision);
+        fallback.setDate(fallback.getDate() + 15);
+        finalFechaVencimiento = fallback;
+      }
+    }
+
+    // 3. Generar número inicial
+    let finalNumero = numero;
+    let guardada: Factura;
+    let attempts = 0;
+    const maxAttempts = 3;
+
+    while (attempts < maxAttempts) {
+      try {
+        if (!finalNumero) {
+          finalNumero = await this.generateNextNumero();
+        }
+
+        // 4. Crear factura
+        const nueva = this.facturaRepo.create({
+          ...rest,
+          numero: finalNumero,
+          total,
+          cliente: { id: clienteId },
+          estado: EstadoFactura.PENDIENTE,
+          fechaVencimiento: finalFechaVencimiento,
+        });
+
+        guardada = await this.facturaRepo.save(nueva);
+        break; // Exit loop if save is successful
+      } catch (error: unknown) {
+        attempts++;
+        // Check for unique constraint violation (Error code 23505 in PG or similar)
+        const isUniqueViolation =
+          typeof error === 'object' &&
+          error !== null &&
+          ((error as { code?: string }).code === '23505' ||
+            (error as { message?: string }).message?.includes('unique') ||
+            (error as { message?: string }).message?.includes('Duplicate'));
+
+        if (isUniqueViolation && !numero && attempts < maxAttempts) {
+          this.logger.warn(
+            `Conflicto de número de factura ${finalNumero}. Reintentando (${attempts}/${maxAttempts})...`,
+          );
+          finalNumero = null; // Force regeneration
+          continue;
+        }
+        throw error;
+      }
+    }
 
     // Notificar a administración/operación sobre nueva factura
     await this.notificacionesService.createForRole(Role.ADMIN, {
@@ -117,7 +227,11 @@ export class FacturasService {
     return this.findOne(guardada.id);
   }
 
-  async updateEstado(id: number, estado: EstadoFactura, metodoPago?: MetodoPago) {
+  async updateEstado(
+    id: number,
+    estado: EstadoFactura,
+    metodoPago?: MetodoPago,
+  ) {
     const factura = await this.findOne(id);
     await this.facturaRepo.update(id, { estado });
 
@@ -162,12 +276,15 @@ export class FacturasService {
     return this.facturaRepo.remove(factura);
   }
 
-  async update(id: number, data: { 
-    fechaEmision?: string; 
-    cargoIds?: number[]; 
-    observaciones?: string;
-    nuevosCargos?: { descripcion: string; monto: number; tipo: TipoCargo }[] 
-  }) {
+  async update(
+    id: number,
+    data: {
+      fechaEmision?: string;
+      cargoIds?: number[];
+      observaciones?: string;
+      nuevosCargos?: { descripcion: string; monto: number; tipo: TipoCargo }[];
+    },
+  ) {
     const factura = await this.findOne(id);
 
     if (data.fechaEmision) {
@@ -186,7 +303,7 @@ export class FacturasService {
           cliente: { id: factura.cliente.id },
           factura: { id: factura.id },
           pagado: false,
-          fechaEmision: factura.fechaEmision || new Date()
+          fechaEmision: factura.fechaEmision || new Date(),
         });
         await this.cargoRepo.save(nuevo);
       }
@@ -199,21 +316,26 @@ export class FacturasService {
       });
 
       if (cargosExistentes.length !== data.cargoIds.length) {
-        throw new BadRequestException('Algunos cargos no son válidos para este cliente');
+        throw new BadRequestException(
+          'Algunos cargos no son válidos para este cliente',
+        );
       }
 
       await this.cargoRepo.update(
         { id: In(data.cargoIds) },
-        { factura: { id: factura.id } }
+        { factura: { id: factura.id } },
       );
     }
 
     // 3. Recalcular el total basado en TODOS los cargos vinculados
     const todosLosCargos = await this.cargoRepo.find({
-      where: { factura: { id: factura.id } }
+      where: { factura: { id: factura.id } },
     });
 
-    factura.total = todosLosCargos.reduce((sum, c) => sum + Number(c.monto || 0), 0);
+    factura.total = todosLosCargos.reduce(
+      (sum, c) => sum + Number(c.monto || 0),
+      0,
+    );
     return this.facturaRepo.save(factura);
   }
 
@@ -224,7 +346,9 @@ export class FacturasService {
     if (optionalEmail) {
       targetEmail = optionalEmail;
       // Guardar en el cliente
-      await this.clienteRepo.update(factura.cliente.id, { email: optionalEmail });
+      await this.clienteRepo.update(factura.cliente.id, {
+        email: optionalEmail,
+      });
     }
 
     if (!targetEmail) {
@@ -259,5 +383,54 @@ export class FacturasService {
     });
 
     return { success: true };
+  }
+
+  async getStats(startDate?: string, endDate?: string) {
+    const qb = this.facturaRepo
+      .createQueryBuilder('f')
+      .select('f.estado', 'estado')
+      .addSelect('SUM(f.total)', 'total')
+      .addSelect('COUNT(f.id)', 'cantidad');
+
+    if (startDate) {
+      qb.andWhere('f.fechaEmision >= :startDate', {
+        startDate: new Date(startDate),
+      });
+    }
+    if (endDate) {
+      qb.andWhere('f.fechaEmision <= :endDate', { endDate: new Date(endDate) });
+    }
+
+    const results = await qb.groupBy('f.estado').getRawMany();
+
+    const stats = {
+      TOTAL_PENDIENTE: 0,
+      TOTAL_PAGADO: 0,
+      TOTAL_ANULADO: 0,
+      CONTEO_PENDIENTE: 0,
+      CONTEO_PAGADO: 0,
+      CONTEO_ANULADO: 0,
+    };
+
+    interface RawStatRow {
+      estado: EstadoFactura;
+      total: string | number;
+      cantidad: string | number;
+    }
+
+    (results as RawStatRow[]).forEach((row) => {
+      if (row.estado === EstadoFactura.PENDIENTE) {
+        stats.TOTAL_PENDIENTE = Number(row.total);
+        stats.CONTEO_PENDIENTE = Number(row.cantidad);
+      } else if (row.estado === EstadoFactura.PAGADA) {
+        stats.TOTAL_PAGADO = Number(row.total);
+        stats.CONTEO_PAGADO = Number(row.cantidad);
+      } else if (row.estado === EstadoFactura.ANULADA) {
+        stats.TOTAL_ANULADO = Number(row.total);
+        stats.CONTEO_ANULADO = Number(row.cantidad);
+      }
+    });
+
+    return stats;
   }
 }

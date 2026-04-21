@@ -2,7 +2,10 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Catalogo } from './catalogo.entity';
-import { paginate, PaginationQuery } from '../common/pagination/pagination.helper';
+import {
+  paginate,
+  PaginationQuery,
+} from '../common/pagination/pagination.helper';
 
 @Injectable()
 export class CatalogoService {

@@ -7,7 +7,7 @@ import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { Role } from './types';
 import AppLayout from './components/layout/AppLayout';
 import { Login } from './features/auth/Login';
-import { ThemeProvider } from './context/ThemeContext';
+import { ThemeProvider } from './context/ThemeProvider';
 import { Toaster } from 'react-hot-toast';
 import { ConfirmProvider } from './shared/context/ConfirmContext';
 

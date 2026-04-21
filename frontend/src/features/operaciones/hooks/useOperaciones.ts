@@ -34,12 +34,25 @@ export interface SolicitudBajada {
   createdAt: string;
 }
 
-export function useOperaciones() {
+export function useOperaciones(options: {
+  pagePedidos?: number;
+  limitPedidos?: number;
+  pageMovimientos?: number;
+  limitMovimientos?: number;
+  pageSolicitudes?: number;
+  limitSolicitudes?: number;
+} = {}) {
   const queryClient = useQueryClient();
 
   const getPedidos = useQuery<Pedido[]>({
-    queryKey: ['pedidos'],
-    queryFn: () => httpClient.get<Pedido[]>('/pedidos'),
+    queryKey: ['pedidos', options.pagePedidos, options.limitPedidos],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (options.pagePedidos) params.append('page', String(options.pagePedidos));
+      if (options.limitPedidos) params.append('limit', String(options.limitPedidos));
+      return httpClient.get<Paginated<Pedido>>(`/pedidos?${params.toString()}`);
+    },
+    select: selectData,
   });
 
   const usePedido = (id: number) =>
@@ -74,9 +87,13 @@ export function useOperaciones() {
   });
 
   const getMovimientos = useQuery({
-    queryKey: ['movimientos'],
-    queryFn: (): Promise<Movimiento[]> =>
-      httpClient.get<Paginated<Movimiento>>('/movimientos?limit=100').then(selectData),
+    queryKey: ['movimientos', options.pageMovimientos, options.limitMovimientos],
+    queryFn: (): Promise<Movimiento[]> => {
+      const params = new URLSearchParams();
+      if (options.pageMovimientos) params.append('page', String(options.pageMovimientos));
+      if (options.limitMovimientos) params.append('limit', String(options.limitMovimientos));
+      return httpClient.get<Paginated<Movimiento>>(`/movimientos?${params.toString()}`).then(selectData);
+    },
   });
 
   const createMovimiento = useMutation({
@@ -117,13 +134,17 @@ export function useMovimientosPaginados(page: number, limit = MOVIMIENTOS_PAGE_S
 }
 
 
-export function useSolicitudesBajada() {
+export function useSolicitudesBajada(options: { page?: number; limit?: number } = {}) {
   const queryClient = useQueryClient();
 
   const getSolicitudes = useQuery({
-    queryKey: ['solicitudes-bajada'],
-    queryFn: (): Promise<SolicitudBajada[]> =>
-      httpClient.get<Paginated<SolicitudBajada>>('/operaciones/solicitudes?limit=100').then(selectData),
+    queryKey: ['solicitudes-bajada', options.page, options.limit],
+    queryFn: (): Promise<SolicitudBajada[]> => {
+      const params = new URLSearchParams();
+      if (options.page) params.append('page', String(options.page));
+      if (options.limit) params.append('limit', String(options.limit));
+      return httpClient.get<Paginated<SolicitudBajada>>(`/operaciones/solicitudes?${params.toString()}`).then(selectData);
+    },
   });
 
   const updateEstado = useMutation({

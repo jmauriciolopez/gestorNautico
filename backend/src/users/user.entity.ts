@@ -8,9 +8,9 @@ import {
 
 export enum Role {
   SUPERADMIN = 'SUPERADMIN', // Dueño del SaaS
-  ADMIN = 'ADMIN',           // Propietario de la guardería
+  ADMIN = 'ADMIN', // Propietario de la guardería
   SUPERVISOR = 'SUPERVISOR', // Gestor operativo
-  OPERADOR = 'OPERADOR',     // Trabajo diario básico
+  OPERADOR = 'OPERADOR', // Trabajo diario básico
 }
 
 @Entity('users')

@@ -17,6 +17,14 @@
 - [x] **Auditoría de Placeholders (Cierre final)**: Barrido exhaustivo completado.
 - [x] **Configuración Centralizada**: Implementación de `ConfiguracionService` y panel UI (v1).
 - [x] **Estandarización de Modales**:
+    - [x] **Fase 3: Búsqueda y Filtros Premium ($$$)**
+    - [x] Implementar barra de búsqueda con `useDebounce` (300ms) en Clientes y Embarcaciones.
+    - [x] Migrar filtrado de "Taller/Servicios" a Server-Side (Estado y Búsqueda).
+    - [x] **Facturación Dashboard**:
+        - [x] KPI Cards con montos totales (Pagado/Pendiente) dependientes del filtro de fecha.
+        - [x] Filtro por Rango de Fechas (Server-side).
+        - [x] Exportación PDF sincronizada con filtros.
+    - [x] Garantizar estabilidad de builds (Frontend & Backend).
     - [x] Estandarizar modales de Finanzas (Premium Dark)
     - [x] Estandarizar modales de Operaciones (Mantenimiento / Maniobras)
     - [x] Estandarizar modales de Infraestructura (Asignación / Liberación)

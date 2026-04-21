@@ -2,6 +2,7 @@ import {
   CanActivate,
   ExecutionContext,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -12,6 +13,8 @@ import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
 @Injectable()
 export class AuthTokenGuard implements CanActivate {
+  private readonly logger = new Logger(AuthTokenGuard.name);
+
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
@@ -32,7 +35,7 @@ export class AuthTokenGuard implements CanActivate {
     const token = this.extractToken(request);
 
     if (!token) {
-      console.log('AuthTokenGuard: No se encontró token en la petición');
+      this.logger.warn('Token ausente en la petición');
       throw new UnauthorizedException('Token no encontrado');
     }
 
@@ -43,9 +46,9 @@ export class AuthTokenGuard implements CanActivate {
       });
       (request as Request & { user: unknown }).user = payload;
       return true;
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      console.log('AuthTokenGuard: Error al verificar JWT:', message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      this.logger.warn(`Token inválido: ${message}`);
       throw new UnauthorizedException('Token inválido o expirado');
     }
   }

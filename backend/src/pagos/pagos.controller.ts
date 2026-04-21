@@ -43,10 +43,7 @@ export class PagosController {
 
   @Get()
   @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
-  findAll(
-    @Query('page') page?: number,
-    @Query('limit') limit?: number,
-  ) {
+  findAll(@Query('page') page?: number, @Query('limit') limit?: number) {
     return this.pagosService.findAll({ page, limit });
   }
 

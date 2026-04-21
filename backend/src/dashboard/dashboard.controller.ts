@@ -18,13 +18,17 @@ export class DashboardController {
 
   @Get('recaudacion')
   @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
-  async getRecaudacion(@Query('periodo') periodo: 'dia' | 'semana' | 'mes' = 'mes') {
+  async getRecaudacion(
+    @Query('periodo') periodo: 'dia' | 'semana' | 'mes' = 'mes',
+  ) {
     return this.dashboardService.getRecaudacionPorPeriodo(periodo);
   }
 
   @Get('deuda')
   @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
-  async getDeuda(@Query('periodo') periodo: 'dia' | 'semana' | 'mes' | 'vencido' = 'mes') {
+  async getDeuda(
+    @Query('periodo') periodo: 'dia' | 'semana' | 'mes' | 'vencido' = 'mes',
+  ) {
     return this.dashboardService.getDeudaPorPeriodo(periodo);
   }
 

@@ -23,6 +23,10 @@ export class CreateFacturaDto {
   @IsDateString()
   fechaEmision: string;
 
+  @IsOptional()
+  @IsDateString()
+  fechaVencimiento?: string;
+
   @IsArray()
   @ArrayMinSize(1, { message: 'Se debe seleccionar al menos un cargo' })
   @IsNumber({}, { each: true })
@@ -38,6 +42,10 @@ export class UpdateFacturaDto {
   @IsOptional()
   @IsDateString()
   fechaEmision?: string;
+
+  @IsOptional()
+  @IsDateString()
+  fechaVencimiento?: string;
 
   @IsOptional()
   @IsArray()

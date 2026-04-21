@@ -25,11 +25,15 @@ export class RegistrosController {
 
   @Get()
   @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
-  findAll(@Query('embarcacionId') embarcacionId?: string) {
-    if (embarcacionId) {
-      return this.registrosService.findByEmbarcacion(+embarcacionId);
-    }
-    return this.registrosService.findAll();
+  findAll(
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('embarcacionId') embarcacionId?: string,
+  ) {
+    return this.registrosService.findAll(
+      { page, limit },
+      embarcacionId ? +embarcacionId : undefined,
+    );
   }
 
   @Get(':id')

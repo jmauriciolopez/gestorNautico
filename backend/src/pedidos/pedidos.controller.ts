@@ -7,6 +7,7 @@ import {
   Delete,
   UseGuards,
   Patch,
+  Query,
 } from '@nestjs/common';
 import { PedidosService } from './pedidos.service';
 import { UpdatePedidoEstadoDto } from './dto/update-pedido-estado.dto';
@@ -22,8 +23,8 @@ export class PedidosController {
 
   @Get()
   @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
-  findAll() {
-    return this.pedidosService.findAll();
+  findAll(@Query('page') page?: number, @Query('limit') limit?: number) {
+    return this.pedidosService.findAll({ page, limit });
   }
 
   @Get(':id')

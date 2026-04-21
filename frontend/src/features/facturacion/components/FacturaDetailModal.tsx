@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FileText, X, History, Download, Mail, Calendar, User, CreditCard, ChevronRight, Clock, Info, CheckCircle2, AlertCircle, Anchor, Hash, DollarSign, BadgeCheck, Receipt } from 'lucide-react';
+import { FileText, X, History, Download, Mail, User, Clock, Info, CheckCircle2, AlertCircle, Anchor, Hash, DollarSign, BadgeCheck, Receipt } from 'lucide-react';
 
 interface FacturaDetailModalProps {
   factura: any;
@@ -14,13 +14,7 @@ export const FacturaDetailModal: React.FC<FacturaDetailModalProps> = ({ factura,
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [isLoadingAudit, setIsLoadingAudit] = useState(false);
 
-  useEffect(() => {
-    if (activeTab === 'audit') {
-      fetchAuditLogs();
-    }
-  }, [activeTab]);
-
-  const fetchAuditLogs = async () => {
+  const fetchAuditLogs = useCallback(async () => {
     setIsLoadingAudit(true);
     try {
       const token = localStorage.getItem('token');
@@ -40,7 +34,13 @@ export const FacturaDetailModal: React.FC<FacturaDetailModalProps> = ({ factura,
     } finally {
       setIsLoadingAudit(false);
     }
-  };
+  }, [factura.numero]);
+
+  useEffect(() => {
+    if (activeTab === 'audit') {
+      fetchAuditLogs();
+    }
+}, [activeTab, fetchAuditLogs]);
 
   const downloadPdf = async () => {
     try {

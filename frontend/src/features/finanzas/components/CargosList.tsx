@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CreditCard, FileText, CheckCircle, ExternalLink, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { CreditCard, FileText, CheckCircle, ExternalLink, ChevronLeft, ChevronRight, Loader2, Receipt } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { ActionMenu } from '../../../shared/components/ActionMenu';
 import { CargoDetailModal } from './CargoDetailModal';
@@ -54,8 +54,18 @@ export function CargosList({ onCobrar }: CargosListProps) {
               </tr>
             ) : cargos.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-8 py-20 text-center text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)]/20">
-                  No se detectaron cargos pendientes.
+                <td colSpan={6} className="px-8 py-24 text-center">
+                  <div className="flex flex-col items-center gap-4 max-w-sm mx-auto">
+                    <div className="w-16 h-16 rounded-[2rem] bg-[var(--bg-secondary)] flex items-center justify-center border border-[var(--border-primary)] shadow-inner">
+                      <Receipt className="w-8 h-8 text-[var(--text-muted)] opacity-20" />
+                    </div>
+                    <div className="space-y-1">
+                      <h4 className="text-xs font-black text-[var(--text-primary)] uppercase tracking-widest">Sin Cargos Pendientes</h4>
+                      <p className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-tighter">
+                        El motor financiero no ha detectado obligaciones de pago activas en este periodo.
+                      </p>
+                    </div>
+                  </div>
                 </td>
               </tr>
             ) : (
@@ -121,7 +131,7 @@ export function CargosList({ onCobrar }: CargosListProps) {
                       <ActionMenu
                         items={[
                           { label: 'Ver Detalle', icon: FileText, onClick: () => setSelectedCargo(cargo) },
-                          { label: 'Imprimir Recibo', icon: ExternalLink, onClick: () => toast.info('Generando recibo...') },
+                          { label: 'Imprimir Recibo', icon: ExternalLink, onClick: () => toast('Generando recibo...', { icon: '📄' }) },
                         ]}
                       />
                     )}

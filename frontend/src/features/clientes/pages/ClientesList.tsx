@@ -1,16 +1,27 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Search, Edit, Trash2, Loader2, Users, Receipt, Mail, Phone, ShieldCheck, ShieldAlert, ShieldPlus } from 'lucide-react';
 import { useConfirm } from '../../../shared/context/ConfirmContext';
 import { useClientes } from '../hooks/useClientes';
 import { RoleGuard } from '../../../components/auth/RoleGuard';
 import { Role } from '../../../types';
+import { PaginationControls } from '../../../shared/components/PaginationControls';
+
+import { useDebounce } from '../../../hooks/useDebounce';
 
 export default function ClientesList() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
-  const { getClientes, deleteCliente, updateCliente } = useClientes();
-  const { data: clientes = [], isLoading } = getClientes;
+  const [page, setPage] = useState(1);
+  const debouncedSearch = useDebounce(search, 300);
+
+  // Reset to page 1 when search changes
+  React.useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
+
+  const { clientes, meta, deleteCliente, updateCliente, getClientes } = useClientes({ page, search: debouncedSearch });
+  const { isLoading } = getClientes;
   const confirm = useConfirm();
 
   const handleDelete = async (id: number) => {
@@ -37,11 +48,6 @@ export default function ClientesList() {
       await updateCliente.mutateAsync({ id, data: { activo: true } });
     }
   };
-
-  const filteredClientes = clientes.filter(c =>
-    c.nombre.toLowerCase().includes(search.toLowerCase()) ||
-    c.dni.includes(search)
-  );
 
   if (isLoading) {
     return (
@@ -102,7 +108,7 @@ export default function ClientesList() {
           </div>
           <div className="hidden md:flex items-center gap-3 text-[var(--text-secondary)] text-[10px] font-black uppercase tracking-widest bg-[var(--bg-primary)]/40 px-4 py-2 rounded-xl border border-[var(--border-primary)] transition-colors duration-300">
             <Receipt className="w-3.5 h-3.5" />
-            Clientes: {filteredClientes.length}
+            Clientes: {meta?.total || 0}
           </div>
         </div>
 
@@ -119,7 +125,7 @@ export default function ClientesList() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border-secondary)] transition-colors duration-300">
-              {filteredClientes.map((cliente) => (
+              {clientes.map((cliente) => (
                 <tr key={cliente.id} className={`group hover:bg-indigo-500/5 transition-all cursor-default ${!cliente.activo ? 'opacity-50 grayscale duration-700' : ''}`}>
                   <td className={`px-8 py-6 ${!cliente.activo ? 'pointer-events-none' : ''}`}>
                     <div className="flex flex-col">
@@ -200,7 +206,7 @@ export default function ClientesList() {
                   </td>
                 </tr>
               ))}
-              {filteredClientes.length === 0 && (
+              {clientes.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-8 py-32 text-center bg-[var(--bg-primary)]/10">
                     <div className="flex flex-col items-center gap-6">
@@ -217,6 +223,16 @@ export default function ClientesList() {
             </tbody>
           </table>
         </div>
+
+        {meta && (
+          <PaginationControls
+            currentPage={page}
+            totalPages={meta.totalPages}
+            onPageChange={setPage}
+            totalItems={meta.total}
+            pageSize={meta.limit}
+          />
+        )}
       </div>
     </div>
   );

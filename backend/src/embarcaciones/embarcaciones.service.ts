@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { ILike, Repository, FindManyOptions } from 'typeorm';
 import { Embarcacion } from './embarcaciones.entity';
 import { Espacio } from '../espacios/espacio.entity';
 import {
@@ -25,12 +25,24 @@ export class EmbarcacionesService {
   ) {}
 
   async findAll(
-    query: PaginationQuery = {},
+    query: PaginationQuery & { search?: string } = {},
   ): Promise<PaginatedResult<Embarcacion>> {
-    return paginate(this.embarcacionesRepository, query, {
+    const { search, ...pagination } = query;
+
+    const options: FindManyOptions<Embarcacion> = {
       relations: ['cliente', 'espacio', 'espacio.rack', 'espacio.rack.zona'],
       order: { createdAt: 'DESC' },
-    });
+    };
+
+    if (search) {
+      options.where = [
+        { nombre: ILike(`%${search}%`) },
+        { matricula: ILike(`%${search}%`) },
+        { cliente: { nombre: ILike(`%${search}%`) } },
+      ];
+    }
+
+    return paginate(this.embarcacionesRepository, pagination, options);
   }
 
   async findOne(id: number): Promise<Embarcacion> {

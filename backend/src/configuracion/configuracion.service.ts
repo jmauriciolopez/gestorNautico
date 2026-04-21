@@ -2,6 +2,11 @@ import { Injectable, OnApplicationBootstrap, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Configuracion } from './configuracion.entity';
+import {
+  paginate,
+  PaginationQuery,
+  PaginatedResult,
+} from '../common/pagination/pagination.helper';
 
 @Injectable()
 export class ConfiguracionService implements OnApplicationBootstrap {
@@ -73,8 +78,10 @@ export class ConfiguracionService implements OnApplicationBootstrap {
     }
   }
 
-  async findAll() {
-    return this.configRepo.find({ order: { clave: 'ASC' } });
+  async findAll(
+    query: PaginationQuery = {},
+  ): Promise<PaginatedResult<Configuracion>> {
+    return paginate(this.configRepo, query, { order: { clave: 'ASC' } });
   }
 
   async findByClave(clave: string) {

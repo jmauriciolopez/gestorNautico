@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BarChart2, AlertTriangle, TrendingDown, Activity, ChevronRight, RefreshCw } from 'lucide-react';
+import { BarChart2, AlertTriangle, TrendingDown, Activity, RefreshCw } from 'lucide-react';
 import { useClientesMorosos, useMensualidades } from '../hooks/useReportes';
 import { ClientesMorososList } from '../components/ClientesMorososList';
 import { MensualidadesTable } from '../components/MensualidadesTable';

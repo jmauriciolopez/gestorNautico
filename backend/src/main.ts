@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, Logger } from '@nestjs/common';
+import { ValidationPipe, Logger, BadRequestException } from '@nestjs/common';
 import { AppModule } from './app.module';
 import * as cookieParser from 'cookie-parser';
 
@@ -46,9 +46,10 @@ async function bootstrap() {
       forbidNonWhitelisted: true,
       exceptionFactory: (errors) => {
         const logger = new Logger('ValidationPipe');
-        const errorMessages = errors.flatMap((error) => Object.values(error.constraints || {}));
+        const errorMessages = errors.flatMap((error) =>
+          Object.values(error.constraints || {}),
+        );
         logger.error(`Validation failed: ${errorMessages.join('. ')}`);
-        const { BadRequestException } = require('@nestjs/common');
         return new BadRequestException(errorMessages);
       },
     }),

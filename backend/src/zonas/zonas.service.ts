@@ -2,6 +2,11 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Zona } from './zona.entity';
+import {
+  paginate,
+  PaginationQuery,
+  PaginatedResult,
+} from '../common/pagination/pagination.helper';
 
 @Injectable()
 export class ZonasService {
@@ -10,8 +15,8 @@ export class ZonasService {
     private readonly zonaRepo: Repository<Zona>,
   ) {}
 
-  findAll() {
-    return this.zonaRepo.find({
+  async findAll(query: PaginationQuery = {}): Promise<PaginatedResult<Zona>> {
+    return paginate(this.zonaRepo, query, {
       relations: ['ubicacion', 'racks', 'racks.espacios'],
     });
   }

@@ -6,7 +6,10 @@ import { EmbarcacionesService } from '../embarcaciones/embarcaciones.service';
 import { EspaciosService } from '../espacios/espacios.service';
 import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
 import { ConfiguracionService } from '../configuracion/configuracion.service';
-import { paginate, PaginationQuery } from '../common/pagination/pagination.helper';
+import {
+  paginate,
+  PaginationQuery,
+} from '../common/pagination/pagination.helper';
 import { CreateMovimientoDto } from './dto/create-movimiento.dto';
 
 @Injectable()

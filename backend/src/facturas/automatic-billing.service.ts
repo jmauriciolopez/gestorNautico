@@ -43,7 +43,10 @@ export class AutomaticBillingService {
     const today = new Date();
     const todayDay = today.getDate();
 
-    const diasVencimiento = await this.configuracionService.getValorNumerico('DIAS_VENCIMIENTO', 15);
+    const diasVencimiento = await this.configuracionService.getValorNumerico(
+      'DIAS_VENCIMIENTO',
+      15,
+    );
     const fechaVencimiento = new Date(today);
     fechaVencimiento.setDate(fechaVencimiento.getDate() + diasVencimiento);
 
@@ -57,7 +60,14 @@ export class AutomaticBillingService {
     );
 
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59);
+    const endOfMonth = new Date(
+      today.getFullYear(),
+      today.getMonth() + 1,
+      0,
+      23,
+      59,
+      59,
+    );
 
     for (const cliente of clientesAFacturar) {
       this.logger.log(`Procesando Cliente: ${cliente.nombre}`);
@@ -126,7 +136,9 @@ export class AutomaticBillingService {
         });
 
         if (cuotaExistente) {
-          this.logger.warn(`Omisión: Cuota Individual ya facturada para ${cliente.nombre}.`);
+          this.logger.warn(
+            `Omisión: Cuota Individual ya facturada para ${cliente.nombre}.`,
+          );
         } else {
           const montoIndividual =
             await this.configuracionService.getValorNumerico(
@@ -160,12 +172,15 @@ export class AutomaticBillingService {
         });
 
         if (cuotaExistente) {
-          this.logger.warn(`Omisión: Cuota Familiar ya facturada para ${cliente.nombre}.`);
-        } else {
-          const montoFamiliar = await this.configuracionService.getValorNumerico(
-            'CUOTA_FAMILIAR',
-            120,
+          this.logger.warn(
+            `Omisión: Cuota Familiar ya facturada para ${cliente.nombre}.`,
           );
+        } else {
+          const montoFamiliar =
+            await this.configuracionService.getValorNumerico(
+              'CUOTA_FAMILIAR',
+              120,
+            );
           const cargoCuota = this.cargoRepo.create({
             descripcion: 'Cuota Grupo Familiar',
             monto: montoFamiliar,
@@ -222,29 +237,32 @@ export class AutomaticBillingService {
     this.logger.log('Iniciando auditoría diaria de deudas...');
     const now = new Date();
 
-    // Busca facturas PENDIENTES cuya fechaVencimiento ya pasó
-    // (usa fechaVencimiento de los cargos asociados como proxy)
-    // Alternativa simplificada: facturas emitidas hace más de 15 días sin pagar
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - 15);
-
     const overdueInvoices = await this.facturaRepo.find({
       where: {
         estado: EstadoFactura.PENDIENTE,
-        fechaEmision: LessThan(cutoffDate),
+        fechaVencimiento: LessThan(now),
       },
       relations: ['cliente'],
     });
 
+    this.logger.log(
+      `Se detectaron ${overdueInvoices.length} facturas vencidas.`,
+    );
+
+    // Obtener URL base configurable
+    const baseUrl = await this.configuracionService.getValor(
+      'PUBLIC_URL',
+      'https://app.gestornautico.com',
+    );
+
     for (const factura of overdueInvoices) {
       await this.notificacionesService.createForRole(Role.ADMIN, {
         titulo: 'Factura Vencida',
-        mensaje: `La factura ${factura.numero} de ${factura.cliente.nombre} lleva más de 7 días.`,
+        mensaje: `La factura ${factura.numero} de ${factura.cliente.nombre} se encuentra vencida (Vto: ${new Date(factura.fechaVencimiento).toLocaleDateString()}).`,
         tipo: NotificacionTipo.ALERTA,
       });
 
       if (factura.cliente.email) {
-        const baseUrl = process.env.PUBLIC_URL || 'https://app.gestornautico.com';
         await this.notificacionesService.sendEmailNotification(
           factura.cliente.email,
           'Recordatorio de Pago',

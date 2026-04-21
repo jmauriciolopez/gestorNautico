@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  Ship, MapPin, Loader2, Plus, Calendar, ArrowRight, ArrowLeft,
+  MapPin, Loader2, Plus, Calendar, ArrowRight, ArrowLeft,
   History, FileText, Trash2, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { Movimiento, useMovimientosPaginados } from '../hooks/useOperaciones';

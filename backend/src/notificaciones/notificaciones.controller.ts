@@ -33,7 +33,7 @@ export class NotificacionesController {
     @Req() request: RequestWithUser,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
-  ): Promise<Notificacion[]> {
+  ) {
     const userId = request.user.sub;
     return this.notificacionesService.findAllByUser(userId, { page, limit });
   }

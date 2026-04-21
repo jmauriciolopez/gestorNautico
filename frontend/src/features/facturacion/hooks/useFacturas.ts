@@ -24,14 +24,24 @@ export interface Factura {
 
 const PAGE_SIZE = 20;
 
-/** Paginated facturas hook — self-contained for FacturasList */
-export function useFacturasPaginadas(page: number, limit = PAGE_SIZE) {
+/** Paginated facturas hook — supports search and date range */
+export function useFacturasPaginadas(
+  page: number,
+  limit = PAGE_SIZE,
+  filters: { search?: string; startDate?: string; endDate?: string } = {}
+) {
   const queryClient = useQueryClient();
+  const { search, startDate, endDate } = filters;
 
   const query = useQuery({
-    queryKey: ['facturas', page, limit],
-    queryFn: (): Promise<Paginated<Factura>> =>
-      httpClient.get<Paginated<Factura>>(`/facturas?page=${page}&limit=${limit}`),
+    queryKey: ['facturas', page, limit, search, startDate, endDate],
+    queryFn: (): Promise<Paginated<Factura>> => {
+      let url = `/facturas?page=${page}&limit=${limit}`;
+      if (search) url += `&search=${encodeURIComponent(search)}`;
+      if (startDate) url += `&startDate=${startDate}`;
+      if (endDate) url += `&endDate=${endDate}`;
+      return httpClient.get<Paginated<Factura>>(url);
+    },
     placeholderData: (prev) => prev,
     staleTime: 30_000,
   });
@@ -69,6 +79,33 @@ export function useFacturasPaginadas(page: number, limit = PAGE_SIZE) {
   });
 
   return { query, createFactura, updateEstadoFactura, deleteFactura };
+}
+
+export interface FacturaStats {
+  TOTAL_PENDIENTE: number;
+  TOTAL_PAGADO: number;
+  TOTAL_ANULADO: number;
+  CONTEO_PENDIENTE: number;
+  CONTEO_PAGADO: number;
+  CONTEO_ANULADO: number;
+}
+
+/** Global stats for Facturacion dashboard */
+export function useFacturasStats(startDate?: string, endDate?: string) {
+  return useQuery<FacturaStats>({
+    queryKey: ['facturas', 'stats', startDate, endDate],
+    queryFn: () => {
+      let url = '/facturas/stats';
+      if (startDate || endDate) {
+        url += '?';
+        if (startDate) url += `startDate=${startDate}`;
+        if (startDate && endDate) url += '&';
+        if (endDate) url += `endDate=${endDate}`;
+      }
+      return httpClient.get<FacturaStats>(url);
+    },
+    staleTime: 60_000,
+  });
 }
 
 /** Kept for backward-compat (NuevaFacturaModal, FacturacionPage) */

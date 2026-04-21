@@ -161,8 +161,12 @@ export class CajasService {
     });
     if (!cajaAbierta) return null;
 
-    // Aggregate in SQL — no loading all pagos into memory
-    const agg = await this.cajaRepo.manager
+    interface CajasRawAgg {
+      totalRecaudado: unknown;
+      totalEfectivo: unknown;
+    }
+
+    const raw = await this.cajaRepo.manager
       .createQueryBuilder()
       .select('COALESCE(SUM(p.monto), 0)', 'totalRecaudado')
       .addSelect(
@@ -171,13 +175,15 @@ export class CajasService {
       )
       .from('pagos', 'p')
       .where('p.caja_id = :cajaId', { cajaId: cajaAbierta.id })
-      .getRawOne<{ totalRecaudado: string; totalEfectivo: string }>();
+      .getRawOne<CajasRawAgg>();
+
+    const agg = raw;
 
     return {
       id: cajaAbierta.id,
       saldoInicial: Number(cajaAbierta.saldoInicial || 0),
-      totalRecaudado: Number(agg?.totalRecaudado || 0),
-      totalEfectivo: Number(agg?.totalEfectivo || 0),
+      totalRecaudado: Number(agg?.totalRecaudado ?? 0),
+      totalEfectivo: Number(agg?.totalEfectivo ?? 0),
       fechaApertura: cajaAbierta.fechaApertura,
     };
   }

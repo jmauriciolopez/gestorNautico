@@ -35,6 +35,9 @@ export class Factura {
   @Column({ type: 'date' })
   fechaEmision: Date;
 
+  @Column({ type: 'date', nullable: true })
+  fechaVencimiento: Date;
+
   @Column({
     type: 'enum',
     enum: EstadoFactura,

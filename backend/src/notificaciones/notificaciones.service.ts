@@ -4,7 +4,10 @@ import { Repository } from 'typeorm';
 import { Notificacion, NotificacionTipo } from './notificacion.entity';
 import { User, Role } from '../users/user.entity';
 import { MailerService } from '@nestjs-modules/mailer';
-import { paginate, PaginationQuery } from '../common/pagination/pagination.helper';
+import {
+  paginate,
+  PaginationQuery,
+} from '../common/pagination/pagination.helper';
 
 @Injectable()
 export class NotificacionesService {
@@ -38,14 +41,10 @@ export class NotificacionesService {
     }
   }
 
-  async findAllByUser(usuarioId: number, query: PaginationQuery = {}): Promise<Notificacion[]> {
-    const page = Math.max(1, Number(query.page) || 1);
-    const limit = Math.min(50, Math.max(1, Number(query.limit) || 20));
-    return this.notificacionesRepository.find({
+  async findAllByUser(usuarioId: number, query: PaginationQuery = {}) {
+    return paginate(this.notificacionesRepository, query, {
       where: { usuarioId },
       order: { createdAt: 'DESC' },
-      skip: (page - 1) * limit,
-      take: limit,
     });
   }
 

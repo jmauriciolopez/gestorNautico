@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { httpClient } from '../../../shared/api/HttpClient';
 
+import { Paginated, selectData } from '../../../api/pagination';
+
 export interface Notificacion {
   id: number;
   titulo: string;
@@ -10,14 +12,17 @@ export interface Notificacion {
   createdAt: string;
 }
 
-export function useNotificaciones() {
+export function useNotificaciones(options: { page?: number; limit?: number } = {}) {
   const queryClient = useQueryClient();
 
   const getNotificaciones = useQuery<Notificacion[]>({
-    queryKey: ['notificaciones'],
+    queryKey: ['notificaciones', options.page, options.limit],
     queryFn: async () => {
       try {
-        return await httpClient.get<Notificacion[]>('/notificaciones');
+        const params = new URLSearchParams();
+        if (options.page) params.append('page', String(options.page));
+        if (options.limit) params.append('limit', String(options.limit));
+        return await httpClient.get<Paginated<Notificacion>>(`/notificaciones?${params.toString()}`).then(selectData);
       } catch (error) {
         console.error('Error fetching notifications:', error);
         return [];

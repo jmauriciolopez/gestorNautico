@@ -3,7 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Raw, FindOptionsWhere } from 'typeorm';
 import { Cargo } from './cargo.entity';
 import { CreateCargoDto } from './dto/create-cargo.dto';
-import { paginate, PaginationQuery } from '../common/pagination/pagination.helper';
+import {
+  paginate,
+  PaginationQuery,
+  PaginatedResult,
+} from '../common/pagination/pagination.helper';
 
 @Injectable()
 export class CargosService {
@@ -12,7 +16,11 @@ export class CargosService {
     private readonly cargoRepo: Repository<Cargo>,
   ) {}
 
-  async findAll(query: PaginationQuery = {}, clienteId?: number, soloSinFacturar: boolean = false) {
+  async findAll(
+    query: PaginationQuery = {},
+    clienteId?: number,
+    soloSinFacturar: boolean = false,
+  ): Promise<PaginatedResult<Cargo>> {
     const where: FindOptionsWhere<Cargo> = {};
     if (clienteId) {
       where.cliente = { id: clienteId };

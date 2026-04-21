@@ -7,6 +7,7 @@ import {
   Put,
   Delete,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { ZonasService } from './zonas.service';
 import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
@@ -23,8 +24,8 @@ export class ZonasController {
 
   @Get()
   @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
-  findAll() {
-    return this.zonasService.findAll();
+  findAll(@Query('page') page?: number, @Query('limit') limit?: number) {
+    return this.zonasService.findAll({ page, limit });
   }
 
   @Get(':id')

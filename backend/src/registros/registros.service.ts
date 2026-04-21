@@ -1,12 +1,17 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, ILike, FindManyOptions, FindOptionsWhere } from 'typeorm';
 import { RegistroServicio, EstadoServicio } from './registro.entity';
 import { CargosService } from '../cargos/cargos.service';
 import { TipoCargo } from '../cargos/cargo.entity';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import { Role } from '../users/user.entity';
 import { NotificacionTipo } from '../notificaciones/notificacion.entity';
+import {
+  paginate,
+  PaginationQuery,
+  PaginatedResult,
+} from '../common/pagination/pagination.helper';
 
 @Injectable()
 export class RegistrosService {
@@ -17,11 +22,37 @@ export class RegistrosService {
     private readonly notificacionesService: NotificacionesService,
   ) {}
 
-  findAll() {
-    return this.registroRepo.find({
+  async findAll(
+    query: PaginationQuery & { search?: string; estado?: string } = {},
+    embarcacionId?: number,
+  ): Promise<PaginatedResult<RegistroServicio>> {
+    const { search, estado, ...pagination } = query;
+    const options: FindManyOptions<RegistroServicio> = {
+      where: {},
       relations: ['embarcacion', 'servicio'],
       order: { createdAt: 'DESC' },
-    });
+    };
+
+    const where: FindOptionsWhere<RegistroServicio> = {};
+
+    if (embarcacionId) {
+      where.embarcacionId = embarcacionId;
+    }
+
+    if (estado) {
+      where.estado = estado as EstadoServicio;
+    }
+
+    if (search) {
+      options.where = [
+        { ...where, embarcacion: { nombre: ILike(`%${search}%`) } },
+        { ...where, servicio: { nombre: ILike(`%${search}%`) } },
+      ];
+    } else {
+      options.where = where;
+    }
+
+    return paginate(this.registroRepo, pagination, options);
   }
 
   async findOne(id: number) {
@@ -34,14 +65,6 @@ export class RegistrosService {
         `Registro de servicio con ID ${id} no encontrado`,
       );
     return registro;
-  }
-
-  findByEmbarcacion(embarcacionId: number) {
-    return this.registroRepo.find({
-      where: { embarcacionId },
-      relations: ['servicio'],
-      order: { createdAt: 'DESC' },
-    });
   }
 
   async create(data: Partial<RegistroServicio>) {

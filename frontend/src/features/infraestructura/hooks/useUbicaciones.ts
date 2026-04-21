@@ -47,17 +47,32 @@ export interface EstadisticasInfraestructura {
   porcentajeOcupacion: number;
 }
 
-export const useUbicaciones = () => {
+export const useUbicaciones = (options: {
+  pageUbicaciones?: number;
+  limitUbicaciones?: number;
+  pageZonas?: number;
+  limitZonas?: number;
+} = {}) => {
   const queryClient = useQueryClient();
 
   const useUbicacionesQuery = useQuery({
-    queryKey: ['ubicaciones'],
-    queryFn: () => httpClient.get<Ubicacion[]>('/ubicaciones'),
+    queryKey: ['ubicaciones', options.pageUbicaciones, options.limitUbicaciones],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (options.pageUbicaciones) params.append('page', String(options.pageUbicaciones));
+      if (options.limitUbicaciones) params.append('limit', String(options.limitUbicaciones));
+      return httpClient.get<Paginated<Ubicacion>>(`/ubicaciones?${params.toString()}`).then(selectData);
+    },
   });
 
   const useZonas = useQuery({
-    queryKey: ['zonas'],
-    queryFn: () => httpClient.get<Zona[]>('/zonas'),
+    queryKey: ['zonas', options.pageZonas, options.limitZonas],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (options.pageZonas) params.append('page', String(options.pageZonas));
+      if (options.limitZonas) params.append('limit', String(options.limitZonas));
+      return httpClient.get<Paginated<Zona>>(`/zonas?${params.toString()}`).then(selectData);
+    },
   });
 
   const useEstadisticas = useQuery({

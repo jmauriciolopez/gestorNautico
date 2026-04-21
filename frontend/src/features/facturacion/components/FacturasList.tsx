@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
-import { FileText, Loader2, ExternalLink, ChevronDown, ChevronRight, Anchor, Mail, Edit3, Trash2, CheckCircle, XCircle, ChevronLeft } from 'lucide-react';
+import { FileText, Loader2, ChevronDown, ChevronRight, Anchor, Mail, Edit3, Trash2, CheckCircle, XCircle, ChevronLeft } from 'lucide-react';
 import { Factura, useFacturasPaginadas } from '../hooks/useFacturas';
-import { RoleGuard } from '../../../components/auth/RoleGuard';
-import { Role } from '../../../types';
 import { ActionMenu } from '../../../shared/components/ActionMenu';
 import { FacturaDetailModal } from './FacturaDetailModal';
 import { FacturaEditModal } from './FacturaEditModal';
@@ -20,14 +18,19 @@ const TIPO_COLORS: Record<string, string> = {
   OTROS:         'bg-[var(--bg-elevated)] text-[var(--text-muted)] border-[var(--border-secondary)]',
 };
 
-export function FacturasList() {
+export function FacturasList({ filters }: { filters: { search?: string; startDate?: string; endDate?: string } }) {
   const [page, setPage] = useState(1);
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
   const [selectedFactura, setSelectedFactura] = useState<Factura | null>(null);
   const [activeModal, setActiveModal] = useState<'detail' | 'edit' | 'email' | 'liquidar' | null>(null);
   const confirm = useConfirm();
 
-  const { query, updateEstadoFactura, deleteFactura } = useFacturasPaginadas(page, PAGE_SIZE);
+  // Reset page when filters change
+  React.useEffect(() => {
+    setPage(1);
+  }, [filters.search, filters.startDate, filters.endDate]);
+
+  const { query, updateEstadoFactura, deleteFactura } = useFacturasPaginadas(page, PAGE_SIZE, filters);
   const { data, isLoading, isFetching } = query;
   const facturas: Factura[] = data?.data ?? [];
   const totalPages = data?.totalPages ?? 1;

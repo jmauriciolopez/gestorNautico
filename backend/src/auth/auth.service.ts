@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from './dto/login.dto';
@@ -7,39 +7,43 @@ import { AuthResponse } from './auth-response.entity';
 import { UsersService } from '../users/users.service';
 
 import { ConfigService } from '@nestjs/config';
+import { LoginAttemptsService } from './login-attempts.service';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly loginAttemptsService: LoginAttemptsService,
   ) {}
 
-  async login(loginDto: LoginDto): Promise<AuthResponse> {
-    const user = await this.usersService.findByIdentifier(loginDto.nombre);
+  async login(loginDto: LoginDto, ip: string = 'unknown'): Promise<AuthResponse> {
+    const identifier = loginDto.nombre;
+
+    this.loginAttemptsService.check(identifier, ip);
+
+    const user = await this.usersService.findByIdentifier(identifier);
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      this.loginAttemptsService.recordFailure(identifier, ip);
+      throw new UnauthorizedException('Credenciales inválidas');
     }
 
     let isPasswordValid = await bcrypt.compare(loginDto.password, user.clave);
 
-    // Auto-migración si la contraseña está en texto plano
-    if (!isPasswordValid && !user.clave.startsWith('$2b$')) {
-      if (loginDto.password === user.clave) {
-        // La contraseña coincide en texto plano, vamos a migrarla a Bcrypt
-        await this.usersService.update(user.id, { clave: loginDto.password });
-        isPasswordValid = true;
-      }
-    }
-
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      this.loginAttemptsService.recordFailure(identifier, ip);
+      throw new UnauthorizedException('Credenciales inválidas');
     }
 
     if (!user.activo) {
+      this.loginAttemptsService.recordFailure(identifier, ip);
       throw new UnauthorizedException('Usuario inactivo');
     }
+
+    this.loginAttemptsService.recordSuccess(identifier, ip);
 
     const payload = {
       sub: user.id,

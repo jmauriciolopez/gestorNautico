@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { httpClient } from '../../../shared/api/HttpClient';
-import { Paginated, selectData } from '../../../api/pagination';
-import { Cliente } from '../../clientes/hooks/useClientes';
+import { Paginated } from '../../../api/pagination';
 
 export interface Embarcacion {
   id: number;
@@ -21,13 +20,18 @@ export interface Embarcacion {
   updatedAt: string;
 }
 
-export const useEmbarcaciones = () => {
+export const useEmbarcaciones = (options: { page?: number; limit?: number; search?: string } = {}) => {
   const queryClient = useQueryClient();
 
   const getEmbarcaciones = useQuery({
-    queryKey: ['embarcaciones'],
-    queryFn: () => httpClient.get<Paginated<Embarcacion>>('/embarcaciones'),
-    select: selectData,
+    queryKey: ['embarcaciones', options.page, options.limit, options.search],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (options.page) params.append('page', String(options.page));
+      if (options.limit) params.append('limit', String(options.limit));
+      if (options.search) params.append('search', options.search);
+      return httpClient.get<Paginated<Embarcacion>>(`/embarcaciones?${params.toString()}`);
+    },
   });
 
   const useEmbarcacion = (id: number) =>
