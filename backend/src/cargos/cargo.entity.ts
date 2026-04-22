@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { Cliente } from '../clientes/clientes.entity';
 import { Factura } from '../facturas/factura.entity';
@@ -35,9 +36,11 @@ export class Cargo {
   @Column({ type: 'date' })
   fechaEmision: Date;
 
+  @Index()
   @Column({ type: 'date', nullable: true })
   fechaVencimiento: Date;
 
+  @Index()
   @Column({ default: false })
   pagado: boolean;
 

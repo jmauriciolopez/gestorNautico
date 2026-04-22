@@ -7,6 +7,7 @@ import {
   ManyToOne,
   OneToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { Cliente } from '../clientes/clientes.entity';
 import { Espacio } from '../espacios/espacio.entity';
@@ -37,6 +38,7 @@ export class Embarcacion {
   @Column({ default: 'Lancha' })
   tipo: string;
 
+  @Index()
   @Column({ default: 'EN_CUNA' })
   estado: string; // EN_CUNA, EN_AGUA, MANTENIMIENTO, INACTIVA
 
@@ -50,6 +52,7 @@ export class Embarcacion {
   @JoinColumn({ name: 'clienteId' })
   cliente: Cliente;
 
+  @Index()
   @Column({ nullable: true })
   espacioId: number;
 

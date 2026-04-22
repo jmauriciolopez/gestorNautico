@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { Cliente } from '../clientes/clientes.entity';
 import { Cargo } from '../cargos/cargo.entity';
@@ -38,6 +39,7 @@ export class Pago {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   monto: number;
 
+  @Index()
   @Column({ type: 'date' })
   fecha: Date;
 

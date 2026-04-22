@@ -4,6 +4,7 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   ManyToOne,
+  Index,
 } from 'typeorm';
 import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
 import { Espacio } from '../espacios/espacio.entity';
@@ -22,6 +23,7 @@ export class Movimiento {
   @ManyToOne(() => Espacio)
   espacio: Espacio;
 
+  @Index()
   @CreateDateColumn()
   fecha: Date;
 
