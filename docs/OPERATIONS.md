@@ -19,6 +19,7 @@ Esta guía describe los flujos de trabajo principales para la gestión diaria de
 ### Ciclo Mensual de Facturación
 - El sistema genera automáticamente los cargos de "Guardería Mensual" el día 1 de cada mes (Configurable).
 - Los cargos se agrupan en una **Factura** que puede ser enviada por email.
+- **Mora Automática**: Diariamente a las 9:00 AM, el sistema audita facturas vencidas. Si superan los días de gracia, aplica automáticamente un recargo fijo y un interés mensual proporcional, actualizando el total de la deuda.
 
 ### Registro de Pagos
 - Los pagos se pueden registrar desde la **Cuenta Corriente** del cliente.

@@ -1,4 +1,4 @@
-﻿import { Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan } from 'typeorm';
 import { Cargo } from '../cargos/cargo.entity';
@@ -150,16 +150,16 @@ export class ReportesService {
     unAnioAtras.setFullYear(unAnioAtras.getFullYear() - 1);
 
     // Nota: Usamos TO_CHAR para PostgreSQL.
-    const rawPagos = (await this.pagoRepo
+    const rawPagos = await this.pagoRepo
       .createQueryBuilder('p')
       .select("TO_CHAR(p.fecha, 'YYYY-MM')", 'mes')
       .addSelect('SUM(p.monto)', 'total')
       .where('p.fecha >= :unAnioAtras', { unAnioAtras })
       .groupBy('mes')
       .orderBy('mes', 'ASC')
-      .getRawMany()) as { mes: string; total: string | number }[];
+      .getRawMany();
 
-    return rawPagos.map((p) => ({
+    return rawPagos.map((p: { mes: string; total: string | number }) => ({
       mes: p.mes,
       total: Number(p.total),
     }));

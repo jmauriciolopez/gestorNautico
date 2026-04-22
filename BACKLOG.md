@@ -19,7 +19,7 @@
 - [ ] **Gestión de Reservas**: Solicitud de bajada online.
 
 ### Fase 2: Finanzas Avanzadas
-- [ ] **Módulo de Mora**: Cálculo automático de intereses y recargos.
+- [x] **Módulo de Mora**: Cálculo automático de intereses y recargos.
 - [ ] **Facturación Compartida**: División de cargos entre copropietarios.
 
 ### Fase 3: Madurez SaaS
