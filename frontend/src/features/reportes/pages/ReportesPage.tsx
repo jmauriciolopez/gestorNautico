@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useClientesMorosos, useMensualidades, useOcupacion, useIngresos } from '../hooks/useReportes';
+import { useClientesMorosos, useMensualidades, useOcupacion } from '../hooks/useReportes';
 import { ClientesMorososList } from '../components/ClientesMorososList';
 import { MensualidadesTable } from '../components/MensualidadesTable';
 import { DashboardOcupacion } from '../components/DashboardOcupacion';
@@ -16,7 +16,6 @@ export default function ReportesPage() {
   const morosos = useClientesMorosos();
   const mensualidades = useMensualidades();
   const ocupacion = useOcupacion();
-  const ingresos = useIngresos();
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ['reportes'] });
@@ -110,7 +109,7 @@ export default function ReportesPage() {
           <DashboardOcupacion data={ocupacion.data} isLoading={ocupacion.isLoading} />
         )}
         {activeTab === 'ingresos' && (
-          <DashboardIngresos data={ingresos.data} isLoading={ingresos.isLoading} />
+          <DashboardIngresos />
         )}
       </div>
     </div>

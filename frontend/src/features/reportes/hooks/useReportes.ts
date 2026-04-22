@@ -64,10 +64,15 @@ export interface IngresoReport {
   total: number;
 }
 
-export const useIngresos = () =>
+export const useIngresos = (params: { startDate?: string; endDate?: string } = {}) =>
   useQuery<IngresoReport[]>({
-    queryKey: ['reportes', 'ingresos'],
-    queryFn: () => httpClient.get('/reportes/ingresos'),
+    queryKey: ['reportes', 'ingresos', params],
+    queryFn: () => {
+      const searchParams = new URLSearchParams();
+      if (params.startDate) searchParams.append('startDate', params.startDate);
+      if (params.endDate) searchParams.append('endDate', params.endDate);
+      return httpClient.get(`/reportes/ingresos?${searchParams.toString()}`);
+    },
   });
 
 export const useProximosVencimientos = () =>

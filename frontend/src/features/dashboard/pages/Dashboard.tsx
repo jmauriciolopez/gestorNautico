@@ -113,21 +113,21 @@ const ToggleChip = ({
   const activeStyles =
     tone === 'amber'
       ? {
-          background: 'var(--accent-amber-soft)',
-          color: 'var(--accent-amber)',
-          border: '1px solid color-mix(in srgb, var(--accent-amber) 18%, transparent)',
-        }
+        background: 'var(--accent-amber-soft)',
+        color: 'var(--accent-amber)',
+        border: '1px solid color-mix(in srgb, var(--accent-amber) 18%, transparent)',
+      }
       : tone === 'red'
         ? {
-            background: 'var(--accent-red-soft)',
-            color: 'var(--accent-red)',
-            border: '1px solid color-mix(in srgb, var(--accent-red) 18%, transparent)',
-          }
+          background: 'var(--accent-red-soft)',
+          color: 'var(--accent-red)',
+          border: '1px solid color-mix(in srgb, var(--accent-red) 18%, transparent)',
+        }
         : {
-            background: 'var(--accent-primary-soft)',
-            color: 'var(--accent-primary)',
-            border: '1px solid color-mix(in srgb, var(--accent-primary) 18%, transparent)',
-          };
+          background: 'var(--accent-primary-soft)',
+          color: 'var(--accent-primary)',
+          border: '1px solid color-mix(in srgb, var(--accent-primary) 18%, transparent)',
+        };
 
   return (
     <button
@@ -137,10 +137,10 @@ const ToggleChip = ({
         active
           ? activeStyles
           : {
-              background: 'var(--bg-elevated)',
-              color: 'var(--text-secondary)',
-              border: '1px solid var(--border-secondary)',
-            }
+            background: 'var(--bg-elevated)',
+            color: 'var(--text-secondary)',
+            border: '1px solid var(--border-secondary)',
+          }
       }
     >
       {label}
@@ -156,7 +156,7 @@ const Dashboard: React.FC = () => {
 
   // Mutation para asignar (reemplaza useEmbarcaciones para ser atómico)
   const updateEmbarcacion = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: any }) => 
+    mutationFn: ({ id, data }: { id: number; data: any }) =>
       httpClient.put(`/embarcaciones/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
@@ -373,7 +373,7 @@ const Dashboard: React.FC = () => {
               <div>
                 <p className="section-title">Rendimiento financiero</p>
                 <p className="text-ui-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-                  Evolución de recaudación auditada.
+                  Evolución de recaudación.
                 </p>
               </div>
 
@@ -554,10 +554,10 @@ const Dashboard: React.FC = () => {
                 style={
                   is3D
                     ? {
-                        background: 'linear-gradient(135deg, #534AB7, #3C3489)',
-                        color: '#EEEDFE',
-                        borderColor: 'transparent',
-                      }
+                      background: 'linear-gradient(135deg, #534AB7, #3C3489)',
+                      color: '#EEEDFE',
+                      borderColor: 'transparent',
+                    }
                     : undefined
                 }
               >
@@ -567,7 +567,7 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
 
-<div className="min-h-[460px] relative">
+          <div className="min-h-[460px] relative">
             {isMapLoading ? (
               <div
                 className="h-[460px] rounded-[20px] flex flex-col items-center justify-center gap-5"

@@ -145,16 +145,28 @@ export class ReportesService {
     };
   }
 
-  async getIngresosMensuales(): Promise<{ mes: string; total: number }[]> {
-    const unAnioAtras = new Date();
-    unAnioAtras.setFullYear(unAnioAtras.getFullYear() - 1);
-
-    // Nota: Usamos TO_CHAR para PostgreSQL.
-    const rawPagos = await this.pagoRepo
+  async getIngresosMensuales(
+    startDate?: string,
+    endDate?: string,
+  ): Promise<{ mes: string; total: number }[]> {
+    const query = this.pagoRepo
       .createQueryBuilder('p')
       .select("TO_CHAR(p.fecha, 'YYYY-MM')", 'mes')
-      .addSelect('SUM(p.monto)', 'total')
-      .where('p.fecha >= :unAnioAtras', { unAnioAtras })
+      .addSelect('SUM(p.monto)', 'total');
+
+    if (startDate) {
+      query.andWhere('p.fecha >= :startDate', { startDate });
+    } else {
+      const unAnioAtras = new Date();
+      unAnioAtras.setFullYear(unAnioAtras.getFullYear() - 1);
+      query.andWhere('p.fecha >= :unAnioAtras', { unAnioAtras });
+    }
+
+    if (endDate) {
+      query.andWhere('p.fecha <= :endDate', { endDate });
+    }
+
+    const rawPagos = await query
       .groupBy('mes')
       .orderBy('mes', 'ASC')
       .getRawMany();

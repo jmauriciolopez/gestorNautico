@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, UseGuards, Query } from '@nestjs/common';
 import { ReportesService } from './reportes.service';
 import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -27,8 +27,11 @@ export class ReportesController {
   }
 
   @Get('ingresos')
-  getIngresos(): Promise<any[]> {
-    return this.reportesService.getIngresosMensuales();
+  getIngresos(
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ): Promise<any[]> {
+    return this.reportesService.getIngresosMensuales(startDate, endDate);
   }
 
   @Get('vencimientos')
