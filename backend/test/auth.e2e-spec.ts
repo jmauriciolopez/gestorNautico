@@ -35,8 +35,9 @@ describe('AuthController (e2e)', () => {
         .send({ nombre: 'admin', password: 'admin123' })
         .expect(201);
 
-      expect(response.body).toHaveProperty('accessToken');
-      token = response.body.accessToken;
+      const body = response.body as { accessToken: string };
+      expect(body).toHaveProperty('accessToken');
+      token = body.accessToken;
     });
   });
 
@@ -44,11 +45,21 @@ describe('AuthController (e2e)', () => {
     it('should return 401 without token', () => {
       return request(app.getHttpServer()).get('/auth/me').expect(401);
     });
+
+    it('should return user info with token', () => {
+      return request(app.getHttpServer())
+        .get('/auth/me')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+    });
   });
 
   describe('/auth/logout (POST)', () => {
     it('should logout successfully', () => {
-      return request(app.getHttpServer()).post('/auth/logout').expect(201);
+      return request(app.getHttpServer())
+        .post('/auth/logout')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(201);
     });
   });
 });

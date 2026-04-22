@@ -19,7 +19,8 @@ describe('FacturasController (e2e)', () => {
     const response = await request(app.getHttpServer())
       .post('/auth/login')
       .send({ nombre: 'admin', password: 'admin123' });
-    token = response.body.accessToken;
+    const { accessToken } = response.body as { accessToken: string };
+    token = accessToken;
   });
 
   afterAll(async () => {
