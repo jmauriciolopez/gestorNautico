@@ -63,7 +63,7 @@ export class PagosService {
       await this.cargosService.setPagado(Number(cargoId), true);
     }
 
-    return pagoGuardado;
+    return this.findOne(pagoGuardado.id);
   }
 
   async remove(id: number) {

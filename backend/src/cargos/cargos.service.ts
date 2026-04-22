@@ -51,7 +51,8 @@ export class CargosService {
       ...rest,
       cliente: { id: clienteId },
     });
-    return this.cargoRepo.save(nuevo);
+    const guardado = await this.cargoRepo.save(nuevo);
+    return this.findOne(guardado.id);
   }
 
   async setPagado(id: number, status: boolean = true) {

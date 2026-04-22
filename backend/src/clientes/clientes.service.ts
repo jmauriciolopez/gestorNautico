@@ -10,6 +10,9 @@ import {
   PaginationQuery,
   PaginatedResult,
 } from '../common/pagination/pagination.helper';
+import { CreateClienteDto } from './dto/create-cliente.dto';
+import { UpdateClienteDto } from './dto/update-cliente.dto';
+import { In } from 'typeorm';
 
 @Injectable()
 export class ClientesService {
@@ -51,21 +54,33 @@ export class ClientesService {
     query: PaginationQuery & { search?: string } = {},
   ): Promise<PaginatedResult<Cliente & { tarifaBase?: number }>> {
     const result = await this.findAll(query);
-    
-    const clientesWithTarifa = await Promise.all(
-      result.data.map(async (cliente) => {
-        const embarcacion = await this.embarcacionRepository.findOne({
-          where: { cliente: { id: cliente.id } },
-          relations: ['espacio', 'espacio.rack'],
-        });
+    const clientIds = result.data.map((c) => c.id);
 
-        const tarifaBase = embarcacion?.espacio?.rack?.tarifaBase 
-          ? Number(embarcacion.espacio.rack.tarifaBase) 
-          : 0;
+    if (clientIds.length === 0) return { ...result, data: [] };
 
-        return { ...cliente, tarifaBase };
-      })
-    );
+    // 1. Obtener todas las embarcaciones de estos clientes en una sola query
+    const embarcaciones = await this.embarcacionRepository.find({
+      where: { cliente: { id: In(clientIds) } },
+      relations: ['espacio', 'espacio.rack'],
+    });
+
+    // 2. Crear un mapa para búsqueda rápida
+    const tarifaMap = new Map<number, number>();
+    embarcaciones.forEach((emb) => {
+      const tarifa = emb.espacio?.rack?.tarifaBase
+        ? Number(emb.espacio.rack.tarifaBase)
+        : 0;
+      // Si el cliente tiene varias embarcaciones, sumamos o tomamos la mayor?
+      // Por ahora mantenemos la lógica anterior (asociada a la primera encontrada)
+      if (!tarifaMap.has(emb.clienteId)) {
+        tarifaMap.set(emb.clienteId, tarifa);
+      }
+    });
+
+    const clientesWithTarifa = result.data.map((cliente) => ({
+      ...cliente,
+      tarifaBase: tarifaMap.get(cliente.id) || 0,
+    }));
 
     return {
       ...result,
@@ -84,8 +99,8 @@ export class ClientesService {
       relations: ['espacio', 'espacio.rack'],
     });
 
-    const tarifaBase = embarcacion?.espacio?.rack?.tarifaBase 
-      ? Number(embarcacion.espacio.rack.tarifaBase) 
+    const tarifaBase = embarcacion?.espacio?.rack?.tarifaBase
+      ? Number(embarcacion.espacio.rack.tarifaBase)
       : 0;
 
     return {
@@ -94,14 +109,14 @@ export class ClientesService {
     };
   }
 
-  async create(createClienteDto: Partial<Cliente>): Promise<Cliente> {
+  async create(createClienteDto: CreateClienteDto): Promise<Cliente> {
     const nuevoCliente = this.clientesRepository.create(createClienteDto);
     return this.clientesRepository.save(nuevoCliente);
   }
 
   async update(
     id: number,
-    updateClienteDto: Partial<Cliente>,
+    updateClienteDto: UpdateClienteDto,
   ): Promise<Cliente> {
     const cliente = await this.findOne(id);
     Object.assign(cliente, updateClienteDto);
@@ -117,13 +132,16 @@ export class ClientesService {
   async getCuentaCorriente(id: number, limite = 50) {
     await this.findOne(id); // valida que existe
 
-    // Totales con aggregates SQL
+    // Totales con aggregates SQL (compatibilidad multi-DB)
     const [cargoAgg, pagoAgg, vencidoAgg] = await Promise.all([
       this.cargoRepository
         .createQueryBuilder('c')
         .select('SUM(c.monto)', 'total')
         .addSelect('COUNT(c.id)', 'cantidad')
-        .addSelect('COUNT(c.id) FILTER (WHERE c.pagado = false)', 'impagos')
+        .addSelect(
+          'SUM(CASE WHEN c.pagado = false THEN 1 ELSE 0 END)',
+          'impagos',
+        )
         .where('c.cliente_id = :id', { id })
         .getRawOne<{ total: string; cantidad: string; impagos: string }>(),
       this.pagoRepository
@@ -137,7 +155,7 @@ export class ClientesService {
         .select('SUM(c.monto)', 'total')
         .where('c.cliente_id = :id', { id })
         .andWhere('c.pagado = false')
-        .andWhere('c.fechaVencimiento < NOW()')
+        .andWhere('c.fechaVencimiento < :now', { now: new Date() })
         .getRawOne<{ total: string }>(),
     ]);
 

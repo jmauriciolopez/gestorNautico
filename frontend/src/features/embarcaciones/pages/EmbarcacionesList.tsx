@@ -172,7 +172,7 @@ export default function EmbarcacionesList() {
                     <span className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-[0.15em] border inline-block ${emb.estado === 'EN_CUNA' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
                       emb.estado === 'EN_AGUA' ? 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20' :
                         emb.estado === 'MANTENIMIENTO' ? 'bg-purple-500/10 text-purple-500 border-purple-500/20' :
-                          'bg-slate-800/40 text-[var(--text-secondary)] border-slate-700/50'
+                          'bg-[var(--bg-primary)]/40 text-[var(--text-secondary)] border-[var(--border-primary)]/50'
                       }`}>
                       {emb.estado.replace('_', ' ')}
                     </span>
@@ -202,7 +202,7 @@ export default function EmbarcacionesList() {
                 <tr>
                   <td colSpan={6} className="px-8 py-32 text-center bg-[var(--bg-primary)]/10">
                     <div className="flex flex-col items-center gap-6">
-                      <div className="w-20 h-20 rounded-[2.5rem] bg-[var(--bg-primary)]/40 border border-[var(--border-primary)] flex items-center justify-center text-slate-700">
+                      <div className="w-20 h-20 rounded-[2.5rem] bg-[var(--bg-primary)]/40 border border-[var(--border-primary)] flex items-center justify-center text-[var(--text-secondary)]">
                         <Ship className="w-10 h-10" />
                       </div>
                       <p className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] max-w-xs mx-auto">

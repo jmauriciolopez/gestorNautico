@@ -203,8 +203,8 @@ export class DashboardService {
         'SUM(p.monto) as sum',
       ])
       .where('p.fecha >= :start', { start: startWindow })
-      .groupBy("mes_key, mes_label")
-      .orderBy("mes_key", 'ASC')
+      .groupBy('mes_key, mes_label')
+      .orderBy('mes_key', 'ASC')
       .getRawMany<{ mes_key: string; mes_label: string; sum: string }>();
 
     // Rellenar meses sin movimientos con 0
@@ -359,7 +359,7 @@ export class DashboardService {
         'SUM(p.monto) as total',
       ])
       .where('p.fecha >= :start', { start: startDate })
-      .groupBy("mes_key, c.tipo")
+      .groupBy('mes_key, c.tipo')
       .orderBy('mes_key', 'ASC')
       .getRawMany<{ mes_key: string; tipo: TipoCargo; total: string }>();
 

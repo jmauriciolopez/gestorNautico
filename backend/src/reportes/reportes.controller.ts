@@ -12,12 +12,27 @@ export class ReportesController {
   constructor(private readonly reportesService: ReportesService) {}
 
   @Get('morosos')
-  getClientesMorosos() {
+  getClientesMorosos(): Promise<any[]> {
     return this.reportesService.getClientesMorosos();
   }
 
   @Get('mensualidades')
-  getMensualidades() {
+  getMensualidades(): Promise<any[]> {
     return this.reportesService.getMensualidadesConDescuentos();
+  }
+
+  @Get('ocupacion')
+  getOcupacion(): Promise<any> {
+    return this.reportesService.getOcupacion();
+  }
+
+  @Get('ingresos')
+  getIngresos(): Promise<any[]> {
+    return this.reportesService.getIngresosMensuales();
+  }
+
+  @Get('vencimientos')
+  getVencimientos(): Promise<any[]> {
+    return this.reportesService.getProximosVencimientos();
   }
 }

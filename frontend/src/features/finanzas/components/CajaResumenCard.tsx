@@ -23,7 +23,7 @@ export function CajaResumenCard({ caja, isLoading, onAbrir, onCerrar }: CajaResu
   if (isLoading) {
     return (
       <div className="h-44 flex items-center justify-center bg-[var(--bg-secondary)]/50 backdrop-blur-xl rounded-[2rem] border border-[var(--border-primary)]/60 animate-pulse">
-        <span className="text-slate-600 font-black uppercase text-[10px] tracking-widest">Sincronizando Estado de Bóveda...</span>
+        <span className="text-[var(--text-muted)] font-black uppercase text-[10px] tracking-widest">Sincronizando Estado de Bóveda...</span>
       </div>
     );
   }
@@ -49,7 +49,7 @@ export function CajaResumenCard({ caja, isLoading, onAbrir, onCerrar }: CajaResu
               <span className={`text-[10px] font-black uppercase tracking-widest ${isAbierta ? 'text-emerald-500' : 'text-rose-500'}`}>
                 Caja {isAbierta ? 'Operativa' : 'Bloqueada'}
               </span>
-              <span className="text-slate-700">•</span>
+              <span className="text-[var(--text-muted)]">•</span>
               <span className="text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)]">
                 ID SESIÓN: {caja?.id || '---'}
               </span>
@@ -63,14 +63,14 @@ export function CajaResumenCard({ caja, isLoading, onAbrir, onCerrar }: CajaResu
         </div>
 
         <div className="grid grid-cols-2 gap-4 w-full md:w-auto">
-          <div className="p-4 bg-[var(--bg-secondary)]/50 rounded-2xl border border-[var(--border-primary)]/60 hover:border-slate-700 transition-colors">
+          <div className="p-4 bg-[var(--bg-secondary)]/50 rounded-2xl border border-[var(--border-primary)]/60 hover:border-[var(--border-primary)] transition-colors">
             <div className="flex items-center gap-2 mb-1.5">
               <Landmark className="w-3 h-3 text-[var(--text-secondary)]" />
               <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest">Base Inicial</span>
             </div>
             <p className="text-sm font-bold text-[var(--text-primary)]">${(caja?.saldoInicial || 0).toLocaleString()}</p>
           </div>
-          <div className="p-4 bg-[var(--bg-secondary)]/50 rounded-2xl border border-[var(--border-primary)]/60 hover:border-slate-700 transition-colors">
+          <div className="p-4 bg-[var(--bg-secondary)]/50 rounded-2xl border border-[var(--border-primary)]/60 hover:border-[var(--border-primary)] transition-colors">
             <div className="flex items-center gap-2 mb-1.5">
               <CreditCard className="w-3 h-3 text-blue-400" />
               <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest">Cobros Hoy</span>

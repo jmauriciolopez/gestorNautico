@@ -1,8 +1,10 @@
-import { Injectable } from '@nestjs/common';
+﻿import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan } from 'typeorm';
 import { Cargo } from '../cargos/cargo.entity';
 import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
+import { Espacio } from '../espacios/espacio.entity';
+import { Pago } from '../pagos/pago.entity';
 
 @Injectable()
 export class ReportesService {
@@ -11,9 +13,13 @@ export class ReportesService {
     private readonly cargoRepo: Repository<Cargo>,
     @InjectRepository(Embarcacion)
     private readonly embarcacionRepo: Repository<Embarcacion>,
+    @InjectRepository(Espacio)
+    private readonly espacioRepo: Repository<Espacio>,
+    @InjectRepository(Pago)
+    private readonly pagoRepo: Repository<Pago>,
   ) {}
 
-  async getClientesMorosos() {
+  async getClientesMorosos(): Promise<any[]> {
     const hoy = new Date();
 
     const cargosVencidos = await this.cargoRepo.find({
@@ -72,7 +78,7 @@ export class ReportesService {
     );
   }
 
-  async getMensualidadesConDescuentos() {
+  async getMensualidadesConDescuentos(): Promise<any[]> {
     const embarcaciones = await this.embarcacionRepo.find({
       where: { estado: 'EN_CUNA' },
       relations: ['cliente', 'espacio', 'espacio.rack'],
@@ -106,5 +112,71 @@ export class ReportesService {
         };
       })
       .sort((a, b) => a.clienteNombre.localeCompare(b.clienteNombre));
+  }
+
+  async getOcupacion(): Promise<any> {
+    const espacios = await this.espacioRepo.find({
+      relations: ['rack', 'rack.zona'],
+    });
+
+    const total = espacios.length;
+    const ocupados = espacios.filter((e) => e.ocupado).length;
+    const libres = total - ocupados;
+
+    const zonasMap = new Map<string, { total: number; ocupados: number }>();
+    espacios.forEach((e) => {
+      const zona = e.rack?.zona?.nombre || 'Sin Zona';
+      const current = zonasMap.get(zona) || { total: 0, ocupados: 0 };
+      current.total++;
+      if (e.ocupado) current.ocupados++;
+      zonasMap.set(zona, current);
+    });
+
+    return {
+      total,
+      ocupados,
+      libres,
+      porcentajeOcupacion: total > 0 ? (ocupados / total) * 100 : 0,
+      porZona: Array.from(zonasMap.entries()).map(([nombre, stats]) => ({
+        nombre,
+        ...stats,
+        porcentaje: (stats.ocupados / stats.total) * 100,
+      })),
+    };
+  }
+
+  async getIngresosMensuales(): Promise<{ mes: string; total: number }[]> {
+    const unAnioAtras = new Date();
+    unAnioAtras.setFullYear(unAnioAtras.getFullYear() - 1);
+
+    // Nota: Usamos TO_CHAR para PostgreSQL.
+    const rawPagos = (await this.pagoRepo
+      .createQueryBuilder('p')
+      .select("TO_CHAR(p.fecha, 'YYYY-MM')", 'mes')
+      .addSelect('SUM(p.monto)', 'total')
+      .where('p.fecha >= :unAnioAtras', { unAnioAtras })
+      .groupBy('mes')
+      .orderBy('mes', 'ASC')
+      .getRawMany()) as { mes: string; total: string | number }[];
+
+    return rawPagos.map((p) => ({
+      mes: p.mes,
+      total: Number(p.total),
+    }));
+  }
+
+  async getProximosVencimientos(): Promise<Cargo[]> {
+    const hoy = new Date();
+    const proximaSemana = new Date();
+    proximaSemana.setDate(hoy.getDate() + 30);
+
+    return this.cargoRepo
+      .createQueryBuilder('c')
+      .leftJoinAndSelect('c.cliente', 'cliente')
+      .where('c.pagado = false')
+      .andWhere('c.fechaVencimiento >= :hoy', { hoy })
+      .andWhere('c.fechaVencimiento <= :proximaSemana', { proximaSemana })
+      .orderBy('c.fechaVencimiento', 'ASC')
+      .getMany();
   }
 }

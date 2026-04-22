@@ -211,20 +211,23 @@ export class FacturasService {
       }
     }
 
-    // Notificar a administración/operación sobre nueva factura
-    await this.notificacionesService.createForRole(Role.ADMIN, {
-      titulo: 'Nueva Factura Generada',
-      mensaje: `Se ha emitido la factura ${guardada.numero} para ${guardada.cliente.nombre}.`,
-      tipo: NotificacionTipo.INFO,
-    });
-
     // 5. Vincular cargos a la factura
     await this.cargoRepo.update(
       { id: In(cargoIds) },
       { factura: { id: guardada.id } },
     );
 
-    return this.findOne(guardada.id);
+    // Reload with relations for notification and return
+    const facturaCompleta = await this.findOne(guardada.id);
+
+    // Notificar a administración/operación sobre nueva factura
+    await this.notificacionesService.createForRole(Role.ADMIN, {
+      titulo: 'Nueva Factura Generada',
+      mensaje: `Se ha emitido la factura ${facturaCompleta.numero} para ${facturaCompleta.cliente.nombre}.`,
+      tipo: NotificacionTipo.INFO,
+    });
+
+    return facturaCompleta;
   }
 
   async updateEstado(

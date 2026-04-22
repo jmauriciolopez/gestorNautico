@@ -23,7 +23,7 @@ export class Pago {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => Cliente, { nullable: false, eager: true })
+  @ManyToOne(() => Cliente, { nullable: false })
   @JoinColumn({ name: 'cliente_id' })
   cliente: Cliente;
 

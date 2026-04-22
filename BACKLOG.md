@@ -1,48 +1,37 @@
-# Backlog de Estabilización: Finanzas y Facturación
+# Backlog Maestro: Gestor Náutico
 
-Este documento lista todas las tareas pendientes identificadas en las auditorías de los módulos de Finanzas y Facturación.
-
-## 🔴 Prioridad Alta (Críticos)
-
-Estas tareas resuelven fallos de seguridad, integridad de datos o errores que afectan directamente al cliente.
-
-### Finanzas
-- [ ] **Backend**: Crear `CreatePagoDto` con `class-validator` para validar montos y tipos de datos.
-- [ ] **Backend**: Implementar `AbrirCajaDto` y `CerrarCajaDto` para validar saldos iniciales/finales.
-- [ ] **Backend**: Paginar el endpoint `findAll` de Pagos (actualmente descarga la tabla completa).
-- [ ] **Frontend**: Corregir el hook `useCargos` para que pase los parámetros `page` y `limit` al backend.
-- [ ] **Frontend**: Sincronizar el hook `getPagos` con la nueva paginación del backend.
-
-### Facturación
-- [ ] **Backend**: Crear DTOs de validación para `create()`, `update()` y `updateEstado` de Facturas.
-- [ ] **Backend**: **URGENTE**: Configurar `paymentLink` para que use una URL pública real en lugar de `localhost`.
-- [ ] **Frontend**: Refactorizar `useFacturas` para que no descarte la información de páginas/totales.
-- [ ] **Frontend**: Corregir los cálculos de KPI en la página de facturación (deben sumar el total real, no solo lo que hay en la primera página).
+## 🔴 Prioridad Actual: Calidad y Estabilidad
+- [ ] **Ejecutar suite de validación Playwright (ayuda_validacion.spec.ts)**:
+    - [ ] Validar flujo completo de salida/entrada.
+    - [ ] Validar facturación de servicios desde órdenes.
+- [ ] **Hito 1: Centro de Logs**:
+    - [ ] Backend: Desarrollar entidad y servicio de Logs para trazabilidad.
+    - [ ] Frontend: Vista de trazabilidad administrativa.
+- [ ] **Documentar escenarios no cubiertos**: Facturación compartida, stock insumos.
 
 ---
 
-## 🟡 Prioridad Media (UX y Performance)
+## 🟡 Próximas Fases (Roadmap)
 
-Mejoran la experiencia del usuario y evitan que el sistema se vuelva lento.
+### Fase 1: Portal del Socio (Autoservicio)
+- [ ] **Acceso Propietarios**: Login diferenciado para dueños de embarcaciones.
+- [ ] **Dashboard Socio**: Visualización de deudas, estado de embarcación y descargas.
+- [ ] **Gestión de Reservas**: Solicitud de bajada online.
 
-### Finanzas
-- [ ] **Backend**: Optimizar `getResumen()` de Caja mediante agregación SQL (`SUM()`) en lugar de carga en JS.
-- [ ] **Frontend**: Agregar `toast.error` en las operaciones de apertura/cierre de caja.
-- [ ] **Frontend**: Eliminar el ordenado en cliente (`.sort()`) en la lista de Pagos (usar orden del backend).
-- [ ] **Frontend**: Definir acción para el botón `ArrowUpRight` en la lista de pagos o eliminarlo si es basura.
+### Fase 2: Finanzas Avanzadas
+- [ ] **Módulo de Mora**: Cálculo automático de intereses y recargos.
+- [ ] **Facturación Compartida**: División de cargos entre copropietarios.
 
-### Facturación
-- [ ] **Backend**: Corregir race condition en `generateNextNumero()` (manejar fallos de numeración duplicada).
-- [ ] **Backend**: Corregir auditoría de vencidas (usar `fechaVencimiento` en lugar de `emisión`).
-- [ ] **Frontend**: Extraer el selector de método de pago a un componente modal con `createPortal` para evitar errores visuales (clipping).
-- [ ] **Frontend**: Agregar feedback visual (`toast`) al liquidar facturas.
+### Fase 3: Madurez SaaS
+- [ ] **Implementación Multi-Tenant**: Ver `docs/plans/PLAN_MULTITENANT.md`.
+- [ ] **Stock de Pañol**: Consumo de insumos integrados.
 
 ---
 
-## 🟢 Prioridad Baja (Mantenimiento)
-
-Mejoras en el código y estética.
-
-- [ ] **Backend**: Remover `eager: true` de las entidades `Cargo` y `Factura` para optimizar consultas de base de datos.
-- [ ] **Backend**: Reemplazar `usuarioId: 1` hardcodeado por roles dinámicos en notificaciones.
-- [ ] **Frontend**: Eliminar colores `slate-*` hardcodeados en Finanzas para que soporten el Modo Claro.
+## ✅ Completado Recientemente (Hitos Logrados)
+- [x] **Reportes Analíticos (V1)**: Dashboard de ocupación e ingresos mensuales con Recharts.
+- [x] **Unificación de Documentación**: Consolidación de archivos .md en `docs/`.
+- [x] **Auditoría de Deuda Técnica (Clientes/Embarcaciones)**: DTOs, validaciones y optimización de queries (N+1).
+- [x] **Estilo Visual 3D/Glassmorphism**: Modales de confirmación y sistema de diseño semántico.
+- [x] **Facturación PDF**: Generación y descarga de comprobantes.
+- [x] **Buscador Global**: Búsqueda en tiempo real ILike.

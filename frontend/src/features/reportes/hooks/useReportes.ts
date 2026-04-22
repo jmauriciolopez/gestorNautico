@@ -40,6 +40,42 @@ export const useMensualidades = () =>
     queryFn: () => httpClient.get('/reportes/mensualidades'),
   });
 
+export interface OcupacionReport {
+  total: number;
+  ocupados: number;
+  libres: number;
+  porcentajeOcupacion: number;
+  porZona: {
+    nombre: string;
+    total: number;
+    ocupados: number;
+    porcentaje: number;
+  }[];
+}
+
+export const useOcupacion = () =>
+  useQuery<OcupacionReport>({
+    queryKey: ['reportes', 'ocupacion'],
+    queryFn: () => httpClient.get('/reportes/ocupacion'),
+  });
+
+export interface IngresoReport {
+  mes: string;
+  total: number;
+}
+
+export const useIngresos = () =>
+  useQuery<IngresoReport[]>({
+    queryKey: ['reportes', 'ingresos'],
+    queryFn: () => httpClient.get('/reportes/ingresos'),
+  });
+
+export const useProximosVencimientos = () =>
+  useQuery<any[]>({
+    queryKey: ['reportes', 'vencimientos'],
+    queryFn: () => httpClient.get('/reportes/vencimientos'),
+  });
+
 export const useOccupancyMetrics = () =>
   useQuery({
     queryKey: ['dashboard', 'gerencial', 'ocupacion'],

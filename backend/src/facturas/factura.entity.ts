@@ -25,7 +25,7 @@ export class Factura {
   @Column({ unique: true })
   numero: string;
 
-  @ManyToOne(() => Cliente, { nullable: false, eager: true })
+  @ManyToOne(() => Cliente, { nullable: false })
   @JoinColumn({ name: 'cliente_id' })
   cliente: Cliente;
 

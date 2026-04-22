@@ -230,11 +230,13 @@ export class AutomaticBillingService {
   }
 
   /**
-   * Auditoría de facturas vencidas
+   * Auditoría de facturas vencidas y aplicación de recargos/intereses
    */
   @Cron(CronExpression.EVERY_DAY_AT_9AM)
   async checkOverdueInvoices() {
-    this.logger.log('Iniciando auditoría diaria de deudas...');
+    this.logger.log(
+      'Iniciando auditoría diaria de deudas y cálculo de mora...',
+    );
     const now = new Date();
 
     const overdueInvoices = await this.facturaRepo.find({
@@ -242,23 +244,75 @@ export class AutomaticBillingService {
         estado: EstadoFactura.PENDIENTE,
         fechaVencimiento: LessThan(now),
       },
-      relations: ['cliente'],
+      relations: ['cliente', 'cargos'],
     });
 
-    this.logger.log(
-      `Se detectaron ${overdueInvoices.length} facturas vencidas.`,
-    );
+    if (overdueInvoices.length === 0) {
+      this.logger.log('No se detectaron facturas vencidas hoy.');
+      return;
+    }
 
-    // Obtener URL base configurable
+    // Configuración de Mora
+    const tasaInteresMensual = await this.configuracionService.getValorNumerico(
+      'MORA_TASA_INTERES',
+      3,
+    );
+    const tasaRecargoFijo = await this.configuracionService.getValorNumerico(
+      'MORA_TASA_RECARGO',
+      10,
+    );
+    const diasGracia = await this.configuracionService.getValorNumerico(
+      'MORA_DIAS_GRACIA',
+      5,
+    );
     const baseUrl = await this.configuracionService.getValor(
       'PUBLIC_URL',
       'https://app.gestornautico.com',
     );
 
     for (const factura of overdueInvoices) {
+      const fechaVto = new Date(factura.fechaVencimiento);
+      const diffTime = Math.abs(now.getTime() - fechaVto.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays > diasGracia) {
+        let huboCambios = false;
+        const totalCargos = (factura.cargos ?? []).reduce(
+          (sum, c) => sum + Number(c.monto),
+          0,
+        );
+
+        // 1. Aplicar Recargo Fijo (Solo una vez si no se ha aplicado)
+        if (Number(factura.recargo) === 0 && tasaRecargoFijo > 0) {
+          factura.recargo = totalCargos * (tasaRecargoFijo / 100);
+          huboCambios = true;
+          this.logger.log(
+            `Aplicando recargo fijo a Factura ${factura.numero}: $${factura.recargo}`,
+          );
+        }
+
+        // 2. Calcular Interés Moratorio (Proporcional mensual)
+        const nuevoInteres =
+          totalCargos * (tasaInteresMensual / 100) * (diffDays / 30);
+        if (Math.abs(Number(factura.interesMoratorio) - nuevoInteres) > 0.01) {
+          factura.interesMoratorio = nuevoInteres;
+          factura.fechaAplicacionMora = now;
+          huboCambios = true;
+        }
+
+        if (huboCambios) {
+          factura.total =
+            totalCargos +
+            Number(factura.recargo) +
+            Number(factura.interesMoratorio);
+          await this.facturaRepo.save(factura);
+        }
+      }
+
+      // Notificaciones
       await this.notificacionesService.createForRole(Role.ADMIN, {
         titulo: 'Factura Vencida',
-        mensaje: `La factura ${factura.numero} de ${factura.cliente.nombre} se encuentra vencida (Vto: ${new Date(factura.fechaVencimiento).toLocaleDateString()}).`,
+        mensaje: `La factura ${factura.numero} de ${factura.cliente.nombre} está vencida (${diffDays} días). Total actual: $${Number(factura.total).toLocaleString('es-AR')}`,
         tipo: NotificacionTipo.ALERTA,
       });
 
@@ -279,5 +333,6 @@ export class AutomaticBillingService {
         );
       }
     }
+    this.logger.log('Auditoría de deudas finalizada.');
   }
 }

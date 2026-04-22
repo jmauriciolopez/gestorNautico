@@ -4,7 +4,7 @@ import { AppModule } from './app.module';
 import * as cookieParser from 'cookie-parser';
 
 import { HttpAdapterHost, BaseExceptionFilter } from '@nestjs/core';
-import { ExceptionFilter, Catch, ArgumentsHost } from '@nestjs/common';
+import { Catch, ArgumentsHost } from '@nestjs/common';
 
 @Catch()
 export class BeepExceptionFilter extends BaseExceptionFilter {
@@ -21,10 +21,12 @@ async function bootstrap() {
   const { httpAdapter } = app.get(HttpAdapterHost);
   app.useGlobalFilters(new BeepExceptionFilter(httpAdapter));
 
-  const allowedOrigins = process.env.CORS_ORIGIN?.split(',').map(o => o.trim()) ?? [
+  const allowedOrigins = process.env.CORS_ORIGIN?.split(',').map((o) =>
+    o.trim(),
+  ) ?? [
     'http://localhost:5173',
     'http://127.0.0.1:5173',
-    'http://localhost:3000'
+    'http://localhost:3000',
   ];
 
   logger.log(`Allowed origins: [${allowedOrigins.join(', ')}]`);

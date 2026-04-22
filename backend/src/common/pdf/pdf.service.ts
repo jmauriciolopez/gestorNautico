@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+/* eslint-disable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return */
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const PDFDocument = require('pdfkit-table');
 import { Factura } from '../../facturas/factura.entity';

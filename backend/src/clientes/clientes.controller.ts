@@ -10,11 +10,12 @@ import {
   Query,
 } from '@nestjs/common';
 import { ClientesService } from './clientes.service';
-import { Cliente } from './clientes.entity';
 import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../users/user.entity';
+import { CreateClienteDto } from './dto/create-cliente.dto';
+import { UpdateClienteDto } from './dto/update-cliente.dto';
 
 @Controller('clientes')
 @UseGuards(AuthTokenGuard, RolesGuard)
@@ -42,12 +43,12 @@ export class ClientesController {
   }
 
   @Post()
-  create(@Body() createClienteDto: Partial<Cliente>) {
+  create(@Body() createClienteDto: CreateClienteDto) {
     return this.clientesService.create(createClienteDto);
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() updateClienteDto: Partial<Cliente>) {
+  update(@Param('id') id: string, @Body() updateClienteDto: UpdateClienteDto) {
     return this.clientesService.update(+id, updateClienteDto);
   }
 

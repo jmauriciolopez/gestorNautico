@@ -58,6 +58,6 @@ export class AuthTokenGuard implements CanActivate {
     if (type === 'Bearer' && token) {
       return token;
     }
-    return request.cookies?.['token'];
+    return request.cookies?.['token'] as string;
   }
 }
