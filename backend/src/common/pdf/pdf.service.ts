@@ -22,9 +22,9 @@ export class PdfService {
     const buffers: Buffer[] = [];
     doc.on('data', (chunk: Buffer) => buffers.push(chunk));
 
-    return new Promise((resolve, reject) => {
+    return new Promise<Buffer>((resolve, reject) => {
       doc.on('end', () => resolve(Buffer.concat(buffers)));
-      doc.on('error', reject);
+      doc.on('error', (err: Error) => reject(err));
 
       const primaryColor = '#1e293b';
       const accentColor = '#3b82f6';
@@ -125,9 +125,9 @@ export class PdfService {
     const buffers: Buffer[] = [];
     doc.on('data', (chunk: Buffer) => buffers.push(chunk));
 
-    return new Promise((resolve, reject) => {
+    return new Promise<Buffer>((resolve, reject) => {
       void doc.on('end', () => resolve(Buffer.concat(buffers)));
-      void doc.on('error', reject);
+      void doc.on('error', (err: Error) => reject(err));
 
       const primaryColor = '#1e293b';
 

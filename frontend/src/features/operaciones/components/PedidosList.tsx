@@ -1,4 +1,4 @@
-import { Anchor, Clock, CheckCircle2, XCircle, Trash2, Loader2, ArrowRight, Ship } from 'lucide-react';
+import { Anchor, Clock, CheckCircle2, XCircle, Trash2, Loader2, ArrowRight, Ship, AlertTriangle } from 'lucide-react';
 import { Pedido } from '../hooks/useOperaciones';
 
 interface PedidosListProps {
@@ -52,6 +52,12 @@ export function PedidosList({ pedidos, isLoading, onUpdateStatus, onDeletePedido
                   <span className="text-xl font-black text-[var(--text-primary)] group-hover:text-indigo-400 transition-colors uppercase tracking-tight">
                     {pedido.embarcacion?.nombre}
                   </span>
+                  {pedido.embarcacion?.tieneDeuda && (
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 animate-pulse">
+                      <AlertTriangle className="w-3 h-3" />
+                      <span className="text-[9px] font-black uppercase tracking-widest">Deuda</span>
+                    </div>
+                  )}
                   <span className="text-[9px] font-black px-3 py-1 bg-[var(--bg-primary)] text-[var(--text-secondary)] rounded-full border border-[var(--border-primary)] tracking-[0.2em] uppercase">
                     {pedido.embarcacion?.matricula}
                   </span>

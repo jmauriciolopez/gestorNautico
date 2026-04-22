@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ILike, Repository, FindManyOptions } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Embarcacion } from './embarcaciones.entity';
 import { Espacio } from '../espacios/espacio.entity';
 import {
@@ -29,20 +29,50 @@ export class EmbarcacionesService {
   ): Promise<PaginatedResult<Embarcacion>> {
     const { search, ...pagination } = query;
 
-    const options: FindManyOptions<Embarcacion> = {
-      relations: ['cliente', 'espacio', 'espacio.rack', 'espacio.rack.zona'],
-      order: { createdAt: 'DESC' },
-    };
+    const queryBuilder = this.embarcacionesRepository
+      .createQueryBuilder('embarcacion')
+      .leftJoinAndSelect('embarcacion.cliente', 'cliente')
+      .leftJoinAndSelect('embarcacion.espacio', 'espacio')
+      .leftJoinAndSelect('espacio.rack', 'rack')
+      .leftJoinAndSelect('rack.zona', 'zona')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('COUNT(cargo.id)', 'count')
+          .from('cargos', 'cargo')
+          .where('cargo.cliente_id = embarcacion.clienteId')
+          .andWhere('cargo.pagado = :pagado', { pagado: false });
+      }, 'deudaCount')
+      .orderBy('embarcacion.createdAt', 'DESC');
 
     if (search) {
-      options.where = [
-        { nombre: ILike(`%${search}%`) },
-        { matricula: ILike(`%${search}%`) },
-        { cliente: { nombre: ILike(`%${search}%`) } },
-      ];
+      queryBuilder.where(
+        'embarcacion.nombre ILIKE :search OR embarcacion.matricula ILIKE :search OR cliente.nombre ILIKE :search',
+        { search: `%${search}%` },
+      );
     }
 
-    return paginate(this.embarcacionesRepository, pagination, options);
+    const { data, total, page, limit, totalPages } = await paginate(
+      queryBuilder,
+      pagination,
+    );
+
+    // Mapear los resultados para incluir el flag tieneDeuda
+    const itemsWithDebt = data.map((item) => {
+      const row = item as Embarcacion & { deudaCount?: string };
+      const { deudaCount, ...embarcacion } = row;
+      return {
+        ...embarcacion,
+        tieneDeuda: parseInt(deudaCount || '0', 10) > 0,
+      };
+    });
+
+    return {
+      data: itemsWithDebt,
+      total,
+      page,
+      limit,
+      totalPages,
+    };
   }
 
   async findOne(id: number): Promise<Embarcacion> {

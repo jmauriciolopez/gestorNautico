@@ -5,11 +5,25 @@ import * as cookieParser from 'cookie-parser';
 
 import { HttpAdapterHost, BaseExceptionFilter } from '@nestjs/core';
 import { Catch, ArgumentsHost } from '@nestjs/common';
+import { exec } from 'child_process';
+import * as os from 'os';
+
+function systemBeep() {
+  try {
+    if (os.platform() === 'win32') {
+      exec('powershell.exe -c "[console]::beep(800,300)"', () => {});
+    } else {
+      process.stdout.write('\x07');
+    }
+  } catch {
+    // Ignorar errores del beep
+  }
+}
 
 @Catch()
 export class BeepExceptionFilter extends BaseExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
-    process.stdout.write('\x07'); // Terminal beep
+    systemBeep(); // Terminal beep confiable
     super.catch(exception, host);
   }
 }
@@ -39,11 +53,17 @@ async function bootstrap() {
       // Permitir peticiones sin origin (curl, Postman, server-to-server)
       if (!origin) return callback(null, true);
 
-      if (allowedOrigins.includes(origin)) {
+      // Regex para permitir localhost y IPs de la red local (LAN)
+      const isLocalOrLan =
+        /^(http:\/\/localhost|http:\/\/127\.0\.0\.1|http:\/\/192\.168\.\d+\.\d+|http:\/\/172\.(1[6-9]|2\d|3[01])\.\d+\.\d+|http:\/\/10\.\d+\.\d+\.\d+)(:\d+)?$/.test(
+          origin,
+        );
+
+      if (allowedOrigins.includes(origin) || isLocalOrLan) {
         callback(null, true);
       } else {
         logger.warn(
-          `CORS rechazado — Origin: "${origin}" no está en [${allowedOrigins.join(', ')}]`,
+          `CORS rechazado — Origin: "${origin}" no está permitido por política de seguridad`,
         );
         callback(new Error(`CORS: origin "${origin}" no permitido`), false);
       }
@@ -63,7 +83,7 @@ async function bootstrap() {
       whitelist: true,
       forbidNonWhitelisted: true,
       exceptionFactory: (errors) => {
-        process.stdout.write('\x07'); // Beep on validation errors too
+        systemBeep(); // Beep confiable en errores de validación
         const logger = new Logger('ValidationPipe');
         const errorMessages = errors.flatMap((error) =>
           Object.values(error.constraints || {}),

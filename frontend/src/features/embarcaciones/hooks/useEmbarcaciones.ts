@@ -16,6 +16,7 @@ export interface Embarcacion {
   espacio?: any;
   espacioId?: number | null;
   descuento?: number;
+  tieneDeuda?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -70,5 +71,13 @@ export const useEmbarcaciones = (options: { page?: number; limit?: number; searc
     },
   });
 
-  return { getEmbarcaciones, useEmbarcacion, createEmbarcacion, updateEmbarcacion, deleteEmbarcacion };
+  const embarcaciones = getEmbarcaciones.data?.data || [];
+  const meta = getEmbarcaciones.data ? {
+    total: getEmbarcaciones.data.total,
+    page: getEmbarcaciones.data.page,
+    limit: getEmbarcaciones.data.limit,
+    totalPages: getEmbarcaciones.data.totalPages
+  } : undefined;
+
+  return { getEmbarcaciones, embarcaciones, meta, useEmbarcacion, createEmbarcacion, updateEmbarcacion, deleteEmbarcacion };
 };

@@ -63,6 +63,31 @@ class HttpClient {
                     }
                 }
 
+                // Función para reproducir un 'beep' en el navegador
+                try {
+                    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+                    if (AudioContext) {
+                        const ctx = new AudioContext();
+                        const oscillator = ctx.createOscillator();
+                        const gainNode = ctx.createGain();
+                        
+                        oscillator.type = 'triangle';
+                        oscillator.frequency.setValueAtTime(300, ctx.currentTime); // Tono de error (grave)
+                        oscillator.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.2); // Caída rápida
+                        
+                        gainNode.gain.setValueAtTime(0.5, ctx.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+                        
+                        oscillator.connect(gainNode);
+                        gainNode.connect(ctx.destination);
+                        
+                        oscillator.start();
+                        oscillator.stop(ctx.currentTime + 0.2);
+                    }
+                } catch (e) {
+                    console.error('Audio api no soportada o bloqueada', e);
+                }
+
                 // Mostrar Toast único
                 toast.error(messageBody, {
                     id: 'global-api-error',

@@ -10,6 +10,7 @@ export interface Pedido {
     id: number;
     nombre: string;
     matricula: string;
+    tieneDeuda?: boolean;
     cliente?: { id: number; nombre: string };
   };
   createdAt: string;

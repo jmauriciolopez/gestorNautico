@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, MoreThan } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Pedido } from './pedidos.entity';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import { Role } from '../users/user.entity';
@@ -25,27 +25,79 @@ export class PedidosService {
     const oneDayAgo = new Date();
     oneDayAgo.setDate(oneDayAgo.getDate() - 1);
 
-    return paginate(this.pedidoRepo, query, {
-      where: [
-        { estado: In(['pendiente', 'en_proceso']) },
+    const queryBuilder = this.pedidoRepo
+      .createQueryBuilder('pedido')
+      .leftJoinAndSelect('pedido.embarcacion', 'embarcacion')
+      .leftJoinAndSelect('embarcacion.cliente', 'cliente')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('COUNT(cargo.id)', 'count')
+          .from('cargos', 'cargo')
+          .where('cargo.cliente_id = embarcacion.clienteId')
+          .andWhere('cargo.pagado = :pagado', { pagado: false });
+      }, 'deudaCount')
+      .where('pedido.estado IN (:...activos)', {
+        activos: ['pendiente', 'en_proceso'],
+      })
+      .orWhere(
+        'pedido.estado IN (:...finalizados) AND pedido.updatedAt > :oneDayAgo',
         {
-          estado: In(['completado', 'cancelado']),
-          updatedAt: MoreThan(oneDayAgo),
+          finalizados: ['completado', 'cancelado'],
+          oneDayAgo,
         },
-      ],
-      relations: ['embarcacion', 'embarcacion.cliente'],
-      order: { createdAt: 'DESC' },
+      )
+      .orderBy('pedido.createdAt', 'DESC');
+
+    const { data, total, page, limit, totalPages } = await paginate(
+      queryBuilder,
+      query,
+    );
+
+    const itemsWithDebt = data.map((item) => {
+      const row = item as Pedido & { deudaCount?: string };
+      const { deudaCount, ...pedido } = row;
+      return {
+        ...pedido,
+        embarcacion: {
+          ...pedido.embarcacion,
+          tieneDeuda: parseInt(deudaCount || '0', 10) > 0,
+        },
+      };
     });
+
+    return { data: itemsWithDebt, total, page, limit, totalPages };
   }
 
   async findOne(id: number) {
-    const pedido = await this.pedidoRepo.findOne({
-      where: { id },
-      relations: ['embarcacion', 'embarcacion.cliente'],
-    });
-    if (!pedido)
+    const queryBuilder = this.pedidoRepo
+      .createQueryBuilder('pedido')
+      .leftJoinAndSelect('pedido.embarcacion', 'embarcacion')
+      .leftJoinAndSelect('embarcacion.cliente', 'cliente')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('COUNT(cargo.id)', 'count')
+          .from('cargos', 'cargo')
+          .where('cargo.cliente_id = embarcacion.clienteId')
+          .andWhere('cargo.pagado = :pagado', { pagado: false });
+      }, 'deudaCount')
+      .where('pedido.id = :id', { id });
+
+    const rawResult = await queryBuilder.getOne();
+
+    if (!rawResult) {
       throw new NotFoundException(`Pedido con ID ${id} no encontrado`);
-    return pedido;
+    }
+
+    const row = rawResult as Pedido & { deudaCount?: string };
+    const { deudaCount, ...pedido } = row;
+
+    return {
+      ...pedido,
+      embarcacion: {
+        ...pedido.embarcacion,
+        tieneDeuda: parseInt(deudaCount || '0', 10) > 0,
+      },
+    };
   }
 
   async create(data: Record<string, unknown>) {

@@ -7,9 +7,8 @@ const HELP_TOPICS = [
     title: 'Operaciones',
     icon: <Anchor className="w-4 h-4" />,
     content: [
-      { q: '¿Cómo registro un movimiento?', a: 'Busca la embarcación en el Buscador Global y selecciona "Registrar Movimiento". El sistema validará automáticamente si existen deudas pendientes mediante una alerta visual.' },
-      { q: '¿Cómo se asignan las ubicaciones?', a: 'Cada embarcación debe estar asignada a un Espacio (Cuna) dentro de un Rack y Zona específicos. Si una embarcación se retira definitivamente, el espacio debe marcarse como "Disponible".' },
-      { q: '¿Qué es el log de auditoría?', a: 'Cada movimiento registrado genera una entrada en el historial de auditoría para garantizar la trazabilidad de quién y cuándo realizó la acción.' }
+      { q: '¿Cómo registro un movimiento?', a: 'Busca la embarcación en el Buscador Global y selecciona "Nueva Orden de Trabajo". El sistema detectará automáticamente si el propietario posee saldos impagos y mostrará una alerta visual de "Deuda Pendiente" antes de confirmar.' },
+      { q: '¿Cómo se asignan las ubicaciones?', a: 'Cada embarcación debe estar vinculada a un Espacio (Cuna) específico dentro de un Rack. Al retirar una embarcación definitivamente, el sistema libera automáticamente el espacio marcándolo como "Disponible".' }
     ]
   },
   {
@@ -17,10 +16,10 @@ const HELP_TOPICS = [
     title: 'Facturación y Mora',
     icon: <CreditCard className="w-4 h-4" />,
     content: [
-      { q: '¿Cuándo se generan los cargos?', a: 'El día 1 de cada mes se generan automáticamente los cargos de "Guardería Mensual" para todos los clientes activos.' },
-      { q: '¿Cómo funciona el recargo por mora?', a: 'Diariamente a las 9:00 AM, el sistema audita facturas vencidas. Si superan los días de gracia, aplica automáticamente un recargo fijo e interés mensual proporcional.' },
-      { q: '¿Por qué no puedo cobrar un pago?', a: 'Es obligatorio tener una "Caja Abierta" operativa. No se pueden registrar cobros ni liquidar facturas si no hay una caja activa en el sistema.' },
-      { q: '¿Cómo descargo un comprobante?', a: 'Desde el listado de facturas o pagos, puedes generar un PDF profesional para entregar al cliente.' }
+      { q: '¿Cuándo se generan los cargos?', a: 'Los cargos de guardería se generan automáticamente según el día de facturación (1 al 28) asignado a cada cliente en su ficha técnica, garantizando ciclos de cobro personalizados.' },
+      { q: '¿Cómo funciona el recargo por mora?', a: 'A las 9:00 AM, el sistema audita facturas vencidas. Si superan los días de gracia configurados, aplica un recargo fijo inicial y un interés mensual proporcional al tiempo de atraso.' },
+      { q: '¿Por qué no puedo cobrar un pago?', a: 'Para garantizar la integridad contable, el sistema exige que exista una "Caja Abierta" activa. Sin una caja operativa, no es posible registrar ingresos ni liquidar facturas.' },
+      { q: '¿Cómo descargo un comprobante?', a: 'Desde el historial de facturación o el detalle de pagos, puedes generar y descargar archivos PDF profesionales para entregar a los socios.' }
     ]
   },
   {
@@ -28,9 +27,8 @@ const HELP_TOPICS = [
     title: 'Monitoreo y Reportes',
     icon: <BarChart3 className="w-4 h-4" />,
     content: [
-      { q: '¿Dónde veo la ocupación real?', a: 'Utiliza el Dashboard de Ocupación para visualizar el estado de los racks y optimizar el uso de los espacios disponibles.' },
-      { q: '¿Cómo analizo la recaudación?', a: 'El Reporte de Ingresos muestra una comparativa mensual de la recaudación real frente a lo proyectado.' },
-      { q: '¿Cómo accedo a los logs críticos?', a: 'Para trazabilidad avanzada de cambios críticos, consulta el historial de logs en la sección de auditoría.' }
+      { q: '¿Dónde veo la ocupación real?', a: 'El Dashboard de Ocupación ofrece una vista tridimensional y estadística de los racks, permitiendo identificar espacios libres y optimizar la logística interna.' },
+      { q: '¿Cómo analizo la recaudación?', a: 'La sección de Reportes Gerenciales permite comparar la recaudación real frente a la proyectada, filtrando por periodos y estados de cuenta.' }
     ]
   },
   {
@@ -38,8 +36,8 @@ const HELP_TOPICS = [
     title: 'Clientes',
     icon: <Users className="w-4 h-4" />,
     content: [
-      { q: '¿Cómo asignar una cuna?', a: 'Al crear o editar una embarcación, puedes seleccionar un espacio disponible del rack.' },
-      { q: '¿Qué es un Responsable de Familia?', a: 'En planes familiares, el responsable recibe el cargo unificado. Los beneficiarios disfrutan del servicio sin generar cargos individuales adicionales.' }
+      { q: '¿Cómo asignar una cuna?', a: 'Desde la edición del perfil de la embarcación, puedes seleccionar un espacio disponible. El sistema valida automáticamente que las dimensiones (eslora/manga) sean aptas para el rack elegido.' },
+      { q: '¿Qué es un Responsable de Familia?', a: 'En grupos familiares, el "Responsable" centraliza la facturación. El sistema genera un solo cargo mensual unificado, permitiendo que los beneficiarios operen sin generar costos adicionales.' }
     ]
   }
 ];
@@ -48,74 +46,107 @@ export default function UserHelp() {
   const [activeTopic, setActiveTopic] = useState(HELP_TOPICS[0].id);
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-3">
-          <HelpCircle className="w-8 h-8 text-indigo-500" />
-          <h1 className="text-3xl font-black tracking-tight text-[var(--text-primary)] uppercase italic">
-            Centro de <span className="text-indigo-500">Ayuda</span>
-          </h1>
+    <div className="max-w-6xl mx-auto py-10 px-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      {/* Header Section */}
+      <div className="text-center mb-16 space-y-4">
+        <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 mb-4">
+          <HelpCircle className="w-10 h-10 text-indigo-500" />
         </div>
-        <p className="text-[var(--text-secondary)]">Conceptos rápidos y guías operativas para el Gestor Náutico.</p>
+        <h1 className="text-5xl font-black tracking-tighter text-[var(--text-primary)] uppercase italic">
+          Centro de <span className="text-indigo-500">Ayuda</span>
+        </h1>
+        <p className="text-xl text-[var(--text-secondary)] max-w-2xl mx-auto leading-relaxed">
+          Guías rápidas y protocolos operativos diseñados para optimizar tu gestión en el Gestor Náutico.
+        </p>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-8 min-h-[500px]">
-        {/* Sidebar Index */}
-        <div className="w-full md:w-64 flex flex-col gap-2">
-          {HELP_TOPICS.map((topic) => (
-            <button
-              key={topic.id}
-              onClick={() => setActiveTopic(topic.id)}
-              className={`flex items-center justify-between p-4 rounded-2xl transition-all font-black uppercase text-[10px] tracking-widest border border-transparent ${
-                activeTopic === topic.id 
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' 
-                  : 'bg-[var(--bg-secondary)]/[0.4] text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]/[0.8] hover:border-[var(--border-primary)]'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                {topic.icon}
-                {topic.title}
-              </div>
-              <ChevronRight className={`w-4 h-4 ${activeTopic === topic.id ? 'opacity-100' : 'opacity-0'}`} />
-            </button>
-          ))}
-          
-          <div className="mt-8 p-6 bg-indigo-500/10 border border-indigo-500/20 rounded-3xl space-y-2">
-            <ShieldCheck className="w-5 h-5 text-indigo-400" />
-            <p className="text-[10px] text-indigo-300 font-bold uppercase tracking-widest">Soporte Técnico</p>
-            <p className="text-xs text-indigo-200/70">Para incidencias críticas, contacte con el administrador del sistema.</p>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        {/* Navigation Sidebar */}
+        <div className="lg:col-span-4 space-y-3">
+          <div className="bg-[var(--bg-secondary)]/50 backdrop-blur-xl border border-[var(--border-primary)] rounded-[2rem] p-4 shadow-xl">
+            {HELP_TOPICS.map((topic) => (
+              <button
+                key={topic.id}
+                onClick={() => setActiveTopic(topic.id)}
+                className={`w-full flex items-center justify-between p-5 rounded-2xl transition-all duration-300 group ${
+                  activeTopic === topic.id 
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 -translate-y-1' 
+                    : 'text-[var(--text-secondary)] hover:bg-white/5 hover:text-[var(--text-primary)]'
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`p-2.5 rounded-xl transition-colors ${
+                    activeTopic === topic.id ? 'bg-white/20' : 'bg-[var(--bg-primary)] group-hover:bg-indigo-500/10'
+                  }`}>
+                    {topic.icon}
+                  </div>
+                  <span className="font-bold tracking-wide uppercase text-sm italic">{topic.title}</span>
+                </div>
+                <ChevronRight className={`w-5 h-5 transition-transform duration-300 ${activeTopic === topic.id ? 'translate-x-1 opacity-100' : 'opacity-0'}`} />
+              </button>
+            ))}
+          </div>
+
+          <div className="p-8 bg-gradient-to-br from-indigo-600/20 to-purple-600/20 border border-indigo-500/20 rounded-[2rem] space-y-4 relative overflow-hidden group">
+            <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-500">
+              <ShieldCheck className="w-32 h-32" />
+            </div>
+            <div className="relative z-10">
+              <ShieldCheck className="w-6 h-6 text-indigo-400 mb-2" />
+              <h4 className="text-xs font-black uppercase tracking-[0.2em] text-indigo-300">Soporte Técnico</h4>
+              <p className="text-sm text-indigo-200/80 leading-relaxed font-medium">
+                ¿Necesitas asistencia técnica personalizada? Contacta con el equipo de soporte especializado.
+              </p>
+            </div>
           </div>
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 bg-[var(--bg-secondary)]/[0.2] border border-[var(--border-primary)] rounded-[2.5rem] p-10 backdrop-blur-md shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-10 opacity-5 pointer-events-none">
-            <div className="w-64 h-64 scale-[5] origin-top-right">
-                {activeTopic === 'operaciones' && <Anchor className="w-full h-full" />}
-                {activeTopic === 'facturacion' && <CreditCard className="w-full h-full" />}
-                {activeTopic === 'reportes' && <BarChart3 className="w-full h-full" />}
-                {activeTopic === 'clientes' && <Users className="w-full h-full" />}
+        <div className="lg:col-span-8">
+          <div className="bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-[2.5rem] p-10 lg:p-12 shadow-2xl relative overflow-hidden min-h-[600px]">
+            {/* Background Accent */}
+            <div className="absolute top-0 right-0 p-12 opacity-[0.03] pointer-events-none">
+              <div className="w-80 h-80 scale-[4] origin-top-right text-indigo-500">
+                  {activeTopic === 'operaciones' && <Anchor className="w-full h-full" />}
+                  {activeTopic === 'facturacion' && <CreditCard className="w-full h-full" />}
+                  {activeTopic === 'reportes' && <BarChart3 className="w-full h-full" />}
+                  {activeTopic === 'clientes' && <Users className="w-full h-full" />}
+              </div>
             </div>
-          </div>
 
-          <div className="relative z-10 space-y-10">
-            <h2 className="text-2xl font-black text-[var(--text-primary)] uppercase tracking-tight flex items-center gap-3 italic">
-              <span className="w-8 h-1 bg-indigo-500 rounded-full" />
-              {HELP_TOPICS.find(t => t.id === activeTopic)?.title}
-            </h2>
+            <div className="relative z-10 space-y-12">
+              <div className="flex items-center gap-6">
+                <span className="h-px flex-1 bg-gradient-to-r from-indigo-500 to-transparent" />
+                <h2 className="text-3xl font-black text-[var(--text-primary)] uppercase tracking-tight italic">
+                  {HELP_TOPICS.find(t => t.id === activeTopic)?.title}
+                </h2>
+              </div>
 
-            <div className="space-y-8">
-              {HELP_TOPICS.find(t => t.id === activeTopic)?.content.map((item, idx) => (
-                <div key={idx} className="group p-6 bg-[var(--bg-primary)]/[0.5] hover:bg-[var(--bg-primary)] rounded-3xl border border-[var(--border-primary)] transition-all animate-in slide-in-from-right-4 duration-300" style={{ animationDelay: `${idx * 100}ms` }}>
-                  <h3 className="text-sm font-black text-[var(--text-primary)] mb-4 tracking-wide group-hover:text-indigo-400 transition-colors uppercase italic flex items-start gap-3">
-                    <span className="text-indigo-500 opacity-50">#</span>
-                    {item.q}
-                  </h3>
-                  <p className="text-[var(--text-secondary)] text-sm leading-relaxed border-l-2 border-indigo-500/20 pl-4">
-                    {item.a}
-                  </p>
-                </div>
-              ))}
+              <div className="space-y-10">
+                {HELP_TOPICS.find(t => t.id === activeTopic)?.content.map((item, idx) => (
+                  <div 
+                    key={idx} 
+                    className="group space-y-4 animate-in slide-in-from-right-8 duration-500" 
+                    style={{ animationDelay: `${idx * 150}ms` }}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="mt-1 flex-shrink-0 w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center font-black text-indigo-500 italic">
+                        ?
+                      </div>
+                      <h3 className="text-xl font-bold text-[var(--text-primary)] leading-snug tracking-tight group-hover:text-indigo-400 transition-colors">
+                        {item.q}
+                      </h3>
+                    </div>
+                    <div className="pl-12">
+                      <div className="p-6 bg-[var(--bg-primary)]/50 rounded-2xl border-l-4 border-indigo-500/50 shadow-inner">
+                        <p className="text-lg text-[var(--text-secondary)] leading-relaxed font-medium">
+                          {item.a}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

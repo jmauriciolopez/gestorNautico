@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { ClipboardCheck, X, Search, Ship, ArrowRight, Calendar, Clock, Loader2, Check } from 'lucide-react';
+import { ClipboardCheck, X, Search, Ship, ArrowRight, Calendar, Clock, Loader2, Check, AlertTriangle } from 'lucide-react';
 import { useEmbarcaciones } from '../../embarcaciones/hooks/useEmbarcaciones';
 
 interface NuevoPedidoModalProps {
@@ -130,23 +130,37 @@ export function NuevoPedidoModal({ isOpen, onClose, onSave }: NuevoPedidoModalPr
                 </div>
               </div>
             ) : (
-              <div className="flex items-center justify-between p-6 bg-gradient-to-r from-indigo-500/10 to-transparent border border-indigo-500/30 rounded-[2rem] shadow-xl shadow-indigo-900/5 animate-in zoom-in-95 duration-300">
-                <div className="flex items-center gap-5">
-                  <div className="w-14 h-14 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-500 border border-indigo-500/20 shadow-inner">
-                    <Ship className="w-7 h-7" />
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-6 bg-gradient-to-r from-indigo-500/10 to-transparent border border-indigo-500/30 rounded-[2rem] shadow-xl shadow-indigo-900/5 animate-in zoom-in-95 duration-300">
+                  <div className="flex items-center gap-5">
+                    <div className="w-14 h-14 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-500 border border-indigo-500/20 shadow-inner">
+                      <Ship className="w-7 h-7" />
+                    </div>
+                    <div>
+                      <h4 className="text-lg font-black text-[var(--text-primary)] uppercase tracking-tight">{selectedBoat?.nombre}</h4>
+                      <p className="text-[10px] text-indigo-500 font-black tracking-[0.3em] uppercase">{selectedBoat?.matricula}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-lg font-black text-[var(--text-primary)] uppercase tracking-tight">{selectedBoat?.nombre}</h4>
-                    <p className="text-[10px] text-indigo-500 font-black tracking-[0.3em] uppercase">{selectedBoat?.matricula}</p>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedBoatId(null)}
+                    className="px-6 py-2.5 bg-[var(--bg-primary)] border border-indigo-500/20 text-[10px] font-black text-indigo-500 hover:bg-indigo-500 hover:text-white rounded-xl transition-all uppercase tracking-widest"
+                  >
+                    Cambiar
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setSelectedBoatId(null)}
-                  className="px-6 py-2.5 bg-[var(--bg-primary)] border border-indigo-500/20 text-[10px] font-black text-indigo-500 hover:bg-indigo-500 hover:text-white rounded-xl transition-all uppercase tracking-widest"
-                >
-                  Cambiar
-                </button>
+
+                {selectedBoat?.tieneDeuda && (
+                  <div className="p-5 bg-red-500/10 border border-red-500/30 rounded-2xl flex items-center gap-4 animate-in shake duration-500">
+                    <div className="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center text-red-500">
+                      <AlertTriangle className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black text-red-500 uppercase tracking-widest mb-0.5">Atención: Deuda Pendiente</p>
+                      <p className="text-[10px] text-red-400 font-bold uppercase leading-tight">El propietario registra saldos impagos. Verificar estado contable.</p>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -34,7 +34,12 @@ export const useClientes = (options: { page?: number; limit?: number; search?: s
 
   // Derived data for backward compatibility in components using { data: clientes = [] } = getClientes
   const clientes = getClientes.data?.data || [];
-  const meta = getClientes.data?.meta;
+  const meta = getClientes.data ? {
+    total: getClientes.data.total,
+    page: getClientes.data.page,
+    limit: getClientes.data.limit,
+    totalPages: getClientes.data.totalPages
+  } : undefined;
 
   const useCliente = (id: number) =>
     useQuery({
