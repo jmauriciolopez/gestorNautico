@@ -26,6 +26,7 @@ import {
   PaginationQuery,
 } from '../common/pagination/pagination.helper';
 import { MovimientosService } from '../movimientos/movimientos.service';
+import { ConfiguracionService } from '../configuracion/configuracion.service';
 
 @Injectable()
 export class OperacionesService {
@@ -40,6 +41,7 @@ export class OperacionesService {
     private readonly embarcacionRepo: Repository<Embarcacion>,
     private readonly notificacionesService: NotificacionesService,
     private readonly movimientosService: MovimientosService,
+    private readonly configuracionService: ConfiguracionService,
   ) {}
 
   async createPublic(dto: CreateSolicitudBajadaDto): Promise<SolicitudBajada> {
@@ -59,6 +61,31 @@ export class OperacionesService {
     if (!barco) {
       throw new BadRequestException(
         'Matrícula inválida o no pertenece al cliente indicado',
+      );
+    }
+
+    // 2b. Validar Horarios Operativos
+    const fechaHora = new Date(dto.fechaHoraDeseada);
+    const horaSolicitud = fechaHora.getHours() + fechaHora.getMinutes() / 60;
+
+    const aperturaRaw = await this.configuracionService.getValor(
+      'HORARIO_APERTURA',
+      '08:00',
+    );
+    const cierreRaw = await this.configuracionService.getValor(
+      'HORARIO_MAX_SUBIDA',
+      '18:00',
+    );
+
+    const [hA, mA] = aperturaRaw.split(':').map(Number);
+    const [hC, mC] = cierreRaw.split(':').map(Number);
+
+    const horaApertura = hA + mA / 60;
+    const horaCierre = hC + mC / 60;
+
+    if (horaSolicitud < horaApertura || horaSolicitud > horaCierre) {
+      throw new BadRequestException(
+        `El horario solicitado (${fechaHora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}) está fuera del rango operativo de la guardería (${aperturaRaw} a ${cierreRaw}).`,
       );
     }
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { HelpCircle, ChevronRight, Anchor, CreditCard, Clock, Users, ShieldCheck } from 'lucide-react';
+import { HelpCircle, ChevronRight, Anchor, CreditCard, Users, ShieldCheck, BarChart3 } from 'lucide-react';
 
 const HELP_TOPICS = [
   {
@@ -7,37 +7,39 @@ const HELP_TOPICS = [
     title: 'Operaciones',
     icon: <Anchor className="w-4 h-4" />,
     content: [
-      { q: '¿Cómo subo una embarcación?', a: 'Desde el panel de "Solicitudes", selecciona una lancha en espera y presiona "Iniciar". Esto asignará un operario y registrará el movimiento.' },
-      { q: '¿Qué es "Fuera de hora"?', a: 'Si una embarcación se sube después del horario límite configurado, el sistema la marcará automáticamente para seguimiento administrativo.' },
-      { q: '¿Cómo libero un espacio?', a: 'Al registrar una "Salida" (bajada al agua), el espacio del rack queda disponible automáticamente.' }
+      { q: '¿Cómo registro un movimiento?', a: 'Busca la embarcación en el Buscador Global y selecciona "Registrar Movimiento". El sistema validará automáticamente si existen deudas pendientes mediante una alerta visual.' },
+      { q: '¿Cómo se asignan las ubicaciones?', a: 'Cada embarcación debe estar asignada a un Espacio (Cuna) dentro de un Rack y Zona específicos. Si una embarcación se retira definitivamente, el espacio debe marcarse como "Disponible".' },
+      { q: '¿Qué es el log de auditoría?', a: 'Cada movimiento registrado genera una entrada en el historial de auditoría para garantizar la trazabilidad de quién y cuándo realizó la acción.' }
     ]
   },
   {
     id: 'facturacion',
-    title: 'Facturación',
+    title: 'Facturación y Mora',
     icon: <CreditCard className="w-4 h-4" />,
     content: [
-      { q: '¿Cuándo se generan las cuotas?', a: 'Las cuotas (Individual/Familiar) se generan automáticamente el día del mes configurado para cada cliente.' },
-      { q: '¿Cómo facturar un servicio?', a: 'Al completar un servicio, se genera un "Cargo" pendiente. Puedes agrupar varios cargos en una sola factura desde el módulo de Facturación.' },
-      { q: '¿Cómo anular una factura?', a: 'Desde el listado de facturas, selecciona la factura y usa el botón de anular. Los cargos volverán a estar pendientes para una nueva facturación.' }
+      { q: '¿Cuándo se generan los cargos?', a: 'El día 1 de cada mes se generan automáticamente los cargos de "Guardería Mensual" para todos los clientes activos.' },
+      { q: '¿Cómo funciona el recargo por mora?', a: 'Diariamente a las 9:00 AM, el sistema audita facturas vencidas. Si superan los días de gracia, aplica automáticamente un recargo fijo e interés mensual proporcional.' },
+      { q: '¿Por qué no puedo cobrar un pago?', a: 'Es obligatorio tener una "Caja Abierta" operativa. No se pueden registrar cobros ni liquidar facturas si no hay una caja activa en el sistema.' },
+      { q: '¿Cómo descargo un comprobante?', a: 'Desde el listado de facturas o pagos, puedes generar un PDF profesional para entregar al cliente.' }
     ]
   },
   {
-    id: 'configuraciones',
-    title: 'Configuraciones',
-    icon: <Clock className="w-4 h-4" />,
+    id: 'reportes',
+    title: 'Monitoreo y Reportes',
+    icon: <BarChart3 className="w-4 h-4" />,
     content: [
-      { q: '¿Dónde cambio el precio de la cuota?', a: 'En el módulo de Configuración Global. Los cambios afectarán a todos los clientes que tengan asignada esa categoría.' },
-      { q: '¿Cómo cambio el horario de la marina?', a: 'Ajusta la "Hora de Apertura" y "Límite Máximo" en Configuración. Esto impacta en el marcado de movimientos fuera de hora.' }
+      { q: '¿Dónde veo la ocupación real?', a: 'Utiliza el Dashboard de Ocupación para visualizar el estado de los racks y optimizar el uso de los espacios disponibles.' },
+      { q: '¿Cómo analizo la recaudación?', a: 'El Reporte de Ingresos muestra una comparativa mensual de la recaudación real frente a lo proyectado.' },
+      { q: '¿Cómo accedo a los logs críticos?', a: 'Para trazabilidad avanzada de cambios críticos, consulta el historial de logs en la sección de auditoría.' }
     ]
   },
   {
     id: 'clientes',
-    title: 'Clientes y Embarcaciones',
+    title: 'Clientes',
     icon: <Users className="w-4 h-4" />,
     content: [
       { q: '¿Cómo asignar una cuna?', a: 'Al crear o editar una embarcación, puedes seleccionar un espacio disponible del rack.' },
-      { q: '¿Qué es un Responsable de Familia?', a: 'En cuotas familiares, solo el responsable recibe el cargo mensual. Los otros miembros son beneficiarios sin cargo individual.' }
+      { q: '¿Qué es un Responsable de Familia?', a: 'En planes familiares, el responsable recibe el cargo unificado. Los beneficiarios disfrutan del servicio sin generar cargos individuales adicionales.' }
     ]
   }
 ];
@@ -88,11 +90,10 @@ export default function UserHelp() {
         {/* Content Area */}
         <div className="flex-1 bg-[var(--bg-secondary)]/[0.2] border border-[var(--border-primary)] rounded-[2.5rem] p-10 backdrop-blur-md shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 right-0 p-10 opacity-5 pointer-events-none">
-            {HELP_TOPICS.find(t => t.id === activeTopic)?.icon}
             <div className="w-64 h-64 scale-[5] origin-top-right">
                 {activeTopic === 'operaciones' && <Anchor className="w-full h-full" />}
                 {activeTopic === 'facturacion' && <CreditCard className="w-full h-full" />}
-                {activeTopic === 'configuraciones' && <Clock className="w-full h-full" />}
+                {activeTopic === 'reportes' && <BarChart3 className="w-full h-full" />}
                 {activeTopic === 'clientes' && <Users className="w-full h-full" />}
             </div>
           </div>
