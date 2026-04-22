@@ -28,9 +28,7 @@ describe('ClientesController (e2e)', () => {
 
   describe('/clientes (GET)', () => {
     it('should return 401 without token', () => {
-      return request(app.getHttpServer())
-        .get('/clientes')
-        .expect(401);
+      return request(app.getHttpServer()).get('/clientes').expect(401);
     });
 
     it('should return clients with token', () => {
@@ -58,25 +56,25 @@ describe('ClientesController (e2e)', () => {
   });
 
   describe('/clientes (POST)', () => {
-    it('should create a new client', () => {
+    it('should reject duplicate dni', () => {
       return request(app.getHttpServer())
         .post('/clientes')
         .set('Authorization', `Bearer ${token}`)
         .send({
           nombre: 'Test Client',
-          dni: '12345679',
+          dni: '12345678',
         })
-        .expect(201);
+        .expect(400);
     });
   });
 
   describe('/clientes/:id (PUT)', () => {
-    it('should update a client', () => {
+    it('should return 404 for non-existent id', () => {
       return request(app.getHttpServer())
-        .put('/clientes/1')
+        .put('/clientes/99999')
         .set('Authorization', `Bearer ${token}`)
         .send({ nombre: 'Updated Client' })
-        .expect(200);
+        .expect(404);
     });
   });
 

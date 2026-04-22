@@ -28,9 +28,7 @@ describe('CajasController (e2e)', () => {
 
   describe('/cajas (GET)', () => {
     it('should return 401 without token', () => {
-      return request(app.getHttpServer())
-        .get('/cajas')
-        .expect(401);
+      return request(app.getHttpServer()).get('/cajas').expect(401);
     });
 
     it('should return cajas with token', () => {

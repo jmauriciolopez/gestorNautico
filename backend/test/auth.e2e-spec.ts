@@ -42,17 +42,13 @@ describe('AuthController (e2e)', () => {
 
   describe('/auth/me (GET)', () => {
     it('should return 401 without token', () => {
-      return request(app.getHttpServer())
-        .get('/auth/me')
-        .expect(401);
+      return request(app.getHttpServer()).get('/auth/me').expect(401);
     });
   });
 
   describe('/auth/logout (POST)', () => {
     it('should logout successfully', () => {
-      return request(app.getHttpServer())
-        .post('/auth/logout')
-        .expect(201);
+      return request(app.getHttpServer()).post('/auth/logout').expect(201);
     });
   });
 });

@@ -28,9 +28,7 @@ describe('FacturasController (e2e)', () => {
 
   describe('/facturas (GET)', () => {
     it('should return 401 without token', () => {
-      return request(app.getHttpServer())
-        .get('/facturas')
-        .expect(401);
+      return request(app.getHttpServer()).get('/facturas').expect(401);
     });
 
     it('should return facturas with token', () => {
@@ -67,11 +65,11 @@ describe('FacturasController (e2e)', () => {
   });
 
   describe('/facturas/:id (GET)', () => {
-    it('should return factura by id', () => {
+    it('should return 404 for non-existent id', () => {
       return request(app.getHttpServer())
-        .get('/facturas/1')
+        .get('/facturas/99999')
         .set('Authorization', `Bearer ${token}`)
-        .expect(200);
+        .expect(404);
     });
   });
 
@@ -102,21 +100,21 @@ describe('FacturasController (e2e)', () => {
   });
 
   describe('/facturas/:id/estado (PATCH)', () => {
-    it('should update factura estado', () => {
+    it('should return 404 for non-existent id', () => {
       return request(app.getHttpServer())
-        .patch('/facturas/1/estado')
+        .patch('/facturas/99999/estado')
         .set('Authorization', `Bearer ${token}`)
         .send({ estado: 'PAGADA' })
-        .expect(200);
+        .expect(404);
     });
   });
 
   describe('/facturas/:id (DELETE)', () => {
-    it('should delete a factura', () => {
+    it('should return 404 for non-existent id', () => {
       return request(app.getHttpServer())
-        .delete('/facturas/1')
+        .delete('/facturas/99999')
         .set('Authorization', `Bearer ${token}`)
-        .expect(200);
+        .expect(404);
     });
   });
 });

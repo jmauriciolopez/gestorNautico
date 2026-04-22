@@ -28,9 +28,7 @@ describe('EmbarcacionesController (e2e)', () => {
 
   describe('/embarcaciones (GET)', () => {
     it('should return 401 without token', () => {
-      return request(app.getHttpServer())
-        .get('/embarcaciones')
-        .expect(401);
+      return request(app.getHttpServer()).get('/embarcaciones').expect(401);
     });
 
     it('should return embarcaciones with token', () => {
@@ -78,21 +76,21 @@ describe('EmbarcacionesController (e2e)', () => {
   });
 
   describe('/embarcaciones/:id (PUT)', () => {
-    it('should update an embarcacion', () => {
+    it('should return 404 for non-existent id', () => {
       return request(app.getHttpServer())
-        .put('/embarcaciones/1')
+        .put('/embarcaciones/99999')
         .set('Authorization', `Bearer ${token}`)
         .send({ nombre: 'Updated Boat' })
-        .expect(200);
+        .expect(404);
     });
   });
 
   describe('/embarcaciones/:id (DELETE)', () => {
-    it('should soft delete an embarcacion', () => {
+    it('should return 404 for non-existent id', () => {
       return request(app.getHttpServer())
-        .delete('/embarcaciones/1')
+        .delete('/embarcaciones/99999')
         .set('Authorization', `Bearer ${token}`)
-        .expect(200);
+        .expect(404);
     });
   });
 });

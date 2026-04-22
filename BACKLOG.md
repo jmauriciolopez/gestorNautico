@@ -16,7 +16,7 @@
 ### Fase 1: Portal del Socio (Autoservicio)
 - [ ] **Acceso Propietarios**: Login diferenciado para dueños de embarcaciones.
 - [ ] **Dashboard Socio**: Visualización de deudas, estado de embarcación y descargas.
-- [ ] **Gestión de Reservas**: Solicitud de bajada online.
+- [x] **Gestión de Reservas**: Solicitud de bajada online.
 
 ### Fase 2: Finanzas Avanzadas
 - [x] **Módulo de Mora**: Cálculo automático de intereses y recargos.
