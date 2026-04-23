@@ -46,7 +46,11 @@ export const useEmbarcaciones = (options: { page?: number; limit?: number; searc
     mutationFn: (data: Partial<Embarcacion>) =>
       httpClient.post<Embarcacion>('/embarcaciones', data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['embarcaciones'] });
+      void queryClient.invalidateQueries({ queryKey: ['embarcaciones'], refetchType: 'all' });
+      void queryClient.invalidateQueries({ queryKey: ['zonas'], refetchType: 'all' });
+      void queryClient.invalidateQueries({ queryKey: ['ubicaciones'], refetchType: 'all' });
+      void queryClient.invalidateQueries({ queryKey: ['infra-stats'], refetchType: 'all' });
+      void queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'all' });
     },
   });
 
@@ -67,7 +71,11 @@ export const useEmbarcaciones = (options: { page?: number; limit?: number; searc
     mutationFn: (id: number) =>
       httpClient.delete(`/embarcaciones/${id}`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['embarcaciones'] });
+      void queryClient.invalidateQueries({ queryKey: ['embarcaciones'], refetchType: 'all' });
+      void queryClient.invalidateQueries({ queryKey: ['zonas'], refetchType: 'all' });
+      void queryClient.invalidateQueries({ queryKey: ['ubicaciones'], refetchType: 'all' });
+      void queryClient.invalidateQueries({ queryKey: ['infra-stats'], refetchType: 'all' });
+      void queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'all' });
     },
   });
 

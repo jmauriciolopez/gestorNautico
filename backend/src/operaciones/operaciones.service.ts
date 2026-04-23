@@ -6,12 +6,11 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
-  Repository,
-  LessThan,
-  In,
-  MoreThan,
-  FindOptionsWhere,
   FindManyOptions,
+  FindOptionsWhere,
+  In,
+  LessThan,
+  Repository,
 } from 'typeorm';
 import { SolicitudBajada, EstadoSolicitud } from './solicitud-bajada.entity';
 import { CreateSolicitudBajadaDto } from './dto/create-solicitud-bajada.dto';
@@ -146,7 +145,11 @@ export class OperacionesService {
           );
         } catch (error: unknown) {
           const errMsg =
-            error instanceof Error ? error.message : 'Unknown error';
+            error instanceof Error
+              ? error.message
+              : typeof error === 'string'
+                ? error
+                : 'Error desconocido';
           this.logger.error(
             `Error enviando email para solicitud ${sol.id}: ${errMsg}`,
           );
@@ -159,22 +162,13 @@ export class OperacionesService {
   }
 
   async findAll(query: PaginationQuery = {}, estado?: EstadoSolicitud) {
-    const oneDayAgo = new Date();
-    oneDayAgo.setDate(oneDayAgo.getDate() - 1);
-
     const where:
       | FindOptionsWhere<SolicitudBajada>
       | FindOptionsWhere<SolicitudBajada>[] = estado
       ? { estado }
-      : [
-          {
-            estado: In([EstadoSolicitud.PENDIENTE, EstadoSolicitud.CONFIRMADA]),
-          },
-          {
-            estado: In([EstadoSolicitud.COMPLETADA, EstadoSolicitud.CANCELADA]),
-            updatedAt: MoreThan(oneDayAgo),
-          },
-        ];
+      : {
+          estado: In([EstadoSolicitud.PENDIENTE, EstadoSolicitud.EN_AGUA]),
+        };
 
     const options: FindManyOptions<SolicitudBajada> = {
       where,
@@ -193,14 +187,24 @@ export class OperacionesService {
     if (!solicitud)
       throw new NotFoundException(`Solicitud ${id} no encontrada`);
 
+    const pedido = solicitud;
+
     await this.solicitudRepo.update(id, { estado });
 
-    // Si se completa, generamos el movimiento automático
-    if (estado === EstadoSolicitud.COMPLETADA) {
+    // Lógica según el nuevo estado simplificado
+    const embarcacionId = pedido.embarcacion?.id || solicitud.embarcacionId;
+
+    if (estado === EstadoSolicitud.EN_AGUA) {
       await this.movimientosService.create({
-        embarcacionId: solicitud.embarcacion.id,
+        embarcacionId,
         tipo: 'salida',
-        observaciones: `Generado automáticamente por Solicitud Pública #${solicitud.id}`,
+        observaciones: `Bajada marcada desde Monitor de Cola #${pedido.id}`,
+      });
+    } else if (estado === EstadoSolicitud.FINALIZADA) {
+      await this.movimientosService.create({
+        embarcacionId,
+        tipo: 'entrada',
+        observaciones: `Retorno a cuna marcado desde Monitor de Cola #${pedido.id}`,
       });
     }
 
@@ -208,10 +212,10 @@ export class OperacionesService {
     const barco = solicitud.embarcacion.nombre;
     const email = solicitud.cliente.email;
 
-    // In-app al cliente no es posible (no tiene usuario), notificamos a ADMIN
+    // Notificaciones internas
     await this.notificacionesService.createForRole(Role.ADMIN, {
-      titulo: `Solicitud ${estado}`,
-      mensaje: `La bajada de "${barco}" para el ${fecha} fue marcada como ${estado}.`,
+      titulo: `Operación ${estado}`,
+      mensaje: `La embarcación "${barco}" cambió a estado ${estado}.`,
       tipo:
         estado === EstadoSolicitud.CANCELADA
           ? NotificacionTipo.ALERTA
@@ -223,13 +227,13 @@ export class OperacionesService {
       const templates: Partial<
         Record<EstadoSolicitud, { subject: string; template: string }>
       > = {
-        [EstadoSolicitud.CONFIRMADA]: {
-          subject: 'Tu bajada fue confirmada — Gestor Náutico',
-          template: 'bajada-confirmada',
-        },
-        [EstadoSolicitud.COMPLETADA]: {
+        [EstadoSolicitud.EN_AGUA]: {
           subject: 'Tu embarcación ya está en el agua — Gestor Náutico',
           template: 'bajada-completada',
+        },
+        [EstadoSolicitud.FINALIZADA]: {
+          subject: 'Tu embarcación ya está en su cuna — Gestor Náutico',
+          template: 'subida-completada',
         },
         [EstadoSolicitud.CANCELADA]: {
           subject: 'Tu solicitud de bajada fue cancelada — Gestor Náutico',
@@ -239,18 +243,31 @@ export class OperacionesService {
 
       const tpl = templates[estado];
       if (tpl) {
-        await this.notificacionesService.sendEmailNotification(
-          email,
-          tpl.subject,
-          tpl.template,
-          {
-            clienteNombre: solicitud.cliente.nombre,
-            barcoNombre: barco,
-            fechaHora: fecha,
-            motivo: motivo ?? '',
-            anio: new Date().getFullYear(),
-          },
-        );
+        try {
+          await this.notificacionesService.sendEmailNotification(
+            email,
+            tpl.subject,
+            tpl.template,
+            {
+              clienteNombre: solicitud.cliente.nombre,
+              barcoNombre: barco,
+              fechaHora: fecha,
+              motivo: motivo ?? '',
+              anio: new Date().getFullYear(),
+            },
+          );
+        } catch (error: unknown) {
+          const msg =
+            error instanceof Error
+              ? error.message
+              : typeof error === 'string'
+                ? error
+                : 'Error desconocido';
+          this.logger.error(
+            `Error enviando email para solicitud ${id}: ${msg}`,
+          );
+          // No relanzamos el error para no bloquear la operación física
+        }
       }
     }
 

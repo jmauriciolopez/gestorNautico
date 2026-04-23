@@ -95,8 +95,8 @@ const Rack3DContainer: React.FC<Rack3DContainerProps> = ({
               <div />
               {Array.from({ length: rack.columnas }).map((_, i) => (
                 <div key={i} className="text-center font-black uppercase tracking-widest flex flex-col items-center">
-                  <span className="text-[10px] text-indigo-400">Columna</span>
-                  <span className="text-sm text-[var(--text-primary)]">{i + 1}</span>
+                  <span className="text-xs text-indigo-300 drop-shadow-sm mb-1">Columna</span>
+                  <span className="text-base text-white">{i + 1}</span>
                 </div>
               ))}
             </div>
@@ -112,9 +112,9 @@ const Rack3DContainer: React.FC<Rack3DContainerProps> = ({
                 const f = fIdx + 1;
                 return (
                   <React.Fragment key={`fila-${f}`}>
-                    <div className="flex flex-col items-center justify-center h-full border-r border-white/10 pr-4 mr-2 floor-pillar-3d px-4 rounded-xl translate-z-[160px]">
-                      <span className="text-[9px] font-black text-indigo-500/60 uppercase tracking-tighter leading-none mb-1">Fila</span>
-                      <span className="text-2xl font-black text-[var(--text-primary)] leading-none tabular-nums italic">{f}</span>
+                    <div className="flex flex-col items-center justify-center h-full border-r-2 border-indigo-500/50 pr-4 mr-2 sticky left-0 bg-slate-900/90 backdrop-blur-md z-20 rounded-l-2xl shadow-2xl border-y border-white/5">
+                      <span className="text-xs font-black text-indigo-300 uppercase tracking-tighter leading-none mb-1">Fila</span>
+                      <span className="text-4xl font-black text-white leading-none tabular-nums drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">{f}</span>
                     </div>
 
                     {Array.from({ length: rack.columnas }).map((_, cIdx) => {
@@ -136,11 +136,11 @@ const Rack3DContainer: React.FC<Rack3DContainerProps> = ({
                                 className={`
                                   absolute inset-0 rounded-xl border transition-all duration-700 flex flex-col items-center justify-center gap-1 group/item relative cell-3d
                                   ${!espacio 
-                                    ? 'bg-transparent border-dashed border-white/5' 
+                                    ? 'bg-transparent border-dashed border-white/10' 
                                     : espacio.ocupado
-                                      ? `${getBoatSizeClass(espacio.embarcacion?.eslora || 0)} cursor-pointer shadow-lg`
-                                      : 'bg-[var(--bg-secondary)]/40 text-slate-600 border-white/10 hover:border-indigo-500/50 hover:bg-indigo-600/10 cursor-pointer'
-                                  }
+                                      ? `${getBoatSizeClass(espacio.embarcacion?.eslora || 0)} cursor-pointer shadow-xl border-2`
+                                      : 'bg-slate-800/40 text-slate-500 border-white/20 hover:border-indigo-400 hover:bg-indigo-500/10 cursor-pointer'
+                                    }
                                 `}
                                 style={{
                                   transform: `translateZ(${p * 100}px) translateX(${p * 3}px) translateY(-${p * 3}px)`,
@@ -191,35 +191,32 @@ const Rack3DContainer: React.FC<Rack3DContainerProps> = ({
           /* VISTA 2D: Eje Y = Pisos (1 abajo), Eje X = (Columnas x Filas) */
           <>
             {/* 2D Column Headers Flattened */}
-            <div
-              className="grid gap-3 items-center w-full"
+            <div 
+              className="grid gap-3 mb-6 px-1"
               style={{
-                gridTemplateColumns: `min-content repeat(${rack.columnas * rack.filas}, minmax(80px, 1fr))`,
+                gridTemplateColumns: `60px repeat(${rack.columnas * rack.filas}, 110px)`
               }}
             >
-              {/* Header Row */}
-              <div className="h-full" />
+              <div />
               {Array.from({ length: rack.filas }).map((_, fIdx) => {
                 const f = fIdx + 1;
                 return Array.from({ length: rack.columnas }).map((_, cIdx) => {
                   const c = cIdx + 1;
                   return (
-                    <div key={`head-${f}-${c}`} className="text-center font-black uppercase tracking-tighter flex flex-col items-center opacity-40 hover:opacity-100 transition-opacity">
-                      <span className="text-[8px] text-indigo-500">F{f} C{c}</span>
-                      <span className="text-[10px] text-[var(--text-primary)] truncate max-w-full">Espacio</span>
+                    <div key={`head-${f}-${c}`} className="text-center font-black uppercase tracking-tighter bg-slate-800/40 py-1.5 rounded-t-xl border-b border-indigo-500/30">
+                      <span className="text-[10px] text-indigo-300">F{f} C{c}</span>
                     </div>
                   );
                 });
               })}
-
               {/* Floor Rows */}
               {Array.from({ length: rack.pisos }).map((_, pRevIdx) => {
                 const p = rack.pisos - pRevIdx;
                 return (
                   <React.Fragment key={`piso-row-${p}`}>
-                    <div className="flex flex-col items-center justify-center h-[110px] border-r border-white/10 px-2 md:px-4 sticky left-0 bg-black/60 backdrop-blur-xl z-20 border-l border-white/5 rounded-l-xl shadow-2xl min-w-[50px] md:min-w-[60px]">
-                      <span className="text-[8px] md:text-[9px] font-black text-indigo-400 uppercase tracking-tighter leading-none mb-1">Piso</span>
-                      <span className="text-xl md:text-2xl font-black text-[var(--text-primary)] leading-none tabular-nums">{p}</span>
+                    <div className="flex flex-col items-center justify-center h-[110px] border-r-2 border-indigo-500/50 px-4 md:px-6 sticky left-0 bg-slate-900/95 backdrop-blur-xl z-20 border-y border-white/5 rounded-l-xl shadow-2xl min-w-[70px] md:min-w-[80px]">
+                      <span className="text-xs font-black text-indigo-300 uppercase tracking-tighter leading-none mb-1">Piso</span>
+                      <span className="text-3xl md:text-4xl font-black text-white leading-none tabular-nums drop-shadow-md">{p}</span>
                     </div>
 
                     {Array.from({ length: rack.filas }).map((_, fIdx) => {
@@ -239,11 +236,11 @@ const Rack3DContainer: React.FC<Rack3DContainerProps> = ({
                             className={`
                               h-[110px] w-full rounded-xl border transition-all duration-300 flex flex-col items-center justify-center gap-1 group/item relative
                               ${!espacio 
-                                ? 'bg-transparent border-dashed border-white/5' 
+                                ? 'bg-transparent border-dashed border-white/10' 
                                 : espacio.ocupado
-                                  ? `${getBoatSizeClass(espacio.embarcacion?.eslora || 0)} cursor-pointer shadow-lg hover:brightness-110 active:scale-95`
-                                  : 'bg-[var(--bg-secondary)]/40 text-slate-600 border-white/10 hover:border-indigo-500/50 hover:bg-indigo-600/10 cursor-pointer active:scale-95'
-                              }
+                                  ? `${getBoatSizeClass(espacio.embarcacion?.eslora || 0)} cursor-pointer shadow-xl border-2 hover:brightness-110 active:scale-95`
+                                  : 'bg-slate-800/40 text-slate-500 border-white/20 hover:border-indigo-400 hover:bg-indigo-500/10 cursor-pointer active:scale-95'
+                                }
                             `}
                           >
                             {!espacio ? (
@@ -251,7 +248,7 @@ const Rack3DContainer: React.FC<Rack3DContainerProps> = ({
                             ) : espacio.ocupado ? (
                               <>
                                 <Anchor size={24} className="text-white/80" />
-                                <span className="text-[9px] font-black text-center px-1 truncate w-full uppercase tracking-tighter leading-tight text-white/90">
+                                <span className="text-[10px] font-black text-center px-1 truncate w-full uppercase tracking-tighter leading-tight text-white drop-shadow-sm">
                                   {espacio.embarcacion?.nombre}
                                 </span>
                               </>
@@ -304,9 +301,9 @@ export const MapaRacks: React.FC<MapaRacksProps> = ({
   }
 
   const getBoatSizeClass = (eslora: number) => {
-    if (eslora < 6) return 'bg-[var(--accent-teal-soft)] text-[var(--accent-teal)] border-[var(--accent-teal)]/20';
-    if (eslora <= 10) return 'bg-[var(--accent-indigo-soft)] text-[var(--accent-indigo)] border-[var(--accent-indigo)]/20';
-    return 'bg-[var(--accent-purple-soft)] text-[var(--accent-purple)] border-[var(--accent-purple)]/20';
+    if (eslora < 6) return 'bg-emerald-500 text-white border-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.4)]';
+    if (eslora <= 10) return 'bg-blue-600 text-white border-blue-400 shadow-[0_0_15px_rgba(37,99,235,0.4)]';
+    return 'bg-orange-500 text-white border-orange-400 shadow-[0_0_15px_rgba(249,115,22,0.4)]';
   };
 
   return (
@@ -319,19 +316,19 @@ export const MapaRacks: React.FC<MapaRacksProps> = ({
         </div>
 
         {/* Legend */}
-        <div className="flex flex-wrap gap-4 items-center bg-slate-800/30 px-5 py-2.5 rounded-2xl border border-slate-700/50 w-fit">
-          <span className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest mr-2">Leyenda Eslora:</span>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-[var(--accent-teal-soft)] border border-[var(--accent-teal)]/30" />
-            <span className="text-xs text-[var(--text-secondary)]">&lt;6m</span>
+        <div className="flex flex-wrap gap-4 items-center bg-slate-900/60 px-6 py-3.5 rounded-2xl border border-slate-700/50 w-fit shadow-lg">
+          <span className="text-xs font-black text-slate-400 uppercase tracking-widest mr-2">Leyenda Eslora:</span>
+          <div className="flex items-center gap-3">
+            <div className="w-4 h-4 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.6)] border border-emerald-300" />
+            <span className="text-sm text-white font-bold">&lt;6m</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-[var(--accent-indigo-soft)] border border-[var(--accent-indigo)]/30" />
-            <span className="text-xs text-[var(--text-secondary)]">6-10m</span>
+          <div className="flex items-center gap-3">
+            <div className="w-4 h-4 rounded-full bg-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.6)] border border-blue-400" />
+            <span className="text-sm text-white font-bold">6-10m</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-[var(--accent-purple-soft)] border border-[var(--accent-purple)]/30" />
-            <span className="text-xs text-[var(--text-secondary)]">&gt;10m</span>
+          <div className="flex items-center gap-3">
+            <div className="w-4 h-4 rounded-full bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.6)] border border-orange-400" />
+            <span className="text-sm text-white font-bold">&gt;10m</span>
           </div>
         </div>
       </div>

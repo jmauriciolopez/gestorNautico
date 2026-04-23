@@ -1,6 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  OnModuleInit,
+  Logger,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Not, IsNull } from 'typeorm';
 import { Espacio } from './espacio.entity';
 import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
 import {
@@ -9,13 +14,62 @@ import {
 } from '../common/pagination/pagination.helper';
 
 @Injectable()
-export class EspaciosService {
+export class EspaciosService implements OnModuleInit {
+  private readonly logger = new Logger(EspaciosService.name);
+
   constructor(
     @InjectRepository(Espacio)
     private readonly espacioRepo: Repository<Espacio>,
     @InjectRepository(Embarcacion)
     private readonly embarcacionRepo: Repository<Embarcacion>,
   ) {}
+
+  async onModuleInit() {
+    this.logger.log('Iniciando saneamiento automático de infraestructura...');
+    await this.syncHealth();
+  }
+
+  async syncHealth() {
+    this.logger.log('Ejecutando diagnóstico de integridad de espacios...');
+    let corregidos = 0;
+
+    // 1. Limpiar embarcaciones INACTIVAS que aún tengan espacioId
+    const inactivasConEspacio = await this.embarcacionRepo.find({
+      where: { estado: 'INACTIVA', espacioId: Not(IsNull()) },
+    });
+
+    for (const emb of inactivasConEspacio) {
+      await this.embarcacionRepo.update(emb.id, { espacioId: null });
+      this.logger.warn(
+        `Limpiada referencia de espacio en embarcación INACTIVA: ${emb.nombre}`,
+      );
+      corregidos++;
+    }
+
+    // 2. Saneamiento de espacios marcados como ocupados
+    const espaciosOcupados = await this.espacioRepo.find({
+      where: { ocupado: true },
+    });
+
+    for (const espacio of espaciosOcupados) {
+      const tieneEmbarcacionActiva = await this.embarcacionRepo.findOne({
+        where: { espacioId: espacio.id, estado: Not('INACTIVA') },
+      });
+
+      if (!tieneEmbarcacionActiva) {
+        await this.espacioRepo.update(espacio.id, { ocupado: false });
+        this.logger.error(
+          `Saneado espacio fantasma: ${espacio.numero} (estaba marcado como ocupado pero no tenía embarcación activa)`,
+        );
+        corregidos++;
+      }
+    }
+
+    this.logger.log(
+      `Saneamiento finalizado. Registros corregidos: ${corregidos}`,
+    );
+    return { corregidos };
+  }
 
   findAll(query: PaginationQuery = {}) {
     return paginate(this.espacioRepo, query, {

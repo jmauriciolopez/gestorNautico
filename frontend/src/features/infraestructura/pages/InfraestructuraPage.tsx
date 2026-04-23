@@ -8,7 +8,9 @@ import {
   Settings,
   Activity,
   ChevronRight,
-  Search
+  Search,
+  ShieldCheck,
+  RefreshCcw
 } from 'lucide-react';
 import { InfraestructuraStats } from '../components/InfraestructuraStats';
 import { MapaOcupacion } from '../components/MapaOcupacion';
@@ -31,7 +33,8 @@ export default function InfraestructuraPage() {
     createRack,
     updateRack,
     deleteRack,
-    updateEspacio
+    updateEspacio,
+    syncHealth
   } = useUbicaciones();
 
   const { getEmbarcaciones, updateEmbarcacion } = useEmbarcaciones();
@@ -242,17 +245,29 @@ export default function InfraestructuraPage() {
           </div>
           <div className="flex items-center gap-4">
             {activeTab === 'mapa' && (
-              <button
-                onClick={() => setIs3D(!is3D)}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl border transition-all font-black text-[9px] uppercase tracking-widest ${
-                  is3D 
-                  ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-900/40' 
-                  : 'bg-[var(--bg-primary)]/40 border-[var(--border-primary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-indigo-500/50'
-                }`}
-              >
-                <Activity className={`w-3.5 h-3.5 ${is3D ? 'animate-pulse' : ''}`} />
-                Vista 3D {is3D ? 'Activa' : 'Inactiva'}
-              </button>
+              <div className="flex items-center gap-4">
+                <RoleGuard allowedRoles={[Role.ADMIN, Role.SUPERADMIN]}>
+                  <button
+                    onClick={() => syncHealth.mutate()}
+                    disabled={syncHealth.isPending}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-2xl border bg-emerald-600/10 border-emerald-500/20 text-emerald-500 hover:bg-emerald-600 hover:text-white transition-all font-black text-[9px] uppercase tracking-widest disabled:opacity-50"
+                    title="Sanear integridad de ocupación"
+                  >
+                    {syncHealth.isPending ? <RefreshCcw className="w-3.5 h-3.5 animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5" />}
+                    <span className="hidden xl:inline">Sanear Datos</span>
+                  </button>
+                </RoleGuard>
+                <button
+                  onClick={() => setIs3D(!is3D)}
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl border transition-all font-black text-[9px] uppercase tracking-widest ${is3D
+                      ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-900/40'
+                      : 'bg-[var(--bg-primary)]/40 border-[var(--border-primary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-indigo-500/50'
+                    }`}
+                >
+                  <Activity className={`w-3.5 h-3.5 ${is3D ? 'animate-pulse' : ''}`} />
+                  <span className="hidden xl:inline">Vista 3D {is3D ? 'Activa' : 'Inactiva'}</span>
+                </button>
+              </div>
             )}
             <div className="hidden sm:flex items-center gap-2 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest">
               <span>Centro de Control</span>

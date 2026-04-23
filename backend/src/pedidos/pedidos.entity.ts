@@ -14,7 +14,7 @@ export class Pedido {
   id: number;
 
   @Column({ default: 'pendiente' })
-  estado: string; // pendiente, en_proceso, completado, cancelado
+  estado: string; // pendiente, en_agua, finalizado, cancelado
 
   @Column({ type: 'timestamp', nullable: true })
   fechaProgramada: Date;

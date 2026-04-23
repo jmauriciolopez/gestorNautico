@@ -20,7 +20,7 @@ export class Embarcacion {
   @Column()
   nombre: string;
 
-  @Column()
+  @Column({ unique: true })
   matricula: string;
 
   @Column({ nullable: true })

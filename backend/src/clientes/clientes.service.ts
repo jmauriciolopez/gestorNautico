@@ -28,26 +28,37 @@ export class ClientesService {
   ) {}
 
   async findAll(
-    query: PaginationQuery & { search?: string } = {},
+    query: PaginationQuery & { search?: string; onlyActive?: boolean } = {},
   ): Promise<PaginatedResult<Cliente>> {
-    const { search, ...pagination } = query;
+    const { search, onlyActive = true, ...pagination } = query;
 
-    const baseOptions = {
-      order: { createdAt: 'DESC' } as const,
+    const baseOptions: any = {
+      order: { createdAt: 'DESC' },
     };
 
     if (search) {
+      const searchConditions: any[] = [
+        {
+          nombre: ILike(`%${search}%`),
+          ...(onlyActive ? { activo: true } : {}),
+        },
+        { dni: ILike(`%${search}%`), ...(onlyActive ? { activo: true } : {}) },
+        {
+          email: ILike(`%${search}%`),
+          ...(onlyActive ? { activo: true } : {}),
+        },
+      ];
       return paginate(this.clientesRepository, pagination, {
         ...baseOptions,
-        where: [
-          { nombre: ILike(`%${search}%`) },
-          { dni: ILike(`%${search}%`) },
-          { email: ILike(`%${search}%`) },
-        ],
+        where: searchConditions,
       });
     }
 
-    return paginate(this.clientesRepository, pagination, baseOptions);
+    const where = onlyActive ? { activo: true } : {};
+    return paginate(this.clientesRepository, pagination, {
+      ...baseOptions,
+      where,
+    });
   }
 
   async findAllWithTarifaBase(

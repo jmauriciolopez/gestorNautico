@@ -101,9 +101,9 @@ const OccupancyRack3DContainer: React.FC<OccupancyRack3DContainerProps> = ({
               const f = fIdx + 1;
               return (
                 <React.Fragment key={`fila-${f}`}>
-                  <div className="flex flex-col items-center justify-center h-full border-r border-white/10 pr-4 mr-2 floor-pillar-3d px-4 rounded-xl translate-z-[160px]">
-                    <span className="text-[8px] font-black text-indigo-500/50 uppercase tracking-tighter leading-none mb-1">Fila</span>
-                    <span className="text-xl font-black text-[var(--text-primary)] leading-none tabular-nums italic">{f}</span>
+                  <div className="flex flex-col items-center justify-center h-full border-r-2 border-indigo-500/50 pr-6 mr-2 floor-pillar-3d px-8 rounded-xl translate-z-[160px] bg-slate-900/90 backdrop-blur-sm border-y border-white/5 shadow-2xl">
+                    <span className="text-xs font-black text-indigo-300 uppercase tracking-tighter leading-none mb-1">Fila</span>
+                    <span className="text-4xl font-black text-white leading-none tabular-nums italic drop-shadow-md">{f}</span>
                   </div>
 
                   {Array.from({ length: rack.columnas }).map((_, cIdx) => {
@@ -118,21 +118,21 @@ const OccupancyRack3DContainer: React.FC<OccupancyRack3DContainerProps> = ({
                             <button
                               key={`cell-${p}-${c}-${f}`}
                               className={`
-                                absolute inset-0 rounded-lg border transition-all duration-700 flex flex-col items-center justify-center gap-1 group/item cell-3d
-                                ${!espacio 
-                                  ? 'bg-transparent border-dashed border-white/5 opacity-20' 
-                                  : espacio.ocupado
-                                    ? `${getBoatSizeClass(espacio.embarcacion?.eslora || 0)} shadow-lg border-2 z-10 ${
-                                        highlightedQuery && espacio.embarcacion?.nombre.toLowerCase().includes(highlightedQuery.toLowerCase())
-                                        ? 'ring-4 ring-yellow-400 ring-offset-4 ring-offset-slate-900 scale-110 z-30 border-yellow-400'
-                                        : 'border-white/10'
-                                      }`
-                                    : `bg-slate-800/40 border-white/10 hover:border-indigo-500/50 ${
-                                        highlightedQuery && rack.codigo.toLowerCase() === highlightedQuery.toLowerCase()
-                                        ? 'border-indigo-500 bg-indigo-500/20 shadow-[0_0_20px_rgba(99,102,241,0.3)]'
-                                        : ''
-                                      }`
-                                }
+                                absolute inset-0 rounded-lg border-2 transition-all duration-700 flex flex-col items-center justify-center gap-1 group/item cell-3d
+                                  ${!espacio 
+                                   ? 'bg-transparent border-dashed border-white/10 opacity-10' 
+                                   : espacio.ocupado
+                                     ? `${getBoatSizeClass(espacio.embarcacion?.eslora || 0)} shadow-xl z-10 border-2 ${
+                                         highlightedQuery && espacio.embarcacion?.nombre.toLowerCase().includes(highlightedQuery.toLowerCase())
+                                         ? 'ring-4 ring-yellow-400 ring-offset-4 ring-offset-slate-900 scale-110 z-30 border-yellow-400'
+                                         : ''
+                                       }`
+                                     : `bg-slate-800/40 border-white/20 hover:border-indigo-400 ${
+                                         highlightedQuery && rack.codigo.toLowerCase() === highlightedQuery.toLowerCase()
+                                         ? 'border-indigo-500 bg-indigo-500/30 shadow-[0_0_20px_rgba(99,102,241,0.3)]'
+                                         : ''
+                                       }`
+                                 }}
                               `}
                               style={{
                                 transform: `translateZ(${p * 80}px) translateX(${p * 2}px) translateY(-${p * 2}px)`,
@@ -152,7 +152,7 @@ const OccupancyRack3DContainer: React.FC<OccupancyRack3DContainerProps> = ({
                                 <span className="text-[10px] font-black opacity-10">{p}</span>
                               )}
 
-                              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[6px] font-black opacity-30 text-white tracking-widest uppercase pointer-events-none">
+                              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[8px] font-black opacity-50 text-white tracking-widest uppercase pointer-events-none">
                                 Z{p}
                               </div>
                             </button>
@@ -169,7 +169,7 @@ const OccupancyRack3DContainer: React.FC<OccupancyRack3DContainerProps> = ({
           /* VISTA 2D: Eje Y = Pisos (1 abajo), Eje X = (Columnas x Filas) */
           <>
             <div 
-              className="grid gap-2 mb-4 px-1 opacity-40"
+              className="grid gap-2 mb-4 px-1"
               style={{
                 gridTemplateColumns: `50px repeat(${rack.columnas * rack.filas}, 85px)`
               }}
@@ -180,8 +180,8 @@ const OccupancyRack3DContainer: React.FC<OccupancyRack3DContainerProps> = ({
                 return Array.from({ length: rack.columnas }).map((_, cIdx) => {
                   const c = cIdx + 1;
                   return (
-                    <div key={`head-${f}-${c}`} className="text-center font-black uppercase tracking-tighter">
-                      <span className="text-[7px] text-indigo-500">F{f} C{c}</span>
+                    <div key={`head-${f}-${c}`} className="text-center font-black uppercase tracking-tighter bg-slate-800/40 py-1 rounded-t-lg border-b border-indigo-500/30">
+                      <span className="text-[10px] text-indigo-300">F{f} C{c}</span>
                     </div>
                   );
                 });
@@ -199,9 +199,9 @@ const OccupancyRack3DContainer: React.FC<OccupancyRack3DContainerProps> = ({
                 const p = rack.pisos - pRevIdx; // Piso 1 abajo
                 return (
                   <React.Fragment key={`piso-row-${p}`}>
-                    <div className="flex flex-col items-center justify-center h-full border-r border-white/10 pr-2 mr-1 sticky left-0 bg-slate-900/60 backdrop-blur-md z-20 rounded-l-lg">
-                      <span className="text-[8px] font-black text-indigo-400 uppercase leading-none mb-1">Piso</span>
-                      <span className="text-xl font-black text-[var(--text-primary)] leading-none tabular-nums">{p}</span>
+                    <div className="flex flex-col items-center justify-center h-full border-r-2 border-indigo-500/50 pr-4 mr-2 sticky left-0 bg-slate-900/90 backdrop-blur-md z-20 rounded-l-lg shadow-2xl border-y border-white/5">
+                      <span className="text-xs font-black text-indigo-300 uppercase leading-none mb-1">Piso</span>
+                      <span className="text-3xl font-black text-white leading-none tabular-nums drop-shadow-md">{p}</span>
                     </div>
 
                     {Array.from({ length: rack.filas }).map((_, fIdx) => {
@@ -214,27 +214,27 @@ const OccupancyRack3DContainer: React.FC<OccupancyRack3DContainerProps> = ({
                           <div
                             key={`cell-2d-${p}-${c}-${f}`}
                             className={`
-                              w-[85px] h-[85px] rounded-lg border transition-all duration-300 flex flex-col items-center justify-center gap-1 group relative
+                              w-[85px] h-[85px] rounded-lg border-2 transition-all duration-300 flex flex-col items-center justify-center gap-1 group relative
                               ${!espacio 
-                                ? 'bg-transparent border-dashed border-white/5 opacity-10' 
+                                ? 'bg-transparent border-dashed border-white/10 opacity-10' 
                                 : espacio.ocupado
-                                  ? `${getBoatSizeClass(espacio.embarcacion?.eslora || 0)} shadow-md border-2 ${
+                                  ? `${getBoatSizeClass(espacio.embarcacion?.eslora || 0)} shadow-lg border-2 ${
                                       highlightedQuery && espacio.embarcacion?.nombre.toLowerCase().includes(highlightedQuery.toLowerCase())
                                       ? 'ring-4 ring-yellow-400 z-10 scale-110 border-yellow-400 shadow-[0_0_30px_rgba(250,204,21,0.4)]'
-                                      : 'border-white/10'
-                                    }`
-                                  : `bg-slate-800/40 border-white/10 hover:border-indigo-500/50 ${
-                                      highlightedQuery && rack.codigo.toLowerCase() === highlightedQuery.toLowerCase()
-                                      ? 'border-indigo-500 bg-indigo-500/20'
                                       : ''
                                     }`
-                              }
+                                  : `bg-slate-800/40 border-white/20 hover:border-indigo-400 ${
+                                      highlightedQuery && rack.codigo.toLowerCase() === highlightedQuery.toLowerCase()
+                                      ? 'border-indigo-500 bg-indigo-500/30'
+                                      : ''
+                                    }`
+                                }
                             `}
                           >
                             {espacio?.ocupado ? (
                               <>
                                 <Anchor size={20} className="text-white/80" />
-                                <span className="text-[7px] font-black text-center px-1 truncate w-full uppercase text-white/90">
+                                <span className="text-[8px] font-black text-center px-1 truncate w-full uppercase text-white leading-tight drop-shadow-sm">
                                   {espacio.embarcacion?.nombre}
                                 </span>
                               </>
@@ -244,7 +244,7 @@ const OccupancyRack3DContainer: React.FC<OccupancyRack3DContainerProps> = ({
                             
                             {espacio && (
                               <div className="absolute top-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <span className="text-[6px] bg-black/60 px-1 rounded text-indigo-400 font-bold">F{f}</span>
+                                <span className="text-[8px] bg-black/80 px-1.5 py-0.5 rounded text-indigo-300 font-bold border border-white/5">F{f} C{c}</span>
                               </div>
                             )}
                           </div>
@@ -288,9 +288,9 @@ export const MapaOcupacion: React.FC<MapaOcupacionProps> = ({ racks, is3D = fals
   };
 
   const getBoatSizeClass = (eslora: number) => {
-    if (eslora < 6) return 'bg-blue-600/30 text-blue-100 border-blue-500/50';
-    if (eslora <= 10) return 'bg-indigo-600/40 text-indigo-100 border-indigo-500/50';
-    return 'bg-purple-600/50 text-purple-100 border-purple-500/50';
+    if (eslora < 6) return 'bg-emerald-500 text-white border-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.4)]';
+    if (eslora <= 10) return 'bg-blue-600 text-white border-blue-400 shadow-[0_0_15px_rgba(37,99,235,0.4)]';
+    return 'bg-orange-500 text-white border-orange-400 shadow-[0_0_15px_rgba(249,115,22,0.4)]';
   };
 
   if (!racks || racks.length === 0) {

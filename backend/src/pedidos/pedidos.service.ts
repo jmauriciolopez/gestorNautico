@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Pedido } from './pedidos.entity';
@@ -14,6 +14,8 @@ import {
 
 @Injectable()
 export class PedidosService {
+  private readonly logger = new Logger(PedidosService.name);
+
   constructor(
     @InjectRepository(Pedido)
     private readonly pedidoRepo: Repository<Pedido>,
@@ -22,9 +24,6 @@ export class PedidosService {
   ) {}
 
   async findAll(query: PaginationQuery = {}): Promise<PaginatedResult<Pedido>> {
-    const oneDayAgo = new Date();
-    oneDayAgo.setDate(oneDayAgo.getDate() - 1);
-
     const queryBuilder = this.pedidoRepo
       .createQueryBuilder('pedido')
       .leftJoinAndSelect('pedido.embarcacion', 'embarcacion')
@@ -37,15 +36,8 @@ export class PedidosService {
           .andWhere('cargo.pagado = :pagado', { pagado: false });
       }, 'deudaCount')
       .where('pedido.estado IN (:...activos)', {
-        activos: ['pendiente', 'en_proceso'],
+        activos: ['pendiente', 'en_agua'],
       })
-      .orWhere(
-        'pedido.estado IN (:...finalizados) AND pedido.updatedAt > :oneDayAgo',
-        {
-          finalizados: ['completado', 'cancelado'],
-          oneDayAgo,
-        },
-      )
       .orderBy('pedido.createdAt', 'DESC');
 
     const { data, total, page, limit, totalPages } = await paginate(
@@ -128,22 +120,36 @@ export class PedidosService {
     const pedido = await this.findOne(id);
     await this.pedidoRepo.update(id, { estado });
 
-    // Si se completa, generamos el movimiento automático
-    if (estado === 'completado') {
+    // Lógica simplificada: EN_AGUA (salida) y FINALIZADO (entrada)
+    if (!pedido.embarcacion?.id) {
+      this.logger.warn(`Pedido ${id} no tiene embarcación asociada`);
+      return;
+    }
+
+    if (estado === 'en_agua') {
       await this.movimientosService.create({
         embarcacionId: pedido.embarcacion.id,
         tipo: 'salida',
-        observaciones: `Generado automáticamente por Pedido #${pedido.id}`,
+        observaciones: `Bajada marcada desde Monitor de Cola #${pedido.id}`,
+      });
+    } else if (estado === 'finalizado') {
+      await this.movimientosService.create({
+        embarcacionId: pedido.embarcacion.id,
+        tipo: 'entrada',
+        observaciones: `Retorno a cuna marcado desde Monitor de Cola #${pedido.id}`,
       });
     }
 
     // Notificar cambio de estado a roles relevantes
     await this.notificacionesService.createForRole(Role.ADMIN, {
-      titulo: 'Actualización de Pedido',
-      mensaje: `El pedido de ${pedido.embarcacion.nombre} ha cambiado a ${estado}.`,
+      titulo: 'Actualización de Operación',
+      mensaje: `La embarcación ${pedido.embarcacion.nombre} cambió a estado ${estado}.`,
+      tipo:
+        estado === 'cancelado'
+          ? NotificacionTipo.ALERTA
+          : NotificacionTipo.INFO,
     });
 
-    // In progress: eventually notify the requester if user association is added to Pedido entity
     return this.findOne(id);
   }
 

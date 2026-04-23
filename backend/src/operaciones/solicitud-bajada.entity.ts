@@ -11,10 +11,10 @@ import { Cliente } from '../clientes/clientes.entity';
 import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
 
 export enum EstadoSolicitud {
-  PENDIENTE = 'PENDIENTE',
-  CONFIRMADA = 'CONFIRMADA',
-  COMPLETADA = 'COMPLETADA',
-  CANCELADA = 'CANCELADA',
+  PENDIENTE = 'PENDIENTE', // Solicitada
+  EN_AGUA = 'EN_AGUA', // Marca bajada (en el agua)
+  FINALIZADA = 'FINALIZADA', // Vuelta a la cuna (completada)
+  CANCELADA = 'CANCELADA', // Cancelada
 }
 
 @Entity('solicitudes_bajada')

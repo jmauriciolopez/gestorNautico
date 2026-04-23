@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -17,6 +18,8 @@ import { UpdateEmbarcacionDto } from './dto/update-embarcacion.dto';
 
 @Injectable()
 export class EmbarcacionesService {
+  private readonly logger = new Logger(EmbarcacionesService.name);
+
   constructor(
     @InjectRepository(Embarcacion)
     private readonly embarcacionesRepository: Repository<Embarcacion>,
@@ -100,18 +103,21 @@ export class EmbarcacionesService {
 
     if (!espacio || !espacio.rack) return;
 
-    const { largo, ancho } = espacio.rack;
+    const largo = Number(espacio.rack.largo);
+    const ancho = Number(espacio.rack.ancho);
+    const esloraNum = Number(eslora);
+    const mangaNum = Number(manga);
 
     // Solo validar si el rack tiene dimensiones configuradas (> 0)
-    if (largo > 0 && eslora > largo) {
+    if (largo > 0 && esloraNum > largo) {
       throw new BadRequestException(
-        `La eslora de la embarcación (${eslora}m) excede el largo disponible en el rack (${largo}m)`,
+        `La eslora de la embarcación (${esloraNum}m) excede el largo disponible en el rack (${largo}m)`,
       );
     }
 
-    if (ancho > 0 && manga > ancho) {
+    if (ancho > 0 && mangaNum > ancho) {
       throw new BadRequestException(
-        `La manga de la embarcación (${manga}m) excede el ancho disponible en el rack (${ancho}m)`,
+        `La manga de la embarcación (${mangaNum}m) excede el ancho disponible en el rack (${ancho}m)`,
       );
     }
   }
@@ -122,6 +128,27 @@ export class EmbarcacionesService {
         dto.espacioId,
         dto.eslora || 0,
         dto.manga || 0,
+      );
+    }
+
+    // Validar que el espacio no esté ocupado por otra embarcación
+    if (dto.espacioId) {
+      const boatWithSpace = await this.embarcacionesRepository.findOne({
+        where: { espacioId: dto.espacioId },
+      });
+      if (boatWithSpace) {
+        throw new BadRequestException(
+          `El espacio seleccionado ya está asignado a la embarcación ${boatWithSpace.nombre} (${boatWithSpace.matricula})`,
+        );
+      }
+    }
+
+    const existing = await this.embarcacionesRepository.findOne({
+      where: { matricula: dto.matricula },
+    });
+    if (existing) {
+      throw new BadRequestException(
+        `Ya existe una embarcación registrada con la matrícula ${dto.matricula}`,
       );
     }
 
@@ -141,8 +168,16 @@ export class EmbarcacionesService {
 
     const nuevaEslora = dto.eslora ?? embarcacion.eslora;
     const nuevaManga = dto.manga ?? embarcacion.manga;
-    const nuevoEspacioId =
-      'espacioId' in dto ? dto.espacioId : anteriorEspacioId;
+    const nuevoEstado = dto.estado ?? embarcacion.estado;
+    let nuevoEspacioId = 'espacioId' in dto ? dto.espacioId : anteriorEspacioId;
+
+    // Si se inactiva o ya está inactiva, liberar espacio automáticamente
+    if (nuevoEstado === 'INACTIVA' && nuevoEspacioId) {
+      this.logger.log(
+        `[EmbarcacionesService] Asegurando liberación de espacio para embarcación INACTIVA ${id}.`,
+      );
+      nuevoEspacioId = null;
+    }
 
     if (nuevoEspacioId) {
       await this.validarDimensionesUbicacion(
@@ -150,6 +185,30 @@ export class EmbarcacionesService {
         nuevaEslora,
         nuevaManga,
       );
+    }
+
+    // Validar que el nuevo espacio no esté ocupado por otra embarcación
+    if (nuevoEspacioId && nuevoEspacioId !== embarcacion.espacioId) {
+      const boatWithSpace = await this.embarcacionesRepository.findOne({
+        where: { espacioId: nuevoEspacioId },
+      });
+      if (boatWithSpace) {
+        throw new BadRequestException(
+          `El espacio seleccionado ya está asignado a la embarcación ${boatWithSpace.nombre} (${boatWithSpace.matricula})`,
+        );
+      }
+    }
+
+    // Si cambia la matrícula, validar que no exista otra igual
+    if (dto.matricula && dto.matricula !== embarcacion.matricula) {
+      const existing = await this.embarcacionesRepository.findOne({
+        where: { matricula: dto.matricula },
+      });
+      if (existing) {
+        throw new BadRequestException(
+          `La matrícula ${dto.matricula} ya pertenece a otra embarcación`,
+        );
+      }
     }
 
     const setValues: Record<string, unknown> = {};
@@ -164,7 +223,11 @@ export class EmbarcacionesService {
     if (dto.estado !== undefined) setValues.estado = dto.estado;
     if (dto.descuento !== undefined) setValues.descuento = dto.descuento;
     if (dto.clienteId !== undefined) setValues.clienteId = dto.clienteId;
-    if ('espacioId' in dto) setValues.espacioId = dto.espacioId;
+
+    // Forzar actualización de espacioId si cambió (por DTO o por inactivación)
+    if (nuevoEspacioId !== anteriorEspacioId) {
+      setValues.espacioId = nuevoEspacioId;
+    }
 
     await this.embarcacionesRepository
       .createQueryBuilder()

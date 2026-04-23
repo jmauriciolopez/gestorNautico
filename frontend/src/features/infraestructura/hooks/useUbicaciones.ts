@@ -153,5 +153,31 @@ export const useUbicaciones = (options: {
     },
   });
 
-  return { useUbicacionesQuery, useZonas, useEstadisticas, createUbicacion, createZona, updateZona, deleteZona, createRack, updateRack, deleteRack, updateEspacio };
+  const syncHealth = useMutation({
+    mutationFn: () => httpClient.post<{ corregidos: number }>('/espacios/sync', {}),
+    onSuccess: (data) => {
+      toast.success(`Saneamiento completado. Registros corregidos: ${data.corregidos}`);
+      void queryClient.invalidateQueries({ queryKey: ['ubicaciones'] });
+      void queryClient.invalidateQueries({ queryKey: ['zonas'] });
+      void queryClient.invalidateQueries({ queryKey: ['infra-stats'] });
+    },
+    onError: (error: any) => {
+      toast.error(`Error en saneamiento: ${error.message}`);
+    },
+  });
+
+  return {
+    useUbicacionesQuery,
+    useZonas,
+    useEstadisticas,
+    createUbicacion,
+    createZona,
+    updateZona,
+    deleteZona,
+    createRack,
+    updateRack,
+    deleteRack,
+    updateEspacio,
+    syncHealth,
+  };
 };

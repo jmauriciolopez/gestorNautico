@@ -17,6 +17,25 @@ Sistema integral de gestión para guarderías náuticas y clubes, diseñado para
    - Backend: `npm run start:dev`
    - Frontend: `npm run dev`
 
+## 🗄️ Gestión de Base de Datos
+
+### Reiniciar Base de Datos (Desde Cero)
+Para eliminar todas las tablas, esquemas y volver a un estado totalmente limpio:
+1. Ir a la carpeta `backend/`.
+2. Ejecutar:
+   ```powershell
+   npm run db:reset
+   ```
+3. Reiniciar el servidor backend (`npm run start:dev`). TypeORM recreará automáticamente las tablas al iniciar.
+
+### Cargar Datos de Demostración (Seed Demo)
+Para poblar la base de datos con un set de datos de prueba completo (clientes, embarcaciones, facturas históricas):
+1. Desde la carpeta `backend/`, ejecutar:
+   ```powershell
+   npm run seed:demo
+   ```
+   *Nota: Este comando también limpia las tablas antes de cargar los nuevos datos.*
+
 ## 📂 Documentación Centralizada
 
 Toda la documentación técnica y operativa se encuentra en la carpeta [`docs/`](./docs/):

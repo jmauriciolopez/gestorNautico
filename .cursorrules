@@ -1,0 +1,13 @@
+# Reglas Globales del Proyecto
+
+## Calidad y Validación
+- **REGLA DE ORO MANDATORIA**: Antes de dar cualquier tarea por terminada, es OBLIGATORIO:
+  1. Correr el linter en ambos entornos.
+  2. Verificar los tipos de TypeScript (`tsc --noEmit`) tanto en el **Frontend** como en el **Backend**.
+- **REGLA DE SINCRONIZACIÓN FULL-STACK**: Todo cambio en el Frontend que implique envío o manipulación de datos debe estar respaldado por una validación en el Backend (DTOs, Entidades o Servicios). No se permiten acciones en el UI sin su contraparte robusta en la API.
+- No se aceptan implementaciones que no hayan superado estas validaciones de integridad.
+- Si una implementación introduce errores de tipo, debe ser corregida antes de ser presentada al usuario.
+
+## Comunicación
+- Siempre solicita confirmación antes de realizar cambios estructurales profundos.
+- Proporciona un plan de implementación detallado para tareas complejas.

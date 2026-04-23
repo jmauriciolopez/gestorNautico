@@ -4,7 +4,7 @@ import { Paginated, selectData } from '../../../api/pagination';
 
 export interface Pedido {
   id: number;
-  estado: 'pendiente' | 'en_proceso' | 'completado' | 'cancelado';
+  estado: 'pendiente' | 'en_agua' | 'finalizado' | 'cancelado';
   fechaProgramada: string;
   embarcacion: {
     id: number;
@@ -27,12 +27,21 @@ export interface Movimiento {
 
 export interface SolicitudBajada {
   id: number;
-  estado: 'PENDIENTE' | 'CONFIRMADA' | 'COMPLETADA' | 'CANCELADA';
+  embarcacionId: number;
+  clienteId: number;
   fechaHoraDeseada: string;
-  observaciones?: string;
-  cliente: { id: number; nombre: string; email: string };
-  embarcacion: { id: number; nombre: string; matricula: string };
-  createdAt: string;
+  estado: 'PENDIENTE' | 'EN_AGUA' | 'FINALIZADA' | 'CANCELADA';
+  motivoCancelacion?: string;
+  embarcacion: {
+    nombre: string;
+    matricula: string;
+    tieneDeuda: boolean;
+  };
+  cliente: {
+    nombre: string;
+    email: string;
+    telefono: string;
+  };
 }
 
 export function useOperaciones(options: {

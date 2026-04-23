@@ -28,8 +28,15 @@ export class ClientesController {
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('search') search?: string,
+    @Query('onlyActive') onlyActive?: boolean,
   ) {
-    return this.clientesService.findAll({ page, limit, search });
+    return this.clientesService.findAll({
+      page,
+      limit,
+      search,
+      onlyActive:
+        onlyActive === undefined ? true : String(onlyActive) === 'true',
+    });
   }
 
   @Get(':id')

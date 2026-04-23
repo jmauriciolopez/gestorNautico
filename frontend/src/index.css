@@ -42,17 +42,21 @@
   --accent-primary-ring: rgba(99, 102, 241, 0.32);
 
   /* Semánticos */
-  --accent-teal:       #19a67b;
-  --accent-teal-soft:  rgba(25, 166, 123, 0.14);
-  --accent-teal-line:  linear-gradient(90deg, #19a67b, #9fe1cb);
+  --accent-teal:       #10b981;
+  --accent-teal-soft:  rgba(16, 185, 129, 0.16);
+  --accent-teal-line:  linear-gradient(90deg, #10b981, #6ee7b7);
 
-  --accent-purple:      #8b7cf6;
-  --accent-purple-soft: rgba(139, 124, 246, 0.14);
-  --accent-purple-line: linear-gradient(90deg, #8b7cf6, #d9d4ff);
+  --accent-indigo:      #6366f1;
+  --accent-indigo-soft: rgba(99, 102, 241, 0.20);
+  --accent-indigo-line: linear-gradient(90deg, #6366f1, #a5b4fc);
 
-  --accent-amber:      #d08a24;
-  --accent-amber-soft: rgba(208, 138, 36, 0.14);
-  --accent-amber-line: linear-gradient(90deg, #d08a24, #ffd58a);
+  --accent-purple:      #8b5cf6;
+  --accent-purple-soft: rgba(139, 92, 246, 0.16);
+  --accent-purple-line: linear-gradient(90deg, #8b5cf6, #c4b5fd);
+
+  --accent-amber:      #f59e0b;
+  --accent-amber-soft: rgba(245, 158, 11, 0.16);
+  --accent-amber-line: linear-gradient(90deg, #f59e0b, #fcd34d);
 
   --accent-red:        #e45858;
   --accent-red-soft:   rgba(228, 88, 88, 0.14);
@@ -123,17 +127,21 @@
   --accent-primary-ring: rgba(91, 92, 240, 0.24);
 
   /* Semánticos */
-  --accent-teal:       #148f6a;
-  --accent-teal-soft:  rgba(20, 143, 106, 0.12);
-  --accent-teal-line:  linear-gradient(90deg, #148f6a, #9fe1cb);
+  --accent-teal:       #059669;
+  --accent-teal-soft:  rgba(5, 150, 105, 0.12);
+  --accent-teal-line:  linear-gradient(90deg, #059669, #6ee7b7);
 
-  --accent-purple:      #7b66f2;
-  --accent-purple-soft: rgba(123, 102, 242, 0.10);
-  --accent-purple-line: linear-gradient(90deg, #7b66f2, #d9d4ff);
+  --accent-indigo:      #4f46e5;
+  --accent-indigo-soft: rgba(79, 70, 229, 0.12);
+  --accent-indigo-line: linear-gradient(90deg, #4f46e5, #a5b4fc);
 
-  --accent-amber:      #b87418;
-  --accent-amber-soft: rgba(184, 116, 24, 0.12);
-  --accent-amber-line: linear-gradient(90deg, #b87418, #ffd58a);
+  --accent-purple:      #7c3aed;
+  --accent-purple-soft: rgba(124, 58, 237, 0.10);
+  --accent-purple-line: linear-gradient(90deg, #7c3aed, #c4b5fd);
+
+  --accent-amber:      #d97706;
+  --accent-amber-soft: rgba(217, 119, 6, 0.12);
+  --accent-amber-line: linear-gradient(90deg, #d97706, #fcd34d);
 
   --accent-red:        #d64747;
   --accent-red-soft:   rgba(214, 71, 71, 0.12);

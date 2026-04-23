@@ -28,6 +28,12 @@ export class EspaciosController {
     return this.espaciosService.findAll({ page, limit });
   }
 
+  @Post('sync')
+  @Roles(Role.SUPERADMIN, Role.ADMIN)
+  syncHealth() {
+    return this.espaciosService.syncHealth();
+  }
+
   @Get('estadisticas')
   @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
   getEstadisticas() {

@@ -34,17 +34,19 @@ export function PedidosList({ pedidos, isLoading, onUpdateStatus, onDeletePedido
       </div>
 
       <div className="grid grid-cols-1 gap-6">
-        {pedidos.map((pedido) => (
+        {pedidos
+          .filter(p => p.estado === 'pendiente' || p.estado === 'en_agua')
+          .map((pedido) => (
           <div key={pedido.id} className="group relative bg-[var(--bg-secondary)]/30 hover:bg-[var(--bg-secondary)]/50 p-8 rounded-[2.5rem] border border-[var(--border-primary)]/60 hover:border-indigo-500/40 transition-all duration-500 flex flex-col xl:flex-row xl:items-center justify-between gap-8 shadow-sm hover:shadow-2xl hover:shadow-indigo-900/10">
             <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 rounded-[2.5rem] pointer-events-none" />
 
             <div className="flex items-center gap-8 relative z-10">
               <div className={`w-16 h-16 rounded-[1.5rem] flex items-center justify-center border-2 transition-all duration-500 ${pedido.estado === 'pendiente' ? 'bg-amber-500/10 border-amber-500/20 text-amber-500 shadow-[0_0_20px_-5px_rgba(245,158,11,0.3)]' :
-                pedido.estado === 'en_proceso' ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-500 shadow-[0_0_20px_-5px_rgba(99,102,241,0.3)]' :
-                  pedido.estado === 'completado' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500 shadow-[0_0_20px_-5px_rgba(16,185,129,0.3)]' :
+                pedido.estado === 'en_agua' ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-500 shadow-[0_0_20px_-5px_rgba(99,102,241,0.3)]' :
+                  pedido.estado === 'finalizado' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500 shadow-[0_0_20px_-5px_rgba(16,185,129,0.3)]' :
                     'bg-rose-500/10 border-rose-500/20 text-rose-500'
                 }`}>
-                <Anchor className={`w-8 h-8 ${pedido.estado === 'en_proceso' ? 'animate-bounce' : ''}`} />
+                <Anchor className={`w-8 h-8 ${pedido.estado === 'en_agua' ? 'animate-pulse' : ''}`} />
               </div>
 
               <div className="space-y-3">
@@ -60,6 +62,14 @@ export function PedidosList({ pedidos, isLoading, onUpdateStatus, onDeletePedido
                   )}
                   <span className="text-[9px] font-black px-3 py-1 bg-[var(--bg-primary)] text-[var(--text-secondary)] rounded-full border border-[var(--border-primary)] tracking-[0.2em] uppercase">
                     {pedido.embarcacion?.matricula}
+                  </span>
+                  <span className={`text-[8px] font-black px-2.5 py-0.5 rounded-md border uppercase tracking-widest ${
+                    pedido.estado === 'pendiente' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
+                    pedido.estado === 'en_agua' ? 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20' :
+                    pedido.estado === 'finalizado' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' :
+                    'bg-rose-500/10 text-rose-500 border-rose-500/20'
+                  }`}>
+                    {pedido.estado === 'en_agua' ? 'En Agua' : pedido.estado}
                   </span>
                 </div>
                 <div className="flex flex-wrap items-center gap-6">
@@ -86,30 +96,32 @@ export function PedidosList({ pedidos, isLoading, onUpdateStatus, onDeletePedido
             <div className="flex items-center gap-4 bg-[var(--bg-primary)]/50 p-3 rounded-[2rem] border border-[var(--border-primary)]/60 relative z-10 backdrop-blur-sm self-end xl:self-center">
               {pedido.estado === 'pendiente' && (
                 <button
-                  onClick={() => onUpdateStatus(pedido.id, 'en_proceso')}
+                  onClick={() => onUpdateStatus(pedido.id, 'en_agua')}
                   className="flex items-center gap-3 px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all hover:scale-[1.03] active:scale-95 shadow-lg shadow-indigo-900/30"
                 >
                   <ArrowRight className="w-4 h-4" />
-                  Iniciar
+                  Bajar a Agua
                 </button>
               )}
-              {pedido.estado === 'en_proceso' && (
+              {pedido.estado === 'en_agua' && (
                 <button
-                  onClick={() => onUpdateStatus(pedido.id, 'completado')}
+                  onClick={() => onUpdateStatus(pedido.id, 'finalizado')}
                   className="flex items-center gap-3 px-8 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all hover:scale-[1.03] active:scale-95 shadow-lg shadow-emerald-900/30"
                 >
                   <CheckCircle2 className="w-4 h-4" />
-                  Finalizar
+                  Vuelta a Cuna
                 </button>
               )}
               
               <div className="flex items-center gap-1.5 px-2">
-                <button
-                  onClick={() => onUpdateStatus(pedido.id, 'cancelado')}
-                  className="p-3 text-[var(--text-muted)] hover:text-rose-500 hover:bg-rose-500/5 rounded-xl transition-all" title="Cancelar Solicitud"
-                >
-                  <XCircle className="w-5 h-5" />
-                </button>
+                {(pedido.estado === 'pendiente' || pedido.estado === 'en_agua') && (
+                  <button
+                    onClick={() => onUpdateStatus(pedido.id, 'cancelado')}
+                    className="p-3 text-[var(--text-muted)] hover:text-rose-500 hover:bg-rose-500/5 rounded-xl transition-all" title="Cancelar Solicitud"
+                  >
+                    <XCircle className="w-5 h-5" />
+                  </button>
+                )}
                 <div className="w-[1px] h-6 bg-[var(--border-primary)] mx-1" />
                 <button
                   onClick={() => onDeletePedido(pedido.id)}
