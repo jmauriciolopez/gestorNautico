@@ -92,7 +92,7 @@ export function useOperaciones(options: {
   });
 
   const updatePedidoEstado = useMutation({
-    mutationFn: ({ id, estado }: { id: number; estado: string }) =>
+    mutationFn: ({ id, estado }: { id: number; estado: EstadoPedido }) =>
       httpClient.patch(`/pedidos/${id}/estado`, { estado }),
     onSuccess: invalidateAll,
     onError: () => toast.error('Error al actualizar estado')

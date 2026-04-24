@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { httpClient } from '../../../shared/api/HttpClient';
 import { Paginated } from '../../../api/pagination';
+import { EstadoEmbarcacion } from '../../../shared/types/enums';
 
 export interface Embarcacion {
   id: number;
@@ -11,7 +12,7 @@ export interface Embarcacion {
   eslora?: number;
   manga?: number;
   tipo: string;
-  estado_operativo: string;
+  estado_operativo: EstadoEmbarcacion;
   cliente?: Cliente;
   espacio?: any;
   espacioId?: number | null;

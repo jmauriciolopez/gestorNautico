@@ -15,6 +15,7 @@ import { useOperaciones } from '../../operaciones/hooks/useOperaciones';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+import { EstadoEmbarcacion, TipoMovimiento } from '../../../shared/types/enums';
 
 const MetricCard = React.memo(({
   icon,
@@ -75,9 +76,9 @@ const DashboardOperativo: React.FC = () => {
   const movimientos = useMemo(() => getMovimientos.data || [], [getMovimientos.data]);
 
   const { enCuna, enAgua, libres } = useMemo(() => ({
-    enCuna: embarcaciones.filter((e) => e.estado_operativo === 'EN_CUNA').length,
-    enAgua: embarcaciones.filter((e) => e.estado_operativo === 'EN_AGUA').length,
-    libres: embarcaciones.filter((e) => !e.espacioId && e.estado_operativo !== 'INACTIVA').length
+    enCuna: embarcaciones.filter((e) => e.estado_operativo === EstadoEmbarcacion.EN_CUNA).length,
+    enAgua: embarcaciones.filter((e) => e.estado_operativo === EstadoEmbarcacion.EN_AGUA).length,
+    libres: embarcaciones.filter((e) => !e.espacioId && e.estado_operativo !== EstadoEmbarcacion.INACTIVA).length
   }), [embarcaciones]);
 
   const movimientosHoy = useMemo(() => movimientos.filter((m) => {
@@ -87,7 +88,7 @@ const DashboardOperativo: React.FC = () => {
   }), [movimientos]);
 
   const embarcacionesLibres = useMemo(() => 
-    embarcaciones.filter((e) => !e.espacioId && e.estado_operativo !== 'INACTIVA'),
+    embarcaciones.filter((e) => !e.espacioId && e.estado_operativo !== EstadoEmbarcacion.INACTIVA),
   [embarcaciones]);
 
   const handleAsignarBarco = useCallback(async (
@@ -102,14 +103,14 @@ const DashboardOperativo: React.FC = () => {
     }
   }, [updateEmbarcacion]);
 
-  const handleRegistrarSalida = useCallback(async (embarcacionId: number, tipo: 'entrada' | 'salida' = 'salida') => {
+  const handleRegistrarSalida = useCallback(async (embarcacionId: number, tipo: TipoMovimiento = TipoMovimiento.SALIDA) => {
     try {
       await createMovimiento.mutateAsync({ 
         embarcacionId, 
         tipo,
         observaciones: `Registro de ${tipo} desde mapa de racks`
       });
-      const msg = tipo === 'salida' ? 'Salida registrada - Embarcación en el agua' : 'Entrada registrada - Embarcación en cuna';
+      const msg = tipo === TipoMovimiento.SALIDA ? 'Salida registrada - Embarcación en el agua' : 'Entrada registrada - Embarcación en cuna';
       toast.success(msg);
     } catch {
       toast.error(`Error al registrar ${tipo}`);
@@ -292,7 +293,7 @@ const DashboardOperativo: React.FC = () => {
         ) : (
           <div className="p-3 space-y-2">
             {movimientosHoy.slice(0, 8).map((m) => {
-              const esEntrada = m.tipo === 'entrada';
+              const esEntrada = m.tipo === TipoMovimiento.ENTRADA;
 
               return (
                 <div key={m.id} className="log-item">

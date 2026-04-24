@@ -20,6 +20,7 @@ import { AsignarEmbarcacionModal } from '../components/AsignarEmbarcacionModal';
 import { LiberarEspacioModal } from '../components/LiberarEspacioModal';
 import { RoleGuard } from '../../../components/auth/RoleGuard';
 import { Role } from '../../../types';
+import { EstadoEmbarcacion } from '../../../shared/types/enums';
 
 export default function InfraestructuraPage() {
   const {
@@ -40,7 +41,7 @@ export default function InfraestructuraPage() {
   const { getEmbarcaciones, updateEmbarcacion } = useEmbarcaciones();
   const embarcaciones = getEmbarcaciones.data?.data || [];
 
-  const embarcacionesLibres = embarcaciones.filter((e: any) => !e.espacioId && e.estado_operativo !== 'INACTIVA');
+  const embarcacionesLibres = embarcaciones.filter((e: any) => !e.espacioId && e.estado_operativo !== EstadoEmbarcacion.INACTIVA);
 
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<'mapa' | 'config'>('mapa');
@@ -152,13 +153,13 @@ export default function InfraestructuraPage() {
     if (!selectedSpaceState) return;
     try {
       if (embarcacionId) {
-        const keepsSpace = nuevoEstado === 'EN_CUNA';
+        const keepsSpace = nuevoEstado === EstadoEmbarcacion.EN_CUNA;
 
         await updateEmbarcacion.mutateAsync({
           id: embarcacionId,
           data: {
             espacioId: keepsSpace ? selectedSpaceState.id : null,
-            estado_operativo: nuevoEstado
+            estado_operativo: nuevoEstado as EstadoEmbarcacion
           }
         });
       } else {

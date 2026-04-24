@@ -16,12 +16,13 @@ import { RackMap } from '../hooks/useDashboard';
 import { useNavigate } from 'react-router-dom';
 import { AsignarEmbarcacionModal } from '../../infraestructura/components/AsignarEmbarcacionModal';
 import { Embarcacion } from '../../embarcaciones/hooks/useEmbarcaciones';
+import { EstadoEmbarcacion, TipoMovimiento } from '../../../shared/types/enums';
 
 interface MapaRacksProps {
   data: RackMap[];
   embarcacionesLibres: Embarcacion[];
   onAsignar: (embarcacionId: number, espacioId: number) => Promise<void>;
-  onRegistrarSalida?: (embarcacionId: number, tipo?: 'entrada' | 'salida') => Promise<void>;
+  onRegistrarSalida?: (embarcacionId: number, tipo?: TipoMovimiento) => Promise<void>;
   is3D?: boolean;
 }
 
@@ -39,17 +40,17 @@ const getEsloraColor = (eslora: number) => {
 
 const getEspacioStyle = (espacio: any) => {
   const estado = espacio?.embarcacion?.estado_operativo;
-  if (estado === 'EN_AGUA') {
+  if (estado === EstadoEmbarcacion.EN_AGUA) {
     return 'bg-[var(--accent-teal-soft)] border-[var(--accent-teal-soft)]';
   }
-  if (estado === 'EN_CUNA' || espacio?.ocupado) {
+  if (estado === EstadoEmbarcacion.EN_CUNA || espacio?.ocupado) {
     return 'bg-[var(--accent-indigo-soft)] border-[var(--accent-indigo-soft)]';
   }
   return 'bg-transparent border-white/10';
 };
 
 const hasEmbarcacion = (espacio: any) => {
-  return espacio?.ocupado || espacio?.embarcacion?.estado_operativo === 'EN_AGUA';
+  return espacio?.ocupado || espacio?.embarcacion?.estado_operativo === EstadoEmbarcacion.EN_AGUA;
 };
 
 const Rack3DContainer: React.FC<Rack3DContainerProps> = ({ 
@@ -474,24 +475,24 @@ export const MapaRacks: React.FC<MapaRacksProps> = ({
                   </button>
                   <button
                     onClick={() => {
-                      const tipo = selectedEspacio.embarcacion.estado_operativo === 'EN_AGUA' ? 'entrada' : 'salida';
+                      const tipo = selectedEspacio.embarcacion.estado_operativo === EstadoEmbarcacion.EN_AGUA ? TipoMovimiento.ENTRADA : TipoMovimiento.SALIDA;
                       onRegistrarSalida?.(selectedEspacio.embarcacion.id, tipo);
                       setSelectedEspacio(null);
                     }}
                     className={`flex items-center justify-between w-full p-4 rounded-2xl border transition-all group mt-2 ${
-                      selectedEspacio.embarcacion.estado_operativo === 'EN_AGUA'
+                      selectedEspacio.embarcacion.estado_operativo === EstadoEmbarcacion.EN_AGUA
                         ? 'bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/20 text-emerald-400'
                         : 'bg-red-500/10 hover:bg-red-500/20 border-red-500/20 text-red-400'
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <div className={`p-2 rounded-lg ${
-                        selectedEspacio.embarcacion.estado_operativo === 'EN_AGUA' ? 'bg-emerald-500/20' : 'bg-red-500/20'
+                        selectedEspacio.embarcacion.estado_operativo === EstadoEmbarcacion.EN_AGUA ? 'bg-emerald-500/20' : 'bg-red-500/20'
                       }`}>
-                        {selectedEspacio.embarcacion.estado_operativo === 'EN_AGUA' ? <LogIn size={18} /> : <LogOut size={18} />}
+                        {selectedEspacio.embarcacion.estado_operativo === EstadoEmbarcacion.EN_AGUA ? <LogIn size={18} /> : <LogOut size={18} />}
                       </div>
                       <span className="font-bold">
-                        {selectedEspacio.embarcacion.estado_operativo === 'EN_AGUA' ? 'Registrar Entrada' : 'Registrar Salida'}
+                        {selectedEspacio.embarcacion.estado_operativo === EstadoEmbarcacion.EN_AGUA ? 'Registrar Entrada' : 'Registrar Salida'}
                       </span>
                     </div>
                     <ChevronRight size={18} className="opacity-40 group-hover:translate-x-1 transition-transform" />

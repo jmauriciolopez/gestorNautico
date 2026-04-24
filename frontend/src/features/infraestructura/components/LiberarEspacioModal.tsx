@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Ship, X, AlertTriangle, Loader2 } from 'lucide-react';
 import { Embarcacion } from '../../embarcaciones/hooks/useEmbarcaciones';
+import { EstadoEmbarcacion } from '../../../shared/types/enums';
 
 interface LiberarEspacioModalProps {
   isOpen: boolean;
@@ -8,7 +9,7 @@ interface LiberarEspacioModalProps {
   espacioId: number;
   codigoEspacio: string;
   embarcacionEnElLugar?: Embarcacion;
-  onLiberar: (embarcacionId: number | null, nuevoEstado: string) => Promise<void>;
+  onLiberar: (embarcacionId: number | null, nuevoEstado: EstadoEmbarcacion) => Promise<void>;
 }
 
 export function LiberarEspacioModal({
@@ -18,7 +19,7 @@ export function LiberarEspacioModal({
   embarcacionEnElLugar,
   onLiberar
 }: LiberarEspacioModalProps) {
-  const [nuevoEstado, setNuevoEstado] = useState<string>('EN_AGUA');
+  const [nuevoEstado, setNuevoEstado] = useState<EstadoEmbarcacion>(EstadoEmbarcacion.EN_AGUA);
   const [isLoading, setIsLoading] = useState(false);
 
   if (!isOpen) return null;
@@ -83,12 +84,12 @@ export function LiberarEspacioModal({
             </div>
             <div className="grid grid-cols-2 gap-3">
               {[
-                { value: 'EN_CUNA', label: 'En Cuna' },
-                { value: 'EN_AGUA', label: 'Puesta a Flote' },
-                { value: 'MANTENIMIENTO', label: 'Varadero' },
-                { value: 'INACTIVA', label: 'Exterior' }
+                { value: EstadoEmbarcacion.EN_CUNA, label: 'En Cuna' },
+                { value: EstadoEmbarcacion.EN_AGUA, label: 'Puesta a Flote' },
+                { value: EstadoEmbarcacion.EN_MANTENIMIENTO, label: 'Varadero' },
+                { value: EstadoEmbarcacion.INACTIVA, label: 'Exterior' }
               ]
-                .filter(estado => estado.value !== embarcacionEnElLugar?.estado)
+                .filter(estado => estado.value !== embarcacionEnElLugar?.estado_operativo)
                 .map((estado) => (
                   <button
                     key={estado.value}

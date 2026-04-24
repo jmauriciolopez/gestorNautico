@@ -7,6 +7,7 @@ import { useClientes } from '../../clientes/hooks/useClientes';
 import { useUbicaciones } from '../../infraestructura/hooks/useUbicaciones';
 import UbicacionPickerModal from '../components/UbicacionPickerModal';
 import { queryClient } from '../../../api/queryClient';
+import { EstadoEmbarcacion } from '../../../shared/types/enums';
 
 export default function EmbarcacionForm() {
   const navigate = useNavigate();
@@ -32,7 +33,7 @@ export default function EmbarcacionForm() {
     tipo: 'Lancha',
     clienteId: '',
     espacioId: '',
-    estado_operativo: 'EN_CUNA',
+    estado_operativo: EstadoEmbarcacion.EN_CUNA,
     descuento: '0'
   });
 
@@ -59,7 +60,7 @@ export default function EmbarcacionForm() {
         tipo: embarcacion.tipo || 'Lancha',
         clienteId: String(embarcacion.cliente?.id || ''),
         espacioId: String(embarcacion.espacio?.id || ''),
-        estado_operativo: embarcacion.estado_operativo || 'EN_CUNA',
+        estado_operativo: embarcacion.estado_operativo || EstadoEmbarcacion.EN_CUNA,
         descuento: embarcacion.descuento !== undefined ? String(embarcacion.descuento) : '0'
       });
     }
@@ -239,7 +240,7 @@ export default function EmbarcacionForm() {
                     ...prev,
                     espacioId: espacioId ? String(espacioId) : '',
                     // Si se quita la ubicación, cambiar estado a EN_AGUA automáticamente
-                    estado_operativo: espacioId ? prev.estado_operativo : 'EN_AGUA'
+                    estado_operativo: espacioId ? prev.estado_operativo : EstadoEmbarcacion.EN_AGUA
                   }));
                 }}
                 currentEspacioId={formData.espacioId ? Number(formData.espacioId) : undefined}
@@ -253,7 +254,12 @@ export default function EmbarcacionForm() {
             <div className="space-y-3 col-span-full">
               <label className="block text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest ml-1">Estado Operativo Actual</label>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
-                {['EN_CUNA', 'EN_AGUA', 'EN_MANTENIMIENTO', 'INACTIVA'].map((estado) => (
+                {[
+                  EstadoEmbarcacion.EN_CUNA,
+                  EstadoEmbarcacion.EN_AGUA,
+                  EstadoEmbarcacion.EN_MANTENIMIENTO,
+                  EstadoEmbarcacion.INACTIVA,
+                ].map((estado) => (
                   <button
                     key={estado}
                     type="button"

@@ -3,18 +3,19 @@ import { createPortal } from 'react-dom';
 import { ArrowLeftRight as ArrowLeftRightIcon, X, Search, Ship, ArrowRight, Loader2, AlertCircle, ArrowLeft, Check } from 'lucide-react';
 import { useEmbarcaciones } from '../../embarcaciones/hooks/useEmbarcaciones';
 import { toast } from 'react-hot-toast';
+import { EstadoEmbarcacion, TipoMovimiento } from '../../../shared/types/enums';
 
 interface NuevoMovimientoModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (data: { embarcacionId: number; tipo: 'entrada' | 'salida'; observaciones?: string }) => Promise<void>;
+  onSuccess: (data: { embarcacionId: number; tipo: TipoMovimiento; observaciones?: string }) => Promise<void>;
 }
 
 export function NuevoMovimientoModal({ isOpen, onClose, onSuccess }: NuevoMovimientoModalProps) {
   const { getEmbarcaciones } = useEmbarcaciones();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [tipo, setTipo] = useState<'entrada' | 'salida'>('entrada');
+  const [tipo, setTipo] = useState<TipoMovimiento>(TipoMovimiento.ENTRADA);
   const [observaciones, setObservaciones] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -31,10 +32,10 @@ export function NuevoMovimientoModal({ isOpen, onClose, onSuccess }: NuevoMovimi
 
   useEffect(() => {
     if (selectedBoat) {
-      if (selectedBoat.estado_operativo === 'EN_CUNA') {
-        setTipo('salida');
+      if (selectedBoat.estado_operativo === EstadoEmbarcacion.EN_CUNA) {
+        setTipo(TipoMovimiento.SALIDA);
       } else {
-        setTipo('entrada');
+        setTipo(TipoMovimiento.ENTRADA);
       }
     }
   }, [selectedBoat]);
@@ -189,34 +190,34 @@ export function NuevoMovimientoModal({ isOpen, onClose, onSuccess }: NuevoMovimi
             <div className="grid grid-cols-2 gap-6">
               <button
                 type="button"
-                disabled={selectedBoat?.estado_operativo === 'EN_CUNA'}
-                onClick={() => setTipo('entrada')}
-                className={`group flex flex-col items-center justify-center p-8 rounded-[2.5rem] border transition-all duration-500 ${tipo === 'entrada'
+                disabled={selectedBoat?.estado_operativo === EstadoEmbarcacion.EN_CUNA}
+                onClick={() => setTipo(TipoMovimiento.ENTRADA)}
+                className={`group flex flex-col items-center justify-center p-8 rounded-[2.5rem] border transition-all duration-500 ${tipo === TipoMovimiento.ENTRADA
                   ? 'bg-indigo-600 border-indigo-500 text-white shadow-[0_20px_50px_-12px_rgba(79,70,229,0.5)] translate-y-[-4px]'
                   : 'bg-[var(--bg-secondary)]/40 border-[var(--border-primary)] text-[var(--text-muted)] hover:border-indigo-500/40 hover:bg-indigo-500/5'
-                } ${selectedBoat?.estado === 'EN_CUNA' ? 'opacity-20 cursor-not-allowed grayscale' : ''}`}
+                } ${selectedBoat?.estado_operativo === EstadoEmbarcacion.EN_CUNA ? 'opacity-20 cursor-not-allowed grayscale' : ''}`}
               >
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 transition-all duration-500 ${tipo === 'entrada' ? 'bg-white/20 text-white' : 'bg-[var(--bg-primary)] border border-[var(--border-primary)] group-hover:border-indigo-500/30'}`}>
+                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 transition-all duration-500 ${tipo === TipoMovimiento.ENTRADA ? 'bg-white/20 text-white' : 'bg-[var(--bg-primary)] border border-[var(--border-primary)] group-hover:border-indigo-500/30'}`}>
                   <ArrowRight className="w-7 h-7" />
                 </div>
                 <span className="text-sm font-black uppercase tracking-[0.2em] mb-1">A Cuna</span>
-                <span className={`text-[9px] uppercase font-black tracking-widest ${tipo === 'entrada' ? 'text-white/60' : 'text-[var(--text-muted)] opacity-60'}`}>Entrada Marítima</span>
+                <span className={`text-[9px] uppercase font-black tracking-widest ${tipo === TipoMovimiento.ENTRADA ? 'text-white/60' : 'text-[var(--text-muted)] opacity-60'}`}>Entrada Marítima</span>
               </button>
 
               <button
                 type="button"
-                disabled={selectedBoat != null && selectedBoat.estado_operativo !== 'EN_CUNA'}
-                onClick={() => setTipo('salida')}
-                className={`group flex flex-col items-center justify-center p-8 rounded-[2.5rem] border transition-all duration-500 ${tipo === 'salida'
+                disabled={selectedBoat != null && selectedBoat.estado_operativo !== EstadoEmbarcacion.EN_CUNA}
+                onClick={() => setTipo(TipoMovimiento.SALIDA)}
+                className={`group flex flex-col items-center justify-center p-8 rounded-[2.5rem] border transition-all duration-500 ${tipo === TipoMovimiento.SALIDA
                   ? 'bg-emerald-600 border-emerald-500 text-white shadow-[0_20px_50px_-12px_rgba(16,185,129,0.5)] translate-y-[-4px]'
                   : 'bg-[var(--bg-secondary)]/40 border-[var(--border-primary)] text-[var(--text-muted)] hover:border-emerald-500/40 hover:bg-emerald-500/5'
-                } ${selectedBoat != null && selectedBoat.estado_operativo !== 'EN_CUNA' ? 'opacity-20 cursor-not-allowed grayscale' : ''}`}
+                } ${selectedBoat != null && selectedBoat.estado_operativo !== EstadoEmbarcacion.EN_CUNA ? 'opacity-20 cursor-not-allowed grayscale' : ''}`}
               >
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 transition-all duration-500 ${tipo === 'salida' ? 'bg-white/20 text-white' : 'bg-[var(--bg-primary)] border border-[var(--border-primary)] group-hover:border-emerald-500/30'}`}>
+                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 transition-all duration-500 ${tipo === TipoMovimiento.SALIDA ? 'bg-white/20 text-white' : 'bg-[var(--bg-primary)] border border-[var(--border-primary)] group-hover:border-emerald-500/30'}`}>
                   <ArrowLeft className="w-7 h-7" />
                 </div>
                 <span className="text-sm font-black uppercase tracking-[0.2em] mb-1">A Agua</span>
-                <span className={`text-[9px] uppercase font-black tracking-widest ${tipo === 'salida' ? 'text-white/60' : 'text-[var(--text-muted)] opacity-60'}`}>Salida a Canal</span>
+                <span className={`text-[9px] uppercase font-black tracking-widest ${tipo === TipoMovimiento.SALIDA ? 'text-white/60' : 'text-[var(--text-muted)] opacity-60'}`}>Salida a Canal</span>
               </button>
             </div>
           </div>
