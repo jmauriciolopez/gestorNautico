@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ILike, Repository, FindManyOptions, FindOptionsWhere } from 'typeorm';
 import { Cliente } from './clientes.entity';
@@ -121,6 +121,16 @@ export class ClientesService {
   }
 
   async create(createClienteDto: CreateClienteDto): Promise<Cliente> {
+    if (createClienteDto.dni) {
+      const existing = await this.clientesRepository.findOne({
+        where: { dni: createClienteDto.dni },
+      });
+      if (existing) {
+        throw new BadRequestException(
+          `Ya existe un cliente con el DNI ${createClienteDto.dni}`,
+        );
+      }
+    }
     const nuevoCliente = this.clientesRepository.create(createClienteDto);
     return this.clientesRepository.save(nuevoCliente);
   }

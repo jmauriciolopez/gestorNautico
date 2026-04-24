@@ -98,10 +98,12 @@ export class CajasService {
         },
       );
     } catch (error: unknown) {
+      if (error instanceof ConflictException) {
+        this.logger.warn(`Intento fallido de abrir caja: ${error.message}`);
+        throw error;
+      }
       const errMsg = error instanceof Error ? error.message : 'Unknown error';
-      const errStack = error instanceof Error ? error.stack : undefined;
-      this.logger.error(`Error crítico al abrir caja: ${errMsg}`, errStack);
-      if (error instanceof ConflictException) throw error;
+      this.logger.error(`Error crítico al abrir caja: ${errMsg}`, error instanceof Error ? error.stack : undefined);
       throw new BadRequestException(`No se pudo abrir la caja: ${errMsg}`);
     }
   }
@@ -142,15 +144,12 @@ export class CajasService {
         },
       );
     } catch (error: unknown) {
-      const errMsg = error instanceof Error ? error.message : 'Unknown error';
-      const errStack = error instanceof Error ? error.stack : undefined;
-      this.logger.error(`Error al cerrar caja: ${errMsg}`, errStack);
-      if (
-        error instanceof ConflictException ||
-        error instanceof NotFoundException
-      ) {
+      if (error instanceof ConflictException || error instanceof NotFoundException) {
+        this.logger.warn(`Intento fallido de cerrar caja: ${error instanceof Error ? error.message : 'Error'}`);
         throw error;
       }
+      const errMsg = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Error al cerrar caja: ${errMsg}`, error instanceof Error ? error.stack : undefined);
       throw new BadRequestException(`No se pudo cerrar la caja: ${errMsg}`);
     }
   }
