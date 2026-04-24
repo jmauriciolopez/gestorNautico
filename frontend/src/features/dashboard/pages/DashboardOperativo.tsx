@@ -40,15 +40,15 @@ const DashboardOperativo: React.FC = () => {
 
   const { data: rackMapData, isLoading: isMapLoading } = useRackMap();
   const { getEmbarcaciones, updateEmbarcacion } = useEmbarcaciones();
-  const { getMovimientos } = useOperaciones();
+  const { getMovimientos, createMovimiento } = useOperaciones();
 
   const embarcaciones = getEmbarcaciones.data?.data || [];
   const movimientos = getMovimientos.data || [];
 
-  const enCuna = embarcaciones.filter((e) => e.estado === 'EN_CUNA').length;
-  const enAgua = embarcaciones.filter((e) => e.estado === 'EN_AGUA').length;
+  const enCuna = embarcaciones.filter((e) => e.estado_operativo === 'EN_CUNA').length;
+  const enAgua = embarcaciones.filter((e) => e.estado_operativo === 'EN_AGUA').length;
   const libres = embarcaciones.filter(
-    (e) => !e.espacioId && e.estado !== 'INACTIVA'
+    (e) => !e.espacioId && e.estado_operativo !== 'INACTIVA'
   ).length;
 
   const movimientosHoy = movimientos.filter((m) => {
@@ -66,6 +66,20 @@ const DashboardOperativo: React.FC = () => {
       toast.success('Embarcación asignada');
     } catch (error: any) {
       console.error('Error al asignar:', error);
+    }
+  };
+
+  const handleRegistrarSalida = async (embarcacionId: number, tipo: 'entrada' | 'salida' = 'salida') => {
+    try {
+      await createMovimiento.mutateAsync({ 
+        embarcacionId, 
+        tipo,
+        observaciones: `Registro de ${tipo} desde mapa de racks`
+      });
+      const msg = tipo === 'salida' ? 'Salida registrada - Embarcación en el agua' : 'Entrada registrada - Embarcación en cuna';
+      toast.success(msg);
+    } catch (error: any) {
+      toast.error(`Error al registrar ${tipo}`);
     }
   };
 
@@ -181,12 +195,13 @@ const DashboardOperativo: React.FC = () => {
               <span className="section-subtitle">Cargando topología</span>
             </div>
           ) : (
-            <MapaRacks
+<MapaRacks
               data={rackMapData || []}
               embarcacionesLibres={embarcaciones.filter(
-                (e) => !e.espacioId && e.estado !== 'INACTIVA'
+                (e) => !e.espacioId && e.estado_operativo !== 'INACTIVA'
               )}
               onAsignar={handleAsignarBarco}
+              onRegistrarSalida={handleRegistrarSalida}
               is3D={is3D}
             />
           )}

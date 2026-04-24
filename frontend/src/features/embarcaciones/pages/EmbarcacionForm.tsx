@@ -32,7 +32,7 @@ export default function EmbarcacionForm() {
     tipo: 'Lancha',
     clienteId: '',
     espacioId: '',
-    estado: 'EN_CUNA',
+    estado_operativo: 'EN_CUNA',
     descuento: '0'
   });
 
@@ -59,7 +59,7 @@ export default function EmbarcacionForm() {
         tipo: embarcacion.tipo || 'Lancha',
         clienteId: String(embarcacion.cliente?.id || ''),
         espacioId: String(embarcacion.espacio?.id || ''),
-        estado: embarcacion.estado || 'EN_CUNA',
+        estado_operativo: embarcacion.estado_operativo || 'EN_CUNA',
         descuento: embarcacion.descuento !== undefined ? String(embarcacion.descuento) : '0'
       });
     }
@@ -239,7 +239,7 @@ export default function EmbarcacionForm() {
                     ...prev,
                     espacioId: espacioId ? String(espacioId) : '',
                     // Si se quita la ubicación, cambiar estado a EN_AGUA automáticamente
-                    estado: espacioId ? prev.estado : 'EN_AGUA'
+                    estado_operativo: espacioId ? prev.estado_operativo : 'EN_AGUA'
                   }));
                 }}
                 currentEspacioId={formData.espacioId ? Number(formData.espacioId) : undefined}
@@ -253,17 +253,17 @@ export default function EmbarcacionForm() {
             <div className="space-y-3 col-span-full">
               <label className="block text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest ml-1">Estado Operativo Actual</label>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
-                {['EN_CUNA', 'EN_AGUA', 'MANTENIMIENTO', 'INACTIVA'].map((estado) => (
+                {['EN_CUNA', 'EN_AGUA', 'EN_MANTENIMIENTO', 'INACTIVA'].map((estado) => (
                   <button
                     key={estado}
                     type="button"
-                    onClick={() => setFormData({ ...formData, estado })}
-                    className={`px-4 py-3 rounded-xl border font-bold text-xs transition-all ${formData.estado === estado
+                    onClick={() => setFormData({ ...formData, estado_operativo: estado })}
+                    className={`px-4 py-3 rounded-xl border font-bold text-xs transition-all ${formData.estado_operativo === estado
                       ? 'bg-blue-600 border-blue-500 text-[var(--text-primary)] shadow-lg shadow-blue-600/20'
                       : 'bg-[var(--bg-primary)] border-[var(--border-primary)] text-[var(--text-secondary)] hover:border-blue-500/40'
                       }`}
                   >
-                    {estado.replace('_', ' ')}
+                    {estado.replace(/_/g, ' ')}
                   </button>
                 ))}
               </div>

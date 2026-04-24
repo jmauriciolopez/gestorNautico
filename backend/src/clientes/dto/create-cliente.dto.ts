@@ -7,6 +7,7 @@ import {
   Min,
   Max,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreateClienteDto {
   @IsString()
@@ -27,12 +28,14 @@ export class CreateClienteDto {
   @IsOptional()
   activo?: boolean;
 
+  @Type(() => Number)
   @IsNumber()
   @IsOptional()
   @Min(1)
   @Max(31)
   diaFacturacion?: number;
 
+  @Type(() => Number)
   @IsNumber()
   @IsOptional()
   @Min(0)
@@ -43,6 +46,7 @@ export class CreateClienteDto {
   @IsOptional()
   tipoCuota?: string;
 
+  @Type(() => Number)
   @IsNumber()
   @IsOptional()
   responsableFamiliaId?: number;

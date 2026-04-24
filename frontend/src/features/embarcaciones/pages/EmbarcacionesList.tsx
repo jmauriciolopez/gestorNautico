@@ -120,7 +120,7 @@ export default function EmbarcacionesList() {
             </thead>
             <tbody className="divide-y divide-[var(--border-secondary)] transition-colors duration-300">
               {embarcaciones.map((emb: Embarcacion) => (
-                <tr key={emb.id} className={`group hover:bg-indigo-500/5 transition-all cursor-default ${emb.estado === 'INACTIVA' ? 'opacity-40 grayscale' : ''}`}>
+                <tr key={emb.id} className={`group hover:bg-indigo-500/5 transition-all cursor-default ${emb.estado_operativo === 'INACTIVA' ? 'opacity-40 grayscale' : ''}`}>
                   <td className="px-8 py-6">
                     <div className="flex items-center gap-5">
                       <div className="w-12 h-12 rounded-[1.25rem] bg-[var(--bg-secondary)]/50 border border-[var(--border-primary)] flex items-center justify-center text-[var(--text-secondary)] group-hover:bg-indigo-600 group-hover:text-[var(--text-primary)] group-hover:shadow-lg group-hover:shadow-indigo-900/40 transition-all duration-300">
@@ -169,12 +169,12 @@ export default function EmbarcacionesList() {
                     )}
                   </td>
                   <td className="px-8 py-6">
-                    <span className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-[0.15em] border inline-block ${emb.estado === 'EN_CUNA' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
-                      emb.estado === 'EN_AGUA' ? 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20' :
-                        emb.estado === 'MANTENIMIENTO' ? 'bg-purple-500/10 text-purple-500 border-purple-500/20' :
+                    <span className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-[0.15em] border inline-block ${emb.estado_operativo === 'EN_CUNA' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
+                      emb.estado_operativo === 'EN_AGUA' ? 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20' :
+                        emb.estado_operativo === 'EN_MANTENIMIENTO' ? 'bg-purple-500/10 text-purple-500 border-purple-500/20' :
                           'bg-[var(--bg-primary)]/40 text-[var(--text-secondary)] border-[var(--border-primary)]/50'
                       }`}>
-                      {emb.estado.replace('_', ' ')}
+                      {emb.estado_operativo.replace(/_/g, ' ')}
                     </span>
                   </td>
                   <td className="px-4 md:px-8 py-6 text-right">

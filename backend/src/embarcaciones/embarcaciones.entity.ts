@@ -39,8 +39,8 @@ export class Embarcacion {
   tipo: string;
 
   @Index()
-  @Column({ default: 'EN_CUNA' })
-  estado: string; // EN_CUNA, EN_AGUA, MANTENIMIENTO, INACTIVA
+  @Column({ name: 'estado_operativo', default: 'EN_CUNA' })
+  estado_operativo: string; // EN_CUNA, EN_AGUA, EN_MANTENIMIENTO, INACTIVA
 
   @Column({ nullable: true })
   clienteId: number;

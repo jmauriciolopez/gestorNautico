@@ -61,7 +61,7 @@ export function NuevoPedidoModal({ isOpen, onClose, onSave }: NuevoPedidoModalPr
             </div>
             <div>
               <h3 className="text-2xl font-black text-[var(--text-primary)] uppercase tracking-tight">
-                Orden de Trabajo
+                Pedido
               </h3>
               <p className="text-[10px] text-[var(--text-secondary)] font-black uppercase tracking-[0.25em] mt-1 opacity-60">Gestión de servicios y taller</p>
             </div>

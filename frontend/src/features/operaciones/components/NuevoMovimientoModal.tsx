@@ -31,7 +31,7 @@ export function NuevoMovimientoModal({ isOpen, onClose, onSuccess }: NuevoMovimi
 
   useEffect(() => {
     if (selectedBoat) {
-      if (selectedBoat.estado === 'EN_CUNA') {
+      if (selectedBoat.estado_operativo === 'EN_CUNA') {
         setTipo('salida');
       } else {
         setTipo('entrada');
@@ -182,14 +182,14 @@ export function NuevoMovimientoModal({ isOpen, onClose, onSuccess }: NuevoMovimi
               {selectedBoat && (
                 <span className="text-[9px] font-black text-indigo-500 flex items-center gap-2 bg-indigo-500/5 px-3 py-1.5 rounded-full border border-indigo-500/10 uppercase">
                   <AlertCircle className="w-3.5 h-3.5" />
-                  Ubicación: {selectedBoat.estado}
+                  Ubicación: {selectedBoat.estado_operativo}
                 </span>
               )}
             </div>
             <div className="grid grid-cols-2 gap-6">
               <button
                 type="button"
-                disabled={selectedBoat?.estado === 'EN_CUNA'}
+                disabled={selectedBoat?.estado_operativo === 'EN_CUNA'}
                 onClick={() => setTipo('entrada')}
                 className={`group flex flex-col items-center justify-center p-8 rounded-[2.5rem] border transition-all duration-500 ${tipo === 'entrada'
                   ? 'bg-indigo-600 border-indigo-500 text-white shadow-[0_20px_50px_-12px_rgba(79,70,229,0.5)] translate-y-[-4px]'
@@ -205,12 +205,12 @@ export function NuevoMovimientoModal({ isOpen, onClose, onSuccess }: NuevoMovimi
 
               <button
                 type="button"
-                disabled={selectedBoat != null && selectedBoat.estado !== 'EN_CUNA'}
+                disabled={selectedBoat != null && selectedBoat.estado_operativo !== 'EN_CUNA'}
                 onClick={() => setTipo('salida')}
                 className={`group flex flex-col items-center justify-center p-8 rounded-[2.5rem] border transition-all duration-500 ${tipo === 'salida'
                   ? 'bg-emerald-600 border-emerald-500 text-white shadow-[0_20px_50px_-12px_rgba(16,185,129,0.5)] translate-y-[-4px]'
                   : 'bg-[var(--bg-secondary)]/40 border-[var(--border-primary)] text-[var(--text-muted)] hover:border-emerald-500/40 hover:bg-emerald-500/5'
-                } ${selectedBoat != null && selectedBoat.estado !== 'EN_CUNA' ? 'opacity-20 cursor-not-allowed grayscale' : ''}`}
+                } ${selectedBoat != null && selectedBoat.estado_operativo !== 'EN_CUNA' ? 'opacity-20 cursor-not-allowed grayscale' : ''}`}
               >
                 <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 transition-all duration-500 ${tipo === 'salida' ? 'bg-white/20 text-white' : 'bg-[var(--bg-primary)] border border-[var(--border-primary)] group-hover:border-emerald-500/30'}`}>
                   <ArrowLeft className="w-7 h-7" />

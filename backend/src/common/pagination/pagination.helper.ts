@@ -24,7 +24,7 @@ export async function paginate<T>(
   let data: T[];
   let total: number;
 
-  if (repoOrQueryBuilder instanceof SelectQueryBuilder) {
+  if ('getManyAndCount' in repoOrQueryBuilder) {
     [data, total] = await repoOrQueryBuilder
       .skip((page - 1) * limit)
       .take(limit)

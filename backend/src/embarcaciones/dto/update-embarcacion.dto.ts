@@ -43,8 +43,8 @@ export class UpdateEmbarcacionDto {
   tipo?: string;
 
   @IsOptional()
-  @IsIn(['EN_CUNA', 'EN_AGUA', 'MANTENIMIENTO', 'INACTIVA'])
-  estado?: string;
+  @IsIn(['EN_CUNA', 'EN_AGUA', 'EN_MANTENIMIENTO', 'INACTIVA'])
+  estado_operativo?: string;
 
   @IsOptional()
   @ValidateIf((o: UpdateEmbarcacionDto) => o.clienteId !== null)

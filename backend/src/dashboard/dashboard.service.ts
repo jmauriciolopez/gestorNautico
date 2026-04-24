@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { Cliente } from '../clientes/clientes.entity';
 import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
 import { Movimiento } from '../movimientos/movimientos.entity';
@@ -42,8 +42,8 @@ export class DashboardService {
 
     // Ocupación
     const [enCuna, enAgua] = await Promise.all([
-      this.barcoRepo.count({ where: { estado: 'EN_CUNA' } }),
-      this.barcoRepo.count({ where: { estado: 'EN_AGUA' } }),
+      this.barcoRepo.count({ where: { estado_operativo: 'EN_CUNA' } }),
+      this.barcoRepo.count({ where: { estado_operativo: 'EN_AGUA' } }),
     ]);
 
     // Finanzas
@@ -82,7 +82,7 @@ export class DashboardService {
       this.getRecaudacionDetalleAll(),
       this.getDeudaDetalleAll(),
       this.barcoRepo.find({
-        where: { espacioId: null, estado: 'ACTIVA' },
+        where: { espacioId: null, estado_operativo: Not('INACTIVA') },
         relations: ['cliente'],
       }),
     ]);
@@ -279,25 +279,29 @@ export class DashboardService {
   }
 
   async getRackMap() {
-    return this.zonaRepo.find({
-      relations: [
-        'ubicacion',
-        'racks',
-        'racks.espacios',
-        'racks.espacios.embarcacion',
-      ],
-      order: {
-        id: 'ASC',
-        racks: {
-          codigo: 'ASC',
-          espacios: {
-            piso: 'ASC',
-            fila: 'ASC',
-            columna: 'ASC',
-          },
-        },
-      },
+    const zonas = await this.zonaRepo.find({
+      relations: ['ubicacion', 'racks', 'racks.espacios', 'racks.espacios.embarcacion'],
+      order: { id: 'ASC', racks: { codigo: 'ASC', espacios: { piso: 'ASC', fila: 'ASC', columna: 'ASC' } } },
     });
+
+    return zonas.map(zona => ({
+      ...zona,
+      racks: zona.racks?.map(rack => ({
+        ...rack,
+        espacios: rack.espacios?.map(espacio => ({
+          ...espacio,
+          embarcacion: espacio.embarcacion ? {
+            id: espacio.embarcacion.id,
+            nombre: espacio.embarcacion.nombre,
+            matricula: espacio.embarcacion.matricula,
+            eslora: espacio.embarcacion.eslora,
+            manga: espacio.embarcacion.manga,
+            tipo: espacio.embarcacion.tipo,
+            estado_operativo: espacio.embarcacion.estado_operativo,
+          } : null,
+        })),
+      })),
+    }));
   }
 
   async getOccupancyMetrics() {

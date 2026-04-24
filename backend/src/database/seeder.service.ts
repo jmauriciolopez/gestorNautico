@@ -60,7 +60,7 @@ export class SeederService {
     await this.initialDataService.syncAll();
 
     // 3. Restaurar Configuraciones Globales
-    await this.configService.onApplicationBootstrap();
+    await this.configService.syncConfigs();
 
     // 4. Crear Infraestructura Base (Requerido para E2E)
     const ub = await this.ubicacionRepo.save(

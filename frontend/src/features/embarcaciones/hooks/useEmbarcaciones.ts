@@ -11,7 +11,7 @@ export interface Embarcacion {
   eslora?: number;
   manga?: number;
   tipo: string;
-  estado: string;
+  estado_operativo: string;
   cliente?: Cliente;
   espacio?: any;
   espacioId?: number | null;

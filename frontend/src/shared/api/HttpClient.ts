@@ -52,7 +52,7 @@ class HttpClient {
                 
                 if (data?.message) {
                     messageBody = Array.isArray(data.message) 
-                        ? data.message[0] // Tomar el primero si hay varios, para no saturar
+                        ? data.message.join('. ') 
                         : data.message;
                 } else if (status) {
                     switch (status) {

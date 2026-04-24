@@ -1,7 +1,7 @@
 import {
   Injectable,
   NotFoundException,
-  OnModuleInit,
+  OnApplicationBootstrap,
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -14,7 +14,7 @@ import {
 } from '../common/pagination/pagination.helper';
 
 @Injectable()
-export class EspaciosService implements OnModuleInit {
+export class EspaciosService implements OnApplicationBootstrap {
   private readonly logger = new Logger(EspaciosService.name);
 
   constructor(
@@ -24,9 +24,13 @@ export class EspaciosService implements OnModuleInit {
     private readonly embarcacionRepo: Repository<Embarcacion>,
   ) {}
 
-  async onModuleInit() {
-    this.logger.log('Iniciando saneamiento automático de infraestructura...');
-    await this.syncHealth();
+  async onApplicationBootstrap() {
+    try {
+      this.logger.log('Iniciando saneamiento automático de infraestructura...');
+      await this.syncHealth();
+    } catch (error) {
+      this.logger.error(`Error durante el saneamiento de espacios: ${error.message}`);
+    }
   }
 
   async syncHealth() {
@@ -35,7 +39,7 @@ export class EspaciosService implements OnModuleInit {
 
     // 1. Limpiar embarcaciones INACTIVAS que aún tengan espacioId
     const inactivasConEspacio = await this.embarcacionRepo.find({
-      where: { estado: 'INACTIVA', espacioId: Not(IsNull()) },
+      where: { estado_operativo: 'INACTIVA', espacioId: Not(IsNull()) },
     });
 
     for (const emb of inactivasConEspacio) {
@@ -53,7 +57,7 @@ export class EspaciosService implements OnModuleInit {
 
     for (const espacio of espaciosOcupados) {
       const tieneEmbarcacionActiva = await this.embarcacionRepo.findOne({
-        where: { espacioId: espacio.id, estado: Not('INACTIVA') },
+        where: { espacioId: espacio.id, estado_operativo: Not('INACTIVA') },
       });
 
       if (!tieneEmbarcacionActiva) {

@@ -18,6 +18,14 @@ export class ConfiguracionService implements OnApplicationBootstrap {
   ) {}
 
   async onApplicationBootstrap() {
+    try {
+      await this.syncConfigs();
+    } catch (error) {
+      this.logger.error(`Error al inicializar configuraciones: ${error.message}`);
+    }
+  }
+
+  async syncConfigs() {
     this.logger.log('Inicializando configuraciones base...');
     const items = [
       {

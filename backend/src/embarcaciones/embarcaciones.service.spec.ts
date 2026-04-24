@@ -17,7 +17,7 @@ describe('EmbarcacionesService', () => {
     eslora: 7.5,
     manga: 2.5,
     tipo: 'Lancha',
-    estado: 'EN_CUNA',
+    estado_operativo: 'EN_CUNA',
     clienteId: 1,
     espacioId: null,
     descuento: 0,
@@ -25,25 +25,39 @@ describe('EmbarcacionesService', () => {
     updatedAt: new Date(),
   };
 
-  const mockRepository = {
-    find: jest.fn(),
-    findOne: jest.fn(),
-    create: jest.fn(),
-    save: jest.fn(),
-    createQueryBuilder: jest.fn(() => ({
-      update: jest.fn().mockReturnThis(),
-      set: jest.fn().mockReturnThis(),
-      where: jest.fn().mockReturnThis(),
-      execute: jest.fn().mockResolvedValue({}),
-    })),
-  };
-
-  const mockEspacioRepo = {
-    findOne: jest.fn(),
-    update: jest.fn(),
-  };
+  let mockRepository: any;
+  let mockEspacioRepo: any;
 
   beforeEach(async () => {
+    mockRepository = {
+      find: jest.fn(),
+      findAndCount: jest.fn().mockResolvedValue([[mockEmbarcacion], 1]),
+      findOne: jest.fn(),
+      create: jest.fn(),
+      save: jest.fn(),
+      createQueryBuilder: jest.fn(() => ({
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        from: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        orWhere: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([[mockEmbarcacion], 1]),
+        update: jest.fn().mockReturnThis(),
+        set: jest.fn().mockReturnThis(),
+        execute: jest.fn().mockResolvedValue({}),
+      })),
+    };
+
+    mockEspacioRepo = {
+      findOne: jest.fn(),
+      update: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         EmbarcacionesService,
@@ -67,17 +81,14 @@ describe('EmbarcacionesService', () => {
 
   describe('findAll', () => {
     it('should return paginated embarcaciones', async () => {
-      mockRepository.find.mockResolvedValue([mockEmbarcacion]);
-
       const result = await service.findAll({});
       expect(result).toBeDefined();
+      expect(mockRepository.createQueryBuilder).toHaveBeenCalled();
     });
 
     it('should filter by search term', async () => {
-      mockRepository.find.mockResolvedValue([mockEmbarcacion]);
-
       await service.findAll({ search: 'Test' });
-      expect(mockRepository.find).toHaveBeenCalled();
+      expect(mockRepository.createQueryBuilder).toHaveBeenCalled();
     });
   });
 
@@ -132,12 +143,7 @@ describe('EmbarcacionesService', () => {
     it('should update a embarcacion', async () => {
       mockRepository.findOne.mockResolvedValue(mockEmbarcacion);
       mockEspacioRepo.findOne.mockResolvedValue(null);
-      mockRepository.createQueryBuilder.mockReturnValue({
-        update: jest.fn().mockReturnThis(),
-        set: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
-        execute: jest.fn().mockResolvedValue({}),
-      });
+      // No need to overwrite createQueryBuilder if the global mock is sufficient
 
       const result = await service.update(1, { nombre: 'Updated' });
       expect(result).toBeDefined();
@@ -154,7 +160,7 @@ describe('EmbarcacionesService', () => {
       mockRepository.findOne.mockResolvedValue(embarcacionWithEspacio);
       mockRepository.save.mockResolvedValue({
         ...embarcacionWithEspacio,
-        estado: 'INACTIVA',
+        estado_operativo: 'INACTIVA',
         espacioId: null,
       });
 

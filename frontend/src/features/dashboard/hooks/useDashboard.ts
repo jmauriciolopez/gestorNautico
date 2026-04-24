@@ -58,6 +58,7 @@ export interface RackMap {
         eslora: number;
         manga: number;
         tipo: string;
+        estado_operativo: string;
       };
     }[];
   }[];

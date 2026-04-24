@@ -40,7 +40,7 @@ export default function InfraestructuraPage() {
   const { getEmbarcaciones, updateEmbarcacion } = useEmbarcaciones();
   const embarcaciones = getEmbarcaciones.data?.data || [];
 
-  const embarcacionesLibres = embarcaciones.filter((e: any) => !e.espacioId && e.estado !== 'INACTIVA');
+  const embarcacionesLibres = embarcaciones.filter((e: any) => !e.espacioId && e.estado_operativo !== 'INACTIVA');
 
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<'mapa' | 'config'>('mapa');
@@ -158,7 +158,7 @@ export default function InfraestructuraPage() {
           id: embarcacionId,
           data: {
             espacioId: keepsSpace ? selectedSpaceState.id : null,
-            estado: nuevoEstado
+            estado_operativo: nuevoEstado
           }
         });
       } else {

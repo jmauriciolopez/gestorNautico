@@ -44,9 +44,17 @@ export default function ClienteForm() {
     const { name, value, type } = e.target;
     const isChecked = (e.target as HTMLInputElement).checked;
 
+    let finalValue: any = value;
+    if (type === 'checkbox') {
+      finalValue = isChecked;
+    } else if (type === 'number') {
+      // Convertir a número, manejar string vacío como undefined o 0 según corresponda
+      finalValue = value === '' ? undefined : Number(value);
+    }
+
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? isChecked : value
+      [name]: finalValue
     }));
   };
 
@@ -61,7 +69,7 @@ export default function ClienteForm() {
       navigate('/clientes');
     } catch (error) {
       console.error('Error saving cliente:', error);
-      alert('Hubo un error al guardar el cliente. Verifique los datos.');
+      // El toast ya es manejado por HttpClient.ts de forma global
     }
   };
 

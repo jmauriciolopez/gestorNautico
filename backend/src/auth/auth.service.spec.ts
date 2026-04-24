@@ -4,6 +4,7 @@ import { AuthService } from './auth.service';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { LoginAttemptsService } from './login-attempts.service';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -43,6 +44,14 @@ describe('AuthService', () => {
               if (key === 'JWT_EXPIRES_IN') return 3600;
               return null;
             }),
+          },
+        },
+        {
+          provide: LoginAttemptsService,
+          useValue: {
+            recordAttempt: jest.fn().mockResolvedValue(true),
+            isBlocked: jest.fn().mockResolvedValue(false),
+            resetAttempts: jest.fn().mockResolvedValue(true),
           },
         },
       ],

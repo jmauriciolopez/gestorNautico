@@ -223,7 +223,8 @@ export class ImportService {
               eslora: eslora || existingEmbarcacion.eslora,
               manga: manga || existingEmbarcacion.manga,
               tipo: row.tipo || existingEmbarcacion.tipo,
-              estado: row.estado || existingEmbarcacion.estado,
+              estado_operativo:
+                row.estado || existingEmbarcacion.estado_operativo,
               clienteId: cliente.id,
             });
             result.updated++;
@@ -236,7 +237,7 @@ export class ImportService {
               eslora: eslora || null,
               manga: manga || null,
               tipo: row.tipo || 'Lancha',
-              estado: row.estado || 'EN_CUNA',
+              estado_operativo: row.estado || 'EN_CUNA',
               clienteId: cliente.id,
             });
             await this.embarcacionRepo.save(nueva);

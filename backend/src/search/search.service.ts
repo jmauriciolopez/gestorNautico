@@ -9,7 +9,7 @@ export interface SearchResult {
   clientes: Pick<Cliente, 'id' | 'nombre' | 'dni' | 'email'>[];
   embarcaciones: Pick<
     Embarcacion,
-    'id' | 'nombre' | 'matricula' | 'tipo' | 'estado'
+    'id' | 'nombre' | 'matricula' | 'tipo' | 'estado_operativo'
   >[];
   racks: Pick<Rack, 'id' | 'codigo'>[];
 }
@@ -44,7 +44,7 @@ export class SearchService {
       }),
       this.embarcacionRepo.find({
         where: [{ nombre: ILike(term) }, { matricula: ILike(term) }],
-        select: ['id', 'nombre', 'matricula', 'tipo', 'estado'],
+        select: ['id', 'nombre', 'matricula', 'tipo', 'estado_operativo'],
         take: 5,
       }),
       this.rackRepo.find({

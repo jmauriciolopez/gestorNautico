@@ -168,7 +168,7 @@ export class EmbarcacionesService {
 
     const nuevaEslora = dto.eslora ?? embarcacion.eslora;
     const nuevaManga = dto.manga ?? embarcacion.manga;
-    const nuevoEstado = dto.estado ?? embarcacion.estado;
+    const nuevoEstado = dto.estado_operativo ?? embarcacion.estado_operativo;
     let nuevoEspacioId = 'espacioId' in dto ? dto.espacioId : anteriorEspacioId;
 
     // Si se inactiva o ya está inactiva, liberar espacio automáticamente
@@ -220,7 +220,8 @@ export class EmbarcacionesService {
     if (dto.eslora !== undefined) setValues.eslora = dto.eslora;
     if (dto.manga !== undefined) setValues.manga = dto.manga;
     if (dto.tipo !== undefined) setValues.tipo = dto.tipo;
-    if (dto.estado !== undefined) setValues.estado = dto.estado;
+    if (dto.estado_operativo !== undefined)
+      setValues.estado_operativo = dto.estado_operativo;
     if (dto.descuento !== undefined) setValues.descuento = dto.descuento;
     if (dto.clienteId !== undefined) setValues.clienteId = dto.clienteId;
 
@@ -257,7 +258,10 @@ export class EmbarcacionesService {
       await this.espacioRepo.update(espacioId, { ocupado: false });
     }
 
-    Object.assign(embarcacion, { estado: 'INACTIVA', espacioId: null });
+    Object.assign(embarcacion, {
+      estado_operativo: 'INACTIVA',
+      espacioId: null,
+    });
     await this.embarcacionesRepository.save(embarcacion);
   }
 }

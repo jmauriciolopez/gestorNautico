@@ -2,10 +2,14 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Movimiento } from './movimientos.entity';
+import { Pedido } from '../pedidos/pedidos.entity';
 import { EmbarcacionesService } from '../embarcaciones/embarcaciones.service';
 import { EspaciosService } from '../espacios/espacios.service';
 import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
 import { ConfiguracionService } from '../configuracion/configuracion.service';
+import { NotificacionesService } from '../notificaciones/notificaciones.service';
+import { NotificacionTipo } from '../notificaciones/notificacion.entity';
+import { Role } from '../users/user.entity';
 import {
   paginate,
   PaginationQuery,
@@ -17,9 +21,12 @@ export class MovimientosService {
   constructor(
     @InjectRepository(Movimiento)
     private readonly movimientoRepo: Repository<Movimiento>,
+    @InjectRepository(Pedido)
+    private readonly pedidoRepo: Repository<Pedido>,
     private readonly embarcacionesService: EmbarcacionesService,
     private readonly espaciosService: EspaciosService,
     private readonly configuracionService: ConfiguracionService,
+    private readonly notificacionesService: NotificacionesService,
   ) {}
 
   findAll(query: PaginationQuery = {}) {
@@ -81,25 +88,61 @@ export class MovimientosService {
 
     // --- SYNC STATUS ---
     if (tipo === 'entrada') {
-      // Boat comes to rack -> Occupy space
+      // Boat comes to rack
       await this.embarcacionesService.update(embarcacion.id, {
-        estado: 'EN_CUNA',
+        estado_operativo: 'EN_CUNA',
       });
-      if (targetEspacioId) {
-        await this.espaciosService.update(Number(targetEspacioId), {
-          ocupado: true,
+      // Update or Create Order (subida)
+      const pedidoExistente = await this.pedidoRepo.findOne({
+        where: { embarcacion: { id: embarcacion.id }, estado: 'en_agua' },
+      });
+
+      if (pedidoExistente) {
+        await this.pedidoRepo.update(pedidoExistente.id, {
+          estado: 'finalizado',
         });
+      } else {
+        const nuevoPedido = this.pedidoRepo.create({
+          embarcacion: { id: embarcacion.id },
+          estado: 'finalizado',
+          fechaProgramada: new Date(),
+        });
+        await this.pedidoRepo.save(nuevoPedido);
       }
+
+      await this.notificacionesService.createForRole(Role.ADMIN, {
+        titulo: 'Retorno a Cuna',
+        mensaje: `La embarcación ${embarcacion.nombre} ha regresado a su cuna.`,
+        tipo: NotificacionTipo.INFO,
+      });
     } else if (tipo === 'salida') {
-      // Boat goes to water -> Free space
+      // Boat goes to water
       await this.embarcacionesService.update(embarcacion.id, {
-        estado: 'EN_AGUA',
+        estado_operativo: 'EN_AGUA',
       });
-      if (targetEspacioId) {
-        await this.espaciosService.update(Number(targetEspacioId), {
-          ocupado: false,
+      // Update or Create Order (bajada)
+      const pedidoExistente = await this.pedidoRepo.findOne({
+        where: { embarcacion: { id: embarcacion.id }, estado: 'pendiente' },
+      });
+
+      if (pedidoExistente) {
+        await this.pedidoRepo.update(pedidoExistente.id, {
+          estado: 'en_agua',
         });
+      } else {
+        const nuevoPedido = this.pedidoRepo.create({
+          embarcacion: { id: embarcacion.id },
+          estado: 'en_agua',
+          fechaProgramada: new Date(),
+        });
+        await this.pedidoRepo.save(nuevoPedido);
       }
+
+      await this.notificacionesService.createForRole(Role.ADMIN, {
+        titulo: 'Salida a Agua',
+        mensaje: `La embarcación ${embarcacion.nombre} ha salido al agua.`,
+        tipo: NotificacionTipo.INFO,
+      });
     }
 
     return savedMovement;

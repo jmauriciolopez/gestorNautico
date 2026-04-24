@@ -80,7 +80,7 @@ export class ReportesService {
 
   async getMensualidadesConDescuentos(): Promise<any[]> {
     const embarcaciones = await this.embarcacionRepo.find({
-      where: { estado: 'EN_CUNA' },
+      where: { estado_operativo: 'EN_CUNA' },
       relations: ['cliente', 'espacio', 'espacio.rack'],
     });
 

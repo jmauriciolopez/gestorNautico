@@ -27,6 +27,7 @@ import {
   type PeriodoRecaudacion,
   type PeriodoDeuda,
 } from '../hooks/useDashboard';
+import { useOperaciones } from '../../operaciones/hooks/useOperaciones';
 import { MapaRacks } from '../components/MapaRacks';
 import { DashboardGerencial } from '../../reportes/components/DashboardGerencial';
 import { useNavigate } from 'react-router-dom';
@@ -151,6 +152,7 @@ const ToggleChip = ({
 const Dashboard: React.FC = () => {
   const { data, isLoading, isError } = useDashboard();
   const { data: rackMapData, isLoading: isMapLoading } = useRackMap();
+  const { createMovimiento } = useOperaciones();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -169,12 +171,26 @@ const Dashboard: React.FC = () => {
   const [periodoRecaudacion, setPeriodoRecaudacion] = useState<PeriodoRecaudacion>('mes');
   const [periodoDeuda, setPeriodoDeuda] = useState<PeriodoDeuda>('mes');
 
-  const handleAsignarBarco = async (embarcacionId: number, espacioId: number) => {
+const handleAsignarBarco = async (embarcacionId: number, espacioId: number) => {
     try {
       await updateEmbarcacion.mutateAsync({ id: embarcacionId, data: { espacioId } });
       toast.success('Embarcación asignada correctamente');
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Error al asignar la embarcación');
+    }
+  };
+
+  const handleRegistrarSalida = async (embarcacionId: number, tipo: 'entrada' | 'salida' = 'salida') => {
+    try {
+      await createMovimiento.mutateAsync({ 
+        embarcacionId, 
+        tipo,
+        observaciones: `Registro de ${tipo} desde mapa de racks`
+      });
+      const msg = tipo === 'salida' ? 'Salida registrada - Embarcación en el agua' : 'Entrada registrada - Embarcación en cuna';
+      toast.success(msg);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || `Error al registrar ${tipo}`);
     }
   };
 
@@ -586,10 +602,11 @@ const Dashboard: React.FC = () => {
                 <span className="section-subtitle">Sincronizando topología...</span>
               </div>
             ) : (
-              <MapaRacks
+<MapaRacks
                 data={rackMapData || []}
                 embarcacionesLibres={embarcacionesLibres}
                 onAsignar={handleAsignarBarco}
+                onRegistrarSalida={handleRegistrarSalida}
                 is3D={is3D}
               />
             )}

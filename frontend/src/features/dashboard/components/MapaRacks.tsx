@@ -7,6 +7,7 @@ import {
   ChevronDown,
   ExternalLink,
   LogOut,
+  LogIn,
   History,
   Box,
   X
@@ -20,21 +21,25 @@ interface MapaRacksProps {
   data: RackMap[];
   embarcacionesLibres: Embarcacion[];
   onAsignar: (embarcacionId: number, espacioId: number) => Promise<void>;
+  onRegistrarSalida?: (embarcacionId: number, tipo?: 'entrada' | 'salida') => Promise<void>;
   is3D?: boolean;
 }
 
 interface Rack3DContainerProps {
   rack: any;
   is3D: boolean;
-  getBoatSizeClass: (eslora: number) => string;
+  getBoatSizeClass: (espacio: any) => string;
+  getEspacioStyle: (espacio: any) => string;
   setSelectedEspacio: (espacio: any) => void;
+  hasEmbarcacion: (espacio: any) => boolean;
 }
 
 const Rack3DContainer: React.FC<Rack3DContainerProps> = ({ 
   rack, 
   is3D, 
-  getBoatSizeClass, 
-  setSelectedEspacio 
+  getEspacioStyle, 
+  setSelectedEspacio,
+  hasEmbarcacion
 }) => {
   const localRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
@@ -137,8 +142,8 @@ const Rack3DContainer: React.FC<Rack3DContainerProps> = ({
                                   absolute inset-0 rounded-xl border transition-all duration-700 flex flex-col items-center justify-center gap-1 group/item relative cell-3d
                                   ${!espacio 
                                     ? 'bg-transparent border-dashed border-white/10' 
-                                    : espacio.ocupado
-                                      ? `${getBoatSizeClass(espacio.embarcacion?.eslora || 0)} cursor-pointer shadow-xl border-2`
+                                    : hasEmbarcacion(espacio)
+                                      ? `${getEspacioStyle(espacio)} cursor-pointer shadow-xl border-2`
                                       : 'bg-slate-800/40 text-slate-500 border-white/20 hover:border-indigo-400 hover:bg-indigo-500/10 cursor-pointer'
                                     }
                                 `}
@@ -160,7 +165,7 @@ const Rack3DContainer: React.FC<Rack3DContainerProps> = ({
 
                                 {!espacio ? (
                                   <div className="text-[10px] font-mono opacity-5">N/A</div>
-                                ) : espacio.ocupado ? (
+                                ) : hasEmbarcacion(espacio) ? (
                                   <>
                                     <Anchor size={24} className={(espacio.embarcacion?.eslora || 0) > 10 ? 'animate-pulse text-white' : 'text-white/80'} />
                                     <span className="text-[9px] font-black text-center px-1 truncate w-full uppercase tracking-tighter leading-tight text-white/90">
@@ -171,7 +176,7 @@ const Rack3DContainer: React.FC<Rack3DContainerProps> = ({
                                   <span className="text-[10px] font-black opacity-20 tracking-widest">{espacio.numero.split('-').pop()}</span>
                                 )}
 
-                                {espacio?.ocupado && (
+                                {hasEmbarcacion(espacio) && (
                                   <div className="absolute -top-1 -right-1 bg-white text-slate-950 p-1 rounded-full opacity-0 group-hover/item:opacity-100 transition-opacity z-20 shadow-xl scale-90 group-hover/item:scale-100">
                                     <Info size={12} />
                                   </div>
@@ -237,15 +242,15 @@ const Rack3DContainer: React.FC<Rack3DContainerProps> = ({
                               h-[110px] w-full rounded-xl border transition-all duration-300 flex flex-col items-center justify-center gap-1 group/item relative
                               ${!espacio 
                                 ? 'bg-transparent border-dashed border-white/10' 
-                                : espacio.ocupado
-                                  ? `${getBoatSizeClass(espacio.embarcacion?.eslora || 0)} cursor-pointer shadow-xl border-2 hover:brightness-110 active:scale-95`
+                                : hasEmbarcacion(espacio)
+                                  ? `${getEspacioStyle(espacio)} cursor-pointer shadow-xl border-2 hover:brightness-110 active:scale-95`
                                   : 'bg-slate-800/40 text-slate-500 border-white/20 hover:border-indigo-400 hover:bg-indigo-500/10 cursor-pointer active:scale-95'
                                 }
                             `}
                           >
                             {!espacio ? (
                               <div className="text-[10px] font-mono opacity-5">N/A</div>
-                            ) : espacio.ocupado ? (
+                            ) : hasEmbarcacion(espacio) ? (
                               <>
                                 <Anchor size={24} className="text-white/80" />
                                 <span className="text-[10px] font-black text-center px-1 truncate w-full uppercase tracking-tighter leading-tight text-white drop-shadow-sm">
@@ -280,6 +285,7 @@ export const MapaRacks: React.FC<MapaRacksProps> = ({
   data, 
   embarcacionesLibres, 
   onAsignar,
+  onRegistrarSalida,
   is3D = false 
 }) => {
   const navigate = useNavigate();
@@ -300,10 +306,19 @@ export const MapaRacks: React.FC<MapaRacksProps> = ({
     );
   }
 
-  const getBoatSizeClass = (eslora: number) => {
-    if (eslora < 6) return 'bg-emerald-500 text-white border-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.4)]';
-    if (eslora <= 10) return 'bg-blue-600 text-white border-blue-400 shadow-[0_0_15px_rgba(37,99,235,0.4)]';
-    return 'bg-orange-500 text-white border-orange-400 shadow-[0_0_15px_rgba(249,115,22,0.4)]';
+  const getEspacioStyle = (espacio: any) => {
+    const estado = espacio?.embarcacion?.estado_operativo;
+    if (estado === 'EN_AGUA') {
+      return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40';
+    }
+    if (estado === 'EN_CUNA' || espacio?.ocupado) {
+      return 'bg-blue-600/20 text-blue-400 border-blue-500/40';
+    }
+    return 'bg-transparent border-white/20';
+  };
+
+  const hasEmbarcacion = (espacio: any) => {
+    return espacio?.ocupado || espacio?.embarcacion?.estado_operativo === 'EN_AGUA';
   };
 
   return (
@@ -373,8 +388,9 @@ export const MapaRacks: React.FC<MapaRacksProps> = ({
                     <Rack3DContainer 
                       rack={rack} 
                       is3D={is3D} 
-                      getBoatSizeClass={getBoatSizeClass} 
-                      setSelectedEspacio={setSelectedEspacio} 
+                      getEspacioStyle={getEspacioStyle} 
+                      setSelectedEspacio={setSelectedEspacio}
+                      hasEmbarcacion={hasEmbarcacion}
                     />
                   </div>
                 ))}
@@ -446,13 +462,28 @@ export const MapaRacks: React.FC<MapaRacksProps> = ({
                     <ChevronRight size={18} className="text-[var(--text-secondary)] group-hover:translate-x-1 transition-transform" />
                   </button>
                   <button
-                    onClick={() => navigate(`/operaciones?embarcacion=${selectedEspacio.embarcacion.id}`)}
-                    className="flex items-center justify-between w-full p-4 bg-red-500/10 hover:bg-red-500/20 rounded-2xl border border-red-500/20 transition-all group mt-2"
+                    onClick={() => {
+                      const tipo = selectedEspacio.embarcacion.estado_operativo === 'EN_AGUA' ? 'entrada' : 'salida';
+                      onRegistrarSalida?.(selectedEspacio.embarcacion.id, tipo);
+                      setSelectedEspacio(null);
+                    }}
+                    className={`flex items-center justify-between w-full p-4 rounded-2xl border transition-all group mt-2 ${
+                      selectedEspacio.embarcacion.estado_operativo === 'EN_AGUA'
+                        ? 'bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/20 text-emerald-400'
+                        : 'bg-red-500/10 hover:bg-red-500/20 border-red-500/20 text-red-400'
+                    }`}
                   >
-                    <div className="flex items-center gap-3 text-red-400">
-                      <div className="p-2 bg-red-500/10 rounded-lg"><LogOut size={18} /></div>
-                      <span className="font-semibold">Registrar Salida</span>
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg ${
+                        selectedEspacio.embarcacion.estado_operativo === 'EN_AGUA' ? 'bg-emerald-500/20' : 'bg-red-500/20'
+                      }`}>
+                        {selectedEspacio.embarcacion.estado_operativo === 'EN_AGUA' ? <LogIn size={18} /> : <LogOut size={18} />}
+                      </div>
+                      <span className="font-bold">
+                        {selectedEspacio.embarcacion.estado_operativo === 'EN_AGUA' ? 'Registrar Entrada' : 'Registrar Salida'}
+                      </span>
                     </div>
+                    <ChevronRight size={18} className="opacity-40 group-hover:translate-x-1 transition-transform" />
                   </button>
                 </div>
               ) : (
