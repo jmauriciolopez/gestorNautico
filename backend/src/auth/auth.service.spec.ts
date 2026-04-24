@@ -5,6 +5,9 @@ import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { LoginAttemptsService } from './login-attempts.service';
+import * as bcrypt from 'bcrypt';
+
+jest.mock('bcrypt');
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -49,9 +52,9 @@ describe('AuthService', () => {
         {
           provide: LoginAttemptsService,
           useValue: {
-            recordAttempt: jest.fn().mockResolvedValue(true),
-            isBlocked: jest.fn().mockResolvedValue(false),
-            resetAttempts: jest.fn().mockResolvedValue(true),
+            check: jest.fn(),
+            recordFailure: jest.fn(),
+            recordSuccess: jest.fn(),
           },
         },
       ],
@@ -59,6 +62,7 @@ describe('AuthService', () => {
 
     service = module.get<AuthService>(AuthService);
     usersService = module.get<UsersService>(UsersService);
+    (bcrypt.compare as jest.Mock).mockResolvedValue(true);
   });
 
   it('should be defined', () => {
@@ -75,6 +79,7 @@ describe('AuthService', () => {
     });
 
     it('should throw UnauthorizedException for invalid password', async () => {
+      (bcrypt.compare as jest.Mock).mockResolvedValueOnce(false);
       const loginDto = { nombre: 'testuser', password: 'wrongpassword' };
       await expect(service.login(loginDto)).rejects.toThrow(
         UnauthorizedException,

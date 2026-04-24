@@ -24,6 +24,7 @@ describe('EspaciosService', () => {
 
   const mockRepository = {
     find: jest.fn(),
+    findAndCount: jest.fn().mockResolvedValue([[], 0]),
     findOne: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
@@ -60,10 +61,11 @@ describe('EspaciosService', () => {
 
   describe('findAll', () => {
     it('should return paginated espacios', async () => {
-      mockRepository.find.mockResolvedValue([mockEspacio]);
+      mockRepository.findAndCount.mockResolvedValue([[mockEspacio], 1]);
 
       const result = await service.findAll({});
-      expect(result).toBeDefined();
+      expect(result.data).toBeDefined();
+      expect(result.total).toBe(1);
     });
   });
 

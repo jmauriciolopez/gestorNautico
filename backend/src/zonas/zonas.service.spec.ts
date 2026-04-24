@@ -19,6 +19,7 @@ describe('ZonasService', () => {
 
   const mockRepository = {
     find: jest.fn(),
+    findAndCount: jest.fn().mockResolvedValue([[], 0]),
     findOne: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
@@ -46,10 +47,11 @@ describe('ZonasService', () => {
 
   describe('findAll', () => {
     it('should return paginated zonas', async () => {
-      mockRepository.find.mockResolvedValue([mockZona]);
+      mockRepository.findAndCount.mockResolvedValue([[mockZona], 1]);
 
       const result = await service.findAll({});
-      expect(result).toBeDefined();
+      expect(result.data).toBeDefined();
+      expect(result.total).toBe(1);
     });
   });
 

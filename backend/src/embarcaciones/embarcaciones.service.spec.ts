@@ -5,6 +5,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { EmbarcacionesService } from './embarcaciones.service';
 import { Embarcacion } from './embarcaciones.entity';
 import { Espacio } from '../espacios/espacio.entity';
+import { DataSource } from 'typeorm';
 
 describe('EmbarcacionesService', () => {
   let service: EmbarcacionesService;
@@ -27,16 +28,35 @@ describe('EmbarcacionesService', () => {
   };
 
   let mockRepository: any;
-
   let mockEspacioRepo: any;
+  let mockManager: any;
+  let mockDataSource: any;
 
   beforeEach(async () => {
+    mockManager = {
+      getRepository: jest.fn().mockImplementation((entity) => {
+        if (entity === Embarcacion) return mockRepository;
+        if (entity === Espacio) return mockEspacioRepo;
+        return null;
+      }),
+      findOne: jest.fn(),
+      find: jest.fn(),
+      save: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+    };
+
+    mockDataSource = {
+      transaction: jest.fn().mockImplementation((cb) => cb(mockManager)),
+    };
+
     mockRepository = {
       find: jest.fn(),
       findAndCount: jest.fn().mockResolvedValue([[mockEmbarcacion], 1]),
       findOne: jest.fn(),
       create: jest.fn(),
       save: jest.fn(),
+      update: jest.fn(),
       createQueryBuilder: jest.fn(() => ({
         leftJoinAndSelect: jest.fn().mockReturnThis(),
         addSelect: jest.fn().mockReturnThis(),
@@ -70,6 +90,10 @@ describe('EmbarcacionesService', () => {
         {
           provide: getRepositoryToken(Espacio),
           useValue: mockEspacioRepo,
+        },
+        {
+          provide: DataSource,
+          useValue: mockDataSource,
         },
       ],
     }).compile();

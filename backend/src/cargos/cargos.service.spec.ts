@@ -23,6 +23,7 @@ describe('CargosService', () => {
 
   const mockRepository = {
     find: jest.fn(),
+    findAndCount: jest.fn().mockResolvedValue([[], 0]),
     findOne: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
@@ -50,24 +51,25 @@ describe('CargosService', () => {
 
   describe('findAll', () => {
     it('should return paginated cargos', async () => {
-      mockRepository.find.mockResolvedValue([mockCargo]);
+      mockRepository.findAndCount.mockResolvedValue([[mockCargo], 1]);
 
       const result = await service.findAll({});
-      expect(result).toBeDefined();
+      expect(result.data).toBeDefined();
+      expect(result.total).toBe(1);
     });
 
     it('should filter by clienteId', async () => {
-      mockRepository.find.mockResolvedValue([mockCargo]);
+      mockRepository.findAndCount.mockResolvedValue([[mockCargo], 1]);
 
       await service.findAll({}, 1);
-      expect(mockRepository.find).toHaveBeenCalled();
+      expect(mockRepository.findAndCount).toHaveBeenCalled();
     });
 
     it('should filter sin facturar', async () => {
-      mockRepository.find.mockResolvedValue([mockCargo]);
+      mockRepository.findAndCount.mockResolvedValue([[mockCargo], 1]);
 
       await service.findAll({}, undefined, true);
-      expect(mockRepository.find).toHaveBeenCalled();
+      expect(mockRepository.findAndCount).toHaveBeenCalled();
     });
   });
 

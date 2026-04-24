@@ -4,6 +4,9 @@ import { UsersService } from './users.service';
 import { User, Role } from './user.entity';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
+import * as bcrypt from 'bcrypt';
+
+jest.mock('bcrypt');
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -20,6 +23,7 @@ describe('UsersService', () => {
 
   const mockRepository = {
     find: jest.fn().mockResolvedValue([mockUser]),
+    findAndCount: jest.fn().mockResolvedValue([[mockUser], 1]),
     findOneBy: jest.fn().mockResolvedValue(mockUser),
     findOne: jest.fn().mockResolvedValue(mockUser),
     create: jest.fn().mockReturnValue(mockUser),
@@ -46,6 +50,8 @@ describe('UsersService', () => {
     }).compile();
 
     service = module.get<UsersService>(UsersService);
+    (bcrypt.hash as jest.Mock).mockResolvedValue('hashed_password');
+    (bcrypt.genSalt as jest.Mock).mockResolvedValue('salt');
   });
 
   it('should be defined', () => {
@@ -53,10 +59,10 @@ describe('UsersService', () => {
   });
 
   describe('findAll', () => {
-    it('should return an array of users', async () => {
+    it('should return paginated users', async () => {
       const result = await service.findAll();
-      expect(result).toEqual([mockUser]);
-      expect(mockRepository.find).toHaveBeenCalled();
+      expect(result.data).toEqual([mockUser]);
+      expect(mockRepository.findAndCount).toHaveBeenCalled();
     });
   });
 

@@ -21,6 +21,7 @@ describe('ClientesService', () => {
     descuento: 0,
     tipoCuota: 'NINGUNA',
     responsableFamiliaId: null,
+    tarifaBase: 0,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -37,6 +38,7 @@ describe('ClientesService', () => {
   const mockRepository = {
     find: jest.fn(),
     findOne: jest.fn(),
+    findAndCount: jest.fn().mockResolvedValue([[], 0]),
     create: jest.fn(),
     save: jest.fn(),
     createQueryBuilder: jest.fn(() => getMockQueryBuilder()),
@@ -74,18 +76,18 @@ describe('ClientesService', () => {
 
   describe('findAll', () => {
     it('should return paginated clients', async () => {
-      mockRepository.find.mockResolvedValue([mockCliente]);
-      mockRepository.createQueryBuilder.mockReturnValue(getMockQueryBuilder());
+      mockRepository.findAndCount.mockResolvedValue([[mockCliente], 1]);
 
       const result = await service.findAll({});
-      expect(result).toBeDefined();
+      expect(result.data).toBeDefined();
+      expect(result.total).toBe(1);
     });
 
     it('should filter by search term', async () => {
-      mockRepository.find.mockResolvedValue([mockCliente]);
+      mockRepository.findAndCount.mockResolvedValue([[mockCliente], 1]);
 
       await service.findAll({ search: 'Test' });
-      expect(mockRepository.find).toHaveBeenCalled();
+      expect(mockRepository.findAndCount).toHaveBeenCalled();
     });
   });
 
@@ -147,12 +149,25 @@ describe('ClientesService', () => {
   describe('getCuentaCorriente', () => {
     it('should return cuenta corriente for client', async () => {
       mockRepository.findOne.mockResolvedValue(mockCliente);
-      mockRepository.createQueryBuilder.mockReturnValue(getMockQueryBuilder());
+      const qb = getMockQueryBuilder();
+      // First call (cargoAgg)
+      qb.getRawOne.mockResolvedValueOnce({
+        total: '100',
+        cantidad: '1',
+        impagos: '0',
+      });
+      // Second call (pagoAgg)
+      qb.getRawOne.mockResolvedValueOnce({ total: '50', ultimaFecha: new Date() });
+      // Third call (vencidoAgg)
+      qb.getRawOne.mockResolvedValueOnce({ total: '0' });
+
+      mockRepository.createQueryBuilder.mockReturnValue(qb);
       mockRepository.find.mockResolvedValue([]);
 
       const result = await service.getCuentaCorriente(1);
       expect(result).toBeDefined();
       expect(result.totalCargado).toBe(100);
+      expect(result.totalPagado).toBe(50);
     });
   });
 });

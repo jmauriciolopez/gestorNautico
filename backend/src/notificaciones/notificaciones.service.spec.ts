@@ -21,6 +21,7 @@ describe('NotificacionesService', () => {
 
   const mockRepository = {
     find: jest.fn(),
+    findAndCount: jest.fn().mockResolvedValue([[], 0]),
     findOne: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
@@ -76,10 +77,11 @@ describe('NotificacionesService', () => {
 
   describe('findAllByUser', () => {
     it('should return paginated notifications for user', async () => {
-      mockRepository.find.mockResolvedValue([mockNotificacion]);
+      mockRepository.findAndCount.mockResolvedValue([[mockNotificacion], 1]);
 
       const result = await service.findAllByUser(1, {});
-      expect(result).toBeDefined();
+      expect(result.data).toBeDefined();
+      expect(result.total).toBe(1);
     });
   });
 

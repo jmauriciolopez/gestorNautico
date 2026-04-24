@@ -70,7 +70,7 @@ describe('EmbarcacionesController (e2e)', () => {
         .set('Authorization', `Bearer ${token}`)
         .send({
           nombre: 'Test Boat',
-          matricula: 'TEST-001',
+          matricula: 'TEST-' + Date.now(),
         })
         .expect(201);
     });

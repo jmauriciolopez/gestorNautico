@@ -28,6 +28,7 @@ describe('RacksService', () => {
 
   const mockRepository = {
     find: jest.fn(),
+    findAndCount: jest.fn().mockResolvedValue([[], 0]),
     findOne: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
@@ -76,10 +77,11 @@ describe('RacksService', () => {
 
   describe('findAll', () => {
     it('should return paginated racks', async () => {
-      mockRepository.find.mockResolvedValue([mockRack]);
+      mockRepository.findAndCount.mockResolvedValue([[mockRack], 1]);
 
       const result = await service.findAll({});
-      expect(result).toBeDefined();
+      expect(result.data).toBeDefined();
+      expect(result.total).toBe(1);
     });
   });
 

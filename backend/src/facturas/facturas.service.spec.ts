@@ -10,6 +10,8 @@ import { CargosService } from '../cargos/cargos.service';
 import { CajasService } from '../cajas/cajas.service';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import { PdfService } from '../common/pdf/pdf.service';
+import { DataSource, In } from 'typeorm';
+import { TipoCargo } from '../cargos/cargo.entity';
 
 describe('FacturasService', () => {
   let service: FacturasService;
@@ -28,9 +30,24 @@ describe('FacturasService', () => {
     cargos: [],
   };
 
+  const dto = {
+    clienteId: 1,
+    cargoIds: [1],
+    fechaEmision: new Date().toISOString(),
+  };
+
+  const mockManager = {
+    find: jest.fn().mockResolvedValue([]),
+    findOne: jest.fn().mockResolvedValue(null),
+    create: jest.fn().mockImplementation((entity, data) => data),
+    save: jest.fn().mockImplementation((data) => Promise.resolve(data)),
+    update: jest.fn().mockResolvedValue({}),
+  };
+
   const mockFacturaRepository = {
     find: jest.fn(),
     findOne: jest.fn(),
+    findAndCount: jest.fn().mockResolvedValue([[], 0]),
     create: jest.fn(),
     save: jest.fn(),
     remove: jest.fn(),
@@ -77,7 +94,20 @@ describe('FacturasService', () => {
     generateInvoice: jest.fn().mockResolvedValue(Buffer.from('PDF')),
   };
 
+  const mockDataSource = {
+    transaction: jest.fn().mockImplementation((cb) => cb(mockManager)),
+  };
+
   beforeEach(async () => {
+    jest.clearAllMocks();
+    
+    // Reset mock manager state
+    mockManager.find.mockReset().mockResolvedValue([]);
+    mockManager.findOne.mockReset().mockResolvedValue(null);
+    mockManager.create.mockReset().mockImplementation((entity, data) => data);
+    mockManager.save.mockReset().mockImplementation((data) => Promise.resolve(data));
+    mockManager.update.mockReset().mockResolvedValue({});
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         FacturasService,
@@ -113,6 +143,10 @@ describe('FacturasService', () => {
           provide: PdfService,
           useValue: mockPdfService,
         },
+        {
+          provide: DataSource,
+          useValue: mockDataSource,
+        },
       ],
     }).compile();
 
@@ -125,24 +159,25 @@ describe('FacturasService', () => {
 
   describe('findAll', () => {
     it('should return paginated facturas', async () => {
-      mockFacturaRepository.find.mockResolvedValue([mockFactura]);
+      mockFacturaRepository.findAndCount.mockResolvedValue([[mockFactura], 1]);
 
       const result = await service.findAll({});
-      expect(result).toBeDefined();
+      expect(result.data).toBeDefined();
+      expect(result.total).toBe(1);
     });
 
     it('should filter by search term', async () => {
-      mockFacturaRepository.find.mockResolvedValue([mockFactura]);
+      mockFacturaRepository.findAndCount.mockResolvedValue([[mockFactura], 1]);
 
       await service.findAll({ search: 'FAC' });
-      expect(mockFacturaRepository.find).toHaveBeenCalled();
+      expect(mockFacturaRepository.findAndCount).toHaveBeenCalled();
     });
 
     it('should filter by date range', async () => {
-      mockFacturaRepository.find.mockResolvedValue([mockFactura]);
+      mockFacturaRepository.findAndCount.mockResolvedValue([[mockFactura], 1]);
 
       await service.findAll({ startDate: '2024-01-01', endDate: '2024-12-31' });
-      expect(mockFacturaRepository.find).toHaveBeenCalled();
+      expect(mockFacturaRepository.findAndCount).toHaveBeenCalled();
     });
   });
 
@@ -181,36 +216,63 @@ describe('FacturasService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('should create a factura with cargos', async () => {
-      const mockCargo = {
-        id: 1,
-        descripcion: 'Amarre',
-        monto: 100,
-        cliente: { id: 1 },
-      };
-      mockCargoRepository.find.mockResolvedValue([mockCargo]);
-      mockFacturaRepository.create.mockReturnValue(mockFactura);
-      mockFacturaRepository.save.mockResolvedValue(mockFactura);
-      mockCargoRepository.update.mockResolvedValue({});
-      mockFacturaRepository.findOne.mockResolvedValue(mockFactura);
+    it('should throw BadRequestException if cargos don\'t belong to client', async () => {
+      mockManager.find.mockResolvedValue([{ id: 1 }]); // Only 1 found
+      await expect(service.create(dto)).rejects.toThrow(BadRequestException);
+    });
 
-      const result = await service.create({
-        clienteId: 1,
-        cargoIds: [1],
-        fechaEmision: '2024-01-01',
-      });
+    it('should retry generation on unique violation', async () => {
+      mockManager.find.mockResolvedValue([{ id: 1, monto: 100 }, { id: 2, monto: 50 }]);
+      mockManager.create.mockReturnValue(mockFactura);
+      
+      // First save fails with unique constraint
+      mockManager.save.mockRejectedValueOnce({ code: '23505' });
+      // Second save succeeds
+      mockManager.save.mockResolvedValueOnce(mockFactura);
+      
+      const result = await service.create({ ...dto, numero: undefined });
       expect(result).toBeDefined();
+      expect(mockManager.save).toHaveBeenCalledTimes(2);
     });
   });
 
   describe('updateEstado', () => {
-    it('should throw error if no caja open for paid state', async () => {
-      mockFacturaRepository.findOne.mockResolvedValue(mockFactura);
-      mockCajasService.findAbierta.mockResolvedValue(null);
+    it('should update state to PAGADA and register payment', async () => {
+      const facturaWithCargos = { ...mockFactura, cargos: [{ id: 1 }], cliente: { id: 1, nombre: 'Test' } };
+      mockManager.findOne.mockResolvedValue(facturaWithCargos);
+      mockCajasService.findAbierta.mockResolvedValue({ id: 1 });
+      mockManager.create.mockReturnValue({});
 
-      await expect(
-        service.updateEstado(1, EstadoFactura.PAGADA),
-      ).rejects.toThrow(BadRequestException);
+      await service.updateEstado(1, EstadoFactura.PAGADA);
+
+      expect(mockManager.update).toHaveBeenCalledWith(Factura, 1, { estado: EstadoFactura.PAGADA });
+      expect(mockManager.update).toHaveBeenCalledWith(Cargo, { id: In([1]) }, { pagado: true });
+      expect(mockManager.save).toHaveBeenCalled(); // Payment saved
+    });
+
+    it('should throw error if no caja open for paid state', async () => {
+      mockManager.findOne.mockResolvedValue(mockFactura);
+      mockCajasService.findAbierta.mockResolvedValue(null);
+      await expect(service.updateEstado(1, EstadoFactura.PAGADA)).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('update', () => {
+    it('should update factura basic fields', async () => {
+      mockManager.findOne.mockResolvedValue(mockFactura);
+      mockManager.find.mockResolvedValue([]);
+      
+      await service.update(1, { observaciones: 'Updated' });
+      expect(mockManager.save).toHaveBeenCalled();
+    });
+
+    it('should add new cargos to factura', async () => {
+      mockManager.findOne.mockResolvedValue(mockFactura);
+      mockManager.find.mockResolvedValue([{ id: 1, monto: 100 }]);
+      
+      await service.update(1, { nuevosCargos: [{ descripcion: 'New', monto: 50, tipo: TipoCargo.OTROS }] });
+      expect(mockManager.create).toHaveBeenCalled();
+      expect(mockManager.save).toHaveBeenCalled();
     });
   });
 
@@ -244,22 +306,22 @@ describe('FacturasService', () => {
   });
 
   describe('getStats', () => {
-    it('should return stats', async () => {
-      mockFacturaRepository.createQueryBuilder.mockReturnValue({
+    it('should return stats with date filters', async () => {
+      const mockQueryBuilder = {
         select: jest.fn().mockReturnThis(),
         addSelect: jest.fn().mockReturnThis(),
-        where: jest.fn().mockReturnThis(),
         andWhere: jest.fn().mockReturnThis(),
         groupBy: jest.fn().mockReturnThis(),
-        getRawMany: jest
-          .fn()
-          .mockResolvedValue([
-            { estado: EstadoFactura.PENDIENTE, total: '100', cantidad: '2' },
-          ]),
-      });
+        getRawMany: jest.fn().mockResolvedValue([
+          { estado: EstadoFactura.PAGADA, total: '100', cantidad: '1' },
+          { estado: EstadoFactura.PENDIENTE, total: '50', cantidad: '1' },
+        ]),
+      };
+      mockFacturaRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
 
-      const result = await service.getStats();
-      expect(result).toBeDefined();
+      const result = await service.getStats('2026-01-01', '2026-01-31');
+      expect(result.TOTAL_PAGADO).toBe(100);
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledTimes(2);
     });
   });
 });

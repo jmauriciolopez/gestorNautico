@@ -24,6 +24,7 @@ describe('PagosService', () => {
 
   const mockRepository = {
     find: jest.fn(),
+    findAndCount: jest.fn().mockResolvedValue([[], 0]),
     findOne: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
@@ -59,6 +60,7 @@ describe('PagosService', () => {
     }).compile();
 
     service = module.get<PagosService>(PagosService);
+    jest.clearAllMocks();
   });
 
   it('should be defined', () => {
@@ -67,10 +69,11 @@ describe('PagosService', () => {
 
   describe('findAll', () => {
     it('should return paginated pagos', async () => {
-      mockRepository.find.mockResolvedValue([mockPago]);
+      mockRepository.findAndCount.mockResolvedValue([[mockPago], 1]);
 
       const result = await service.findAll({});
-      expect(result).toBeDefined();
+      expect(result.data).toBeDefined();
+      expect(result.total).toBe(1);
     });
   });
 
