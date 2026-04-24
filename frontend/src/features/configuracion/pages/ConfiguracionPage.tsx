@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Save, Loader2, Clock, CircleDollarSign, Info, AlertTriangle } from 'lucide-react';
+import { Save, Loader2, Clock, CircleDollarSign, Info, AlertTriangle, Building2, MapPin, Phone, Mail } from 'lucide-react';
 import { useConfiguracion } from '../hooks/useConfiguracion';
 
 export default function ConfiguracionPage() {
@@ -67,6 +67,66 @@ export default function ConfiguracionPage() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Sección Información de la Guardería */}
+        <div className="bg-[var(--bg-secondary)]/[0.4] border border-[var(--border-primary)] rounded-3xl p-8 backdrop-blur-xl shadow-2xl">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 bg-indigo-500/10 rounded-xl">
+              <Building2 className="w-5 h-5 text-indigo-400" />
+            </div>
+            <h2 className="text-lg font-black uppercase tracking-widest text-[var(--text-primary)]">Información de la Guardería</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-2">
+              <label className="text-[11px] font-black uppercase tracking-widest text-[var(--text-secondary)] flex items-center gap-2">
+                <Building2 size={12} className="text-indigo-400" /> Nombre de la Guardería
+              </label>
+              <input
+                type="text"
+                value={formData['NOMBRE_GUARDERIA'] || ''}
+                onChange={(e) => handleChange('NOMBRE_GUARDERIA', e.target.value)}
+                className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-2xl px-5 py-4 text-[var(--text-primary)] focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all font-bold"
+                placeholder="Ej: Náutica del Sol"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[11px] font-black uppercase tracking-widest text-[var(--text-secondary)] flex items-center gap-2">
+                <MapPin size={12} className="text-indigo-400" /> Dirección
+              </label>
+              <input
+                type="text"
+                value={formData['DIRECCION'] || ''}
+                onChange={(e) => handleChange('DIRECCION', e.target.value)}
+                className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-2xl px-5 py-4 text-[var(--text-primary)] focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all font-bold"
+                placeholder="Ej: Av. Costanera 123"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[11px] font-black uppercase tracking-widest text-[var(--text-secondary)] flex items-center gap-2">
+                <Phone size={12} className="text-indigo-400" /> Teléfono
+              </label>
+              <input
+                type="text"
+                value={formData['TELEFONO'] || ''}
+                onChange={(e) => handleChange('TELEFONO', e.target.value)}
+                className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-2xl px-5 py-4 text-[var(--text-primary)] focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all font-bold"
+                placeholder="Ej: +54 11 1234-5678"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[11px] font-black uppercase tracking-widest text-[var(--text-secondary)] flex items-center gap-2">
+                <Mail size={12} className="text-indigo-400" /> Email de Contacto
+              </label>
+              <input
+                type="email"
+                value={formData['EMAIL_GUARDERIA'] || ''}
+                onChange={(e) => handleChange('EMAIL_GUARDERIA', e.target.value)}
+                className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-2xl px-5 py-4 text-[var(--text-primary)] focus:ring-2 focus:ring-indigo-500/50 outline-none transition-all font-bold"
+                placeholder="Ej: contacto@nautica.com"
+              />
+            </div>
+          </div>
+        </div>
         {/* Sección Cuotas */}
         <div className="bg-[var(--bg-secondary)]/[0.4] border border-[var(--border-primary)] rounded-3xl p-8 backdrop-blur-xl shadow-2xl">
           <div className="flex items-center gap-3 mb-6">
