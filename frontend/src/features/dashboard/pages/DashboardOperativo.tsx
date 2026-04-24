@@ -22,19 +22,32 @@ const MetricCard = React.memo(({
   value,
   accent,
   delay = 0,
+  onClick,
 }: {
   icon: React.ReactNode;
   label: string;
   value: number;
   accent: 'teal' | 'purple' | 'amber';
   delay?: number;
+  onClick?: () => void;
 }) => (
   <motion.div 
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.6, delay: delay, ease: [0.16, 1, 0.3, 1] }}
     whileHover={{ y: -5, scale: 1.02 }}
-    className={`bento-card p-8 group transition-all duration-500 shadow-sm hover:shadow-premium bg-gradient-to-br from-[var(--bg-card)] to-[var(--bg-surface)] border-[var(--border-primary)]/50`}
+    whileTap={{ scale: 0.98 }}
+    role="button"
+    tabIndex={0}
+    onClick={onClick}
+    onKeyDown={(e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        onClick?.();
+      }
+    }}
+    aria-label={`${label}: ${value}`}
+    className={`bento-card p-8 group transition-all duration-500 shadow-sm hover:shadow-premium bg-gradient-to-br from-[var(--bg-card)] to-[var(--bg-surface)] border-[var(--border-primary)]/50 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)]`}
   >
     <div className={`bento-icon accent-${accent} transition-transform duration-500 group-hover:scale-110 shadow-lg shadow-${accent}-500/10`}>{icon}</div>
     <div className="flex items-baseline gap-1 mt-2">
@@ -156,6 +169,7 @@ const DashboardOperativo: React.FC = () => {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => navigate('/operaciones')}
+              aria-label="Ir a nueva operación"
               className="bg-teal-600 hover:bg-teal-500 text-white px-10 py-5 rounded-full font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl shadow-teal-900/40 transition-all flex items-center gap-4 group/btn"
             >
               <Navigation size={18} className="group-hover/btn:rotate-12 transition-transform" />

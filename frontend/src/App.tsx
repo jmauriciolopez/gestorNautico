@@ -1,8 +1,10 @@
+// Refreshed after context refactor
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { queryClient } from './api/queryClient';
-import { AuthProvider } from './features/auth/context/AuthContext';
+import { AuthProvider } from './features/auth/context/AuthProvider';
 import { useAuth } from './features/auth/hooks/useAuth';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { Role } from './types';
@@ -10,24 +12,39 @@ import AppLayout from './components/layout/AppLayout';
 import { Login } from './features/auth/Login';
 import { ThemeProvider } from './context/ThemeProvider';
 import { Toaster } from 'react-hot-toast';
-import { ConfirmProvider } from './shared/context/ConfirmContext';
+import { ConfirmProvider } from './shared/context/ConfirmProvider';
 
-// === Feature Pages ===
-import DashboardRouter from './features/dashboard/pages/DashboardRouter';
-import ClientesList from './features/clientes/pages/ClientesList';
-import ClienteForm from './features/clientes/pages/ClienteForm';
-import EmbarcacionesList from './features/embarcaciones/pages/EmbarcacionesList';
-import EmbarcacionForm from './features/embarcaciones/pages/EmbarcacionForm';
-import OperacionesPage from './features/operaciones/pages/OperacionesPage';
-import InfraestructuraPage from './features/infraestructura/pages/InfraestructuraPage';
-import FinanzasPage from './features/finanzas/pages/FinanzasPage';
-import ServiciosPage from './features/servicios/pages/ServiciosPage';
-import FacturacionPage from './features/facturacion/pages/FacturacionPage';
-import UsersPage from './features/users/pages/UsersPage';
-import SolicitudBajadaPublica from './features/operaciones/pages/SolicitudBajadaPublica';
-import ConfiguracionPage from './features/configuracion/pages/ConfiguracionPage';
-import UserHelp from './features/help/components/UserHelp';
-import ReportesPage from './features/reportes/pages/ReportesPage';
+// === Lazy Loaded Pages ===
+const DashboardRouter = lazy(() => import('./features/dashboard/pages/DashboardRouter'));
+const ClientesList = lazy(() => import('./features/clientes/pages/ClientesList'));
+const ClienteForm = lazy(() => import('./features/clientes/pages/ClienteForm'));
+const EmbarcacionesList = lazy(() => import('./features/embarcaciones/pages/EmbarcacionesList'));
+const EmbarcacionForm = lazy(() => import('./features/embarcaciones/pages/EmbarcacionForm'));
+const OperacionesPage = lazy(() => import('./features/operaciones/pages/OperacionesPage'));
+const InfraestructuraPage = lazy(() => import('./features/infraestructura/pages/InfraestructuraPage'));
+const FinanzasPage = lazy(() => import('./features/finanzas/pages/FinanzasPage'));
+const ServiciosPage = lazy(() => import('./features/servicios/pages/ServiciosPage'));
+const FacturacionPage = lazy(() => import('./features/facturacion/pages/FacturacionPage'));
+const UsersPage = lazy(() => import('./features/users/pages/UsersPage'));
+const SolicitudBajadaPublica = lazy(() => import('./features/operaciones/pages/SolicitudBajadaPublica'));
+const ConfiguracionPage = lazy(() => import('./features/configuracion/pages/ConfiguracionPage'));
+const UserHelp = lazy(() => import('./features/help/components/UserHelp'));
+const ReportesPage = lazy(() => import('./features/reportes/pages/ReportesPage'));
+
+// Componente de Carga Premium
+const LoadingScreen = () => (
+  <div className="flex h-screen w-screen items-center justify-center bg-[var(--bg-primary)]">
+    <div className="flex flex-col items-center gap-4">
+      <div className="relative">
+        <div className="w-16 h-16 border-4 border-[var(--accent-primary-soft)] rounded-full" />
+        <div className="absolute top-0 left-0 w-16 h-16 border-4 border-t-[var(--accent-primary)] rounded-full animate-spin" />
+      </div>
+      <p className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.3em] animate-pulse">
+        Cargando Experiencia...
+      </p>
+    </div>
+  </div>
+);
 
 // Componente simple para Login Helper
 const LoginWrapper = () => {
@@ -66,52 +83,54 @@ function App() {
           />
           <AuthProvider>
             <ConfirmProvider>
-              <Routes>
-                <Route path="/login" element={<LoginWrapper />} />
-                <Route path="/bajada-publica" element={<SolicitudBajadaPublica />} />
-                <Route path="/unauthorized" element={<Unauthorized />} />
+              <Suspense fallback={<LoadingScreen />}>
+                <Routes>
+                  <Route path="/login" element={<LoginWrapper />} />
+                  <Route path="/bajada-publica" element={<SolicitudBajadaPublica />} />
+                  <Route path="/unauthorized" element={<Unauthorized />} />
 
-                {/* Rutas Protegidas */}
-                <Route element={<ProtectedRoute />}>
-                  <Route path="/" element={<AppLayout />}>
-                    <Route index element={<DashboardRouter />} />
+                  {/* Rutas Protegidas */}
+                  <Route element={<ProtectedRoute />}>
+                    <Route path="/" element={<AppLayout />}>
+                      <Route index element={<DashboardRouter />} />
 
-                    {/* Operativo — todos los roles */}
-                    <Route path="clientes" element={<ClientesList />} />
-                    <Route path="clientes/nuevo" element={<ClienteForm />} />
-                    <Route path="clientes/editar/:id" element={<ClienteForm />} />
+                      {/* Operativo — todos los roles */}
+                      <Route path="clientes" element={<ClientesList />} />
+                      <Route path="clientes/nuevo" element={<ClienteForm />} />
+                      <Route path="clientes/editar/:id" element={<ClienteForm />} />
 
-                    <Route path="embarcaciones" element={<EmbarcacionesList />} />
-                    <Route path="embarcaciones/nueva" element={<EmbarcacionForm />} />
-                    <Route path="embarcaciones/editar/:id" element={<EmbarcacionForm />} />
+                      <Route path="embarcaciones" element={<EmbarcacionesList />} />
+                      <Route path="embarcaciones/nueva" element={<EmbarcacionForm />} />
+                      <Route path="embarcaciones/editar/:id" element={<EmbarcacionForm />} />
 
-                    <Route path="operaciones" element={<OperacionesPage />} />
-                    <Route path="infraestructura" element={<InfraestructuraPage />} />
-                    <Route path="servicios" element={<ServiciosPage />} />
-                    <Route path="ayuda" element={<UserHelp />} />
+                      <Route path="operaciones" element={<OperacionesPage />} />
+                      <Route path="infraestructura" element={<InfraestructuraPage />} />
+                      <Route path="servicios" element={<ServiciosPage />} />
+                      <Route path="ayuda" element={<UserHelp />} />
 
-                    {/* Finanzas y Facturación — Supervisor en adelante */}
-                    <Route element={<ProtectedRoute allowedRoles={[Role.ADMIN, Role.SUPERADMIN, Role.SUPERVISOR]} />}>
-                      <Route path="finanzas" element={<FinanzasPage />} />
-                      <Route path="facturacion" element={<FacturacionPage />} />
-                      <Route path="reportes" element={<ReportesPage />} />
-                    </Route>
+                      {/* Finanzas y Facturación — Supervisor en adelante */}
+                      <Route element={<ProtectedRoute allowedRoles={[Role.ADMIN, Role.SUPERADMIN, Role.SUPERVISOR]} />}>
+                        <Route path="finanzas" element={<FinanzasPage />} />
+                        <Route path="facturacion" element={<FacturacionPage />} />
+                        <Route path="reportes" element={<ReportesPage />} />
+                      </Route>
 
-                    {/* Configuración — Admin en adelante */}
-                    <Route element={<ProtectedRoute allowedRoles={[Role.ADMIN, Role.SUPERADMIN]} />}>
-                      <Route path="configuracion" element={<ConfiguracionPage />} />
-                    </Route>
+                      {/* Configuración — Admin en adelante */}
+                      <Route element={<ProtectedRoute allowedRoles={[Role.ADMIN, Role.SUPERADMIN]} />}>
+                        <Route path="configuracion" element={<ConfiguracionPage />} />
+                      </Route>
 
-                    {/* Usuarios — solo SuperAdmin */}
-                    <Route element={<ProtectedRoute allowedRoles={[Role.SUPERADMIN]} />}>
-                      <Route path="usuarios/*" element={<UsersPage />} />
+                      {/* Usuarios — solo SuperAdmin */}
+                      <Route element={<ProtectedRoute allowedRoles={[Role.SUPERADMIN]} />}>
+                        <Route path="usuarios/*" element={<UsersPage />} />
+                      </Route>
                     </Route>
                   </Route>
-                </Route>
 
-                {/* Fallback */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
+                  {/* Fallback */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </Suspense>
             </ConfirmProvider>
           </AuthProvider>
         </BrowserRouter>

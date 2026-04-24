@@ -1,13 +1,11 @@
 import { useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { toast } from 'react-hot-toast';
 import { useOperaciones, useSolicitudesBajada, Pedido } from '../hooks/useOperaciones';
 import { PedidosList } from '../components/PedidosList';
 import { MovimientosList } from '../components/MovimientosList';
-import { SolicitudesBajadaList } from '../components/SolicitudesBajadaList';
 import { NuevoPedidoModal } from '../components/NuevoPedidoModal';
 import { NuevoMovimientoModal } from '../components/NuevoMovimientoModal';
-import { Activity, Plus, Clock, Anchor, History } from 'lucide-react';
+import { Activity, Plus, Clock, History } from 'lucide-react';
 import { useConfirm } from '../../../shared/hooks/useConfirm';
 
 type Tab = 'pedidos' | 'movimientos' | 'bajadas';
@@ -35,9 +33,6 @@ export default function OperacionesPage() {
     ].sort((a, b) => new Date(b.fechaProgramada).getTime() - new Date(a.fechaProgramada).getTime());
   }, [getPedidos.data, getSolicitudes.data]);
 
-  const activeBoatIds = useMemo(() => 
-    getPedidos.data?.map(p => p.embarcacion.id) || [],
-  [getPedidos.data]);
 
   const handleUpdateStatusUnified = useCallback(async (id: number, nuevoEstado: Pedido['estado'], isSolicitud?: boolean) => {
     if (isSolicitud) {
