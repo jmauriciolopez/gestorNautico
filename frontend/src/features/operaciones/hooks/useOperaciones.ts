@@ -31,6 +31,7 @@ export interface SolicitudBajada {
   clienteId: number;
   fechaHoraDeseada: string;
   estado: 'PENDIENTE' | 'EN_AGUA' | 'FINALIZADA' | 'CANCELADA';
+  observaciones?: string;
   motivoCancelacion?: string;
   embarcacion: {
     nombre: string;

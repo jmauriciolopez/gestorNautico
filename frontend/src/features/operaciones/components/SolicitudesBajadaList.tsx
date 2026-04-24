@@ -85,6 +85,11 @@ export function SolicitudesBajadaList({ solicitudes, isLoading, onUpdateEstado }
                           Motivo: "{s.motivoCancelacion}"
                         </div>
                       )}
+                      {s.observaciones && (
+                        <div className="flex items-center gap-2.5 text-[10px] text-indigo-400 font-bold italic truncate max-w-[250px] bg-indigo-500/5 px-3 py-1.5 rounded-xl border border-indigo-500/10">
+                          Nota: "{s.observaciones}"
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
