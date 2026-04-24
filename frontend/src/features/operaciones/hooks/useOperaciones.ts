@@ -126,7 +126,7 @@ export function useOperaciones(options: {
 
 const MOVIMIENTOS_PAGE_SIZE = 20;
 
-export function useMovimientosPaginados(page: number, limit = MOVIMIENTOS_PAGE_SIZE) {
+export function useMovimientosPaginados(page: number, limit = MOVIMIENTOS_PAGE_SIZE, search?: string, embarcacionId?: number) {
   const queryClient = useQueryClient();
   
   const invalidate = useCallback(() => {
@@ -137,9 +137,15 @@ export function useMovimientosPaginados(page: number, limit = MOVIMIENTOS_PAGE_S
   }, [queryClient]);
 
   const query = useQuery({
-    queryKey: ['movimientos', page, limit],
-    queryFn: (): Promise<Paginated<Movimiento>> =>
-      httpClient.get<Paginated<Movimiento>>(`/movimientos?page=${page}&limit=${limit}`),
+    queryKey: ['movimientos', page, limit, search, embarcacionId],
+    queryFn: (): Promise<Paginated<Movimiento>> => {
+      const params = new URLSearchParams();
+      params.append('page', String(page));
+      params.append('limit', String(limit));
+      if (search) params.append('search', search);
+      if (embarcacionId) params.append('embarcacionId', String(embarcacionId));
+      return httpClient.get<Paginated<Movimiento>>(`/movimientos?${params.toString()}`);
+    },
     placeholderData: (prev) => prev,
     staleTime: 30_000,
   });

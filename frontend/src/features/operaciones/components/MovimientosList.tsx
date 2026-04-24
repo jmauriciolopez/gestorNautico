@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   MapPin, Loader2, Calendar, ArrowRight, ArrowLeft,
   History, FileText, Trash2, ChevronLeft, ChevronRight,
@@ -11,12 +12,16 @@ import { useConfirm } from '../../../shared/hooks/useConfirm';
 const PAGE_SIZE = 20;
 
 export function MovimientosList() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const search = searchParams.get('search') || '';
+  const embarcacionId = searchParams.get('embarcacionId') ? Number(searchParams.get('embarcacionId')) : undefined;
+  
   const [page, setPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const confirm = useConfirm();
-
-  const { query, deleteMovimiento } = useMovimientosPaginados(page, PAGE_SIZE);
+ 
+  const { query, deleteMovimiento } = useMovimientosPaginados(page, PAGE_SIZE, search, embarcacionId);
   const { data, isLoading, isFetching } = query;
   const movimientos: Movimiento[] = data?.data ?? [];
   const totalPages = data?.totalPages ?? 1;
@@ -57,6 +62,31 @@ export function MovimientosList() {
 
   return (
     <div className="p-12 space-y-10">
+      {/* Header con Filtros Activos si existen */}
+      {(search || embarcacionId) && (
+        <div className="flex items-center justify-between bg-amber-500/10 border border-amber-500/20 p-6 rounded-2xl animate-in fade-in zoom-in-95 duration-500">
+          <div className="flex items-center gap-4">
+            <div className="p-2 bg-amber-500/20 rounded-xl">
+              <History className="w-5 h-5 text-amber-500" />
+            </div>
+            <div>
+              <p className="text-xs font-black text-amber-500 uppercase tracking-widest">Filtro de Bitácora Activo</p>
+              <p className="text-sm text-[var(--text-primary)] font-bold">
+                Mostrando resultados para: <span className="text-amber-500">"{search || `ID Embarcación: ${embarcacionId}`}"</span>
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              setSearchParams({});
+            }}
+            className="px-6 py-2 bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all active:scale-95 shadow-lg shadow-amber-900/20"
+          >
+            Limpiar Filtros
+          </button>
+        </div>
+      )}
+
       {/* Lista */}
       <div className={`grid grid-cols-1 gap-4 transition-opacity duration-200 ${isFetching ? 'opacity-60 pointer-events-none' : 'opacity-100'}`}>
         {movimientos.map((mov) => (

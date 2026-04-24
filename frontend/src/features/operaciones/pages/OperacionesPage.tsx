@@ -1,4 +1,5 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useOperaciones, useSolicitudesBajada, Pedido } from '../hooks/useOperaciones';
 import { PedidosList } from '../components/PedidosList';
@@ -11,7 +12,18 @@ import { useConfirm } from '../../../shared/hooks/useConfirm';
 type Tab = 'pedidos' | 'movimientos' | 'bajadas';
 
 export default function OperacionesPage() {
-  const [activeTab, setActiveTab] = useState<Tab>('pedidos');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = (searchParams.get('tab') as Tab) || 'pedidos';
+  const initialSearch = searchParams.get('search') || '';
+
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab);
+  
+  useEffect(() => {
+    const tab = searchParams.get('tab') as Tab;
+    if (tab && tab !== activeTab) {
+      setActiveTab(tab);
+    }
+  }, [searchParams, activeTab]);
   const [isPedidoModalOpen, setIsPedidoModalOpen] = useState(false);
   const [isMovimientoModalOpen, setIsMovimientoModalOpen] = useState(false);
   const { getPedidos, deletePedido, updatePedidoEstado, createPedido, createMovimiento } = useOperaciones();
@@ -120,7 +132,10 @@ export default function OperacionesPage() {
               ].map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as Tab)}
+                  onClick={() => {
+                    setActiveTab(tab.id as Tab);
+                    setSearchParams({ tab: tab.id });
+                  }}
                   className={`group flex items-center gap-3 px-8 py-3 rounded-full transition-all duration-500 ${activeTab === tab.id
                     ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-900/40 translate-y-[-1px]'
                     : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)]/60 active:scale-95'

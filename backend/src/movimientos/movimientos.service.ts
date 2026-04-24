@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, EntityManager } from 'typeorm';
+import { Repository, In, EntityManager, ILike } from 'typeorm';
 import { Movimiento, TipoMovimiento } from './movimientos.entity';
 import { Pedido, EstadoPedido } from '../pedidos/pedidos.entity';
 import {
@@ -38,11 +38,23 @@ export class MovimientosService {
     private readonly notificacionesService: NotificacionesService,
   ) {}
 
-  findAll(query: PaginationQuery = {}) {
-    return paginate(this.movimientoRepo, query, {
+  findAll(query: PaginationQuery & { search?: string; embarcacionId?: number } = {}) {
+    const { search, embarcacionId, ...pagination } = query;
+    const findOptions: any = {
       relations: ['embarcacion', 'espacio', 'espacio.rack'],
       order: { fecha: 'DESC' },
-    });
+    };
+
+    if (embarcacionId) {
+      findOptions.where = { embarcacion: { id: Number(embarcacionId) } };
+    } else if (search) {
+      findOptions.where = [
+        { embarcacion: { nombre: ILike(`%${search}%`) } },
+        { embarcacion: { matricula: ILike(`%${search}%`) } },
+      ];
+    }
+
+    return paginate(this.movimientoRepo, pagination, findOptions);
   }
 
   async findOne(id: number) {

@@ -464,7 +464,7 @@ export const MapaRacks: React.FC<MapaRacksProps> = ({
                     <ChevronRight size={18} className="text-[var(--text-secondary)] group-hover:translate-x-1 transition-transform" />
                   </button>
                   <button
-                    onClick={() => navigate('/operaciones')}
+                    onClick={() => navigate(`/operaciones?tab=movimientos&embarcacionId=${selectedEspacio.embarcacion.id}&search=${selectedEspacio.embarcacion.nombre}`)}
                     className="flex items-center justify-between w-full p-4 bg-slate-800 hover:bg-slate-700 rounded-2xl border border-slate-700 transition-all group"
                   >
                     <div className="flex items-center gap-3">
