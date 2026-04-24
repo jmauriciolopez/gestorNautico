@@ -2,7 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Not, Repository } from 'typeorm';
 import { Cliente } from '../clientes/clientes.entity';
-import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
+import {
+  Embarcacion,
+  EstadoEmbarcacion,
+} from '../embarcaciones/embarcaciones.entity';
 import { Movimiento } from '../movimientos/movimientos.entity';
 import { Cargo } from '../cargos/cargo.entity';
 import { Pago } from '../pagos/pago.entity';
@@ -42,8 +45,12 @@ export class DashboardService {
 
     // Ocupación
     const [enCuna, enAgua] = await Promise.all([
-      this.barcoRepo.count({ where: { estado_operativo: 'EN_CUNA' } }),
-      this.barcoRepo.count({ where: { estado_operativo: 'EN_AGUA' } }),
+      this.barcoRepo.count({
+        where: { estado_operativo: EstadoEmbarcacion.EN_CUNA },
+      }),
+      this.barcoRepo.count({
+        where: { estado_operativo: EstadoEmbarcacion.EN_AGUA },
+      }),
     ]);
 
     // Finanzas
@@ -82,7 +89,10 @@ export class DashboardService {
       this.getRecaudacionDetalleAll(),
       this.getDeudaDetalleAll(),
       this.barcoRepo.find({
-        where: { espacioId: null, estado_operativo: Not('INACTIVA') },
+        where: {
+          espacioId: null,
+          estado_operativo: Not(EstadoEmbarcacion.INACTIVA),
+        },
         relations: ['cliente'],
       }),
     ]);

@@ -5,8 +5,8 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Embarcacion } from './embarcaciones.entity';
+import { Repository, EntityManager, DataSource } from 'typeorm';
+import { Embarcacion, EstadoEmbarcacion } from './embarcaciones.entity';
 import { Espacio } from '../espacios/espacio.entity';
 import {
   paginate,
@@ -25,6 +25,7 @@ export class EmbarcacionesService {
     private readonly embarcacionesRepository: Repository<Embarcacion>,
     @InjectRepository(Espacio)
     private readonly espacioRepo: Repository<Espacio>,
+    private readonly dataSource: DataSource,
   ) {}
 
   async findAll(
@@ -93,10 +94,13 @@ export class EmbarcacionesService {
     espacioId: number,
     eslora: number,
     manga: number,
+    manager?: EntityManager,
   ) {
     if (!espacioId) return;
 
-    const espacio = await this.espacioRepo.findOne({
+    const espRepo = manager ? manager.getRepository(Espacio) : this.espacioRepo;
+
+    const espacio = await espRepo.findOne({
       where: { id: espacioId },
       relations: ['rack'],
     });
@@ -122,146 +126,172 @@ export class EmbarcacionesService {
     }
   }
 
-  async create(dto: CreateEmbarcacionDto): Promise<Embarcacion> {
-    if (dto.espacioId) {
-      await this.validarDimensionesUbicacion(
-        dto.espacioId,
-        dto.eslora || 0,
-        dto.manga || 0,
-      );
-    }
+  async create(
+    dto: CreateEmbarcacionDto,
+    manager?: EntityManager,
+  ): Promise<Embarcacion> {
+    const work = async (mgr: EntityManager) => {
+      const boatRepo = mgr.getRepository(Embarcacion);
+      const espRepo = mgr.getRepository(Espacio);
 
-    // Validar que el espacio no esté ocupado por otra embarcación
-    if (dto.espacioId) {
-      const boatWithSpace = await this.embarcacionesRepository.findOne({
-        where: { espacioId: dto.espacioId },
-      });
-      if (boatWithSpace) {
-        throw new BadRequestException(
-          `El espacio seleccionado ya está asignado a la embarcación ${boatWithSpace.nombre} (${boatWithSpace.matricula})`,
+      if (dto.espacioId) {
+        await this.validarDimensionesUbicacion(
+          dto.espacioId,
+          dto.eslora || 0,
+          dto.manga || 0,
+          mgr,
         );
       }
-    }
 
-    const existing = await this.embarcacionesRepository.findOne({
-      where: { matricula: dto.matricula },
-    });
-    if (existing) {
-      throw new BadRequestException(
-        `Ya existe una embarcación registrada con la matrícula ${dto.matricula}`,
-      );
-    }
-
-    const nuevaEmbarcacion = this.embarcacionesRepository.create(dto);
-    const saved = await this.embarcacionesRepository.save(nuevaEmbarcacion);
-
-    if (saved.espacioId) {
-      await this.espacioRepo.update(saved.espacioId, { ocupado: true });
-    }
-
-    return saved;
-  }
-
-  async update(id: number, dto: UpdateEmbarcacionDto): Promise<Embarcacion> {
-    const embarcacion = await this.findOne(id);
-    const anteriorEspacioId = embarcacion.espacio?.id || null;
-
-    const nuevaEslora = dto.eslora ?? embarcacion.eslora;
-    const nuevaManga = dto.manga ?? embarcacion.manga;
-    const nuevoEstado = dto.estado_operativo ?? embarcacion.estado_operativo;
-    let nuevoEspacioId = 'espacioId' in dto ? dto.espacioId : anteriorEspacioId;
-
-    // Si se inactiva o ya está inactiva, liberar espacio automáticamente
-    if (nuevoEstado === 'INACTIVA' && nuevoEspacioId) {
-      this.logger.log(
-        `[EmbarcacionesService] Asegurando liberación de espacio para embarcación INACTIVA ${id}.`,
-      );
-      nuevoEspacioId = null;
-    }
-
-    if (nuevoEspacioId) {
-      await this.validarDimensionesUbicacion(
-        nuevoEspacioId,
-        nuevaEslora,
-        nuevaManga,
-      );
-    }
-
-    // Validar que el nuevo espacio no esté ocupado por otra embarcación
-    if (nuevoEspacioId && nuevoEspacioId !== embarcacion.espacioId) {
-      const boatWithSpace = await this.embarcacionesRepository.findOne({
-        where: { espacioId: nuevoEspacioId },
-      });
-      if (boatWithSpace) {
-        throw new BadRequestException(
-          `El espacio seleccionado ya está asignado a la embarcación ${boatWithSpace.nombre} (${boatWithSpace.matricula})`,
-        );
+      // Validar que el espacio no esté ocupado por otra embarcación
+      if (dto.espacioId) {
+        const boatWithSpace = await boatRepo.findOne({
+          where: { espacioId: dto.espacioId },
+        });
+        if (boatWithSpace) {
+          throw new BadRequestException(
+            `El espacio seleccionado ya está asignado a la embarcación ${boatWithSpace.nombre} (${boatWithSpace.matricula})`,
+          );
+        }
       }
-    }
 
-    // Si cambia la matrícula, validar que no exista otra igual
-    if (dto.matricula && dto.matricula !== embarcacion.matricula) {
-      const existing = await this.embarcacionesRepository.findOne({
+      const existing = await boatRepo.findOne({
         where: { matricula: dto.matricula },
       });
       if (existing) {
         throw new BadRequestException(
-          `La matrícula ${dto.matricula} ya pertenece a otra embarcación`,
+          `Ya existe una embarcación registrada con la matrícula ${dto.matricula}`,
         );
       }
-    }
 
-    const setValues: Record<string, unknown> = {};
+      const nuevaEmbarcacion = boatRepo.create(dto);
+      const saved = await boatRepo.save(nuevaEmbarcacion);
 
-    if (dto.nombre !== undefined) setValues.nombre = dto.nombre;
-    if (dto.matricula !== undefined) setValues.matricula = dto.matricula;
-    if (dto.marca !== undefined) setValues.marca = dto.marca;
-    if (dto.modelo !== undefined) setValues.modelo = dto.modelo;
-    if (dto.eslora !== undefined) setValues.eslora = dto.eslora;
-    if (dto.manga !== undefined) setValues.manga = dto.manga;
-    if (dto.tipo !== undefined) setValues.tipo = dto.tipo;
-    if (dto.estado_operativo !== undefined)
-      setValues.estado_operativo = dto.estado_operativo;
-    if (dto.descuento !== undefined) setValues.descuento = dto.descuento;
-    if (dto.clienteId !== undefined) setValues.clienteId = dto.clienteId;
-
-    // Forzar actualización de espacioId si cambió (por DTO o por inactivación)
-    if (nuevoEspacioId !== anteriorEspacioId) {
-      setValues.espacioId = nuevoEspacioId;
-    }
-
-    await this.embarcacionesRepository
-      .createQueryBuilder()
-      .update(Embarcacion)
-      .set(setValues)
-      .where('id = :id', { id })
-      .execute();
-
-    if (anteriorEspacioId !== nuevoEspacioId) {
-      if (anteriorEspacioId) {
-        await this.espacioRepo.update(anteriorEspacioId, { ocupado: false });
+      if (saved.espacioId) {
+        await espRepo.update(saved.espacioId, { ocupado: true });
       }
-      if (nuevoEspacioId) {
-        await this.espacioRepo.update(nuevoEspacioId, { ocupado: true });
-      }
-    }
 
-    return this.findOne(id);
+      return saved;
+    };
+
+    if (manager) return await work(manager);
+    return await this.dataSource.transaction(work);
   }
 
-  async remove(id: number): Promise<void> {
-    const embarcacion = await this.findOne(id);
-    const espacioId = embarcacion.espacioId;
+  async update(
+    id: number,
+    dto: UpdateEmbarcacionDto,
+    manager?: EntityManager,
+  ): Promise<Embarcacion> {
+    const work = async (mgr: EntityManager) => {
+      const boatRepo = mgr.getRepository(Embarcacion);
+      const espRepo = mgr.getRepository(Espacio);
 
-    // Liberar espacio si tenía uno
-    if (espacioId) {
-      await this.espacioRepo.update(espacioId, { ocupado: false });
-    }
+      const embarcacion = await this.findOne(id);
+      const anteriorEspacioId = embarcacion.espacio?.id || null;
 
-    Object.assign(embarcacion, {
-      estado_operativo: 'INACTIVA',
-      espacioId: null,
-    });
-    await this.embarcacionesRepository.save(embarcacion);
+      const nuevaEslora = dto.eslora ?? embarcacion.eslora;
+      const nuevaManga = dto.manga ?? embarcacion.manga;
+      const nuevoEstado = dto.estado_operativo ?? embarcacion.estado_operativo;
+      let nuevoEspacioId =
+        'espacioId' in dto ? dto.espacioId : anteriorEspacioId;
+
+      // Si se inactiva o ya está inactiva, liberar espacio automáticamente
+      if (nuevoEstado === EstadoEmbarcacion.INACTIVA && nuevoEspacioId) {
+        nuevoEspacioId = null;
+      }
+
+      if (nuevoEspacioId) {
+        await this.validarDimensionesUbicacion(
+          nuevoEspacioId,
+          nuevaEslora,
+          nuevaManga,
+          mgr,
+        );
+      }
+
+      // Validar que el nuevo espacio no esté ocupado por otra embarcación
+      if (nuevoEspacioId && nuevoEspacioId !== embarcacion.espacioId) {
+        const boatWithSpace = await boatRepo.findOne({
+          where: { espacioId: nuevoEspacioId },
+        });
+        if (boatWithSpace) {
+          throw new BadRequestException(
+            `El espacio seleccionado ya está asignado a la embarcación ${boatWithSpace.nombre} (${boatWithSpace.matricula})`,
+          );
+        }
+      }
+
+      // Si cambia la matrícula, validar que no exista otra igual
+      if (dto.matricula && dto.matricula !== embarcacion.matricula) {
+        const existing = await boatRepo.findOne({
+          where: { matricula: dto.matricula },
+        });
+        if (existing) {
+          throw new BadRequestException(
+            `La matrícula ${dto.matricula} ya pertenece a otra embarcación`,
+          );
+        }
+      }
+
+      const setValues: Record<string, unknown> = {};
+
+      if (dto.nombre !== undefined) setValues.nombre = dto.nombre;
+      if (dto.matricula !== undefined) setValues.matricula = dto.matricula;
+      if (dto.marca !== undefined) setValues.marca = dto.marca;
+      if (dto.modelo !== undefined) setValues.modelo = dto.modelo;
+      if (dto.eslora !== undefined) setValues.eslora = dto.eslora;
+      if (dto.manga !== undefined) setValues.manga = dto.manga;
+      if (dto.tipo !== undefined) setValues.tipo = dto.tipo;
+      if (dto.estado_operativo !== undefined)
+        setValues.estado_operativo = dto.estado_operativo;
+      if (dto.descuento !== undefined) setValues.descuento = dto.descuento;
+      if (dto.clienteId !== undefined) setValues.clienteId = dto.clienteId;
+
+      // Forzar actualización de espacioId si cambió (por DTO o por inactivación)
+      if (nuevoEspacioId !== anteriorEspacioId) {
+        setValues.espacioId = nuevoEspacioId;
+      }
+
+      await boatRepo.update(id, setValues);
+
+      if (anteriorEspacioId !== nuevoEspacioId) {
+        if (anteriorEspacioId) {
+          await espRepo.update(anteriorEspacioId, { ocupado: false });
+        }
+        if (nuevoEspacioId) {
+          await espRepo.update(nuevoEspacioId, { ocupado: true });
+        }
+      }
+
+      return await this.findOne(id);
+    };
+
+    if (manager) return await work(manager);
+    return await this.dataSource.transaction(work);
+  }
+
+  async remove(id: number, manager?: EntityManager): Promise<void> {
+    const work = async (mgr: EntityManager) => {
+      const boatRepo = mgr.getRepository(Embarcacion);
+      const espRepo = mgr.getRepository(Espacio);
+
+      const embarcacion = await this.findOne(id);
+      const espacioId = embarcacion.espacioId;
+
+      // Liberar espacio si tenía uno
+      if (espacioId) {
+        await espRepo.update(espacioId, { ocupado: false });
+      }
+
+      Object.assign(embarcacion, {
+        estado_operativo: 'INACTIVA',
+        espacioId: null,
+      });
+      await boatRepo.save(embarcacion);
+    };
+
+    if (manager) return await work(manager);
+    return await this.dataSource.transaction(work);
   }
 }

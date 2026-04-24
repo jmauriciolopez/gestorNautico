@@ -7,7 +7,10 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Not, IsNull } from 'typeorm';
 import { Espacio } from './espacio.entity';
-import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
+import {
+  Embarcacion,
+  EstadoEmbarcacion,
+} from '../embarcaciones/embarcaciones.entity';
 import {
   paginate,
   PaginationQuery,
@@ -43,7 +46,10 @@ export class EspaciosService implements OnApplicationBootstrap {
 
     // 1. Limpiar embarcaciones INACTIVAS que aún tengan espacioId
     const inactivasConEspacio = await this.embarcacionRepo.find({
-      where: { estado_operativo: 'INACTIVA', espacioId: Not(IsNull()) },
+      where: {
+        estado_operativo: EstadoEmbarcacion.INACTIVA,
+        espacioId: Not(IsNull()),
+      },
     });
 
     for (const emb of inactivasConEspacio) {
@@ -61,7 +67,10 @@ export class EspaciosService implements OnApplicationBootstrap {
 
     for (const espacio of espaciosOcupados) {
       const tieneEmbarcacionActiva = await this.embarcacionRepo.findOne({
-        where: { espacioId: espacio.id, estado_operativo: Not('INACTIVA') },
+        where: {
+          espacioId: espacio.id,
+          estado_operativo: Not(EstadoEmbarcacion.INACTIVA),
+        },
       });
 
       if (!tieneEmbarcacionActiva) {

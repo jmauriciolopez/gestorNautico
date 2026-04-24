@@ -1,12 +1,18 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
-import { Movimiento } from './movimientos.entity';
-import { Pedido } from '../pedidos/pedidos.entity';
-import { SolicitudBajada, EstadoSolicitud } from '../operaciones/solicitud-bajada.entity';
+import { Repository, In, EntityManager } from 'typeorm';
+import { Movimiento, TipoMovimiento } from './movimientos.entity';
+import { Pedido, EstadoPedido } from '../pedidos/pedidos.entity';
+import {
+  SolicitudBajada,
+  EstadoSolicitud,
+} from '../operaciones/solicitud-bajada.entity';
 import { EmbarcacionesService } from '../embarcaciones/embarcaciones.service';
 import { EspaciosService } from '../espacios/espacios.service';
-import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
+import {
+  Embarcacion,
+  EstadoEmbarcacion,
+} from '../embarcaciones/embarcaciones.entity';
 import { ConfiguracionService } from '../configuracion/configuracion.service';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import { NotificacionTipo } from '../notificaciones/notificacion.entity';
@@ -49,8 +55,16 @@ export class MovimientosService {
     return movimiento;
   }
 
-  async create(data: CreateMovimientoDto) {
+  async create(data: CreateMovimientoDto, manager?: EntityManager) {
     const { embarcacionId, espacioId, tipo, ...rest } = data;
+
+    const movRepo = manager
+      ? manager.getRepository(Movimiento)
+      : this.movimientoRepo;
+    const pedRepo = manager ? manager.getRepository(Pedido) : this.pedidoRepo;
+    const solRepo = manager
+      ? manager.getRepository(SolicitudBajada)
+      : this.solicitudRepo;
 
     // Find the current boat to get its assigned space if needed
     const embarcacion: Embarcacion = await this.embarcacionesService.findOne(
@@ -62,7 +76,7 @@ export class MovimientosService {
 
     // --- CHECK AFTER HOURS (Only for ENTRADA/SUBIDA) ---
     let fueraHora = false;
-    if (tipo === 'entrada') {
+    if (tipo === TipoMovimiento.ENTRADA) {
       const maxHora = await this.configuracionService.getValor(
         'HORARIO_MAX_SUBIDA',
         '18:00',
@@ -86,50 +100,50 @@ export class MovimientosService {
       espacio: targetEspacioId ? { id: Number(targetEspacioId) } : null,
     };
 
-    const nuevoMovimiento = this.movimientoRepo.create(createData);
-    const savedMovement = await this.movimientoRepo.save(nuevoMovimiento);
+    const nuevoMovimiento = movRepo.create(createData);
+    const savedMovement = await movRepo.save(nuevoMovimiento);
 
     // --- SYNC STATUS ---
-    if (tipo === 'entrada') {
+    if (tipo === TipoMovimiento.ENTRADA) {
       // Boat comes to rack
-      await this.embarcacionesService.update(embarcacion.id, {
-        estado_operativo: 'EN_CUNA',
-      });
+      await this.embarcacionesService.update(
+        embarcacion.id,
+        { estado_operativo: EstadoEmbarcacion.EN_CUNA },
+        manager,
+      );
       // Update or Create Order (subida)
-      // First check in Pedidos
-      const pedidoExistente = await this.pedidoRepo.findOne({
-        where: { 
-          embarcacion: { id: embarcacion.id }, 
-          estado: In(['pendiente', 'en_agua']) 
+      const pedidoExistente = await pedRepo.findOne({
+        where: {
+          embarcacion: { id: embarcacion.id },
+          estado: In([EstadoPedido.PENDIENTE, EstadoPedido.EN_AGUA]),
         },
-        order: { createdAt: 'DESC' }
+        order: { createdAt: 'DESC' },
       });
 
       if (pedidoExistente) {
-        await this.pedidoRepo.update(pedidoExistente.id, {
-          estado: 'finalizado',
+        await pedRepo.update(pedidoExistente.id, {
+          estado: EstadoPedido.FINALIZADO,
         });
       } else {
-        // Check in SolicitudesBajada
-        const solicitudExistente = await this.solicitudRepo.findOne({
+        const solicitudExistente = await solRepo.findOne({
           where: {
             embarcacion: { id: embarcacion.id },
-            estado: In([EstadoSolicitud.PENDIENTE, EstadoSolicitud.EN_AGUA])
+            estado: In([EstadoSolicitud.PENDIENTE, EstadoSolicitud.EN_AGUA]),
           },
-          order: { createdAt: 'DESC' }
+          order: { createdAt: 'DESC' },
         });
 
         if (solicitudExistente) {
-          await this.solicitudRepo.update(solicitudExistente.id, {
-            estado: EstadoSolicitud.FINALIZADA
+          await solRepo.update(solicitudExistente.id, {
+            estado: EstadoSolicitud.FINALIZADA,
           });
         } else {
-          const nuevoPedido = this.pedidoRepo.create({
+          const nuevoPedido = pedRepo.create({
             embarcacion: { id: embarcacion.id },
-            estado: 'finalizado',
+            estado: EstadoPedido.FINALIZADO,
             fechaProgramada: new Date(),
           });
-          await this.pedidoRepo.save(nuevoPedido);
+          await pedRepo.save(nuevoPedido);
         }
       }
 
@@ -138,47 +152,46 @@ export class MovimientosService {
         mensaje: `La embarcación ${embarcacion.nombre} ha regresado a su cuna.`,
         tipo: NotificacionTipo.INFO,
       });
-    } else if (tipo === 'salida') {
+    } else if (tipo === TipoMovimiento.SALIDA) {
       // Boat goes to water
-      await this.embarcacionesService.update(embarcacion.id, {
-        estado_operativo: 'EN_AGUA',
-      });
+      await this.embarcacionesService.update(
+        embarcacion.id,
+        { estado_operativo: EstadoEmbarcacion.EN_AGUA },
+        manager,
+      );
 
-      // Update or Create Order (bajada)
-      // First check in Pedidos
-      const pedidoExistente = await this.pedidoRepo.findOne({
-        where: { 
-          embarcacion: { id: embarcacion.id }, 
-          estado: In(['pendiente', 'en_agua']) 
+      const pedidoExistente = await pedRepo.findOne({
+        where: {
+          embarcacion: { id: embarcacion.id },
+          estado: In([EstadoPedido.PENDIENTE, EstadoPedido.EN_AGUA]),
         },
-        order: { createdAt: 'DESC' }
+        order: { createdAt: 'DESC' },
       });
 
       if (pedidoExistente) {
-        await this.pedidoRepo.update(pedidoExistente.id, {
-          estado: 'en_agua',
+        await pedRepo.update(pedidoExistente.id, {
+          estado: EstadoPedido.EN_AGUA,
         });
       } else {
-        // Check in SolicitudesBajada
-        const solicitudExistente = await this.solicitudRepo.findOne({
+        const solicitudExistente = await solRepo.findOne({
           where: {
             embarcacion: { id: embarcacion.id },
-            estado: In([EstadoSolicitud.PENDIENTE, EstadoSolicitud.EN_AGUA])
+            estado: In([EstadoSolicitud.PENDIENTE, EstadoSolicitud.EN_AGUA]),
           },
-          order: { createdAt: 'DESC' }
+          order: { createdAt: 'DESC' },
         });
 
         if (solicitudExistente) {
-          await this.solicitudRepo.update(solicitudExistente.id, {
-            estado: EstadoSolicitud.EN_AGUA
+          await solRepo.update(solicitudExistente.id, {
+            estado: EstadoSolicitud.EN_AGUA,
           });
         } else {
-          const nuevoPedido = this.pedidoRepo.create({
+          const nuevoPedido = pedRepo.create({
             embarcacion: { id: embarcacion.id },
-            estado: 'en_agua',
+            estado: EstadoPedido.EN_AGUA,
             fechaProgramada: new Date(),
           });
-          await this.pedidoRepo.save(nuevoPedido);
+          await pedRepo.save(nuevoPedido);
         }
       }
 

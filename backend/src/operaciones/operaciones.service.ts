@@ -26,7 +26,8 @@ import {
 } from '../common/pagination/pagination.helper';
 import { MovimientosService } from '../movimientos/movimientos.service';
 import { ConfiguracionService } from '../configuracion/configuracion.service';
-import { Pedido } from '../pedidos/pedidos.entity';
+import { Pedido, EstadoPedido } from '../pedidos/pedidos.entity';
+import { TipoMovimiento } from '../movimientos/movimientos.entity';
 
 @Injectable()
 export class OperacionesService {
@@ -84,7 +85,7 @@ export class OperacionesService {
     const pedidoActivo = await this.pedidoRepo.findOne({
       where: {
         embarcacion: { id: barco.id },
-        estado: In(['pendiente', 'en_agua']),
+        estado: In([EstadoPedido.PENDIENTE, EstadoPedido.EN_AGUA]),
       },
     });
 
@@ -228,13 +229,13 @@ export class OperacionesService {
     if (estado === EstadoSolicitud.EN_AGUA) {
       await this.movimientosService.create({
         embarcacionId,
-        tipo: 'salida',
+        tipo: TipoMovimiento.SALIDA,
         observaciones: `Bajada marcada desde Monitor de Cola #${pedido.id}`,
       });
     } else if (estado === EstadoSolicitud.FINALIZADA) {
       await this.movimientosService.create({
         embarcacionId,
-        tipo: 'entrada',
+        tipo: TipoMovimiento.ENTRADA,
         observaciones: `Retorno a cuna marcado desde Monitor de Cola #${pedido.id}`,
       });
     }

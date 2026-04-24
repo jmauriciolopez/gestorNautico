@@ -14,6 +14,7 @@ import {
   In,
   FindManyOptions,
   FindOptionsWhere,
+  DataSource,
 } from 'typeorm';
 import { Factura, EstadoFactura } from './factura.entity';
 import { Cargo, TipoCargo } from '../cargos/cargo.entity';
@@ -49,6 +50,7 @@ export class FacturasService {
     private readonly cajasService: CajasService,
     private readonly notificacionesService: NotificacionesService,
     private readonly pdfService: PdfService,
+    private readonly dataSource: DataSource,
   ) {}
 
   async findAll(
@@ -127,107 +129,106 @@ export class FacturasService {
       throw new BadRequestException('Se debe seleccionar al menos un cargo');
     }
 
-    // 1. Obtener los cargos y validar
-    const cargos = await this.cargoRepo.find({
-      where: { id: In(cargoIds), cliente: { id: clienteId } },
-    });
+    return await this.dataSource.transaction(async (manager) => {
+      // 1. Obtener los cargos y validar (dentro de transacción)
+      const cargos = await manager.find(Cargo, {
+        where: { id: In(cargoIds), cliente: { id: clienteId } },
+      });
 
-    if (cargos.length !== cargoIds.length) {
-      throw new BadRequestException(
-        'Algunos cargos seleccionados no son válidos o no pertenecen al cliente',
+      if (cargos.length !== cargoIds.length) {
+        throw new BadRequestException(
+          'Algunos cargos seleccionados no son válidos o no pertenecen al cliente',
+        );
+      }
+
+      // 2. Calcular total
+      const total = cargos.reduce(
+        (sum, cargo) => sum + Number(cargo.monto || 0),
+        0,
       );
-    }
 
-    // 2. Calcular total
-    const total = cargos.reduce(
-      (sum, cargo) => sum + Number(cargo.monto || 0),
-      0,
-    );
+      // Cálculo de fecha de vencimiento consolidada
+      let finalFechaVencimiento = data.fechaVencimiento
+        ? new Date(data.fechaVencimiento)
+        : null;
 
-    // Calculo de fecha de vencimiento consolidada
-    let finalFechaVencimiento = data.fechaVencimiento
-      ? new Date(data.fechaVencimiento)
-      : null;
+      if (!finalFechaVencimiento) {
+        const vencimientos = cargos
+          .map((c) => c.fechaVencimiento)
+          .filter((v) => !!v)
+          .map((v) => new Date(v).getTime());
 
-    if (!finalFechaVencimiento) {
-      // Tomar el vencimiento más lejano de los cargos
-      const vencimientos = cargos
-        .map((c) => c.fechaVencimiento)
-        .filter((v) => !!v)
-        .map((v) => new Date(v).getTime());
-
-      if (vencimientos.length > 0) {
-        finalFechaVencimiento = new Date(Math.max(...vencimientos));
-      } else {
-        // Fallback: 15 días después de emisión
-        const fallback = new Date(data.fechaEmision);
-        fallback.setDate(fallback.getDate() + 15);
-        finalFechaVencimiento = fallback;
-      }
-    }
-
-    // 3. Generar número inicial
-    let finalNumero = numero;
-    let guardada: Factura;
-    let attempts = 0;
-    const maxAttempts = 3;
-
-    while (attempts < maxAttempts) {
-      try {
-        if (!finalNumero) {
-          finalNumero = await this.generateNextNumero();
+        if (vencimientos.length > 0) {
+          finalFechaVencimiento = new Date(Math.max(...vencimientos));
+        } else {
+          const fallback = new Date(data.fechaEmision);
+          fallback.setDate(fallback.getDate() + 15);
+          finalFechaVencimiento = fallback;
         }
-
-        // 4. Crear factura
-        const nueva = this.facturaRepo.create({
-          ...rest,
-          numero: finalNumero,
-          total,
-          cliente: { id: clienteId },
-          estado: EstadoFactura.PENDIENTE,
-          fechaVencimiento: finalFechaVencimiento,
-        });
-
-        guardada = await this.facturaRepo.save(nueva);
-        break; // Exit loop if save is successful
-      } catch (error: unknown) {
-        attempts++;
-        // Check for unique constraint violation (Error code 23505 in PG or similar)
-        const isUniqueViolation =
-          typeof error === 'object' &&
-          error !== null &&
-          ((error as { code?: string }).code === '23505' ||
-            (error as { message?: string }).message?.includes('unique') ||
-            (error as { message?: string }).message?.includes('Duplicate'));
-
-        if (isUniqueViolation && !numero && attempts < maxAttempts) {
-          this.logger.warn(
-            `Conflicto de número de factura ${finalNumero}. Reintentando (${attempts}/${maxAttempts})...`,
-          );
-          finalNumero = null; // Force regeneration
-          continue;
-        }
-        throw error;
       }
-    }
 
-    // 5. Vincular cargos a la factura
-    await this.cargoRepo.update(
-      { id: In(cargoIds) },
-      { factura: { id: guardada.id } },
-    );
+      // 3. Generar número inicial y guardar
+      let finalNumero = numero;
+      let guardada: Factura;
+      let attempts = 0;
+      const maxAttempts = 3;
 
-    // Reload with relations for notification and return
-    const facturaCompleta = await this.findOne(guardada.id);
+      while (attempts < maxAttempts) {
+        try {
+          if (!finalNumero) {
+            finalNumero = await this.generateNextNumero();
+          }
 
-    // Notificar a administración/operación sobre nueva factura
-    await this.notificacionesService.createForRole(Role.ADMIN, {
-      titulo: 'Nueva Factura Generada',
-      mensaje: `Se ha emitido la factura ${facturaCompleta.numero} para ${facturaCompleta.cliente.nombre}.`,
-      tipo: NotificacionTipo.INFO,
+          const nueva = manager.create(Factura, {
+            ...rest,
+            numero: finalNumero,
+            total,
+            cliente: { id: clienteId },
+            estado: EstadoFactura.PENDIENTE,
+            fechaVencimiento: finalFechaVencimiento,
+          });
+
+          guardada = await manager.save(nueva);
+          break;
+        } catch (error: unknown) {
+          attempts++;
+          const isUniqueViolation =
+            typeof error === 'object' &&
+            error !== null &&
+            ((error as { code?: string }).code === '23505' ||
+              (error as { message?: string }).message?.includes('unique') ||
+              (error as { message?: string }).message?.includes('Duplicate'));
+
+          if (isUniqueViolation && !numero && attempts < maxAttempts) {
+            this.logger.warn(
+              `Conflicto de número de factura ${finalNumero}. Reintentando (${attempts}/${maxAttempts})...`,
+            );
+            finalNumero = null;
+            continue;
+          }
+          throw error;
+        }
+      }
+
+      // 5. Vincular cargos a la factura
+      await manager.update(
+        Cargo,
+        { id: In(cargoIds) },
+        { factura: { id: guardada.id } },
+      );
+
+      // Notificar a administración/operación sobre nueva factura
+      await this.notificacionesService.createForRole(Role.ADMIN, {
+        titulo: 'Nueva Factura Generada',
+        mensaje: `Se ha emitido la factura ${guardada.numero} para el cliente ID ${clienteId}.`,
+        tipo: NotificacionTipo.INFO,
+      });
+
+      return await manager.findOne(Factura, {
+        where: { id: guardada.id },
+        relations: ['cliente', 'cargos'],
+      });
     });
-
-    return facturaCompleta;
   }
 
   async updateEstado(
@@ -235,42 +236,56 @@ export class FacturasService {
     estado: EstadoFactura,
     metodoPago?: MetodoPago,
   ) {
-    const factura = await this.findOne(id);
-    await this.facturaRepo.update(id, { estado });
+    return await this.dataSource.transaction(async (manager) => {
+      const factura = await manager.findOne(Factura, {
+        where: { id },
+        relations: ['cliente', 'cargos'],
+      });
 
-    if (estado === EstadoFactura.PAGADA) {
-      // 1. Marcar cargos como pagados
-      const cargoIds = (factura.cargos || []).map((c) => c.id);
-      if (cargoIds.length > 0) {
-        await this.cargoRepo.update({ id: In(cargoIds) }, { pagado: true });
+      if (!factura) {
+        throw new NotFoundException(`Factura con ID ${id} no encontrada`);
       }
 
-      // 2. Registrar pago en caja activa
-      const caja = await this.cajasService.findAbierta();
-      if (!caja) {
-        throw new BadRequestException(
-          'No hay caja abierta. Abra una caja antes de liquidar una factura.',
-        );
+      await manager.update(Factura, id, { estado });
+
+      if (estado === EstadoFactura.PAGADA) {
+        // 1. Marcar cargos como pagados
+        const cargoIds = (factura.cargos || []).map((c) => c.id);
+        if (cargoIds.length > 0) {
+          await manager.update(Cargo, { id: In(cargoIds) }, { pagado: true });
+        }
+
+        // 2. Registrar pago en caja activa
+        const caja = await this.cajasService.findAbierta();
+        if (!caja) {
+          throw new BadRequestException(
+            'No hay caja abierta. Abra una caja antes de liquidar una factura.',
+          );
+        }
+
+        const pago = manager.create(Pago, {
+          cliente: { id: factura.cliente.id },
+          caja: { id: caja.id },
+          monto: Number(factura.total),
+          fecha: new Date(),
+          metodoPago: metodoPago ?? MetodoPago.EFECTIVO,
+          comprobante: `Liquidación factura ${factura.numero}`,
+        });
+        await manager.save(pago);
+
+        // 3. Notificar
+        await this.notificacionesService.createForRole(Role.OPERADOR, {
+          titulo: 'Factura Liquidada',
+          mensaje: `La factura ${factura.numero} del cliente ${factura.cliente.nombre} fue marcada como PAGADA.`,
+          tipo: NotificacionTipo.EXITO,
+        });
       }
-      const pago = this.pagoRepo.create({
-        cliente: { id: factura.cliente.id },
-        caja: { id: caja.id },
-        monto: Number(factura.total),
-        fecha: new Date(),
-        metodoPago: metodoPago ?? MetodoPago.EFECTIVO,
-        comprobante: `Liquidación factura ${factura.numero}`,
-      });
-      await this.pagoRepo.save(pago);
 
-      // 3. Notificar
-      await this.notificacionesService.createForRole(Role.OPERADOR, {
-        titulo: 'Factura Liquidada',
-        mensaje: `La factura ${factura.numero} del cliente ${factura.cliente.nombre} fue marcada como PAGADA.`,
-        tipo: NotificacionTipo.EXITO,
+      return await manager.findOne(Factura, {
+        where: { id },
+        relations: ['cliente', 'cargos'],
       });
-    }
-
-    return this.findOne(id);
+    });
   }
 
   async remove(id: number) {
@@ -288,58 +303,68 @@ export class FacturasService {
       nuevosCargos?: { descripcion: string; monto: number; tipo: TipoCargo }[];
     },
   ) {
-    const factura = await this.findOne(id);
-
-    if (data.fechaEmision) {
-      factura.fechaEmision = new Date(data.fechaEmision);
-    }
-
-    if (data.observaciones !== undefined) {
-      factura.observaciones = data.observaciones;
-    }
-
-    // 1. Crear nuevos cargos si vienen
-    if (data.nuevosCargos && data.nuevosCargos.length > 0) {
-      for (const nc of data.nuevosCargos) {
-        const nuevo = this.cargoRepo.create({
-          ...nc,
-          cliente: { id: factura.cliente.id },
-          factura: { id: factura.id },
-          pagado: false,
-          fechaEmision: factura.fechaEmision || new Date(),
-        });
-        await this.cargoRepo.save(nuevo);
-      }
-    }
-
-    // 2. Vincular cargos existentes si vienen
-    if (data.cargoIds) {
-      const cargosExistentes = await this.cargoRepo.find({
-        where: { id: In(data.cargoIds), cliente: { id: factura.cliente.id } },
+    return await this.dataSource.transaction(async (manager) => {
+      const factura = await manager.findOne(Factura, {
+        where: { id },
+        relations: ['cliente', 'cargos'],
       });
 
-      if (cargosExistentes.length !== data.cargoIds.length) {
-        throw new BadRequestException(
-          'Algunos cargos no son válidos para este cliente',
+      if (!factura) {
+        throw new NotFoundException(`Factura con ID ${id} no encontrada`);
+      }
+
+      if (data.fechaEmision) {
+        factura.fechaEmision = new Date(data.fechaEmision);
+      }
+
+      if (data.observaciones !== undefined) {
+        factura.observaciones = data.observaciones;
+      }
+
+      // 1. Crear nuevos cargos si vienen
+      if (data.nuevosCargos && data.nuevosCargos.length > 0) {
+        for (const nc of data.nuevosCargos) {
+          const nuevo = manager.create(Cargo, {
+            ...nc,
+            cliente: { id: factura.cliente.id },
+            factura: { id: factura.id },
+            pagado: false,
+            fechaEmision: factura.fechaEmision || new Date(),
+          });
+          await manager.save(nuevo);
+        }
+      }
+
+      // 2. Vincular cargos existentes si vienen
+      if (data.cargoIds) {
+        const cargosExistentes = await manager.find(Cargo, {
+          where: { id: In(data.cargoIds), cliente: { id: factura.cliente.id } },
+        });
+
+        if (cargosExistentes.length !== data.cargoIds.length) {
+          throw new BadRequestException(
+            'Algunos cargos no son válidos para este cliente',
+          );
+        }
+
+        await manager.update(
+          Cargo,
+          { id: In(data.cargoIds) },
+          { factura: { id: factura.id } },
         );
       }
 
-      await this.cargoRepo.update(
-        { id: In(data.cargoIds) },
-        { factura: { id: factura.id } },
+      // 3. Recalcular el total basado en TODOS los cargos vinculados
+      const todosLosCargos = await manager.find(Cargo, {
+        where: { factura: { id: factura.id } },
+      });
+
+      factura.total = todosLosCargos.reduce(
+        (sum, c) => sum + Number(c.monto || 0),
+        0,
       );
-    }
-
-    // 3. Recalcular el total basado en TODOS los cargos vinculados
-    const todosLosCargos = await this.cargoRepo.find({
-      where: { factura: { id: factura.id } },
+      return await manager.save(factura);
     });
-
-    factura.total = todosLosCargos.reduce(
-      (sum, c) => sum + Number(c.monto || 0),
-      0,
-    );
-    return this.facturaRepo.save(factura);
   }
 
   async sendEmail(id: number, optionalEmail?: string) {

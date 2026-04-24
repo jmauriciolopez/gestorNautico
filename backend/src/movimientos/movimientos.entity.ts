@@ -9,13 +9,19 @@ import {
 import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
 import { Espacio } from '../espacios/espacio.entity';
 
+export enum TipoMovimiento {
+  ENTRADA = 'entrada',
+  SALIDA = 'salida',
+  MOVIMIENTO_CUNA = 'movimiento_cuna',
+}
+
 @Entity('movimientos')
 export class Movimiento {
   @PrimaryGeneratedColumn()
   id: number;
 
   @Column()
-  tipo: string; // entrada, salida
+  tipo: TipoMovimiento;
 
   @ManyToOne(() => Embarcacion)
   embarcacion: Embarcacion;

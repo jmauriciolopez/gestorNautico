@@ -1,12 +1,22 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
-import { Pedido } from './pedidos.entity';
-import { SolicitudBajada, EstadoSolicitud } from '../operaciones/solicitud-bajada.entity';
+import { Repository, In, DataSource } from 'typeorm';
+import { Pedido, EstadoPedido } from './pedidos.entity';
+import {
+  SolicitudBajada,
+  EstadoSolicitud,
+} from '../operaciones/solicitud-bajada.entity';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import { Role } from '../users/user.entity';
 import { NotificacionTipo } from '../notificaciones/notificacion.entity';
 import { MovimientosService } from '../movimientos/movimientos.service';
+import { TipoMovimiento } from '../movimientos/movimientos.entity';
+import { CreatePedidoDto } from './dto/create-pedido.dto';
 import {
   paginate,
   PaginationQuery,
@@ -24,6 +34,7 @@ export class PedidosService {
     private readonly solicitudRepo: Repository<SolicitudBajada>,
     private readonly notificacionesService: NotificacionesService,
     private readonly movimientosService: MovimientosService,
+    private readonly dataSource: DataSource,
   ) {}
 
   async findAll(query: PaginationQuery = {}): Promise<PaginatedResult<Pedido>> {
@@ -95,94 +106,120 @@ export class PedidosService {
     };
   }
 
-  async create(data: Record<string, unknown>) {
-    const { embarcacionId, ...rest } = data as { embarcacionId: number };
+  async create(data: CreatePedidoDto) {
+    const { embarcacionId, ...rest } = data;
 
-    // Validar si ya existe un pedido activo para esta embarcación
-    const pedidoActivo = await this.pedidoRepo.findOne({
-      where: {
+    return await this.dataSource.transaction(async (manager) => {
+      const pedRepo = manager.getRepository(Pedido);
+      const solRepo = manager.getRepository(SolicitudBajada);
+
+      // Validar si ya existe un pedido activo para esta embarcación
+      const pedidoActivo = await pedRepo.findOne({
+        where: {
+          embarcacion: { id: embarcacionId },
+          estado: In([EstadoPedido.PENDIENTE, EstadoPedido.EN_AGUA]),
+        },
+      });
+
+      if (pedidoActivo) {
+        throw new BadRequestException(
+          'Ya existe un pedido activo para esta embarcación en el Monitor de Cola.',
+        );
+      }
+
+      // Validar si ya existe una solicitud activa en el Portal Web
+      const solicitudActiva = await solRepo.findOne({
+        where: {
+          embarcacionId: embarcacionId,
+          estado: In([EstadoSolicitud.PENDIENTE, EstadoSolicitud.EN_AGUA]),
+        },
+      });
+
+      if (solicitudActiva) {
+        throw new BadRequestException(
+          'Ya existe una solicitud activa para esta embarcación en el Portal Web (Solicitudes Externas).',
+        );
+      }
+
+      const nuevo = pedRepo.create({
+        ...rest,
         embarcacion: { id: embarcacionId },
-        estado: In(['pendiente', 'en_agua']),
-      },
+      });
+      const guardado = await pedRepo.save(nuevo);
+
+      const pedidox = await manager.findOne(Pedido, {
+        where: { id: guardado.id },
+        relations: ['embarcacion'],
+      });
+
+      // Notificar a los operadores y administradores
+      await this.notificacionesService.createForRole(Role.OPERADOR, {
+        titulo: 'Nueva Solicitud de Movimiento',
+        mensaje: `Se ha registrado una solicitud para la embarcación ${pedidox.embarcacion.nombre}.`,
+        tipo: NotificacionTipo.INFO,
+      });
+      await this.notificacionesService.createForRole(Role.ADMIN, {
+        titulo: 'Nueva Solicitud de Movimiento (Admin)',
+        mensaje: `Se ha registrado una solicitud para la embarcación ${pedidox.embarcacion.nombre}.`,
+        tipo: NotificacionTipo.INFO,
+      });
+
+      return pedidox;
     });
-
-    if (pedidoActivo) {
-      throw new BadRequestException(
-        'Ya existe un pedido activo para esta embarcación en el Monitor de Cola.',
-      );
-    }
-
-    // Validar si ya existe una solicitud activa en el Portal Web
-    const solicitudActiva = await this.solicitudRepo.findOne({
-      where: {
-        embarcacionId: embarcacionId,
-        estado: In([EstadoSolicitud.PENDIENTE, EstadoSolicitud.EN_AGUA]),
-      },
-    });
-
-    if (solicitudActiva) {
-      throw new BadRequestException(
-        'Ya existe una solicitud activa para esta embarcación en el Portal Web (Solicitudes Externas).',
-      );
-    }
-
-    const nuevo = this.pedidoRepo.create({
-      ...rest,
-      embarcacion: { id: embarcacionId },
-    });
-    const guardado = await this.pedidoRepo.save(nuevo);
-    const pedidox = await this.findOne(guardado.id);
-
-    // Notificar a los operadores y administradores
-    await this.notificacionesService.createForRole(Role.OPERADOR, {
-      titulo: 'Nueva Solicitud de Movimiento',
-      mensaje: `Se ha registrado una solicitud para la embarcación ${pedidox.embarcacion.nombre}.`,
-      tipo: NotificacionTipo.INFO,
-    });
-    await this.notificacionesService.createForRole(Role.ADMIN, {
-      titulo: 'Nueva Solicitud de Movimiento (Admin)',
-      mensaje: `Se ha registrado una solicitud para la embarcación ${pedidox.embarcacion.nombre}.`,
-      tipo: NotificacionTipo.INFO,
-    });
-
-    return pedidox;
   }
 
-  async updateEstado(id: number, estado: string) {
-    const pedido = await this.findOne(id);
-    await this.pedidoRepo.update(id, { estado });
-
-    // Lógica simplificada: EN_AGUA (salida) y FINALIZADO (entrada)
-    if (!pedido.embarcacion?.id) {
-      this.logger.warn(`Pedido ${id} no tiene embarcación asociada`);
-      return;
-    }
-
-    if (estado === 'en_agua') {
-      await this.movimientosService.create({
-        embarcacionId: pedido.embarcacion.id,
-        tipo: 'salida',
-        observaciones: `Bajada marcada desde Monitor de Cola #${pedido.id}`,
+  async updateEstado(id: number, estado: EstadoPedido) {
+    return await this.dataSource.transaction(async (manager) => {
+      const pedido = await manager.findOne(Pedido, {
+        where: { id },
+        relations: ['embarcacion'],
       });
-    } else if (estado === 'finalizado') {
-      await this.movimientosService.create({
-        embarcacionId: pedido.embarcacion.id,
-        tipo: 'entrada',
-        observaciones: `Retorno a cuna marcado desde Monitor de Cola #${pedido.id}`,
-      });
-    }
 
-    // Notificar cambio de estado a roles relevantes
-    await this.notificacionesService.createForRole(Role.ADMIN, {
-      titulo: 'Actualización de Operación',
-      mensaje: `La embarcación ${pedido.embarcacion.nombre} cambió a estado ${estado}.`,
-      tipo:
-        estado === 'cancelado'
-          ? NotificacionTipo.ALERTA
-          : NotificacionTipo.INFO,
+      if (!pedido) {
+        throw new NotFoundException(`Pedido con ID ${id} no encontrado`);
+      }
+
+      await manager.update(Pedido, id, { estado });
+
+      if (!pedido.embarcacion?.id) {
+        this.logger.warn(`Pedido ${id} no tiene embarcación asociada`);
+      } else {
+        if (estado === EstadoPedido.EN_AGUA) {
+          await this.movimientosService.create(
+            {
+              embarcacionId: pedido.embarcacion.id,
+              tipo: TipoMovimiento.SALIDA,
+              observaciones: `Bajada marcada desde Monitor de Cola #${pedido.id}`,
+            },
+            manager,
+          );
+        } else if (estado === EstadoPedido.FINALIZADO) {
+          await this.movimientosService.create(
+            {
+              embarcacionId: pedido.embarcacion.id,
+              tipo: TipoMovimiento.ENTRADA,
+              observaciones: `Retorno a cuna marcado desde Monitor de Cola #${pedido.id}`,
+            },
+            manager,
+          );
+        }
+      }
+
+      // Notificar cambio de estado a roles relevantes
+      await this.notificacionesService.createForRole(Role.ADMIN, {
+        titulo: 'Actualización de Operación',
+        mensaje: `La embarcación ${pedido.embarcacion?.nombre || 'N/A'} cambió a estado ${estado}.`,
+        tipo:
+          estado === EstadoPedido.CANCELADO
+            ? NotificacionTipo.ALERTA
+            : NotificacionTipo.INFO,
+      });
+
+      return await manager.findOne(Pedido, {
+        where: { id },
+        relations: ['embarcacion'],
+      });
     });
-
-    return this.findOne(id);
   }
 
   async remove(id: number) {

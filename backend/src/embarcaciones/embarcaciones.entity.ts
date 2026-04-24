@@ -12,6 +12,14 @@ import {
 import { Cliente } from '../clientes/clientes.entity';
 import { Espacio } from '../espacios/espacio.entity';
 
+export enum EstadoEmbarcacion {
+  EN_CUNA = 'EN_CUNA',
+  EN_AGUA = 'EN_AGUA',
+  MANTENIMIENTO = 'EN_MANTENIMIENTO',
+  INACTIVA = 'INACTIVA',
+  BLOQUEADA = 'BLOQUEADA',
+}
+
 @Entity('embarcaciones')
 export class Embarcacion {
   @PrimaryGeneratedColumn()
@@ -39,8 +47,11 @@ export class Embarcacion {
   tipo: string;
 
   @Index()
-  @Column({ name: 'estado_operativo', default: 'EN_CUNA' })
-  estado_operativo: string; // EN_CUNA, EN_AGUA, EN_MANTENIMIENTO, INACTIVA
+  @Column({
+    name: 'estado_operativo',
+    default: EstadoEmbarcacion.EN_CUNA,
+  })
+  estado_operativo: EstadoEmbarcacion;
 
   @Column({ nullable: true })
   clienteId: number;

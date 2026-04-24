@@ -2,11 +2,13 @@ import {
   IsString,
   IsNumber,
   IsOptional,
-  IsIn,
   IsNotEmpty,
   IsDate,
+  IsEnum,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+
+import { TipoMovimiento } from '../movimientos.entity';
 
 export class CreateMovimientoDto {
   @IsNotEmpty()
@@ -20,8 +22,8 @@ export class CreateMovimientoDto {
   espacioId?: number;
 
   @IsNotEmpty()
-  @IsIn(['entrada', 'salida'])
-  tipo: 'entrada' | 'salida';
+  @IsEnum(TipoMovimiento)
+  tipo: TipoMovimiento;
 
   @IsOptional()
   @IsString()

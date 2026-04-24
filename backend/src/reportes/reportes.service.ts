@@ -2,7 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan } from 'typeorm';
 import { Cargo } from '../cargos/cargo.entity';
-import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
+import {
+  Embarcacion,
+  EstadoEmbarcacion,
+} from '../embarcaciones/embarcaciones.entity';
 import { Espacio } from '../espacios/espacio.entity';
 import { Pago } from '../pagos/pago.entity';
 
@@ -80,7 +83,7 @@ export class ReportesService {
 
   async getMensualidadesConDescuentos(): Promise<any[]> {
     const embarcaciones = await this.embarcacionRepo.find({
-      where: { estado_operativo: 'EN_CUNA' },
+      where: { estado_operativo: EstadoEmbarcacion.EN_CUNA },
       relations: ['cliente', 'espacio', 'espacio.rack'],
     });
 

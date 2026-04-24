@@ -2,7 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Cliente } from '../clientes/clientes.entity';
-import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
+import {
+  Embarcacion,
+  EstadoEmbarcacion,
+} from '../embarcaciones/embarcaciones.entity';
 
 export interface ImportResult {
   success: boolean;
@@ -223,8 +226,9 @@ export class ImportService {
               eslora: eslora || existingEmbarcacion.eslora,
               manga: manga || existingEmbarcacion.manga,
               tipo: row.tipo || existingEmbarcacion.tipo,
-              estado_operativo:
-                row.estado || existingEmbarcacion.estado_operativo,
+              estado_operativo: row.estado
+                ? (row.estado as EstadoEmbarcacion)
+                : existingEmbarcacion.estado_operativo,
               clienteId: cliente.id,
             });
             result.updated++;
@@ -237,7 +241,8 @@ export class ImportService {
               eslora: eslora || null,
               manga: manga || null,
               tipo: row.tipo || 'Lancha',
-              estado_operativo: row.estado || 'EN_CUNA',
+              estado_operativo:
+                (row.estado as EstadoEmbarcacion) || EstadoEmbarcacion.EN_CUNA,
               clienteId: cliente.id,
             });
             await this.embarcacionRepo.save(nueva);

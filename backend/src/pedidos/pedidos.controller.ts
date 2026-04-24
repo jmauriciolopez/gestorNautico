@@ -10,6 +10,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { PedidosService } from './pedidos.service';
+import { CreatePedidoDto } from './dto/create-pedido.dto';
 import { UpdatePedidoEstadoDto } from './dto/update-pedido-estado.dto';
 import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -35,7 +36,7 @@ export class PedidosController {
 
   @Post()
   @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
-  create(@Body() data: Record<string, unknown>) {
+  create(@Body() data: CreatePedidoDto) {
     return this.pedidosService.create(data);
   }
 

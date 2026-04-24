@@ -3,10 +3,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import { httpClient } from '../../../shared/api/HttpClient';
 import { Paginated, selectData } from '../../../api/pagination';
+import { EstadoPedido, TipoMovimiento, EstadoSolicitud } from '../../../shared/types/enums';
 
 export interface Pedido {
   id: number;
-  estado: 'pendiente' | 'en_agua' | 'finalizado' | 'cancelado';
+  estado: EstadoPedido;
   fechaProgramada: string;
   embarcacion: {
     id: number;
@@ -20,7 +21,7 @@ export interface Pedido {
 
 export interface Movimiento {
   id: number;
-  tipo: 'entrada' | 'salida';
+  tipo: TipoMovimiento;
   fecha: string;
   observaciones?: string;
   embarcacion: { id: number; nombre: string; matricula: string };
@@ -32,7 +33,7 @@ export interface SolicitudBajada {
   embarcacionId: number;
   clienteId: number;
   fechaHoraDeseada: string;
-  estado: 'PENDIENTE' | 'EN_AGUA' | 'FINALIZADA' | 'CANCELADA';
+  estado: EstadoSolicitud;
   observaciones?: string;
   motivoCancelacion?: string;
   embarcacion: {

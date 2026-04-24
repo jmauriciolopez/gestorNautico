@@ -2,12 +2,13 @@ import {
   IsString,
   IsNumber,
   IsOptional,
-  IsIn,
   IsNotEmpty,
   Min,
   Max,
+  IsEnum,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { EstadoEmbarcacion } from '../embarcaciones.entity';
 
 export class CreateEmbarcacionDto {
   @IsNotEmpty()
@@ -43,8 +44,8 @@ export class CreateEmbarcacionDto {
   tipo?: string;
 
   @IsOptional()
-  @IsIn(['EN_CUNA', 'EN_AGUA', 'EN_MANTENIMIENTO', 'INACTIVA'])
-  estado_operativo?: string;
+  @IsEnum(EstadoEmbarcacion)
+  estado_operativo?: EstadoEmbarcacion;
 
   @IsOptional()
   @Type(() => Number)
