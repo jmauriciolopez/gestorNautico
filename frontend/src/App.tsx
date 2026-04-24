@@ -30,6 +30,8 @@ const SolicitudBajadaPublica = lazy(() => import('./features/operaciones/pages/S
 const ConfiguracionPage = lazy(() => import('./features/configuracion/pages/ConfiguracionPage'));
 const UserHelp = lazy(() => import('./features/help/components/UserHelp'));
 const ReportesPage = lazy(() => import('./features/reportes/pages/ReportesPage'));
+const SelectTenantPage = lazy(() => import('./features/guarderia/pages/SelectTenantPage'));
+const GuarderiasPage = lazy(() => import('./features/guarderia/pages/GuarderiasPage'));
 
 // Componente de Carga Premium
 const LoadingScreen = () => (
@@ -88,41 +90,41 @@ function App() {
                   <Route path="/login" element={<LoginWrapper />} />
                   <Route path="/bajada-publica" element={<SolicitudBajadaPublica />} />
                   <Route path="/unauthorized" element={<Unauthorized />} />
+                  <Route path="/select-tenant" element={<SelectTenantPage />} />
 
                   {/* Rutas Protegidas */}
                   <Route element={<ProtectedRoute />}>
                     <Route path="/" element={<AppLayout />}>
                       <Route index element={<DashboardRouter />} />
 
-                      {/* Operativo — todos los roles */}
+                      {/* Operativo — Lectura para todos, Escritura restringida */}
                       <Route path="clientes" element={<ClientesList />} />
-                      <Route path="clientes/nuevo" element={<ClienteForm />} />
-                      <Route path="clientes/editar/:id" element={<ClienteForm />} />
-
                       <Route path="embarcaciones" element={<EmbarcacionesList />} />
-                      <Route path="embarcaciones/nueva" element={<EmbarcacionForm />} />
-                      <Route path="embarcaciones/editar/:id" element={<EmbarcacionForm />} />
-
                       <Route path="operaciones" element={<OperacionesPage />} />
-                      <Route path="infraestructura" element={<InfraestructuraPage />} />
-                      <Route path="servicios" element={<ServiciosPage />} />
                       <Route path="ayuda" element={<UserHelp />} />
 
-                      {/* Finanzas y Facturación — Supervisor en adelante */}
+                      {/* Creación y Edición — Solo Supervisor en adelante */}
                       <Route element={<ProtectedRoute allowedRoles={[Role.ADMIN, Role.SUPERADMIN, Role.SUPERVISOR]} />}>
+                        <Route path="clientes/nuevo" element={<ClienteForm />} />
+                        <Route path="clientes/editar/:id" element={<ClienteForm />} />
+                        <Route path="embarcaciones/nueva" element={<EmbarcacionForm />} />
+                        <Route path="embarcaciones/editar/:id" element={<EmbarcacionForm />} />
+                        <Route path="servicios" element={<ServiciosPage />} />
+                      </Route>
+
+                      {/* Administración — Solo Admin y SuperAdmin */}
+                      <Route element={<ProtectedRoute allowedRoles={[Role.ADMIN, Role.SUPERADMIN]} />}>
                         <Route path="finanzas" element={<FinanzasPage />} />
                         <Route path="facturacion" element={<FacturacionPage />} />
                         <Route path="reportes" element={<ReportesPage />} />
-                      </Route>
-
-                      {/* Configuración — Admin en adelante */}
-                      <Route element={<ProtectedRoute allowedRoles={[Role.ADMIN, Role.SUPERADMIN]} />}>
+                        <Route path="infraestructura" element={<InfraestructuraPage />} />
                         <Route path="configuracion" element={<ConfiguracionPage />} />
+                        <Route path="usuarios/*" element={<UsersPage />} />
                       </Route>
 
-                      {/* Usuarios — solo SuperAdmin */}
+                      {/* Sedes — solo SuperAdmin */}
                       <Route element={<ProtectedRoute allowedRoles={[Role.SUPERADMIN]} />}>
-                        <Route path="usuarios/*" element={<UsersPage />} />
+                        <Route path="sedes" element={<GuarderiasPage />} />
                       </Route>
                     </Route>
                   </Route>

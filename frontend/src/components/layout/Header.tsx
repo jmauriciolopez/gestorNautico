@@ -15,6 +15,7 @@ import { useNotificaciones } from '../../features/notificaciones/hooks/useNotifi
 import { useTheme } from '../../context/ThemeContext';
 import { useGlobalSearch } from '../../hooks/useGlobalSearch';
 import { GlobalSearchDropdown } from '../search/GlobalSearchDropdown';
+import { GuarderiaSelector } from '../../features/guarderia/components/GuarderiaSelector';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -104,6 +105,11 @@ export default function Header({ onMenuClick }: HeaderProps) {
               }}
             />
           )}
+        </div>
+
+        {/* Tenant Selector — Visible para SuperAdmin */}
+        <div className="hidden md:block ml-4">
+          <GuarderiaSelector />
         </div>
       </div>
 

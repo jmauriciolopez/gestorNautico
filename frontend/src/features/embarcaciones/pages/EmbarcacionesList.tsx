@@ -74,15 +74,17 @@ export default function EmbarcacionesList() {
           </div>
         </div>
 
-        <Link
-          to="/embarcaciones/nueva"
-          className="relative z-10 px-10 py-4 bg-indigo-600 hover:bg-indigo-500 text-[var(--text-primary)] rounded-2xl flex items-center gap-4 text-xs font-black uppercase tracking-[0.2em] shadow-2xl shadow-indigo-900/40 transition-all active:scale-95 group/btn"
-        >
-          <div className="p-1 bg-indigo-400/20 rounded-lg group-hover/btn:rotate-90 transition-transform">
-            <Plus className="w-4 h-4" />
-          </div>
-          Nueva Embarcación
-        </Link>
+        <RoleGuard allowedRoles={[Role.ADMIN, Role.SUPERADMIN, Role.SUPERVISOR]}>
+          <Link
+            to="/embarcaciones/nueva"
+            className="relative z-10 px-10 py-4 bg-indigo-600 hover:bg-indigo-500 text-[var(--text-primary)] rounded-2xl flex items-center gap-4 text-xs font-black uppercase tracking-[0.2em] shadow-2xl shadow-indigo-900/40 transition-all active:scale-95 group/btn"
+          >
+            <div className="p-1 bg-indigo-400/20 rounded-lg group-hover/btn:rotate-90 transition-transform">
+              <Plus className="w-4 h-4" />
+            </div>
+            Nueva Embarcación
+          </Link>
+        </RoleGuard>
       </div>
 
       {/* Grid Container */}
@@ -180,12 +182,14 @@ export default function EmbarcacionesList() {
                   </td>
                   <td className="px-4 md:px-8 py-6 text-right">
                     <div className="flex items-center justify-end gap-2 md:gap-3">
-                      <button
-                        onClick={() => navigate(`/embarcaciones/editar/${emb.id}`)}
-                        className="p-2 md:p-3 bg-[var(--bg-primary)]/60 border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-indigo-500 hover:border-indigo-500/50 rounded-xl md:rounded-2xl transition-all active:scale-90 shadow-xl"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
+                      <RoleGuard allowedRoles={[Role.ADMIN, Role.SUPERADMIN, Role.SUPERVISOR]}>
+                        <button
+                          onClick={() => navigate(`/embarcaciones/editar/${emb.id}`)}
+                          className="p-2 md:p-3 bg-[var(--bg-primary)]/60 border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-indigo-500 hover:border-indigo-500/50 rounded-xl md:rounded-2xl transition-all active:scale-90 shadow-xl"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                      </RoleGuard>
                       <RoleGuard allowedRoles={[Role.ADMIN, Role.SUPERADMIN]}>
                         <button
                           onClick={() => handleDelete(emb.id)}

@@ -18,6 +18,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
             const userData = await httpClient.get<User>('/auth/me');
             setUser(userData);
+            
+            // Si el usuario tiene una guardería asignada y no hay una activa, la seteamos por defecto
+            const currentTenant = localStorage.getItem('guarderiaId');
+            if (userData.guarderiaId && !currentTenant) {
+                httpClient.setGuarderiaActiva(userData.guarderiaId);
+            }
         } catch (error) {
             console.error('Error verificando sesión:', error);
             localStorage.removeItem('token');

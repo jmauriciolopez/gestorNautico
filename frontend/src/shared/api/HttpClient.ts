@@ -64,10 +64,24 @@ class HttpClient {
                 } else if (status) {
                     switch (status) {
                         case 400: messageBody = 'La solicitud no es válida.'; break;
+                        case 401: messageBody = 'Sesión expirada o no válida.'; break;
                         case 403: messageBody = 'Acceso denegado.'; break;
-                        case 404: messageBody = 'No encontrado.'; break;
+                        case 404: messageBody = 'Recurso no encontrado.'; break;
                         case 500: messageBody = 'Error interno del servidor.'; break;
                     }
+                }
+
+                // 3. Manejar errores de Tenant (403/404 con mensajes específicos)
+                // Si el error menciona guardería o acceso denegado por multi-tenancy
+                const isTenantError = (status === 403 || status === 404) && 
+                    (messageBody.toLowerCase().includes('guardería') || 
+                     messageBody.toLowerCase().includes('tenant'));
+                
+                if (isTenantError) {
+                    console.warn('[HttpClient] Tenant error detected, redirecting to selector...');
+                    // Redirigir al selector de guardería (se definirá en rutas)
+                    window.location.href = '/select-tenant';
+                    return Promise.reject(error);
                 }
 
                 // Función para reproducir un 'beep' en el navegador
@@ -108,6 +122,17 @@ class HttpClient {
 
     public setUnauthorizedCallback(callback: () => void) {
         this.unauthorizedCallback = callback;
+    }
+
+    /**
+     * Actualiza la guardería activa en el almacenamiento local y para futuras peticiones
+     */
+    public setGuarderiaActiva(id: string | number | null) {
+        if (id !== null && id !== undefined && id !== '') {
+            localStorage.setItem('guarderiaId', id.toString());
+        } else {
+            localStorage.removeItem('guarderiaId');
+        }
     }
 
     async get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {
