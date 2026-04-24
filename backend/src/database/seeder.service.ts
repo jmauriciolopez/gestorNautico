@@ -33,8 +33,11 @@ export class SeederService {
     private readonly rackRepo: Repository<Rack>,
     @InjectRepository(Espacio)
     private readonly espacioRepo: Repository<Espacio>,
+    @InjectRepository(Guarderia)
+    private readonly guarderiaRepo: Repository<Guarderia>,
     private readonly initialDataService: InitialDataService,
     private readonly configService: ConfiguracionService,
+    private readonly seedGuarderiaService: SeedGuarderiaService,
   ) {}
 
   async seed() {
@@ -57,6 +60,7 @@ export class SeederService {
     }
 
     // 2. Restaurar Datos Maestros (Usuarios Admin, etc.)
+    const defaultGuarderia = await this.seedGuarderiaService.ensureDefaultGuarderia();
     await this.initialDataService.syncAll();
 
     // 3. Restaurar Configuraciones Globales
@@ -67,10 +71,15 @@ export class SeederService {
       this.ubicacionRepo.create({
         nombre: 'Puerto Principal',
         descripcion: 'Sede Central del Gestor Náutico',
+        guarderia: defaultGuarderia,
       }),
     );
     const zona = await this.zonaRepo.save(
-      this.zonaRepo.create({ nombre: 'Guardería Principal', ubicacion: ub }),
+      this.zonaRepo.create({ 
+        nombre: 'Guardería Principal', 
+        ubicacion: ub,
+        guarderia: defaultGuarderia,
+      }),
     );
     const rack = await this.rackRepo.save(
       this.rackRepo.create({
@@ -79,6 +88,7 @@ export class SeederService {
         pisos: 3,
         filas: 2,
         columnas: 2,
+        guarderia: defaultGuarderia,
       }),
     );
 
@@ -95,6 +105,7 @@ export class SeederService {
               fila: f,
               columna: c,
               ocupado: false,
+              guarderia: defaultGuarderia,
             }),
           );
         }
@@ -109,6 +120,7 @@ export class SeederService {
         telefono: '12345678',
         email: 'juan@test.com',
         dni: '20123456',
+        guarderia: defaultGuarderia,
       }),
     );
     await this.clienteRepo.save(
@@ -117,6 +129,7 @@ export class SeederService {
         telefono: '87654321',
         email: 'maria@test.com',
         dni: '30123456',
+        guarderia: defaultGuarderia,
       }),
     );
 
@@ -128,6 +141,7 @@ export class SeederService {
       manga: 3,
       cliente: c1,
       espacio: cunas[0],
+      guarderia: defaultGuarderia,
     });
     await this.embarcacionRepo.save(e1);
 
@@ -140,6 +154,7 @@ export class SeederService {
         saldoInicial: 50000,
         estado: EstadoCaja.ABIERTA,
         fechaApertura: new Date(),
+        guarderia: defaultGuarderia,
       }),
     );
 

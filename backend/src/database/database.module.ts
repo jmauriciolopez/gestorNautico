@@ -31,6 +31,12 @@ import { Pedido } from '../pedidos/pedidos.entity';
 import { ConfiguracionModule } from '../configuracion/configuracion.module';
 import { Configuracion } from '../configuracion/configuracion.entity';
 
+// Entidades de Negocio
+import { Guarderia } from '../guarderias/guarderia.entity';
+import { SeedGuarderiaService } from './seed-guarderia.service';
+
+import { MigrationService } from './migration.service';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -50,11 +56,12 @@ import { Configuracion } from '../configuracion/configuracion.entity';
       Movimiento,
       Pedido,
       Configuracion,
+      Guarderia,
     ]),
     ConfiguracionModule,
   ],
-  providers: [SeederService, InitialDataService],
+  providers: [SeederService, InitialDataService, SeedGuarderiaService, MigrationService],
   controllers: [SeederController],
-  exports: [SeederService, InitialDataService, TypeOrmModule],
+  exports: [SeederService, InitialDataService, SeedGuarderiaService, MigrationService, TypeOrmModule],
 })
 export class DatabaseModule {}

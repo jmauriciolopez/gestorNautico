@@ -57,9 +57,14 @@ export class UsersService extends BaseTenantService {
       createUserDto.clave = await bcrypt.hash(createUserDto.clave, salt);
     }
 
+    // Determinar la guardería: si es SuperAdmin puede especificarla, si no, se usa la de su contexto
+    const guarderiaId = (tenant.role === Role.SUPERADMIN && createUserDto.guarderiaId)
+        ? createUserDto.guarderiaId
+        : tenant.guarderiaId;
+
     const newUser = this.userRepository.create({
       ...createUserDto,
-      guarderiaId: tenant.guarderiaId as number,
+      guarderiaId: guarderiaId as number,
     });
     return await this.userRepository.save(newUser);
   }

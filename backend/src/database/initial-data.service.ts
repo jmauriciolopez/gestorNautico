@@ -2,6 +2,8 @@ import { Injectable, OnApplicationBootstrap, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User, Role } from '../users/user.entity';
+import { Guarderia } from '../guarderias/guarderia.entity';
+import { SeedGuarderiaService } from './seed-guarderia.service';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -11,6 +13,7 @@ export class InitialDataService implements OnApplicationBootstrap {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly seedGuarderiaService: SeedGuarderiaService,
   ) {}
 
   async onApplicationBootstrap() {
@@ -29,11 +32,12 @@ export class InitialDataService implements OnApplicationBootstrap {
     this.logger.log(
       '🌱 Sincronizando datos maestros iniciales (Master Data)...',
     );
-    await this.ensureInitialUsers();
+    const defaultGuarderia = await this.seedGuarderiaService.ensureDefaultGuarderia();
+    await this.ensureInitialUsers(defaultGuarderia);
     this.logger.log('✅ Master Data Sync: Completed');
   }
 
-  private async ensureInitialUsers() {
+  private async ensureInitialUsers(defaultGuarderia: Guarderia) {
     // -------------------------------------------------------------------------
     // USUARIOS INICIALES DE PRUEBA Y ADMINISTRACIÓN
     // -------------------------------------------------------------------------
@@ -45,6 +49,7 @@ export class InitialDataService implements OnApplicationBootstrap {
         clave: 'super123',
         role: Role.SUPERADMIN,
         activo: true,
+        guarderia: null, // Global
       },
       {
         usuario: 'admin',
@@ -53,6 +58,7 @@ export class InitialDataService implements OnApplicationBootstrap {
         clave: 'admin123',
         role: Role.ADMIN,
         activo: true,
+        guarderia: defaultGuarderia,
       },
       {
         usuario: 'operador',
@@ -61,6 +67,7 @@ export class InitialDataService implements OnApplicationBootstrap {
         clave: 'operador123',
         role: Role.OPERADOR,
         activo: true,
+        guarderia: defaultGuarderia,
       },
     ];
 
