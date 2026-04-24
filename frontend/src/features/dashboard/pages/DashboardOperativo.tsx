@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   Ship,
   Navigation,
@@ -15,7 +15,7 @@ import { useAuth } from '../../auth/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 
-const MetricCard = ({
+const MetricCard = React.memo(({
   icon,
   label,
   value,
@@ -31,7 +31,7 @@ const MetricCard = ({
     <div className="kpi-value mt-1">{value}</div>
     <div className="section-subtitle mt-2">{label}</div>
   </div>
-);
+));
 
 const DashboardOperativo: React.FC = () => {
   const { user } = useAuth();
@@ -42,22 +42,26 @@ const DashboardOperativo: React.FC = () => {
   const { getEmbarcaciones, updateEmbarcacion } = useEmbarcaciones();
   const { getMovimientos, createMovimiento } = useOperaciones();
 
-  const embarcaciones = getEmbarcaciones.data?.data || [];
-  const movimientos = getMovimientos.data || [];
+  const embarcaciones = useMemo(() => getEmbarcaciones.data?.data || [], [getEmbarcaciones.data]);
+  const movimientos = useMemo(() => getMovimientos.data || [], [getMovimientos.data]);
 
-  const enCuna = embarcaciones.filter((e) => e.estado_operativo === 'EN_CUNA').length;
-  const enAgua = embarcaciones.filter((e) => e.estado_operativo === 'EN_AGUA').length;
-  const libres = embarcaciones.filter(
-    (e) => !e.espacioId && e.estado_operativo !== 'INACTIVA'
-  ).length;
+  const { enCuna, enAgua, libres } = useMemo(() => ({
+    enCuna: embarcaciones.filter((e) => e.estado_operativo === 'EN_CUNA').length,
+    enAgua: embarcaciones.filter((e) => e.estado_operativo === 'EN_AGUA').length,
+    libres: embarcaciones.filter((e) => !e.espacioId && e.estado_operativo !== 'INACTIVA').length
+  }), [embarcaciones]);
 
-  const movimientosHoy = movimientos.filter((m) => {
+  const movimientosHoy = useMemo(() => movimientos.filter((m) => {
     const fecha = new Date(m.fecha);
     const hoy = new Date();
     return fecha.toDateString() === hoy.toDateString();
-  });
+  }), [movimientos]);
 
-  const handleAsignarBarco = async (
+  const embarcacionesLibres = useMemo(() => 
+    embarcaciones.filter((e) => !e.espacioId && e.estado_operativo !== 'INACTIVA'),
+  [embarcaciones]);
+
+  const handleAsignarBarco = useCallback(async (
     embarcacionId: number,
     espacioId: number
   ) => {
@@ -67,9 +71,9 @@ const DashboardOperativo: React.FC = () => {
     } catch (error: any) {
       console.error('Error al asignar:', error);
     }
-  };
+  }, [updateEmbarcacion]);
 
-  const handleRegistrarSalida = async (embarcacionId: number, tipo: 'entrada' | 'salida' = 'salida') => {
+  const handleRegistrarSalida = useCallback(async (embarcacionId: number, tipo: 'entrada' | 'salida' = 'salida') => {
     try {
       await createMovimiento.mutateAsync({ 
         embarcacionId, 
@@ -81,7 +85,8 @@ const DashboardOperativo: React.FC = () => {
     } catch {
       toast.error(`Error al registrar ${tipo}`);
     }
-  };
+  }, [createMovimiento]);
+
 
   return (
     <div className="space-y-4 animate-in fade-in duration-500">
@@ -197,9 +202,7 @@ const DashboardOperativo: React.FC = () => {
           ) : (
 <MapaRacks
               data={rackMapData || []}
-              embarcacionesLibres={embarcaciones.filter(
-                (e) => !e.espacioId && e.estado_operativo !== 'INACTIVA'
-              )}
+              embarcacionesLibres={embarcacionesLibres}
               onAsignar={handleAsignarBarco}
               onRegistrarSalida={handleRegistrarSalida}
               is3D={is3D}

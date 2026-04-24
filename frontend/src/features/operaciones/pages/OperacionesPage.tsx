@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { toast } from 'react-hot-toast';
 import { useOperaciones, useSolicitudesBajada, Pedido } from '../hooks/useOperaciones';
 import { PedidosList } from '../components/PedidosList';
@@ -19,22 +19,27 @@ export default function OperacionesPage() {
   const { getSolicitudes, updateEstado: updateSolicitudEstado } = useSolicitudesBajada();
   const confirm = useConfirm();
 
-  const unifiedPedidos = [
-    ...(getPedidos.data || []).map(p => ({ ...p, origen: 'interno' })),
-    ...(getSolicitudes.data || []).filter(s => s.estado === 'PENDIENTE' || s.estado === 'EN_AGUA').map(s => ({
-      id: s.id,
-      estado: s.estado.toLowerCase() as any,
-      fechaProgramada: s.fechaHoraDeseada,
-      embarcacion: s.embarcacion,
-      origen: 'web',
-      observaciones: s.observaciones,
-      isSolicitud: true
-    }))
-  ].sort((a, b) => new Date(b.fechaProgramada).getTime() - new Date(a.fechaProgramada).getTime());
+  const unifiedPedidos = useMemo(() => {
+    return [
+      ...(getPedidos.data || []).map(p => ({ ...p, origen: 'interno' })),
+      ...(getSolicitudes.data || []).filter(s => s.estado === 'PENDIENTE' || s.estado === 'EN_AGUA').map(s => ({
+        id: s.id,
+        estado: s.estado.toLowerCase() as any,
+        fechaProgramada: s.fechaHoraDeseada,
+        embarcacion: s.embarcacion,
+        origen: 'web',
+        observaciones: s.observaciones,
+        isSolicitud: true
+      }))
+    ].sort((a, b) => new Date(b.fechaProgramada).getTime() - new Date(a.fechaProgramada).getTime());
+  }, [getPedidos.data, getSolicitudes.data]);
 
-  const handleUpdateStatusUnified = async (id: number, nuevoEstado: Pedido['estado'], isSolicitud?: boolean) => {
+  const activeBoatIds = useMemo(() => 
+    getPedidos.data?.map(p => p.embarcacion.id) || [],
+  [getPedidos.data]);
+
+  const handleUpdateStatusUnified = useCallback(async (id: number, nuevoEstado: Pedido['estado'], isSolicitud?: boolean) => {
     if (isSolicitud) {
-      // Map 'en_agua' -> 'EN_AGUA', 'finalizado' -> 'FINALIZADA', 'cancelado' -> 'CANCELADA'
       const statusMap: Record<string, any> = {
         'pendiente': 'PENDIENTE',
         'en_agua': 'EN_AGUA',
@@ -45,9 +50,9 @@ export default function OperacionesPage() {
     } else {
       await updatePedidoEstado.mutateAsync({ id, estado: nuevoEstado });
     }
-  };
+  }, [updateSolicitudEstado, updatePedidoEstado]);
 
-  const handleDeletePedidoUnified = async (id: number, isSolicitud?: boolean) => {
+  const handleDeletePedidoUnified = useCallback(async (id: number, isSolicitud?: boolean) => {
     const title = isSolicitud ? 'Cancelar Solicitud Web' : 'Eliminar Solicitud';
     const message = isSolicitud
       ? '¿Estás seguro de que deseas cancelar esta solicitud web? El cliente será notificado.'
@@ -67,17 +72,18 @@ export default function OperacionesPage() {
         await deletePedido.mutateAsync(id);
       }
     }
-  };
+  }, [confirm, updateSolicitudEstado, deletePedido]);
 
-  const handleCreatePedido = async (data: { embarcacionId: number; fechaProgramada: string; observaciones?: string }) => {
+  const handleCreatePedido = useCallback(async (data: { embarcacionId: number; fechaProgramada: string; observaciones?: string }) => {
     await createPedido.mutateAsync(data);
     setIsPedidoModalOpen(false);
-  };
+  }, [createPedido]);
 
-  const handleCreateMovimiento = async (data: any) => {
+  const handleCreateMovimiento = useCallback(async (data: any) => {
     await createMovimiento.mutateAsync(data);
     setIsMovimientoModalOpen(false);
-  };
+  }, [createMovimiento]);
+
 
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">

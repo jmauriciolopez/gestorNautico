@@ -55,6 +55,14 @@ export function useOperaciones(options: {
 } = {}) {
   const queryClient = useQueryClient();
 
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+    queryClient.invalidateQueries({ queryKey: ['movimientos'] });
+    queryClient.invalidateQueries({ queryKey: ['solicitudes-bajada'] });
+    queryClient.invalidateQueries({ queryKey: ['embarcaciones'] });
+    queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+  };
+
   const getPedidos = useQuery<Pedido[]>({
     queryKey: ['pedidos', options.pagePedidos, options.limitPedidos],
     queryFn: () => {
@@ -76,25 +84,18 @@ export function useOperaciones(options: {
   const createPedido = useMutation({
     mutationFn: (data: Partial<Pedido> & { embarcacionId: number }) =>
       httpClient.post('/pedidos', data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pedidos'] });
-    },
+    onSuccess: invalidateAll,
   });
 
   const updatePedidoEstado = useMutation({
     mutationFn: ({ id, estado }: { id: number; estado: string }) =>
       httpClient.patch(`/pedidos/${id}/estado`, { estado }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pedidos'] });
-      queryClient.invalidateQueries({ queryKey: ['embarcaciones'] });
-    },
+    onSuccess: invalidateAll,
   });
 
   const deletePedido = useMutation({
     mutationFn: (id: number) => httpClient.delete(`/pedidos/${id}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pedidos'] });
-    },
+    onSuccess: invalidateAll,
   });
 
   const getMovimientos = useQuery({
@@ -110,11 +111,7 @@ export function useOperaciones(options: {
   const createMovimiento = useMutation({
     mutationFn: (data: Partial<Movimiento> & { embarcacionId: number; espacioId?: number }) =>
       httpClient.post('/movimientos', data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['movimientos'] });
-      queryClient.invalidateQueries({ queryKey: ['embarcaciones'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard', 'rack-map'] });
-    },
+    onSuccess: invalidateAll,
   });
 
   return { getPedidos, usePedido, createPedido, updatePedidoEstado, deletePedido, getMovimientos, createMovimiento };
@@ -139,7 +136,7 @@ export function useMovimientosPaginados(page: number, limit = MOVIMIENTOS_PAGE_S
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['movimientos'] });
       queryClient.invalidateQueries({ queryKey: ['embarcaciones'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard', 'rack-map'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
 
@@ -166,6 +163,7 @@ export function useSolicitudesBajada(options: { page?: number; limit?: number } 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['solicitudes-bajada'] });
       queryClient.invalidateQueries({ queryKey: ['embarcaciones'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
   });
 
