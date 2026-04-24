@@ -28,18 +28,34 @@ interface MapaRacksProps {
 interface Rack3DContainerProps {
   rack: any;
   is3D: boolean;
-  getBoatSizeClass: (espacio: any) => string;
-  getEspacioStyle: (espacio: any) => string;
   setSelectedEspacio: (espacio: any) => void;
-  hasEmbarcacion: (espacio: any) => boolean;
 }
+
+const getEsloraColor = (eslora: number) => {
+  if (eslora > 10) return 'amber';
+  if (eslora >= 6) return 'indigo';
+  return 'teal';
+};
+
+const getEspacioStyle = (espacio: any) => {
+  const estado = espacio?.embarcacion?.estado_operativo;
+  if (estado === 'EN_AGUA') {
+    return 'bg-[var(--accent-teal-soft)] border-[var(--accent-teal-soft)]';
+  }
+  if (estado === 'EN_CUNA' || espacio?.ocupado) {
+    return 'bg-[var(--accent-indigo-soft)] border-[var(--accent-indigo-soft)]';
+  }
+  return 'bg-transparent border-white/10';
+};
+
+const hasEmbarcacion = (espacio: any) => {
+  return espacio?.ocupado || espacio?.embarcacion?.estado_operativo === 'EN_AGUA';
+};
 
 const Rack3DContainer: React.FC<Rack3DContainerProps> = ({ 
   rack, 
   is3D, 
-  getEspacioStyle, 
-  setSelectedEspacio,
-  hasEmbarcacion
+  setSelectedEspacio
 }) => {
   const localRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
@@ -138,19 +154,20 @@ const Rack3DContainer: React.FC<Rack3DContainerProps> = ({
                                   codigo: espacio.numero,
                                   embarcacion: espacio.embarcacion
                                 })}
-                                className={`
-                                  absolute inset-0 rounded-xl border transition-all duration-700 flex flex-col items-center justify-center gap-1 group/item relative cell-3d
-                                  ${!espacio 
-                                    ? 'bg-transparent border-dashed border-white/10' 
-                                    : hasEmbarcacion(espacio)
-                                      ? `${getEspacioStyle(espacio)} cursor-pointer shadow-xl border-2`
-                                      : 'bg-slate-800/40 text-slate-500 border-white/20 hover:border-indigo-400 hover:bg-indigo-500/10 cursor-pointer'
-                                    }
-                                `}
-                                style={{
-                                  transform: `translateZ(${p * 100}px) translateX(${p * 3}px) translateY(-${p * 3}px)`,
-                                  zIndex: 20 - p
-                                }}
+                                  className={`
+                                    absolute inset-0 rounded-xl border transition-all duration-700 flex flex-col items-center justify-center gap-1 group/item relative cell-3d
+                                    ${!espacio 
+                                      ? 'bg-transparent border-dashed border-white/10' 
+                                      : hasEmbarcacion(espacio)
+                                        ? `${getEspacioStyle(espacio)} cursor-pointer shadow-xl border-2 border-l-4`
+                                        : 'bg-slate-800/40 text-slate-500 border-white/20 hover:border-indigo-400 hover:bg-indigo-500/10 cursor-pointer'
+                                      }
+                                  `}
+                                  style={{
+                                    transform: `translateZ(${p * 100}px) translateX(${p * 3}px) translateY(-${p * 3}px)`,
+                                    zIndex: 20 - p,
+                                    borderLeftColor: hasEmbarcacion(espacio) ? `var(--accent-${getEsloraColor(espacio.embarcacion?.eslora)})` : undefined
+                                  }}
                               >
                                 <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[7px] font-black opacity-30 text-white tracking-widest uppercase pointer-events-none whitespace-nowrap">
                                   Nivel {p}
@@ -167,7 +184,11 @@ const Rack3DContainer: React.FC<Rack3DContainerProps> = ({
                                   <div className="text-[10px] font-mono opacity-5">N/A</div>
                                 ) : hasEmbarcacion(espacio) ? (
                                   <>
-                                    <Anchor size={24} className={(espacio.embarcacion?.eslora || 0) > 10 ? 'animate-pulse text-white' : 'text-white/80'} />
+                                      <Anchor 
+                                        size={24} 
+                                        className={(espacio.embarcacion?.eslora || 0) > 10 ? 'animate-pulse' : ''} 
+                                        style={{ color: `var(--accent-${getEsloraColor(espacio.embarcacion?.eslora)})` }}
+                                      />
                                     <span className="text-[9px] font-black text-center px-1 truncate w-full uppercase tracking-tighter leading-tight text-white/90">
                                       {espacio.embarcacion?.nombre}
                                     </span>
@@ -243,16 +264,22 @@ const Rack3DContainer: React.FC<Rack3DContainerProps> = ({
                               ${!espacio 
                                 ? 'bg-transparent border-dashed border-white/10' 
                                 : hasEmbarcacion(espacio)
-                                  ? `${getEspacioStyle(espacio)} cursor-pointer shadow-xl border-2 hover:brightness-110 active:scale-95`
+                                  ? `${getEspacioStyle(espacio)} cursor-pointer shadow-xl border-2 border-l-4 hover:brightness-110 active:scale-95`
                                   : 'bg-slate-800/40 text-slate-500 border-white/20 hover:border-indigo-400 hover:bg-indigo-500/10 cursor-pointer active:scale-95'
                                 }
                             `}
+                            style={{
+                              borderLeftColor: hasEmbarcacion(espacio) ? `var(--accent-${getEsloraColor(espacio.embarcacion?.eslora)})` : undefined
+                            }}
                           >
                             {!espacio ? (
                               <div className="text-[10px] font-mono opacity-5">N/A</div>
                             ) : hasEmbarcacion(espacio) ? (
                               <>
-                                <Anchor size={24} className="text-white/80" />
+                                <Anchor 
+                                  size={24} 
+                                  style={{ color: `var(--accent-${getEsloraColor(espacio.embarcacion?.eslora)})` }}
+                                />
                                 <span className="text-[10px] font-black text-center px-1 truncate w-full uppercase tracking-tighter leading-tight text-white drop-shadow-sm">
                                   {espacio.embarcacion?.nombre}
                                 </span>
@@ -306,20 +333,6 @@ export const MapaRacks: React.FC<MapaRacksProps> = ({
     );
   }
 
-  const getEspacioStyle = (espacio: any) => {
-    const estado = espacio?.embarcacion?.estado_operativo;
-    if (estado === 'EN_AGUA') {
-      return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40';
-    }
-    if (estado === 'EN_CUNA' || espacio?.ocupado) {
-      return 'bg-blue-600/20 text-blue-400 border-blue-500/40';
-    }
-    return 'bg-transparent border-white/20';
-  };
-
-  const hasEmbarcacion = (espacio: any) => {
-    return espacio?.ocupado || espacio?.embarcacion?.estado_operativo === 'EN_AGUA';
-  };
 
   return (
     <>
@@ -334,15 +347,15 @@ export const MapaRacks: React.FC<MapaRacksProps> = ({
         <div className="flex flex-wrap gap-4 items-center bg-slate-900/60 px-6 py-3.5 rounded-2xl border border-slate-700/50 w-fit shadow-lg">
           <span className="text-xs font-black text-slate-400 uppercase tracking-widest mr-2">Leyenda Eslora:</span>
           <div className="flex items-center gap-3">
-            <div className="w-4 h-4 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.6)] border border-emerald-300" />
+            <div className="w-4 h-4 rounded-full shadow-[0_0_10px_var(--accent-teal-soft)] border border-[var(--accent-teal)]" style={{ background: 'var(--accent-teal)' }} />
             <span className="text-sm text-white font-bold">&lt;6m</span>
           </div>
           <div className="flex items-center gap-3">
-            <div className="w-4 h-4 rounded-full bg-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.6)] border border-blue-400" />
+            <div className="w-4 h-4 rounded-full shadow-[0_0_10px_var(--accent-indigo-soft)] border border-[var(--accent-indigo)]" style={{ background: 'var(--accent-indigo)' }} />
             <span className="text-sm text-white font-bold">6-10m</span>
           </div>
           <div className="flex items-center gap-3">
-            <div className="w-4 h-4 rounded-full bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.6)] border border-orange-400" />
+            <div className="w-4 h-4 rounded-full shadow-[0_0_10px_var(--accent-amber-soft)] border border-[var(--accent-amber)]" style={{ background: 'var(--accent-amber)' }} />
             <span className="text-sm text-white font-bold">&gt;10m</span>
           </div>
         </div>
@@ -388,9 +401,7 @@ export const MapaRacks: React.FC<MapaRacksProps> = ({
                     <Rack3DContainer 
                       rack={rack} 
                       is3D={is3D} 
-                      getEspacioStyle={getEspacioStyle} 
                       setSelectedEspacio={setSelectedEspacio}
-                      hasEmbarcacion={hasEmbarcacion}
                     />
                   </div>
                 ))}
