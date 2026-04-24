@@ -23,12 +23,13 @@
 - [ ] **Facturación Compartida**: División de cargos entre copropietarios.
 
 ### Fase 3: Madurez SaaS
-- [ ] **Implementación Multi-Tenant**: Ver `docs/plans/PLAN_MULTITENANT.md`.
+- [x] **Implementación Multi-Tenant**: Estructura de base de datos compartida, interceptores de tenant y gestión de sedes.
 - [ ] **Stock de Pañol**: Consumo de insumos integrados.
 
 ---
 
 ## ✅ Completado Recientemente (Hitos Logrados)
+- [x] **Arquitectura Multi-Tenant (FASE 1-6)**: Aislamiento de datos, gestión de sedes (UI SuperAdmin) y RBAC funcional.
 - [x] **Reportes Analíticos (V1)**: Dashboard de ocupación e ingresos mensuales con Recharts.
 - [x] **Unificación de Documentación**: Consolidación de archivos .md en `docs/`.
 - [x] **Auditoría de Deuda Técnica (Clientes/Embarcaciones)**: DTOs, validaciones y optimización de queries (N+1).

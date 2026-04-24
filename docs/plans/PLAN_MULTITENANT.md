@@ -1,71 +1,82 @@
-# Roadmap: Estrategia y Tareas para Multi-Tenant (SaaS)
+# Implementación Definitiva: Arquitectura Multi-Tenant (SaaS)
 
-Este documento detalla el análisis técnico para transformar el Gestor Náutico en una plataforma SaaS Multi-Tenant, incluyendo el modelo híbrido solicitado.
-
-## 🏗️ 1. Modelos de Aislamiento Propuestos
-
-### A. Esquema Compartido (Shared Database)
-- **Para**: Clubes pequeños/medianos.
-- **Implementación**: Columna `tenant_id` en todas las tablas.
-- **Ventaja**: Bajos costos de mantenimiento e infraestructura.
-
-### B. Esquema Aislado (Database-per-Tenant)
-- **Para**: Grandes clubes con alto volumen de transacciones o requisitos de seguridad/legalidad específicos.
-- **Implementación**: Cada club tiene su propia base de datos física o instancia.
-- **Ventaja**: Mayor seguridad, facilidad de backups por club y escalabilidad vertical independiente.
+Este documento detalla la implementación técnica final de la arquitectura multi-tenant en el Gestor Náutico, basada en un modelo de **Base de Datos Compartida (Shared Schema)** con aislamiento lógico por `guarderia_id`.
 
 ---
 
-## 🚀 2. Arquitectura Híbrida (El "Catalog Pattern")
+## 🏗️ 1. Modelo de Aislamiento: Esquema Compartido
+Se ha implementado el aislamiento de datos mediante la columna `guarderia_id` en todas las entidades clave del sistema (Clientes, Embarcaciones, Movimientos, Finanzas, etc.).
 
-Para soportar ambos modelos simultáneamente, la arquitectura debe evolucionar hacia una **Enrutamiento Dinámico de Conexiones**.
-
-### Componentes Clave:
-1.  **Base de Datos Maestra (Master/Catalog DB)**:
-    - Una base de datos pequeña que SOLO contiene la tabla `Tenants`.
-    - Atributos: `id`, `nombre`, `slug`, `storage_type` (SHAERD/ISOLATED), `connection_string` (null si es shared).
-2.  **Connection Manager en el Backend**:
-    - Un servicio que, en cada request, consulta el caché (Redis) para saber a qué base de datos apuntar.
-    - Si es `SHARED`, usa el pool de conexiones común e inyecta el `tenant_id`.
-    - Si es `ISOLATED`, crea o recupera una conexión específica para ese club.
+### Ventajas Implementadas:
+- **Costos**: Mantenimiento de una única instancia de base de datos.
+- **Simplicidad**: Migraciones de esquema centralizadas.
+- **Visibilidad Global**: Capacidad para el rol `SUPERADMIN` de gestionar múltiples sedes desde un único panel.
 
 ---
 
-## 📊 3. Tareas Técnicas (Esquema Híbrido)
+## 🚀 2. Arquitectura del Backend (NestJS)
 
-### Tareas de Infraestructura:
-- [ ] **Catalog Database**: Implementar la tabla de tenants y configuración de conectividad.
-- [ ] **Interceptor de Conexión**: Crear un middleware de NestJS que resuelva el `DataSource` correcto dinámicamente.
-- [ ] **Secret Management**: Almacenar de forma segura (Vault/AWS Secrets) las credenciales de las bases de datos de clientes aislados.
+### A. Core de Aislamiento
+1.  **`TenantContext`**: Interface que define el contexto del tenant activo (`guarderiaId`, `scope`).
+2.  **`BaseTenantService`**: Clase base que todos los servicios extienden. Proporciona el método `buildTenantWhere()` para inyectar automáticamente el filtro `guarderiaId` en las consultas de TypeORM.
+3.  **`TenantInterceptor`**: Extrae el `guarderiaId` del header `x-guarderia-id` y lo inyecta en el objeto `request` para que esté disponible en controladores y servicios.
 
-### Tareas de Migración:
-- [ ] **Herramienta de Extracción**: Crear un script que pueda "extraer" todos los datos de un `tenant_id` de la DB compartida y los inserte en una DB nueva para transformarlo en `ISOLATED`.
-- [ ] **Versionamiento Sincronizado**: Asegurar que todas las bases de datos (común y aisladas) se mantengan en la misma versión de esquema mediante migraciones automatizadas.
-
----
-
-## ⚡ 4. Cuellos de Botella y Performance
-
-### Identificados en Híbrido:
-- **Latencia de Conexión**: La creación de conexiones "al vuelo" es costosa. Se necesita un pool persistente por cada base de datos aislada, lo que consume memoria RAM en el servidor de backend.
-- **Escala del Pool**: El número máximo de conexiones abiertas en el servidor de Postgres debe ajustarse cuidadosamente.
-- **Mantenimiento**: Correr una migración de esquema en 100 bases de datos aisladas es más lento que en una sola compartida.
+### B. Seguridad y Autenticación
+1.  **JWT Dinámico**: El payload del token ahora incluye el `guarderiaId` asignado al usuario.
+2.  **`AuthTokenGuard`**: Valida el token y expone los datos del usuario (incluyendo su sede) en `request.user`.
+3.  **`TenantGuard`**: Capa de seguridad crítica que verifica:
+    - Que el `guarderiaId` solicitado en el header coincida con el asignado al usuario en su JWT.
+    - Permite acceso total al `SUPERADMIN` (bypass de validación de pertenencia).
+4.  **`RolesGuard` & `@TenantRoles`**: Decorador específico para proteger rutas basándose en roles dentro del contexto del tenant.
 
 ---
 
-## 🔐 5. Seguridad y Gobernanza
+## ⚡ 3. Arquitectura del Frontend (React)
 
-- **Aislamiento de Recursos**: Un club grande aislado no afectará el performance de los clubes compartidos si hay un pico de tráfico (Noisy Neighbor Effect).
-- **Backups**: Capacidad de ofrecer al club "VIP" su propio backup diario descargable.
+### A. Comunicación (HttpClient)
+- **Interceptor de Peticiones**: Inyecta automáticamente el header `x-guarderia-id` desde el `localStorage`.
+- **Manejo de Errores**: Intercepta respuestas `403/404` relacionadas con el tenant y redirige al usuario a `/select-tenant`.
+
+### B. Gestión de Estado y UI
+1.  **`AuthProvider`**: Inicializa automáticamente el tenant del usuario al hacer login, asegurando que las peticiones tengan el contexto correcto desde el primer segundo.
+2.  **`GuarderiaSelector`**: Componente premium en el `Header` (solo para `SUPERADMIN`) que permite conmutar entre sedes en tiempo real.
+3.  **`useGuarderias` Hook**: Gestión eficiente de la lista de sedes mediante `React Query`.
+4.  **`SelectTenantPage`**: Página de aterrizaje de seguridad para que los SuperAdmins elijan su contexto de trabajo.
 
 ---
 
-## 🛠️ 6. Resumen de Implementación
-1.  **Inicio**: Comenzar con Esquema Compartido (`tenant_id`).
-2.  **Escalado**: Al llegar a N registros, implementar el `ConnectionManager`.
-3.  **Híbrido**: Mover los clubes de alta carga a sus propias instancias.
+## 🔐 4. Flujo de Datos Seguro
+
+```mermaid
+sequenceDiagram
+    participant User as Usuario/Navegador
+    participant Gateway as HttpClient (Frontend)
+    participant Auth as Auth/Tenant Guard (Backend)
+    participant Service as Business Service
+    participant DB as PostgreSQL
+
+    User->>Gateway: Realiza acción (ej: ver clientes)
+    Note over Gateway: Inyecta x-guarderia-id: 5
+    Gateway->>Auth: Request con Header + JWT
+    Auth->>Auth: Valida JWT (User.guarderiaId == 5)
+    Auth->>Service: Acceso concedido
+    Service->>DB: query WHERE guarderia_id = 5
+    DB-->>Service: Datos filtrados
+    Service-->>Gateway: Respuesta segura
+    Gateway-->>User: Visualización
+```
 
 ---
 
-> [!TIP]
-> **Estrategia Comercial**: El modelo aislado suele venderse como un "Add-on" premium o nivel "Enterprise", justificando los costos extra de infraestructura.
+## 📅 5. Futuras Ampliaciones (Roadmap SaaS)
+
+### A. Aislamiento Físico (Isolated DB)
+Para clientes "Enterprise", se puede implementar el **Catalog Pattern** donde el `TenantInterceptor` resuelva dinámicamente un `DataSource` (conexión) diferente basado en el slug del cliente, manteniendo la misma lógica de servicios gracias a la inyección de dependencias de NestJS.
+
+### B. Gestión de Suscripciones
+Implementar un servicio de cuotas que, basándose en el `TenantContext`, limite el número de embarcaciones o usuarios permitidos para esa sede.
+
+---
+
+> [!IMPORTANT]
+> **Regla de Oro**: Ningún servicio debe realizar una consulta a la base de datos sin pasar por `buildTenantWhere()` o recibir el objeto `tenant: TenantContext`, garantizando que nunca se filtren datos entre sedes.

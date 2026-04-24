@@ -53,6 +53,7 @@ export class AuthService {
       usuario: user.usuario,
       role: user.role,
       nombre: user.nombre,
+      guarderiaId: user.guarderiaId,
     };
     return {
       accessToken: await this.jwtService.signAsync(payload),

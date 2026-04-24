@@ -52,7 +52,26 @@ Consulta el [**BACKLOG.md**](./BACKLOG.md) para ver las tareas pendientes y hito
 ## 🛠️ Tecnologías
 - **Frontend**: React, Vite, Recharts, Lucide Icons, Framer Motion.
 - **Backend**: NestJS, TypeORM, Class-validator.
-- **Infraestructura**: PostgreSQL, Docker (próximamente), Resend (SMTP).
+- **Infraestructura**: PostgreSQL, Resend (SMTP).
+
+## 🔐 Control de Acceso (RBAC)
+
+El sistema implementa una matriz estricta de permisos basada en roles:
+
+| Módulo | OPERADOR | SUPERVISOR | ADMIN | SUPERADMIN |
+| :--- | :---: | :---: | :---: | :---: |
+| **Dashboard** | Operativo | Ambos | Ambos | Ambos |
+| **Operaciones** | ✅ | ✅ | ✅ | ✅ |
+| **Clientes / Emb.** | Lectura | ✅ | ✅ | ✅ |
+| **Servicios** | ❌ | ✅ | ✅ | ✅ |
+| **Finanzas / Fact.** | ❌ | ❌ | ✅ | ✅ |
+| **Reportes** | ❌ | ❌ | ✅ | ✅ |
+| **Infraestructura** | ❌ | ❌ | ✅ | ✅ |
+| **Usuarios / Conf.** | ❌ | ❌ | ✅ | ✅ |
+| **Sedes (SaaS)** | ❌ | ❌ | ❌ | ✅ |
+| **Ayuda** | ✅ | ✅ | ✅ | ✅ |
+
+*Nota: El acceso a la creación y edición de Clientes/Embarcaciones está restringido para el rol Operador.*
 
 ---
 Desarrollado para la optimización de la gestión náutica moderna.
