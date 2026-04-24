@@ -6,9 +6,10 @@ interface NuevoPedidoModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (data: { embarcacionId: number; fechaProgramada: string }) => Promise<void>;
+  activeBoatIds?: number[];
 }
 
-export function NuevoPedidoModal({ isOpen, onClose, onSave }: NuevoPedidoModalProps) {
+export function NuevoPedidoModal({ isOpen, onClose, onSave, activeBoatIds = [] }: NuevoPedidoModalProps) {
   const { getEmbarcaciones } = useEmbarcaciones();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -107,19 +108,30 @@ export function NuevoPedidoModal({ isOpen, onClose, onSave }: NuevoPedidoModalPr
                       <button
                         key={boat.id}
                         type="button"
-                        onClick={() => setSelectedBoatId(boat.id)}
-                        className="w-full flex items-center justify-between p-4 bg-[var(--bg-secondary)]/30 border border-[var(--border-primary)]/40 rounded-[1.25rem] hover:border-violet-500/40 hover:bg-violet-500/5 transition-all group/item"
+                        onClick={() => !activeBoatIds.includes(boat.id) && setSelectedBoatId(boat.id)}
+                        className={`w-full flex items-center justify-between p-4 bg-[var(--bg-secondary)]/30 border border-[var(--border-primary)]/40 rounded-[1.25rem] transition-all group/item ${activeBoatIds.includes(boat.id) ? 'cursor-not-allowed opacity-80' : 'hover:border-violet-500/40 hover:bg-violet-500/5'}`}
                       >
                         <div className="flex items-center gap-4 text-left">
-                          <div className="w-10 h-10 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-primary)] flex items-center justify-center text-[var(--text-muted)] group-hover/item:text-indigo-500 group-hover/item:border-indigo-500/20 transition-all">
+                          <div className={`w-10 h-10 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-primary)] flex items-center justify-center text-[var(--text-muted)] group-hover/item:text-indigo-500 group-hover/item:border-indigo-500/20 transition-all ${activeBoatIds.includes(boat.id) ? 'opacity-40' : ''}`}>
                             <Ship className="w-5 h-5" />
                           </div>
                           <div>
-                            <p className="text-sm font-black text-[var(--text-primary)] group-hover/item:text-indigo-400 transition-colors uppercase leading-none mb-1">{boat.nombre}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="text-sm font-black text-[var(--text-primary)] group-hover/item:text-indigo-400 transition-colors uppercase leading-none mb-1">{boat.nombre}</p>
+                              {activeBoatIds.includes(boat.id) && (
+                                <span className="text-[7px] font-black bg-amber-500/10 text-amber-500 px-1.5 py-0.5 rounded border border-amber-500/20 uppercase tracking-widest">En Cola</span>
+                              )}
+                            </div>
                             <p className="text-[10px] text-[var(--text-muted)] font-black tracking-widest uppercase">{boat.matricula}</p>
                           </div>
                         </div>
-                        <ArrowRight className="w-5 h-5 text-[var(--text-muted)] group-hover/item:text-indigo-500 transition-all transform group-hover/item:translate-x-1" />
+                        {!activeBoatIds.includes(boat.id) ? (
+                          <ArrowRight className="w-5 h-5 text-[var(--text-muted)] group-hover/item:text-indigo-500 transition-all transform group-hover/item:translate-x-1" />
+                        ) : (
+                          <div className="p-2 rounded-lg bg-amber-500/5 text-amber-500/40">
+                            <X className="w-4 h-4" />
+                          </div>
+                        )}
                       </button>
                     ))
                   ) : (

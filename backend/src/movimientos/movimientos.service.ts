@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { Movimiento } from './movimientos.entity';
 import { Pedido } from '../pedidos/pedidos.entity';
 import { EmbarcacionesService } from '../embarcaciones/embarcaciones.service';
@@ -94,7 +94,11 @@ export class MovimientosService {
       });
       // Update or Create Order (subida)
       const pedidoExistente = await this.pedidoRepo.findOne({
-        where: { embarcacion: { id: embarcacion.id }, estado: 'en_agua' },
+        where: { 
+          embarcacion: { id: embarcacion.id }, 
+          estado: In(['en_agua', 'finalizado']) 
+        },
+        order: { createdAt: 'DESC' }
       });
 
       if (pedidoExistente) {
@@ -122,7 +126,11 @@ export class MovimientosService {
       });
       // Update or Create Order (bajada)
       const pedidoExistente = await this.pedidoRepo.findOne({
-        where: { embarcacion: { id: embarcacion.id }, estado: 'pendiente' },
+        where: { 
+          embarcacion: { id: embarcacion.id }, 
+          estado: In(['pendiente', 'en_agua']) 
+        },
+        order: { createdAt: 'DESC' }
       });
 
       if (pedidoExistente) {

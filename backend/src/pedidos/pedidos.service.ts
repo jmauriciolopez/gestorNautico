@@ -1,6 +1,6 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { Pedido } from './pedidos.entity';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import { Role } from '../users/user.entity';
@@ -94,6 +94,21 @@ export class PedidosService {
 
   async create(data: Record<string, unknown>) {
     const { embarcacionId, ...rest } = data as { embarcacionId: number };
+
+    // Validar si ya existe un pedido activo para esta embarcación
+    const pedidoActivo = await this.pedidoRepo.findOne({
+      where: {
+        embarcacion: { id: embarcacionId },
+        estado: In(['pendiente', 'en_agua']),
+      },
+    });
+
+    if (pedidoActivo) {
+      throw new BadRequestException(
+        'Ya existe un pedido activo para esta embarcación en el Monitor de Cola.',
+      );
+    }
+
     const nuevo = this.pedidoRepo.create({
       ...rest,
       embarcacion: { id: embarcacionId },

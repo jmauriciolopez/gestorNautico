@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { useOperaciones, useSolicitudesBajada, Pedido } from '../hooks/useOperaciones';
 import { PedidosList } from '../components/PedidosList';
 import { MovimientosList } from '../components/MovimientosList';
@@ -36,8 +37,12 @@ export default function OperacionesPage() {
   };
 
   const handleCreatePedido = async (data: { embarcacionId: number; fechaProgramada: string }) => {
-    await createPedido.mutateAsync(data);
-    setIsPedidoModalOpen(false);
+    try {
+      await createPedido.mutateAsync(data);
+      setIsPedidoModalOpen(false);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Error al crear el pedido');
+    }
   };
 
   const handleCreateMovimiento = async (data: any) => {
@@ -168,6 +173,7 @@ export default function OperacionesPage() {
         isOpen={isPedidoModalOpen}
         onClose={() => setIsPedidoModalOpen(false)}
         onSave={handleCreatePedido}
+        activeBoatIds={getPedidos.data?.map(p => p.embarcacion.id) || []}
       />
 
       <NuevoMovimientoModal

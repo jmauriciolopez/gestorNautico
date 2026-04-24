@@ -63,6 +63,20 @@ export class OperacionesService {
       );
     }
 
+    // 2c. Validar si ya existe una solicitud activa
+    const solicitudActiva = await this.solicitudRepo.findOne({
+      where: {
+        embarcacion: { id: barco.id },
+        estado: In([EstadoSolicitud.PENDIENTE, EstadoSolicitud.EN_AGUA]),
+      },
+    });
+
+    if (solicitudActiva) {
+      throw new BadRequestException(
+        'Ya existe una solicitud activa para esta embarcación.',
+      );
+    }
+
     // 2b. Validar Horarios Operativos
     const fechaHora = new Date(dto.fechaHoraDeseada);
     const horaSolicitud = fechaHora.getHours() + fechaHora.getMinutes() / 60;
