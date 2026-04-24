@@ -2,6 +2,7 @@ import { Injectable, Logger, NotFoundException, BadRequestException } from '@nes
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { Pedido } from './pedidos.entity';
+import { SolicitudBajada, EstadoSolicitud } from '../operaciones/solicitud-bajada.entity';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import { Role } from '../users/user.entity';
 import { NotificacionTipo } from '../notificaciones/notificacion.entity';
@@ -19,6 +20,8 @@ export class PedidosService {
   constructor(
     @InjectRepository(Pedido)
     private readonly pedidoRepo: Repository<Pedido>,
+    @InjectRepository(SolicitudBajada)
+    private readonly solicitudRepo: Repository<SolicitudBajada>,
     private readonly notificacionesService: NotificacionesService,
     private readonly movimientosService: MovimientosService,
   ) {}
@@ -106,6 +109,20 @@ export class PedidosService {
     if (pedidoActivo) {
       throw new BadRequestException(
         'Ya existe un pedido activo para esta embarcación en el Monitor de Cola.',
+      );
+    }
+
+    // Validar si ya existe una solicitud activa en el Portal Web
+    const solicitudActiva = await this.solicitudRepo.findOne({
+      where: {
+        embarcacionId: embarcacionId,
+        estado: In([EstadoSolicitud.PENDIENTE, EstadoSolicitud.EN_AGUA]),
+      },
+    });
+
+    if (solicitudActiva) {
+      throw new BadRequestException(
+        'Ya existe una solicitud activa para esta embarcación en el Portal Web (Solicitudes Externas).',
       );
     }
 

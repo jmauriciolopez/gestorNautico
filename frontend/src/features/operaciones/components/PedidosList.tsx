@@ -2,10 +2,10 @@ import { Anchor, Clock, CheckCircle2, XCircle, Trash2, Loader2, ArrowRight, Ship
 import { Pedido } from '../hooks/useOperaciones';
 
 interface PedidosListProps {
-  pedidos: Pedido[];
+  pedidos: (Pedido & { origen?: 'interno' | 'web'; isSolicitud?: boolean; observaciones?: string })[];
   isLoading: boolean;
-  onUpdateStatus: (id: number, nuevoEstado: Pedido['estado']) => void;
-  onDeletePedido: (id: number) => void;
+  onUpdateStatus: (id: number, nuevoEstado: Pedido['estado'], isSolicitud?: boolean) => void;
+  onDeletePedido: (id: number, isSolicitud?: boolean) => void;
   onOpenCreate: () => void;
 }
 
@@ -58,6 +58,11 @@ export function PedidosList({ pedidos, isLoading, onUpdateStatus, onDeletePedido
                   }`}>
                     {pedido.estado === 'en_agua' ? 'En Agua' : pedido.estado}
                   </span>
+                  {pedido.origen === 'web' && (
+                    <span className="text-[8px] font-black px-2.5 py-0.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-md uppercase tracking-widest">
+                      Portal Web
+                    </span>
+                  )}
                 </div>
                 <div className="flex flex-wrap items-center gap-6">
                   <div className="flex items-center gap-2.5 text-[10px] text-[var(--text-secondary)] font-black uppercase tracking-widest bg-[var(--bg-primary)]/40 px-3 py-1.5 rounded-xl border border-[var(--border-primary)]/40">
@@ -76,6 +81,11 @@ export function PedidosList({ pedidos, isLoading, onUpdateStatus, onDeletePedido
                       return fecha.toLocaleDateString('es-AR', { day: '2-digit', month: 'short' }) + ' ' + hora;
                     })()}
                   </div>
+                  {pedido.observaciones && (
+                    <div className="flex items-center gap-2.5 text-[9px] text-indigo-400 font-bold italic truncate max-w-[250px] bg-indigo-500/5 px-3 py-1 rounded-lg border border-indigo-500/10">
+                      "{pedido.observaciones}"
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -83,7 +93,7 @@ export function PedidosList({ pedidos, isLoading, onUpdateStatus, onDeletePedido
             <div className="flex items-center gap-4 bg-[var(--bg-primary)]/50 p-3 rounded-[2rem] border border-[var(--border-primary)]/60 relative z-10 backdrop-blur-sm self-end xl:self-center">
               {pedido.estado === 'pendiente' && (
                 <button
-                  onClick={() => onUpdateStatus(pedido.id, 'en_agua')}
+                  onClick={() => onUpdateStatus(pedido.id, 'en_agua', pedido.isSolicitud)}
                   className="flex items-center gap-3 px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all hover:scale-[1.03] active:scale-95 shadow-lg shadow-indigo-900/30"
                 >
                   <ArrowRight className="w-4 h-4" />
@@ -92,7 +102,7 @@ export function PedidosList({ pedidos, isLoading, onUpdateStatus, onDeletePedido
               )}
               {pedido.estado === 'en_agua' && (
                 <button
-                  onClick={() => onUpdateStatus(pedido.id, 'finalizado')}
+                  onClick={() => onUpdateStatus(pedido.id, 'finalizado', pedido.isSolicitud)}
                   className="flex items-center gap-3 px-8 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all hover:scale-[1.03] active:scale-95 shadow-lg shadow-emerald-900/30"
                 >
                   <CheckCircle2 className="w-4 h-4" />
@@ -103,7 +113,7 @@ export function PedidosList({ pedidos, isLoading, onUpdateStatus, onDeletePedido
               <div className="flex items-center gap-1.5 px-2">
                 {(pedido.estado === 'pendiente' || pedido.estado === 'en_agua') && (
                   <button
-                    onClick={() => onUpdateStatus(pedido.id, 'cancelado')}
+                    onClick={() => onUpdateStatus(pedido.id, 'cancelado', pedido.isSolicitud)}
                     className="p-3 text-[var(--text-muted)] hover:text-rose-500 hover:bg-rose-500/5 rounded-xl transition-all" title="Cancelar Solicitud"
                   >
                     <XCircle className="w-5 h-5" />
@@ -111,7 +121,7 @@ export function PedidosList({ pedidos, isLoading, onUpdateStatus, onDeletePedido
                 )}
                 <div className="w-[1px] h-6 bg-[var(--border-primary)] mx-1" />
                 <button
-                  onClick={() => onDeletePedido(pedido.id)}
+                  onClick={() => onDeletePedido(pedido.id, pedido.isSolicitud)}
                   className="p-3 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-white/5 rounded-xl transition-all" title="Eliminar del Monitor"
                 >
                   <Trash2 className="w-5 h-5" />

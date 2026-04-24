@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { Movimiento } from './movimientos.entity';
 import { Pedido } from '../pedidos/pedidos.entity';
+import { SolicitudBajada, EstadoSolicitud } from '../operaciones/solicitud-bajada.entity';
 import { EmbarcacionesService } from '../embarcaciones/embarcaciones.service';
 import { EspaciosService } from '../espacios/espacios.service';
 import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
@@ -23,6 +24,8 @@ export class MovimientosService {
     private readonly movimientoRepo: Repository<Movimiento>,
     @InjectRepository(Pedido)
     private readonly pedidoRepo: Repository<Pedido>,
+    @InjectRepository(SolicitudBajada)
+    private readonly solicitudRepo: Repository<SolicitudBajada>,
     private readonly embarcacionesService: EmbarcacionesService,
     private readonly espaciosService: EspaciosService,
     private readonly configuracionService: ConfiguracionService,
@@ -93,10 +96,11 @@ export class MovimientosService {
         estado_operativo: 'EN_CUNA',
       });
       // Update or Create Order (subida)
+      // First check in Pedidos
       const pedidoExistente = await this.pedidoRepo.findOne({
         where: { 
           embarcacion: { id: embarcacion.id }, 
-          estado: In(['en_agua', 'finalizado']) 
+          estado: In(['pendiente', 'en_agua']) 
         },
         order: { createdAt: 'DESC' }
       });
@@ -106,12 +110,27 @@ export class MovimientosService {
           estado: 'finalizado',
         });
       } else {
-        const nuevoPedido = this.pedidoRepo.create({
-          embarcacion: { id: embarcacion.id },
-          estado: 'finalizado',
-          fechaProgramada: new Date(),
+        // Check in SolicitudesBajada
+        const solicitudExistente = await this.solicitudRepo.findOne({
+          where: {
+            embarcacion: { id: embarcacion.id },
+            estado: In([EstadoSolicitud.PENDIENTE, EstadoSolicitud.EN_AGUA])
+          },
+          order: { createdAt: 'DESC' }
         });
-        await this.pedidoRepo.save(nuevoPedido);
+
+        if (solicitudExistente) {
+          await this.solicitudRepo.update(solicitudExistente.id, {
+            estado: EstadoSolicitud.FINALIZADA
+          });
+        } else {
+          const nuevoPedido = this.pedidoRepo.create({
+            embarcacion: { id: embarcacion.id },
+            estado: 'finalizado',
+            fechaProgramada: new Date(),
+          });
+          await this.pedidoRepo.save(nuevoPedido);
+        }
       }
 
       await this.notificacionesService.createForRole(Role.ADMIN, {
@@ -124,7 +143,9 @@ export class MovimientosService {
       await this.embarcacionesService.update(embarcacion.id, {
         estado_operativo: 'EN_AGUA',
       });
+
       // Update or Create Order (bajada)
+      // First check in Pedidos
       const pedidoExistente = await this.pedidoRepo.findOne({
         where: { 
           embarcacion: { id: embarcacion.id }, 
@@ -138,12 +159,27 @@ export class MovimientosService {
           estado: 'en_agua',
         });
       } else {
-        const nuevoPedido = this.pedidoRepo.create({
-          embarcacion: { id: embarcacion.id },
-          estado: 'en_agua',
-          fechaProgramada: new Date(),
+        // Check in SolicitudesBajada
+        const solicitudExistente = await this.solicitudRepo.findOne({
+          where: {
+            embarcacion: { id: embarcacion.id },
+            estado: In([EstadoSolicitud.PENDIENTE, EstadoSolicitud.EN_AGUA])
+          },
+          order: { createdAt: 'DESC' }
         });
-        await this.pedidoRepo.save(nuevoPedido);
+
+        if (solicitudExistente) {
+          await this.solicitudRepo.update(solicitudExistente.id, {
+            estado: EstadoSolicitud.EN_AGUA
+          });
+        } else {
+          const nuevoPedido = this.pedidoRepo.create({
+            embarcacion: { id: embarcacion.id },
+            estado: 'en_agua',
+            fechaProgramada: new Date(),
+          });
+          await this.pedidoRepo.save(nuevoPedido);
+        }
       }
 
       await this.notificacionesService.createForRole(Role.ADMIN, {

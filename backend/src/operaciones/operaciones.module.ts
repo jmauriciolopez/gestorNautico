@@ -9,10 +9,11 @@ import { NotificacionesModule } from '../notificaciones/notificaciones.module';
 import { JwtModule } from '@nestjs/jwt';
 import { MovimientosModule } from '../movimientos/movimientos.module';
 import { ConfiguracionModule } from '../configuracion/configuracion.module';
+import { Pedido } from '../pedidos/pedidos.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([SolicitudBajada, Cliente, Embarcacion]),
+    TypeOrmModule.forFeature([SolicitudBajada, Cliente, Embarcacion, Pedido]),
     NotificacionesModule,
     JwtModule, // Needed for AuthTokenGuard
     MovimientosModule,

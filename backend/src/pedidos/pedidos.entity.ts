@@ -22,6 +22,9 @@ export class Pedido {
   @ManyToOne(() => Embarcacion)
   embarcacion: Embarcacion;
 
+  @Column({ nullable: true })
+  observaciones: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

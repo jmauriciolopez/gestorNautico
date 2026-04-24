@@ -26,6 +26,7 @@ import {
 } from '../common/pagination/pagination.helper';
 import { MovimientosService } from '../movimientos/movimientos.service';
 import { ConfiguracionService } from '../configuracion/configuracion.service';
+import { Pedido } from '../pedidos/pedidos.entity';
 
 @Injectable()
 export class OperacionesService {
@@ -38,6 +39,8 @@ export class OperacionesService {
     private readonly clienteRepo: Repository<Cliente>,
     @InjectRepository(Embarcacion)
     private readonly embarcacionRepo: Repository<Embarcacion>,
+    @InjectRepository(Pedido)
+    private readonly pedidoRepo: Repository<Pedido>,
     private readonly notificacionesService: NotificacionesService,
     private readonly movimientosService: MovimientosService,
     private readonly configuracionService: ConfiguracionService,
@@ -74,6 +77,20 @@ export class OperacionesService {
     if (solicitudActiva) {
       throw new BadRequestException(
         'Ya existe una solicitud activa para esta embarcación.',
+      );
+    }
+
+    // 2d. Validar si ya existe un pedido activo en el Monitor de Cola
+    const pedidoActivo = await this.pedidoRepo.findOne({
+      where: {
+        embarcacion: { id: barco.id },
+        estado: In(['pendiente', 'en_agua']),
+      },
+    });
+
+    if (pedidoActivo) {
+      throw new BadRequestException(
+        'Ya existe una solicitud activa para esta embarcación en el Monitor de Cola.',
       );
     }
 

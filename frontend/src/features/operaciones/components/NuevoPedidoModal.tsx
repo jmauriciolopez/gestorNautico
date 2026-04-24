@@ -1,11 +1,12 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { ClipboardCheck, X, Search, Ship, ArrowRight, Calendar, Clock, Loader2, Check, AlertTriangle } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import { useEmbarcaciones } from '../../embarcaciones/hooks/useEmbarcaciones';
 
 interface NuevoPedidoModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: { embarcacionId: number; fechaProgramada: string }) => Promise<void>;
+  onSave: (data: { embarcacionId: number; fechaProgramada: string; observaciones?: string }) => Promise<void>;
   activeBoatIds?: number[];
 }
 
@@ -14,10 +15,25 @@ export function NuevoPedidoModal({ isOpen, onClose, onSave, activeBoatIds = [] }
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBoatId, setSelectedBoatId] = useState<number | null>(null);
-  const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
-  const [hora, setHora] = useState('10:00');
+  const [fecha, setFecha] = useState('');
+  const [hora, setHora] = useState('');
+  const [observaciones, setObservaciones] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Resetear y calcular sugerencia cuando se abre
+  useEffect(() => {
+    if (isOpen) {
+      setSearchTerm('');
+      setSelectedBoatId(null);
+      setObservaciones('');
+      
+      const d = new Date();
+      d.setHours(d.getHours() + 1);
+      d.setMinutes(0);
+      setFecha(d.toISOString().split('T')[0]);
+      setHora(`${d.getHours().toString().padStart(2, '0')}:00`);
+    }
+  }, [isOpen]);
   const filteredEmbarcaciones = useMemo(() => {
     const boats = getEmbarcaciones.data?.data || [];
     if (!searchTerm) return boats.slice(0, 5);
@@ -37,10 +53,19 @@ export function NuevoPedidoModal({ isOpen, onClose, onSave, activeBoatIds = [] }
 
     setIsSubmitting(true);
     try {
-      const fechaProgramada = `${fecha}T${hora}:00.000Z`;
+      // Validar fecha futura
+      const selectedDateTime = new Date(`${fecha}T${hora}:00`);
+      if (selectedDateTime <= new Date()) {
+        toast.error('La fecha y hora deben ser futuras');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const fechaProgramada = selectedDateTime.toISOString();
       await onSave({
         embarcacionId: selectedBoatId,
         fechaProgramada,
+        observaciones: observaciones.trim() || undefined
       });
       onClose();
     } catch (error) {
@@ -202,6 +227,18 @@ export function NuevoPedidoModal({ isOpen, onClose, onSave, activeBoatIds = [] }
                 onChange={e => setHora(e.target.value)}
               />
             </div>
+          </div>
+
+          <div className="space-y-3">
+            <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.3em] flex items-center gap-3 px-2">
+              <ClipboardCheck className="w-4 h-4 text-indigo-500" /> 4. Observaciones (Opcional)
+            </label>
+            <textarea
+              className="w-full bg-[var(--bg-secondary)]/50 border border-[var(--border-primary)] rounded-[1.25rem] px-5 py-4 text-sm text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all font-medium placeholder:opacity-30 resize-none h-24"
+              value={observaciones}
+              onChange={e => setObservaciones(e.target.value)}
+              placeholder="Notas para el operador o detalles del pedido..."
+            />
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 pt-4">

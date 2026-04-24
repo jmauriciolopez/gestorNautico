@@ -113,6 +113,7 @@ export function useOperaciones(options: {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['movimientos'] });
       queryClient.invalidateQueries({ queryKey: ['embarcaciones'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'rack-map'] });
     },
   });
 
@@ -138,6 +139,7 @@ export function useMovimientosPaginados(page: number, limit = MOVIMIENTOS_PAGE_S
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['movimientos'] });
       queryClient.invalidateQueries({ queryKey: ['embarcaciones'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard', 'rack-map'] });
     },
   });
 
