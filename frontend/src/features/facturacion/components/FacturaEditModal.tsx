@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { httpClient } from '../../../shared/api/HttpClient';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Edit3, X, Save, Plus, Loader2, FileText, CheckCircle2, Trash2 } from 'lucide-react';
@@ -28,16 +29,9 @@ export const FacturaEditModal: React.FC<FacturaEditModalProps> = ({ factura, onC
 
   const fetchPendingCargos = useCallback(async () => {
     try {
-      const token = localStorage.getItem('token');
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-      const response = await fetch(`${baseUrl}/cargos?clienteId=${factura.cliente.id}&soloSinFacturar=true`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        const items = Array.isArray(data) ? data : (data.items || []);
-        setPendingCargos(items);
-      }
+      const data = await httpClient.get<any>(`/cargos?clienteId=${factura.cliente.id}&soloSinFacturar=true`);
+      const items = Array.isArray(data) ? data : (data.items || []);
+      setPendingCargos(items);
     } catch (error) {
       console.error('Error fetching pending cargos:', error);
     } finally {
@@ -63,25 +57,12 @@ export const FacturaEditModal: React.FC<FacturaEditModalProps> = ({ factura, onC
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      const token = localStorage.getItem('token');
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-      
-      const response = await fetch(`${baseUrl}/facturas/${factura.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          fechaEmision: fecha,
-          observaciones,
-          cargoIds: selectedCargoIds,
-          nuevosCargos: nuevosCargos.map(({ monto }) => ({ monto: Number(monto) }))
-        })
+      await httpClient.patch(`/facturas/${factura.id}`, {
+        fechaEmision: fecha,
+        observaciones,
+        cargoIds: selectedCargoIds,
+        nuevosCargos: nuevosCargos.map(({ monto }) => ({ monto: Number(monto) }))
       });
-
-      if (!response.ok) throw new Error('Error al actualizar factura');
-
       onSuccess();
       onClose();
     } catch (error) {

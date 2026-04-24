@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { CreditCard, Calendar, Hash, FileText, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { usePagosPaginados, Pago } from '../hooks/useFinanzas';
 import { toast } from 'react-hot-toast';
+import { httpClient } from '../../../shared/api/HttpClient';
 
 const PAGE_SIZE = 20;
 
@@ -16,13 +17,9 @@ export function PagosList() {
 
   const handleDescargarPdf = async (pago: Pago) => {
     try {
-      const token = localStorage.getItem('token');
-      const baseUrl = import.meta.env.VITE_API_URL;
-      const response = await fetch(`${baseUrl}/pagos/${pago.id}/pdf`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const blob = await httpClient.get<Blob>(`/pagos/${pago.id}/pdf`, {
+        responseType: 'blob',
       });
-      if (!response.ok) throw new Error(`Error ${response.status}`);
-      const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;

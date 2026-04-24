@@ -16,7 +16,7 @@ export function MovimientosList() {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const confirm = useConfirm();
 
-  const { query, createMovimiento } = useMovimientosPaginados(page, PAGE_SIZE);
+  const { query, deleteMovimiento } = useMovimientosPaginados(page, PAGE_SIZE);
   const { data, isLoading, isFetching } = query;
   const movimientos: Movimiento[] = data?.data ?? [];
   const totalPages = data?.totalPages ?? 1;
@@ -29,18 +29,16 @@ export function MovimientosList() {
       confirmText: 'Eliminar',
       variant: 'danger',
     });
+    
     if (confirmed) {
       try {
-        const token = localStorage.getItem('token');
-        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-        await fetch(`${baseUrl}/movimientos/${mov.id}`, {
-          method: 'DELETE',
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        // Restar una página si quedó vacía
-        if (movimientos.length === 1 && page > 1) setPage(p => p - 1);
-        else query.refetch();
+        await deleteMovimiento.mutateAsync(mov.id);
+        // Si la página quedó vacía (y no es la primera), retroceder
+        if (movimientos.length === 1 && page > 1) {
+          setPage(p => p - 1);
+        }
       } catch (e) {
+        // El error ya lo maneja la mutación con toast
         console.error(e);
       }
     }

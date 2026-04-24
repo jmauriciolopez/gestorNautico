@@ -1,4 +1,6 @@
+import { useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'react-hot-toast';
 import { httpClient } from '../../../shared/api/HttpClient';
 import { Paginated, selectData } from '../../../api/pagination';
 
@@ -55,13 +57,13 @@ export function useOperaciones(options: {
 } = {}) {
   const queryClient = useQueryClient();
 
-  const invalidateAll = () => {
+  const invalidateAll = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['pedidos'] });
     queryClient.invalidateQueries({ queryKey: ['movimientos'] });
     queryClient.invalidateQueries({ queryKey: ['solicitudes-bajada'] });
     queryClient.invalidateQueries({ queryKey: ['embarcaciones'] });
     queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-  };
+  }, [queryClient]);
 
   const getPedidos = useQuery<Pedido[]>({
     queryKey: ['pedidos', options.pagePedidos, options.limitPedidos],
@@ -85,17 +87,20 @@ export function useOperaciones(options: {
     mutationFn: (data: Partial<Pedido> & { embarcacionId: number }) =>
       httpClient.post('/pedidos', data),
     onSuccess: invalidateAll,
+    onError: () => toast.error('Error al crear pedido')
   });
 
   const updatePedidoEstado = useMutation({
     mutationFn: ({ id, estado }: { id: number; estado: string }) =>
       httpClient.patch(`/pedidos/${id}/estado`, { estado }),
     onSuccess: invalidateAll,
+    onError: () => toast.error('Error al actualizar estado')
   });
 
   const deletePedido = useMutation({
     mutationFn: (id: number) => httpClient.delete(`/pedidos/${id}`),
     onSuccess: invalidateAll,
+    onError: () => toast.error('Error al eliminar pedido')
   });
 
   const getMovimientos = useQuery({
@@ -112,15 +117,23 @@ export function useOperaciones(options: {
     mutationFn: (data: Partial<Movimiento> & { embarcacionId: number; espacioId?: number }) =>
       httpClient.post('/movimientos', data),
     onSuccess: invalidateAll,
+    onError: () => toast.error('Error al registrar movimiento')
   });
 
-  return { getPedidos, usePedido, createPedido, updatePedidoEstado, deletePedido, getMovimientos, createMovimiento };
+  return { getPedidos, usePedido, createPedido, updatePedidoEstado, deletePedido, getMovimientos, createMovimiento, invalidateAll };
 }
 
 const MOVIMIENTOS_PAGE_SIZE = 20;
 
 export function useMovimientosPaginados(page: number, limit = MOVIMIENTOS_PAGE_SIZE) {
   const queryClient = useQueryClient();
+  
+  const invalidate = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['movimientos'] });
+    queryClient.invalidateQueries({ queryKey: ['embarcaciones'] });
+    queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    queryClient.invalidateQueries({ queryKey: ['pedidos'] });
+  }, [queryClient]);
 
   const query = useQuery({
     queryKey: ['movimientos', page, limit],
@@ -133,14 +146,17 @@ export function useMovimientosPaginados(page: number, limit = MOVIMIENTOS_PAGE_S
   const createMovimiento = useMutation({
     mutationFn: (data: Partial<Movimiento> & { embarcacionId: number; espacioId?: number }) =>
       httpClient.post('/movimientos', data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['movimientos'] });
-      queryClient.invalidateQueries({ queryKey: ['embarcaciones'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-    },
+    onSuccess: invalidate,
+    onError: () => toast.error('Error al registrar movimiento')
   });
 
-  return { query, createMovimiento };
+  const deleteMovimiento = useMutation({
+    mutationFn: (id: number) => httpClient.delete(`/movimientos/${id}`),
+    onSuccess: invalidate,
+    onError: () => toast.error('Error al eliminar registro de bitácora')
+  });
+
+  return { query, createMovimiento, deleteMovimiento };
 }
 
 
@@ -162,9 +178,11 @@ export function useSolicitudesBajada(options: { page?: number; limit?: number } 
       httpClient.patch(`/operaciones/solicitudes/${id}/estado`, { estado, motivo }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['solicitudes-bajada'] });
+      queryClient.invalidateQueries({ queryKey: ['pedidos'] }); // IMPORTANTE: Al actualizar solicitud, invalidar pedidos unificados
       queryClient.invalidateQueries({ queryKey: ['embarcaciones'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
     },
+    onError: () => toast.error('Error al actualizar solicitud web')
   });
 
   return { getSolicitudes, updateEstado };

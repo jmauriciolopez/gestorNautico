@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { httpClient } from '../../../shared/api/HttpClient';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, X, History, Download, Mail, User, Clock, Info, CheckCircle2, AlertCircle, Anchor, Hash, DollarSign, BadgeCheck, Receipt, ChevronRight } from 'lucide-react';
@@ -17,18 +18,11 @@ export const FacturaDetailModal: React.FC<FacturaDetailModalProps> = ({ factura,
   const fetchAuditLogs = useCallback(async () => {
     setIsLoadingAudit(true);
     try {
-      const token = localStorage.getItem('token');
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-      const response = await fetch(`${baseUrl}/notificaciones?limit=50`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        const logs = data.filter((n: any) =>
-          n.mensaje?.includes(factura.numero) || n.titulo?.includes(factura.numero)
-        );
-        setAuditLogs(logs);
-      }
+      const data = await httpClient.get<any[]>('/notificaciones?limit=50');
+      const logs = data.filter((n: any) =>
+        n.mensaje?.includes(factura.numero) || n.titulo?.includes(factura.numero)
+      );
+      setAuditLogs(logs);
     } catch (error) {
       console.error('Error fetching audit logs:', error);
     } finally {
@@ -44,13 +38,9 @@ export const FacturaDetailModal: React.FC<FacturaDetailModalProps> = ({ factura,
 
   const downloadPdf = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-      const response = await fetch(`${baseUrl}/facturas/${factura.id}/pdf`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+      const blob = await httpClient.get<Blob>(`/facturas/${factura.id}/pdf`, {
+        responseType: 'blob'
       });
-      if (!response.ok) throw new Error('Error al generar PDF');
-      const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;

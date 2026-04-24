@@ -36,11 +36,11 @@ export function NuevoPedidoModal({ isOpen, onClose, onSave, activeBoatIds = [] }
   }, [isOpen]);
   const filteredEmbarcaciones = useMemo(() => {
     const boats = getEmbarcaciones.data?.data || [];
-    if (!searchTerm) return boats.slice(0, 5);
+    if (!searchTerm) return boats.slice(0, 20);
     return boats.filter(b =>
       b.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
       b.matricula.toLowerCase().includes(searchTerm.toLowerCase())
-    ).slice(0, 5);
+    ).slice(0, 20);
   }, [getEmbarcaciones.data, searchTerm]);
 
   const selectedBoat = getEmbarcaciones.data?.data?.find(b => b.id === selectedBoatId);
@@ -89,7 +89,7 @@ export function NuevoPedidoModal({ isOpen, onClose, onSave, activeBoatIds = [] }
               <h3 className="text-2xl font-black text-[var(--text-primary)] uppercase tracking-tight">
                 Pedido
               </h3>
-              <p className="text-[10px] text-[var(--text-secondary)] font-black uppercase tracking-[0.25em] mt-1 opacity-60">Gestión de servicios y taller</p>
+              <p className="section-subtitle mt-1">Gestión de servicios y taller</p>
             </div>
           </div>
           <button onClick={onClose} className="p-3 hover:bg-[var(--bg-primary)] rounded-full text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all active:scale-90 border border-transparent hover:border-[var(--border-primary)]">
@@ -100,7 +100,7 @@ export function NuevoPedidoModal({ isOpen, onClose, onSave, activeBoatIds = [] }
         <form onSubmit={handleSubmit} className="p-10 space-y-8">
           <div className="space-y-4">
             <div className="flex items-center justify-between px-2">
-              <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.3em] flex items-center gap-3">
+              <label className="section-subtitle flex items-center gap-3">
                 <Ship className="w-4 h-4 text-indigo-500" /> 1. Localizar Embarcación
               </label>
               {selectedBoatId && (
@@ -204,7 +204,7 @@ export function NuevoPedidoModal({ isOpen, onClose, onSave, activeBoatIds = [] }
 
           <div className="grid grid-cols-2 gap-8">
             <div className="space-y-3">
-              <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.3em] flex items-center gap-3 px-2">
+              <label className="section-subtitle flex items-center gap-3 px-2">
                 <Calendar className="w-4 h-4 text-indigo-500" /> 2. Fecha
               </label>
               <input
@@ -216,7 +216,7 @@ export function NuevoPedidoModal({ isOpen, onClose, onSave, activeBoatIds = [] }
               />
             </div>
             <div className="space-y-3">
-              <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.3em] flex items-center gap-3 px-2">
+              <label className="section-subtitle flex items-center gap-3 px-2">
                 <Clock className="w-4 h-4 text-indigo-500" /> 3. Hora
               </label>
               <input
@@ -230,7 +230,7 @@ export function NuevoPedidoModal({ isOpen, onClose, onSave, activeBoatIds = [] }
           </div>
 
           <div className="space-y-3">
-            <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.3em] flex items-center gap-3 px-2">
+            <label className="section-subtitle flex items-center gap-3 px-2">
               <ClipboardCheck className="w-4 h-4 text-indigo-500" /> 4. Observaciones (Opcional)
             </label>
             <textarea
