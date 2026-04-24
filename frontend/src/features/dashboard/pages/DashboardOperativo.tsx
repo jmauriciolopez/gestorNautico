@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import {
   Ship,
   Navigation,
@@ -20,17 +21,32 @@ const MetricCard = React.memo(({
   label,
   value,
   accent,
+  delay = 0,
 }: {
   icon: React.ReactNode;
   label: string;
   value: number;
   accent: 'teal' | 'purple' | 'amber';
+  delay?: number;
 }) => (
-  <div className={`bento-card bento-metric accent-${accent} p-5`}>
-    <div className={`bento-icon accent-${accent}`}>{icon}</div>
-    <div className="kpi-value mt-1">{value}</div>
-    <div className="section-subtitle mt-2">{label}</div>
-  </div>
+  <motion.div 
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.6, delay: delay, ease: [0.16, 1, 0.3, 1] }}
+    whileHover={{ y: -5, scale: 1.02 }}
+    className={`bento-card p-8 group transition-all duration-500 shadow-sm hover:shadow-premium bg-gradient-to-br from-[var(--bg-card)] to-[var(--bg-surface)] border-[var(--border-primary)]/50`}
+  >
+    <div className={`bento-icon accent-${accent} transition-transform duration-500 group-hover:scale-110 shadow-lg shadow-${accent}-500/10`}>{icon}</div>
+    <div className="flex items-baseline gap-1 mt-2">
+      <div className="kpi-value text-4xl font-black tracking-tighter">{value}</div>
+      <div className="text-[10px] font-black uppercase tracking-widest text-[var(--text-muted)] opacity-50 mb-1">Total</div>
+    </div>
+    <div className="section-subtitle mt-2 text-[10px] font-bold tracking-[0.15em] text-[var(--text-muted)] group-hover:text-[var(--text-primary)] transition-colors">{label}</div>
+    
+    <div className={`absolute top-0 right-0 p-4 opacity-[0.03] group-hover:opacity-[0.08] transition-all duration-1000 group-hover:rotate-12`}>
+      {icon}
+    </div>
+  </motion.div>
 ));
 
 const DashboardOperativo: React.FC = () => {
@@ -89,37 +105,44 @@ const DashboardOperativo: React.FC = () => {
 
 
   return (
-    <div className="space-y-4 animate-in fade-in duration-500">
-      <section className="bento-card p-6 relative overflow-hidden">
+    <div className="space-y-6 max-w-[1600px] mx-auto pb-10 overflow-visible">
+      <motion.section 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        className="relative p-10 rounded-[var(--bento-radius)] border border-[var(--border-primary)] shadow-premium overflow-hidden group transition-all duration-700 bg-gradient-to-br from-[var(--bg-secondary)]/80 to-[var(--bg-surface)]/40 backdrop-blur-3xl"
+      >
+        <div className="absolute -top-32 -right-32 w-[30rem] h-[30rem] bg-teal-500/10 rounded-full blur-[120px] group-hover:bg-teal-500/20 transition-all duration-1000" />
+        
         <div
-          className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none opacity-[0.04]"
+          className="absolute right-10 top-1/2 -translate-y-1/2 pointer-events-none opacity-[0.03] group-hover:scale-110 group-hover:opacity-[0.08] transition-all duration-1000"
         >
-          <Navigation className="w-28 h-28" style={{ color: 'var(--accent-teal)' }} />
+          <Navigation className="w-48 h-48" style={{ color: 'var(--accent-teal)' }} />
         </div>
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-8">
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="relative flex h-2.5 w-2.5">
+            <div className="flex items-center gap-3 mb-3">
+              <span className="relative flex h-3 w-3">
                 <span
                   className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-60"
                   style={{ backgroundColor: 'var(--accent-teal)' }}
                 />
                 <span
-                  className="relative inline-flex h-2.5 w-2.5 rounded-full"
+                  className="relative inline-flex h-3 w-3 rounded-full"
                   style={{ backgroundColor: 'var(--accent-teal)' }}
                 />
               </span>
-              <span className="section-subtitle" style={{ color: 'var(--accent-teal)' }}>
-                Turno activo
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--accent-teal)]">
+                OPERACIÓN ACTIVA
               </span>
             </div>
 
-            <h1 className="text-2xl font-semibold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-              Hola, {user?.nombre}
+            <h1 className="text-5xl font-black tracking-tighter text-[var(--text-primary)] leading-none">
+              Hola, {user?.nombre?.split(' ')[0]}
             </h1>
 
-            <p className="text-ui-sm mt-2" style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-ui-sm mt-3 font-medium text-[var(--text-muted)] tracking-wide">
               {new Date().toLocaleDateString('es-AR', {
                 weekday: 'long',
                 day: 'numeric',
@@ -128,40 +151,50 @@ const DashboardOperativo: React.FC = () => {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
+          <div className="flex items-center gap-4">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => navigate('/operaciones')}
-              className="btn btn-primary"
+              className="bg-teal-600 hover:bg-teal-500 text-white px-10 py-5 rounded-full font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl shadow-teal-900/40 transition-all flex items-center gap-4 group/btn"
             >
-              <Navigation size={15} />
-              Nueva operación
-            </button>
+              <Navigation size={18} className="group-hover/btn:rotate-12 transition-transform" />
+              NUEVA OPERACIÓN
+            </motion.button>
           </div>
         </div>
-      </section>
+      </motion.section>
 
-      <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         <MetricCard
           accent="amber"
           label="En cuna"
           value={enCuna}
-          icon={<Anchor size={16} style={{ color: 'var(--accent-amber)' }} />}
+          delay={0.1}
+          icon={<Anchor size={20} style={{ color: 'var(--accent-amber)' }} />}
         />
         <MetricCard
           accent="purple"
           label="En agua"
           value={enAgua}
-          icon={<Ship size={16} style={{ color: 'var(--accent-purple)' }} />}
+          delay={0.2}
+          icon={<Ship size={20} style={{ color: 'var(--accent-purple)' }} />}
         />
         <MetricCard
           accent="teal"
           label="Sin ubicar"
           value={libres}
-          icon={<MapPin size={16} style={{ color: 'var(--accent-teal)' }} />}
+          delay={0.3}
+          icon={<MapPin size={20} style={{ color: 'var(--accent-teal)' }} />}
         />
-      </section>
+      </div>
 
-      <section className="bento-card overflow-hidden">
+      <motion.section 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        className="bento-card overflow-hidden shadow-premium"
+      >
         <div
           className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-5 py-4"
           style={{ borderBottom: '1px solid var(--border-primary)' }}
@@ -209,9 +242,14 @@ const DashboardOperativo: React.FC = () => {
             />
           )}
         </div>
-      </section>
+      </motion.section>
 
-      <section className="bento-card overflow-hidden">
+      <motion.section 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+        className="bento-card overflow-hidden shadow-premium"
+      >
         <div
           className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-5 py-4"
           style={{ borderBottom: '1px solid var(--border-primary)' }}
@@ -285,7 +323,7 @@ const DashboardOperativo: React.FC = () => {
             })}
           </div>
         )}
-      </section>
+      </motion.section>
     </div>
   );
 };

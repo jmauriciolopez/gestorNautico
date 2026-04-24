@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import { useOperaciones, useSolicitudesBajada, Pedido } from '../hooks/useOperaciones';
 import { PedidosList } from '../components/PedidosList';
@@ -86,30 +87,38 @@ export default function OperacionesPage() {
 
 
   return (
-    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="space-y-10 max-w-[1600px] mx-auto overflow-visible">
       {/* Premium Header - Glassmorphism & Depth */}
-      <header className="relative p-8 rounded-[3rem] border border-[var(--border-primary)] shadow-2xl overflow-hidden group transition-all duration-500 bg-gradient-to-br from-[var(--bg-secondary)]/50 to-[var(--bg-surface)]/30 backdrop-blur-3xl">
-        <div className="absolute -top-24 -right-24 w-96 h-96 bg-indigo-500/10 rounded-full blur-[100px] group-hover:bg-indigo-500/20 transition-all duration-1000" />
-        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-purple-500/5 rounded-full blur-[100px] group-hover:bg-purple-500/10 transition-all duration-1000" />
+      <motion.header 
+        initial={{ opacity: 0, y: -40, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        className="relative p-10 rounded-[var(--bento-radius)] border border-[var(--border-primary)] shadow-premium overflow-hidden group transition-all duration-700 bg-gradient-to-br from-[var(--bg-secondary)]/80 to-[var(--bg-surface)]/40 backdrop-blur-3xl"
+      >
+        <div className="absolute -top-32 -right-32 w-[30rem] h-[30rem] bg-indigo-500/10 rounded-full blur-[120px] group-hover:bg-indigo-500/20 transition-all duration-1000" />
+        <div className="absolute -bottom-32 -left-32 w-[30rem] h-[30rem] bg-purple-500/5 rounded-full blur-[120px] group-hover:bg-purple-500/10 transition-all duration-1000" />
 
-        <div className="absolute top-0 right-0 p-16 opacity-5 pointer-events-none group-hover:scale-110 group-hover:opacity-10 transition-all duration-1000">
-          <Activity className="w-56 h-56 text-indigo-500" />
+        <div className="absolute top-0 right-0 p-16 opacity-[0.03] pointer-events-none group-hover:scale-110 group-hover:opacity-10 transition-all duration-1000">
+          <Activity className="w-64 h-64 text-indigo-500" />
         </div>
 
         <div className="flex flex-col lg:flex-row items-center justify-between gap-8 relative z-10">
           {/* Left: Title & Counter */}
-          <div className="flex items-baseline gap-4">
-            <h1 className="text-[2.5rem] font-black text-[var(--text-primary)] leading-none tracking-tight uppercase">Operaciones</h1>
-            <div className={`px-4 py-1 rounded-full border text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${activeTab === 'pedidos' ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' :
-              'bg-amber-500/10 text-amber-400 border-amber-500/20'
-              }`}>
-              {activeTab === 'pedidos' ? `${unifiedPedidos.length} Activas` : 'Bitácora'}
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-3">
+              <h1 className="text-5xl font-black text-[var(--text-primary)] leading-none tracking-tighter">OPERACIONES</h1>
+              <div className={`px-4 py-1.5 rounded-full border text-[9px] font-black uppercase tracking-[0.25em] transition-all duration-500 ${activeTab === 'pedidos' ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' :
+                'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                }`}>
+                {activeTab === 'pedidos' ? `${unifiedPedidos.length} Activas` : 'Bitácora'}
+              </div>
             </div>
+            <p className="text-ui-sm text-[var(--text-muted)] tracking-wide">Gestión centralizada de botadas y movimientos</p>
           </div>
 
           {/* Center: Integrated Tabs */}
           <div className="flex-1 flex justify-center">
-            <div className="flex items-center gap-2 p-1 bg-[var(--bg-primary)]/30 backdrop-blur-md rounded-[2rem] border border-[var(--border-primary)]/40 w-fit">
+            <div className="flex items-center gap-2 p-1.5 bg-[var(--bg-primary)]/40 backdrop-blur-md rounded-full border border-[var(--border-primary)]/40 w-fit shadow-inner">
               {[
                 { id: 'pedidos', label: 'Monitor de Cola', icon: Clock },
                 { id: 'movimientos', label: 'Bitácora Histórica', icon: History },
@@ -117,52 +126,68 @@ export default function OperacionesPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as Tab)}
-                  className={`group flex items-center gap-3 px-6 py-2.5 rounded-[1.5rem] transition-all duration-500 ${activeTab === tab.id
-                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/40'
-                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)]/60'
+                  className={`group flex items-center gap-3 px-8 py-3 rounded-full transition-all duration-500 ${activeTab === tab.id
+                    ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-900/40 translate-y-[-1px]'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)]/60 active:scale-95'
                     }`}
                 >
                   <tab.icon className={`w-3.5 h-3.5 ${activeTab === tab.id ? 'text-white' : 'text-indigo-400'}`} />
-                  <span className="text-[9px] font-black uppercase tracking-[0.2em]">{tab.label}</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em]">{tab.label}</span>
                 </button>
               ))}
             </div>
           </div>
 
           {/* Right: Action Button */}
-          <div className="flex items-center gap-4 min-w-[200px] justify-end">
+          <div className="flex items-center gap-4 min-w-[240px] justify-end">
             {activeTab === 'pedidos' && (
-              <button
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => setIsPedidoModalOpen(true)}
-                className="bg-indigo-600 hover:bg-indigo-500 text-white px-10 py-4 rounded-[1.75rem] font-black text-xs uppercase tracking-[0.25em] shadow-2xl shadow-indigo-900/30 transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-4 group/btn"
+                className="bg-indigo-600 hover:bg-indigo-500 text-white px-10 py-5 rounded-full font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl shadow-indigo-900/40 transition-all flex items-center gap-4 group/btn"
               >
                 <Plus className="w-5 h-5 group-hover/btn:rotate-90 transition-transform duration-500" />
                 Nueva Solicitud
-              </button>
+              </motion.button>
             )}
           </div>
         </div>
-      </header>
+      </motion.header>
 
       {/* Main Content Area - Refined Bento-Style Surface */}
-      <main className="bg-[var(--bg-surface)]/60 backdrop-blur-2xl border border-[var(--border-primary)]/80 rounded-[3.5rem] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.5)] overflow-hidden relative transition-all duration-500 min-h-[600px]">
+      <motion.main 
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.6, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+        className="bg-[var(--bg-surface)]/40 backdrop-blur-3xl border border-[var(--border-primary)]/60 rounded-[var(--bento-radius)] shadow-premium overflow-hidden relative min-h-[600px]"
+      >
         <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500/5 via-transparent to-purple-500/5 pointer-events-none" />
 
-        <div className="relative z-10 transition-all duration-500">
-          {activeTab === 'pedidos' && (
-            <PedidosList
-              pedidos={unifiedPedidos as any}
-              isLoading={getPedidos.isLoading || getSolicitudes.isLoading}
-              onUpdateStatus={handleUpdateStatusUnified}
-              onDeletePedido={handleDeletePedidoUnified}
-              onOpenCreate={() => setIsPedidoModalOpen(true)}
-            />
-          )}
-          {activeTab === 'movimientos' && (
-            <MovimientosList />
-          )}
-        </div>
-      </main>
+        <AnimatePresence mode="wait">
+          <motion.div 
+            key={activeTab}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="relative z-10"
+          >
+            {activeTab === 'pedidos' && (
+              <PedidosList
+                pedidos={unifiedPedidos as any}
+                isLoading={getPedidos.isLoading || getSolicitudes.isLoading}
+                onUpdateStatus={handleUpdateStatusUnified}
+                onDeletePedido={handleDeletePedidoUnified}
+                onOpenCreate={() => setIsPedidoModalOpen(true)}
+              />
+            )}
+            {activeTab === 'movimientos' && (
+              <MovimientosList />
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </motion.main>
 
       <NuevoPedidoModal
         isOpen={isPedidoModalOpen}
