@@ -23,8 +23,11 @@ import {
 } from '../common/pagination/pagination.helper';
 import { CreateMovimientoDto } from './dto/create-movimiento.dto';
 
+import { BaseTenantService } from '../compartido/bases/base-tenant.service';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+
 @Injectable()
-export class MovimientosService {
+export class MovimientosService extends BaseTenantService {
   constructor(
     @InjectRepository(Movimiento)
     private readonly movimientoRepo: Repository<Movimiento>,
@@ -36,30 +39,41 @@ export class MovimientosService {
     private readonly espaciosService: EspaciosService,
     private readonly configuracionService: ConfiguracionService,
     private readonly notificacionesService: NotificacionesService,
-  ) {}
+  ) {
+    super();
+  }
 
-  findAll(query: PaginationQuery & { search?: string; embarcacionId?: number } = {}) {
+  findAll(
+    tenant: TenantContext,
+    query: PaginationQuery & { search?: string; embarcacionId?: number } = {},
+  ) {
     const { search, embarcacionId, ...pagination } = query;
+    const tenantFilter = this.buildTenantWhere(tenant);
+
     const findOptions: any = {
       relations: ['embarcacion', 'espacio', 'espacio.rack'],
       order: { fecha: 'DESC' },
+      where: tenantFilter,
     };
 
     if (embarcacionId) {
-      findOptions.where = { embarcacion: { id: Number(embarcacionId) } };
+      findOptions.where = {
+        ...tenantFilter,
+        embarcacion: { id: Number(embarcacionId) },
+      };
     } else if (search) {
       findOptions.where = [
-        { embarcacion: { nombre: ILike(`%${search}%`) } },
-        { embarcacion: { matricula: ILike(`%${search}%`) } },
+        { ...tenantFilter, embarcacion: { nombre: ILike(`%${search}%`) } },
+        { ...tenantFilter, embarcacion: { matricula: ILike(`%${search}%`) } },
       ];
     }
 
     return paginate(this.movimientoRepo, pagination, findOptions);
   }
 
-  async findOne(id: number) {
+  async findOne(tenant: TenantContext, id: number) {
     const movimiento = await this.movimientoRepo.findOne({
-      where: { id },
+      where: this.buildTenantWhere(tenant, { id }),
       relations: ['embarcacion', 'espacio'],
     });
     if (!movimiento)
@@ -67,7 +81,11 @@ export class MovimientosService {
     return movimiento;
   }
 
-  async create(data: CreateMovimientoDto, manager?: EntityManager) {
+  async create(
+    tenant: TenantContext,
+    data: CreateMovimientoDto,
+    manager?: EntityManager,
+  ) {
     const { embarcacionId, espacioId, tipo, ...rest } = data;
 
     const movRepo = manager
@@ -80,6 +98,7 @@ export class MovimientosService {
 
     // Find the current boat to get its assigned space if needed
     const embarcacion: Embarcacion = await this.embarcacionesService.findOne(
+      tenant,
       Number(embarcacionId),
     );
     const targetEspacioId = espacioId
@@ -90,6 +109,7 @@ export class MovimientosService {
     let fueraHora = false;
     if (tipo === TipoMovimiento.ENTRADA) {
       const maxHora = await this.configuracionService.getValor(
+        tenant,
         'HORARIO_MAX_SUBIDA',
         '18:00',
       );
@@ -110,6 +130,7 @@ export class MovimientosService {
       fueraHora,
       embarcacion: { id: Number(embarcacionId) },
       espacio: targetEspacioId ? { id: Number(targetEspacioId) } : null,
+      guarderiaId: tenant.guarderiaId as number,
     };
 
     const nuevoMovimiento = movRepo.create(createData);
@@ -119,6 +140,7 @@ export class MovimientosService {
     if (tipo === TipoMovimiento.ENTRADA) {
       // Boat comes to rack
       await this.embarcacionesService.update(
+        tenant,
         embarcacion.id,
         { estado_operativo: EstadoEmbarcacion.EN_CUNA },
         manager,
@@ -128,6 +150,7 @@ export class MovimientosService {
         where: {
           embarcacion: { id: embarcacion.id },
           estado: In([EstadoPedido.PENDIENTE, EstadoPedido.EN_AGUA]),
+          guarderiaId: tenant.guarderiaId as number,
         },
         order: { createdAt: 'DESC' },
       });
@@ -141,6 +164,7 @@ export class MovimientosService {
           where: {
             embarcacion: { id: embarcacion.id },
             estado: In([EstadoSolicitud.PENDIENTE, EstadoSolicitud.EN_AGUA]),
+            guarderiaId: tenant.guarderiaId as number,
           },
           order: { createdAt: 'DESC' },
         });
@@ -154,12 +178,13 @@ export class MovimientosService {
             embarcacion: { id: embarcacion.id },
             estado: EstadoPedido.FINALIZADO,
             fechaProgramada: new Date(),
+            guarderiaId: tenant.guarderiaId as number,
           });
           await pedRepo.save(nuevoPedido);
         }
       }
 
-      await this.notificacionesService.createForRole(Role.ADMIN, {
+      await this.notificacionesService.createForRole(tenant, Role.ADMIN, {
         titulo: 'Retorno a Cuna',
         mensaje: `La embarcación ${embarcacion.nombre} ha regresado a su cuna.`,
         tipo: NotificacionTipo.INFO,
@@ -167,6 +192,7 @@ export class MovimientosService {
     } else if (tipo === TipoMovimiento.SALIDA) {
       // Boat goes to water
       await this.embarcacionesService.update(
+        tenant,
         embarcacion.id,
         { estado_operativo: EstadoEmbarcacion.EN_AGUA },
         manager,
@@ -176,6 +202,7 @@ export class MovimientosService {
         where: {
           embarcacion: { id: embarcacion.id },
           estado: In([EstadoPedido.PENDIENTE, EstadoPedido.EN_AGUA]),
+          guarderiaId: tenant.guarderiaId as number,
         },
         order: { createdAt: 'DESC' },
       });
@@ -189,6 +216,7 @@ export class MovimientosService {
           where: {
             embarcacion: { id: embarcacion.id },
             estado: In([EstadoSolicitud.PENDIENTE, EstadoSolicitud.EN_AGUA]),
+            guarderiaId: tenant.guarderiaId as number,
           },
           order: { createdAt: 'DESC' },
         });
@@ -202,12 +230,13 @@ export class MovimientosService {
             embarcacion: { id: embarcacion.id },
             estado: EstadoPedido.EN_AGUA,
             fechaProgramada: new Date(),
+            guarderiaId: tenant.guarderiaId as number,
           });
           await pedRepo.save(nuevoPedido);
         }
       }
 
-      await this.notificacionesService.createForRole(Role.ADMIN, {
+      await this.notificacionesService.createForRole(tenant, Role.ADMIN, {
         titulo: 'Salida a Agua',
         mensaje: `La embarcación ${embarcacion.nombre} ha salido al agua.`,
         tipo: NotificacionTipo.INFO,
@@ -217,8 +246,8 @@ export class MovimientosService {
     return savedMovement;
   }
 
-  async remove(id: number) {
-    const movimiento = await this.findOne(id);
+  async remove(tenant: TenantContext, id: number) {
+    const movimiento = await this.findOne(tenant, id);
     return this.movimientoRepo.remove(movimiento);
   }
 }

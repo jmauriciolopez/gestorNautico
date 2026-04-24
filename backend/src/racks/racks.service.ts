@@ -14,8 +14,11 @@ import {
   PaginatedResult,
 } from '../common/pagination/pagination.helper';
 
+import { BaseTenantService } from '../compartido/bases/base-tenant.service';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+
 @Injectable()
-export class RacksService {
+export class RacksService extends BaseTenantService {
   constructor(
     @InjectRepository(Rack)
     private readonly rackRepo: Repository<Rack>,
@@ -23,7 +26,9 @@ export class RacksService {
     private readonly espacioRepo: Repository<Espacio>,
     @InjectRepository(Embarcacion)
     private readonly embarcacionRepo: Repository<Embarcacion>,
-  ) {}
+  ) {
+    super();
+  }
 
   /** Desvincula embarcaciones de los espacios dados y luego los elimina */
   private async desvincularYEliminarEspacios(espacios: Espacio[]) {
@@ -36,23 +41,30 @@ export class RacksService {
     await this.espacioRepo.remove(espacios);
   }
 
-  async findAll(query: PaginationQuery = {}): Promise<PaginatedResult<Rack>> {
+  async findAll(
+    tenant: TenantContext,
+    query: PaginationQuery = {},
+  ): Promise<PaginatedResult<Rack>> {
     return paginate(this.rackRepo, query, {
+      where: this.buildTenantWhere(tenant),
       relations: ['zona', 'espacios'],
     });
   }
 
-  async findOne(id: number) {
+  async findOne(tenant: TenantContext, id: number) {
     const rack = await this.rackRepo.findOne({
-      where: { id },
+      where: this.buildTenantWhere(tenant, { id }),
       relations: ['zona', 'espacios'],
     });
     if (!rack) throw new NotFoundException(`Rack con ID ${id} no encontrado`);
     return rack;
   }
 
-  async create(data: Partial<Rack>) {
-    const rack = this.rackRepo.create(data);
+  async create(tenant: TenantContext, data: Partial<Rack>) {
+    const rack = this.rackRepo.create({
+      ...data,
+      guarderiaId: tenant.guarderiaId as number,
+    });
     const savedRack = await this.rackRepo.save(rack);
 
     // Lógica de Cuadrícula Automática (Grid Generation)
@@ -73,6 +85,7 @@ export class RacksService {
               columna: c,
               rackId: savedRack.id,
               ocupado: false,
+              guarderiaId: tenant.guarderiaId as number,
             }),
           );
         }
@@ -83,11 +96,11 @@ export class RacksService {
       await this.espacioRepo.save(nuevosEspacios);
     }
 
-    return this.findOne(savedRack.id);
+    return this.findOne(tenant, savedRack.id);
   }
 
-  async update(id: number, data: Partial<Rack>) {
-    const rack = await this.findOne(id);
+  async update(tenant: TenantContext, id: number, data: Partial<Rack>) {
+    const rack = await this.findOne(tenant, id);
 
     // Si se están cambiando dimensiones de cuadrícula
     const gridChanged =
@@ -112,7 +125,7 @@ export class RacksService {
 
     // Actualizar rack
     await this.rackRepo.update(id, data);
-    const updatedRack = await this.findOne(id);
+    const updatedRack = await this.findOne(tenant, id);
 
     // Re-generar espacios si cambió la cuadrícula o el código
     if (gridChanged || (data.codigo && data.codigo !== rack.codigo)) {
@@ -138,6 +151,7 @@ export class RacksService {
                 columna: c,
                 rackId: updatedRack.id,
                 ocupado: false,
+                guarderiaId: tenant.guarderiaId as number,
               }),
             );
           }
@@ -148,12 +162,12 @@ export class RacksService {
       }
     }
 
-    return this.findOne(id);
+    return this.findOne(tenant, id);
   }
 
-  async remove(id: number) {
+  async remove(tenant: TenantContext, id: number) {
     const rack = await this.rackRepo.findOne({
-      where: { id },
+      where: this.buildTenantWhere(tenant, { id }),
       relations: ['espacios'],
     });
     if (!rack) throw new NotFoundException(`Rack con ID ${id} no encontrado`);
@@ -166,8 +180,14 @@ export class RacksService {
     }
 
     // Usar delete directo para mayor seguridad con claves foráneas
-    await this.espacioRepo.delete({ rackId: id });
-    await this.rackRepo.delete(id);
+    await this.espacioRepo.delete({
+      rackId: id,
+      guarderiaId: tenant.guarderiaId as number,
+    });
+    await this.rackRepo.delete({
+      id,
+      guarderiaId: tenant.guarderiaId as number,
+    });
 
     return { success: true };
   }

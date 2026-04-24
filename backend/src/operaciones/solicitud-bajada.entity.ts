@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { Cliente } from '../clientes/clientes.entity';
 import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
+import { Guarderia } from '../guarderias/guarderia.entity';
 
 export enum EstadoSolicitud {
   PENDIENTE = 'PENDIENTE', // Solicitada
@@ -55,6 +56,14 @@ export class SolicitudBajada {
 
   @Column({ default: false })
   emailConfirmado: boolean;
+
+  @Index()
+  @Column({ type: 'int' })
+  guarderiaId: number;
+
+  @ManyToOne(() => Guarderia, { nullable: false })
+  @JoinColumn({ name: 'guarderiaId' })
+  guarderia: Guarderia;
 
   @CreateDateColumn()
   createdAt: Date;

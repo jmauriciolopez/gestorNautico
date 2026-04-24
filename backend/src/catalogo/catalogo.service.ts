@@ -6,22 +6,29 @@ import {
   paginate,
   PaginationQuery,
 } from '../common/pagination/pagination.helper';
+import { BaseTenantService } from '../compartido/bases/base-tenant.service';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
 
 @Injectable()
-export class CatalogoService {
+export class CatalogoService extends BaseTenantService {
   constructor(
     @InjectRepository(Catalogo)
     private readonly catalogoRepo: Repository<Catalogo>,
-  ) {}
+  ) {
+    super();
+  }
 
-  findAll(query: PaginationQuery = {}) {
+  findAll(tenant: TenantContext, query: PaginationQuery = {}) {
     return paginate(this.catalogoRepo, query, {
+      where: this.buildTenantWhere(tenant),
       order: { categoria: 'ASC', nombre: 'ASC' },
     });
   }
 
-  async findOne(id: number) {
-    const item = await this.catalogoRepo.findOne({ where: { id } });
+  async findOne(tenant: TenantContext, id: number) {
+    const item = await this.catalogoRepo.findOne({
+      where: this.buildTenantWhere(tenant, { id }),
+    });
     if (!item)
       throw new NotFoundException(
         `Servicio con ID ${id} no encontrado en catálogo`,
@@ -29,19 +36,22 @@ export class CatalogoService {
     return item;
   }
 
-  create(data: Partial<Catalogo>) {
-    const item = this.catalogoRepo.create(data);
+  create(tenant: TenantContext, data: Partial<Catalogo>) {
+    const item = this.catalogoRepo.create({
+      ...data,
+      guarderiaId: tenant.guarderiaId,
+    });
     return this.catalogoRepo.save(item);
   }
 
-  async update(id: number, data: Partial<Catalogo>) {
-    await this.findOne(id);
-    await this.catalogoRepo.update(id, data);
-    return this.findOne(id);
+  async update(tenant: TenantContext, id: number, data: Partial<Catalogo>) {
+    await this.findOne(tenant, id);
+    await this.catalogoRepo.update({ id, guarderiaId: tenant.guarderiaId }, data);
+    return this.findOne(tenant, id);
   }
 
-  async remove(id: number) {
-    const item = await this.findOne(id);
+  async remove(tenant: TenantContext, id: number) {
+    const item = await this.findOne(tenant, id);
     return this.catalogoRepo.remove(item);
   }
 }

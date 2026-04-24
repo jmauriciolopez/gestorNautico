@@ -11,6 +11,7 @@ import {
 import { Cliente } from '../clientes/clientes.entity';
 import { Cargo } from '../cargos/cargo.entity';
 import { Caja } from '../cajas/caja.entity';
+import { Guarderia } from '../guarderias/guarderia.entity';
 
 export enum MetodoPago {
   EFECTIVO = 'EFECTIVO',
@@ -48,6 +49,14 @@ export class Pago {
 
   @Column({ length: 255, nullable: true })
   comprobante: string;
+
+  @Index()
+  @Column({ type: 'int' })
+  guarderiaId: number;
+
+  @ManyToOne(() => Guarderia, { nullable: false })
+  @JoinColumn({ name: 'guarderiaId' })
+  guarderia: Guarderia;
 
   @CreateDateColumn()
   createdAt: Date;

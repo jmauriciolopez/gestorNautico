@@ -3,12 +3,13 @@ import {
   Column,
   PrimaryGeneratedColumn,
   ManyToOne,
+  OneToOne,
   JoinColumn,
   Index,
 } from 'typeorm';
 import { Rack } from '../racks/rack.entity';
 import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
-import { OneToOne } from 'typeorm';
+import { Guarderia } from '../guarderias/guarderia.entity';
 
 @Entity('espacios')
 export class Espacio {
@@ -40,4 +41,12 @@ export class Espacio {
 
   @OneToOne(() => Embarcacion, (embarcacion) => embarcacion.espacio)
   embarcacion: Embarcacion;
+
+  @Index()
+  @Column({ type: 'int' })
+  guarderiaId: number;
+
+  @ManyToOne(() => Guarderia, { nullable: false })
+  @JoinColumn({ name: 'guarderiaId' })
+  guarderia: Guarderia;
 }

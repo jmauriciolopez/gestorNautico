@@ -13,9 +13,11 @@ import {
 import { CreateClienteDto } from './dto/create-cliente.dto';
 import { UpdateClienteDto } from './dto/update-cliente.dto';
 import { In } from 'typeorm';
+import { BaseTenantService } from '../compartido/bases/base-tenant.service';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
 
 @Injectable()
-export class ClientesService {
+export class ClientesService extends BaseTenantService {
   constructor(
     @InjectRepository(Cliente)
     private readonly clientesRepository: Repository<Cliente>,
@@ -25,9 +27,12 @@ export class ClientesService {
     private readonly pagoRepository: Repository<Pago>,
     @InjectRepository(Embarcacion)
     private readonly embarcacionRepository: Repository<Embarcacion>,
-  ) {}
+  ) {
+    super();
+  }
 
   async findAll(
+    tenant: TenantContext,
     query: PaginationQuery & { search?: string; onlyActive?: boolean } = {},
   ): Promise<PaginatedResult<Cliente>> {
     const { search, onlyActive = true, ...pagination } = query;
@@ -50,28 +55,28 @@ export class ClientesService {
       ];
       return paginate(this.clientesRepository, pagination, {
         ...baseOptions,
-        where: searchConditions,
+        where: this.buildTenantWhere(tenant, { activo: true }),
       });
     }
 
-    const where = onlyActive ? { activo: true } : {};
     return paginate(this.clientesRepository, pagination, {
       ...baseOptions,
-      where,
+      where: this.buildTenantWhere(tenant, onlyActive ? { activo: true } : {}),
     });
   }
 
   async findAllWithTarifaBase(
+    tenant: TenantContext,
     query: PaginationQuery & { search?: string } = {},
   ): Promise<PaginatedResult<Cliente & { tarifaBase?: number }>> {
-    const result = await this.findAll(query);
+    const result = await this.findAll(tenant, query);
     const clientIds = result.data.map((c) => c.id);
 
     if (clientIds.length === 0) return { ...result, data: [] };
 
     // 1. Obtener todas las embarcaciones de estos clientes en una sola query
     const embarcaciones = await this.embarcacionRepository.find({
-      where: { cliente: { id: In(clientIds) } },
+      where: this.buildTenantWhere(tenant, { cliente: { id: In(clientIds) } }),
       relations: ['espacio', 'espacio.rack'],
     });
 
@@ -99,14 +104,19 @@ export class ClientesService {
     };
   }
 
-  async findOne(id: number): Promise<Cliente & { tarifaBase?: number }> {
-    const cliente = await this.clientesRepository.findOne({ where: { id } });
+  async findOne(
+    tenant: TenantContext,
+    id: number,
+  ): Promise<Cliente & { tarifaBase?: number }> {
+    const cliente = await this.clientesRepository.findOne({
+      where: this.buildTenantWhere(tenant, { id }),
+    });
     if (!cliente) {
       throw new NotFoundException(`Cliente con ID ${id} no encontrado`);
     }
 
     const embarcacion = await this.embarcacionRepository.findOne({
-      where: { cliente: { id } },
+      where: this.buildTenantWhere(tenant, { cliente: { id } }),
       relations: ['espacio', 'espacio.rack'],
     });
 
@@ -120,10 +130,13 @@ export class ClientesService {
     };
   }
 
-  async create(createClienteDto: CreateClienteDto): Promise<Cliente> {
+  async create(
+    tenant: TenantContext,
+    createClienteDto: CreateClienteDto,
+  ): Promise<Cliente> {
     if (createClienteDto.dni) {
       const existing = await this.clientesRepository.findOne({
-        where: { dni: createClienteDto.dni },
+        where: this.buildTenantWhere(tenant, { dni: createClienteDto.dni }),
       });
       if (existing) {
         throw new BadRequestException(
@@ -131,27 +144,31 @@ export class ClientesService {
         );
       }
     }
-    const nuevoCliente = this.clientesRepository.create(createClienteDto);
+    const nuevoCliente = this.clientesRepository.create({
+      ...createClienteDto,
+      guarderiaId: tenant.guarderiaId as number,
+    });
     return this.clientesRepository.save(nuevoCliente);
   }
 
   async update(
+    tenant: TenantContext,
     id: number,
     updateClienteDto: UpdateClienteDto,
   ): Promise<Cliente> {
-    const cliente = await this.findOne(id);
+    const cliente = await this.findOne(tenant, id);
     Object.assign(cliente, updateClienteDto);
     return this.clientesRepository.save(cliente);
   }
 
-  async remove(id: number): Promise<void> {
-    const cliente = await this.findOne(id);
+  async remove(tenant: TenantContext, id: number): Promise<void> {
+    const cliente = await this.findOne(tenant, id);
     cliente.activo = false;
     await this.clientesRepository.save(cliente);
   }
 
-  async getCuentaCorriente(id: number, limite = 50) {
-    await this.findOne(id); // valida que existe
+  async getCuentaCorriente(tenant: TenantContext, id: number, limite = 50) {
+    await this.findOne(tenant, id); // valida que existe y pertenece al tenant
 
     // Totales con aggregates SQL (compatibilidad multi-DB)
     const [cargoAgg, pagoAgg, vencidoAgg] = await Promise.all([
@@ -164,12 +181,14 @@ export class ClientesService {
           'impagos',
         )
         .where('c.cliente_id = :id', { id })
+        .andWhere(tenant.scope === 'guarderia' ? 'c.guarderiaId = :gId' : '1=1', { gId: tenant.guarderiaId })
         .getRawOne<{ total: string; cantidad: string; impagos: string }>(),
       this.pagoRepository
         .createQueryBuilder('p')
         .select('SUM(p.monto)', 'total')
         .addSelect('MAX(p.fecha)', 'ultimaFecha')
         .where('p.cliente_id = :id', { id })
+        .andWhere(tenant.scope === 'guarderia' ? 'p.guarderiaId = :gId' : '1=1', { gId: tenant.guarderiaId })
         .getRawOne<{ total: string; ultimaFecha: string }>(),
       this.cargoRepository
         .createQueryBuilder('c')
@@ -177,6 +196,7 @@ export class ClientesService {
         .where('c.cliente_id = :id', { id })
         .andWhere('c.pagado = false')
         .andWhere('c.fechaVencimiento < :now', { now: new Date() })
+        .andWhere(tenant.scope === 'guarderia' ? 'c.guarderiaId = :gId' : '1=1', { gId: tenant.guarderiaId })
         .getRawOne<{ total: string }>(),
     ]);
 
@@ -186,12 +206,12 @@ export class ClientesService {
     // Historiales paginados en paralelo
     const [cargos, pagos] = await Promise.all([
       this.cargoRepository.find({
-        where: { cliente: { id } },
+        where: this.buildTenantWhere(tenant, { cliente: { id } }),
         order: { fechaEmision: 'DESC' },
         take: limite,
       }),
       this.pagoRepository.find({
-        where: { cliente: { id } },
+        where: this.buildTenantWhere(tenant, { cliente: { id } }),
         order: { fecha: 'DESC' },
         take: limite,
       }),

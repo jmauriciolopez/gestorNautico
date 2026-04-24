@@ -10,38 +10,44 @@ import {
   PaginationQuery,
 } from '../common/pagination/pagination.helper';
 
+import { BaseTenantService } from '../compartido/bases/base-tenant.service';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+
 @Injectable()
-export class PagosService {
+export class PagosService extends BaseTenantService {
   constructor(
     @InjectRepository(Pago)
     private readonly pagoRepo: Repository<Pago>,
     private readonly cajasService: CajasService,
     private readonly cargosService: CargosService,
-  ) {}
+  ) {
+    super();
+  }
 
-  findAll(query: PaginationQuery = {}) {
+  findAll(tenant: TenantContext, query: PaginationQuery = {}) {
     return paginate(this.pagoRepo, query, {
+      where: this.buildTenantWhere(tenant),
       relations: ['cliente', 'cargo', 'caja'],
       order: { fecha: 'DESC' },
     });
   }
 
-  async findOne(id: number) {
+  async findOne(tenant: TenantContext, id: number) {
     const pago = await this.pagoRepo.findOne({
-      where: { id },
+      where: this.buildTenantWhere(tenant, { id }),
       relations: ['cliente', 'cargo', 'caja'],
     });
     if (!pago) throw new NotFoundException(`Pago con ID ${id} no encontrado`);
     return pago;
   }
 
-  async create(data: CreatePagoDto) {
+  async create(tenant: TenantContext, data: CreatePagoDto) {
     const { clienteId, cargoId, cajaId, metodo, referencia, ...rest } = data;
 
     // 1. Obtener una caja abierta
     const caja = cajaId
-      ? await this.cajasService.findOne(cajaId)
-      : await this.cajasService.findAbierta();
+      ? await this.cajasService.findOne(tenant, cajaId)
+      : await this.cajasService.findAbierta(tenant);
 
     if (!caja)
       throw new NotFoundException('No hay caja abierta para registrar el pago');
@@ -54,23 +60,24 @@ export class PagosService {
       cliente: { id: Number(clienteId) },
       cargo: cargoId ? { id: Number(cargoId) } : null,
       caja: caja,
+      guarderiaId: tenant.guarderiaId as number,
     });
 
     const pagoGuardado = await this.pagoRepo.save(nuevoPago);
 
     // 3. Si el pago está vinculado a un cargo, marcarlo como pagado
     if (cargoId) {
-      await this.cargosService.setPagado(Number(cargoId), true);
+      await this.cargosService.setPagado(tenant, Number(cargoId), true);
     }
 
-    return this.findOne(pagoGuardado.id);
+    return this.findOne(tenant, pagoGuardado.id);
   }
 
-  async remove(id: number) {
-    const pago = await this.findOne(id);
+  async remove(tenant: TenantContext, id: number) {
+    const pago = await this.findOne(tenant, id);
     // Si tenía un cargo, revertimos el estado pagado
     if (pago.cargo) {
-      await this.cargosService.setPagado(pago.cargo.id, false);
+      await this.cargosService.setPagado(tenant, pago.cargo.id, false);
     }
     return this.pagoRepo.remove(pago);
   }

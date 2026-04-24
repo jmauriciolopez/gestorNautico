@@ -5,9 +5,11 @@ import {
   ManyToOne,
   OneToMany,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { Ubicacion } from '../ubicaciones/ubicacion.entity';
 import { Rack } from '../racks/rack.entity';
+import { Guarderia } from '../guarderias/guarderia.entity';
 
 @Entity('zonas')
 export class Zona {
@@ -26,4 +28,12 @@ export class Zona {
 
   @OneToMany(() => Rack, (rack) => rack.zona)
   racks: Rack[];
+
+  @Index()
+  @Column({ type: 'int' })
+  guarderiaId: number;
+
+  @ManyToOne(() => Guarderia, { nullable: false })
+  @JoinColumn({ name: 'guarderiaId' })
+  guarderia: Guarderia;
 }

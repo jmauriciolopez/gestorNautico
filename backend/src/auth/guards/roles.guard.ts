@@ -1,4 +1,3 @@
-// src/auth/guards/roles.guard.ts
 import {
   Injectable,
   CanActivate,
@@ -8,44 +7,51 @@ import {
 import { Reflector } from '@nestjs/core';
 import { Role } from '../../users/user.entity';
 import { ROLES_KEY } from '../decorators/roles.decorator';
+import { TENANT_ROLES_KEY } from '../decorators/tenant-roles.decorator';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    // 1. Extraer los roles requeridos de los metadatos (Handler o Clase)
-    const requiredRoles = this.reflector.getAllAndOverride<Role[]>(ROLES_KEY, [
+    const roles = this.reflector.getAllAndOverride<Role[]>(ROLES_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
 
-    // Si no hay roles definidos, la ruta es pública o no requiere RBAC
-    if (!requiredRoles) {
+    const tenantRoles = this.reflector.getAllAndOverride<Role[]>(TENANT_ROLES_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+
+    if (!roles && !tenantRoles) {
       return true;
     }
 
-    // 2. Obtener el usuario del Request (inyectado previamente por un AuthGuard/Passport)
-    const req = context
-      .switchToHttp()
-      .getRequest<{ user?: { role: string } }>();
-    const user = req.user;
+    const request = context.switchToHttp().getRequest();
+    const user = request.user;
 
     if (!user || !user.role) {
-      throw new ForbiddenException('User context not found or roles missing');
+      throw new ForbiddenException('Contexto de usuario no encontrado');
     }
 
-    // 3. Validar si el usuario tiene al menos uno de los roles requeridos
-    const hasRole = requiredRoles.some((role: Role) =>
-      user.role.includes(role),
+    // El SUPERADMIN siempre pasa si hay roles definidos (a menos que se bloquee explícitamente)
+    if (user.role === Role.SUPERADMIN) {
+      return true;
+    }
+
+    // Verificar roles globales
+    if (roles && roles.includes(user.role)) {
+      return true;
+    }
+
+    // Verificar roles de tenant
+    if (tenantRoles && tenantRoles.includes(user.role)) {
+      return true;
+    }
+
+    throw new ForbiddenException(
+      'No tienes los permisos necesarios para esta acción',
     );
-
-    if (!hasRole) {
-      throw new ForbiddenException(
-        'Usted no tiene los permisos necesarios para esta acción',
-      );
-    }
-
-    return true;
   }
 }

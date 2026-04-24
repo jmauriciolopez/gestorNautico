@@ -8,16 +8,20 @@ import {
   paginate,
   PaginationQuery,
 } from '../common/pagination/pagination.helper';
+import { BaseTenantService } from '../compartido/bases/base-tenant.service';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
 
 @Injectable()
-export class NotificacionesService {
+export class NotificacionesService extends BaseTenantService {
   constructor(
     @InjectRepository(Notificacion)
     private readonly notificacionesRepository: Repository<Notificacion>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly mailerService: MailerService,
-  ) {}
+  ) {
+    super();
+  }
 
   async sendEmailNotification(
     to: string,
@@ -41,42 +45,62 @@ export class NotificacionesService {
     }
   }
 
-  async findAllByUser(usuarioId: number, query: PaginationQuery = {}) {
+  async findAllByUser(
+    tenant: TenantContext,
+    usuarioId: number,
+    query: PaginationQuery = {},
+  ) {
     return paginate(this.notificacionesRepository, query, {
-      where: { usuarioId },
+      where: this.buildTenantWhere(tenant, { usuarioId }),
       order: { createdAt: 'DESC' },
     });
   }
 
-  async create(data: {
-    usuarioId: number;
-    titulo: string;
-    mensaje: string;
-    tipo?: NotificacionTipo;
-  }): Promise<Notificacion> {
-    const notificacion = this.notificacionesRepository.create(data);
+  async create(
+    tenant: TenantContext,
+    data: {
+      usuarioId: number;
+      titulo: string;
+      mensaje: string;
+      tipo?: NotificacionTipo;
+    },
+  ): Promise<Notificacion> {
+    const notificacion = this.notificacionesRepository.create({
+      ...data,
+      guarderiaId: tenant.guarderiaId as number,
+    });
     return this.notificacionesRepository.save(notificacion);
   }
 
   async createForRole(
+    tenant: TenantContext,
     role: Role,
     data: { titulo: string; mensaje: string; tipo?: NotificacionTipo },
   ): Promise<void> {
     const users = await this.userRepository.find({
-      where: { role, activo: true },
+      where: {
+        role,
+        activo: true,
+        guarderiaId: tenant.guarderiaId as number,
+      },
     });
     const notifications = users.map((user) =>
       this.notificacionesRepository.create({
         ...data,
         usuarioId: user.id,
+        guarderiaId: tenant.guarderiaId as number,
       }),
     );
     await this.notificacionesRepository.save(notifications);
   }
 
-  async markAsRead(id: number, usuarioId: number): Promise<Notificacion> {
+  async markAsRead(
+    tenant: TenantContext,
+    id: number,
+    usuarioId: number,
+  ): Promise<Notificacion> {
     const notificacion = await this.notificacionesRepository.findOne({
-      where: { id, usuarioId },
+      where: this.buildTenantWhere(tenant, { id, usuarioId }),
     });
     if (!notificacion) {
       throw new NotFoundException('Notificación no encontrada');
@@ -85,25 +109,32 @@ export class NotificacionesService {
     return this.notificacionesRepository.save(notificacion);
   }
 
-  async markAllAsRead(usuarioId: number): Promise<void> {
+  async markAllAsRead(tenant: TenantContext, usuarioId: number): Promise<void> {
     await this.notificacionesRepository.update(
-      { usuarioId, leida: false },
+      this.buildTenantWhere(tenant, { usuarioId, leida: false }),
       { leida: true },
     );
   }
 
-  async delete(id: number, usuarioId: number): Promise<void> {
-    const result = await this.notificacionesRepository.delete({
-      id,
-      usuarioId,
-    });
+  async delete(
+    tenant: TenantContext,
+    id: number,
+    usuarioId: number,
+  ): Promise<void> {
+    const result = await this.notificacionesRepository.delete(
+      this.buildTenantWhere(tenant, { id, usuarioId }),
+    );
     if (result.affected === 0) {
       throw new NotFoundException('Notificación no encontrada');
     }
   }
 
-  async findAllRecentGlobal(limit = 10): Promise<Notificacion[]> {
+  async findAllRecentGlobal(
+    tenant: TenantContext,
+    limit = 10,
+  ): Promise<Notificacion[]> {
     return this.notificacionesRepository.find({
+      where: this.buildTenantWhere(tenant),
       order: { createdAt: 'DESC' },
       take: limit,
       relations: ['usuario'],

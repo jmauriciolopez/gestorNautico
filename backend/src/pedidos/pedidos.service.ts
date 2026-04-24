@@ -23,8 +23,11 @@ import {
   PaginatedResult,
 } from '../common/pagination/pagination.helper';
 
+import { BaseTenantService } from '../compartido/bases/base-tenant.service';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+
 @Injectable()
-export class PedidosService {
+export class PedidosService extends BaseTenantService {
   private readonly logger = new Logger(PedidosService.name);
 
   constructor(
@@ -35,9 +38,14 @@ export class PedidosService {
     private readonly notificacionesService: NotificacionesService,
     private readonly movimientosService: MovimientosService,
     private readonly dataSource: DataSource,
-  ) {}
+  ) {
+    super();
+  }
 
-  async findAll(query: PaginationQuery = {}): Promise<PaginatedResult<Pedido>> {
+  async findAll(
+    tenant: TenantContext,
+    query: PaginationQuery = {},
+  ): Promise<PaginatedResult<Pedido>> {
     const queryBuilder = this.pedidoRepo
       .createQueryBuilder('pedido')
       .leftJoinAndSelect('pedido.embarcacion', 'embarcacion')
@@ -47,10 +55,16 @@ export class PedidosService {
           .select('COUNT(cargo.id)', 'count')
           .from('cargos', 'cargo')
           .where('cargo.cliente_id = embarcacion.clienteId')
-          .andWhere('cargo.pagado = :pagado', { pagado: false });
+          .andWhere('cargo.pagado = :pagado', { pagado: false })
+          .andWhere('cargo.guarderia_id = :guarderiaId', {
+            guarderiaId: tenant.guarderiaId,
+          });
       }, 'deudaCount')
       .where('pedido.estado IN (:...activos)', {
         activos: ['pendiente', 'en_agua'],
+      })
+      .andWhere('pedido.guarderiaId = :guarderiaId', {
+        guarderiaId: tenant.guarderiaId,
       })
       .orderBy('pedido.createdAt', 'DESC');
 
@@ -74,7 +88,7 @@ export class PedidosService {
     return { data: itemsWithDebt, total, page, limit, totalPages };
   }
 
-  async findOne(id: number) {
+  async findOne(tenant: TenantContext, id: number) {
     const queryBuilder = this.pedidoRepo
       .createQueryBuilder('pedido')
       .leftJoinAndSelect('pedido.embarcacion', 'embarcacion')
@@ -84,9 +98,15 @@ export class PedidosService {
           .select('COUNT(cargo.id)', 'count')
           .from('cargos', 'cargo')
           .where('cargo.cliente_id = embarcacion.clienteId')
-          .andWhere('cargo.pagado = :pagado', { pagado: false });
+          .andWhere('cargo.pagado = :pagado', { pagado: false })
+          .andWhere('cargo.guarderia_id = :guarderiaId', {
+            guarderiaId: tenant.guarderiaId,
+          });
       }, 'deudaCount')
-      .where('pedido.id = :id', { id });
+      .where('pedido.id = :id', { id })
+      .andWhere('pedido.guarderiaId = :guarderiaId', {
+        guarderiaId: tenant.guarderiaId,
+      });
 
     const rawResult = await queryBuilder.getOne();
 
@@ -106,7 +126,7 @@ export class PedidosService {
     };
   }
 
-  async create(data: CreatePedidoDto) {
+  async create(tenant: TenantContext, data: CreatePedidoDto) {
     const { embarcacionId, ...rest } = data;
 
     return await this.dataSource.transaction(async (manager) => {
@@ -118,6 +138,7 @@ export class PedidosService {
         where: {
           embarcacion: { id: embarcacionId },
           estado: In([EstadoPedido.PENDIENTE, EstadoPedido.EN_AGUA]),
+          guarderiaId: tenant.guarderiaId as number,
         },
       });
 
@@ -132,6 +153,7 @@ export class PedidosService {
         where: {
           embarcacionId: embarcacionId,
           estado: In([EstadoSolicitud.PENDIENTE, EstadoSolicitud.EN_AGUA]),
+          guarderiaId: tenant.guarderiaId as number,
         },
       });
 
@@ -144,21 +166,22 @@ export class PedidosService {
       const nuevo = pedRepo.create({
         ...rest,
         embarcacion: { id: embarcacionId },
+        guarderiaId: tenant.guarderiaId as number,
       });
       const guardado = await pedRepo.save(nuevo);
 
       const pedidox = await manager.findOne(Pedido, {
-        where: { id: guardado.id },
+        where: { id: guardado.id, guarderiaId: tenant.guarderiaId as number },
         relations: ['embarcacion'],
       });
 
       // Notificar a los operadores y administradores
-      await this.notificacionesService.createForRole(Role.OPERADOR, {
+      await this.notificacionesService.createForRole(tenant, Role.OPERADOR, {
         titulo: 'Nueva Solicitud de Movimiento',
         mensaje: `Se ha registrado una solicitud para la embarcación ${pedidox.embarcacion.nombre}.`,
         tipo: NotificacionTipo.INFO,
       });
-      await this.notificacionesService.createForRole(Role.ADMIN, {
+      await this.notificacionesService.createForRole(tenant, Role.ADMIN, {
         titulo: 'Nueva Solicitud de Movimiento (Admin)',
         mensaje: `Se ha registrado una solicitud para la embarcación ${pedidox.embarcacion.nombre}.`,
         tipo: NotificacionTipo.INFO,
@@ -168,10 +191,10 @@ export class PedidosService {
     });
   }
 
-  async updateEstado(id: number, estado: EstadoPedido) {
+  async updateEstado(tenant: TenantContext, id: number, estado: EstadoPedido) {
     return await this.dataSource.transaction(async (manager) => {
       const pedido = await manager.findOne(Pedido, {
-        where: { id },
+        where: { id, guarderiaId: tenant.guarderiaId as number },
         relations: ['embarcacion'],
       });
 
@@ -179,13 +202,18 @@ export class PedidosService {
         throw new NotFoundException(`Pedido con ID ${id} no encontrado`);
       }
 
-      await manager.update(Pedido, id, { estado });
+      await manager.update(
+        Pedido,
+        { id, guarderiaId: tenant.guarderiaId as number },
+        { estado },
+      );
 
       if (!pedido.embarcacion?.id) {
         this.logger.warn(`Pedido ${id} no tiene embarcación asociada`);
       } else {
         if (estado === EstadoPedido.EN_AGUA) {
           await this.movimientosService.create(
+            tenant,
             {
               embarcacionId: pedido.embarcacion.id,
               tipo: TipoMovimiento.SALIDA,
@@ -195,6 +223,7 @@ export class PedidosService {
           );
         } else if (estado === EstadoPedido.FINALIZADO) {
           await this.movimientosService.create(
+            tenant,
             {
               embarcacionId: pedido.embarcacion.id,
               tipo: TipoMovimiento.ENTRADA,
@@ -206,7 +235,7 @@ export class PedidosService {
       }
 
       // Notificar cambio de estado a roles relevantes
-      await this.notificacionesService.createForRole(Role.ADMIN, {
+      await this.notificacionesService.createForRole(tenant, Role.ADMIN, {
         titulo: 'Actualización de Operación',
         mensaje: `La embarcación ${pedido.embarcacion?.nombre || 'N/A'} cambió a estado ${estado}.`,
         tipo:
@@ -216,14 +245,14 @@ export class PedidosService {
       });
 
       return await manager.findOne(Pedido, {
-        where: { id },
+        where: { id, guarderiaId: tenant.guarderiaId as number },
         relations: ['embarcacion'],
       });
     });
   }
 
-  async remove(id: number) {
-    const pedido = await this.findOne(id);
+  async remove(tenant: TenantContext, id: number) {
+    const pedido = await this.findOne(tenant, id);
     return this.pedidoRepo.remove(pedido);
   }
 }

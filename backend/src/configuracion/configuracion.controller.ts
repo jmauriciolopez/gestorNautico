@@ -5,20 +5,32 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../users/user.entity';
 
+import { TenantGuard } from '../auth/guards/tenant.guard';
+import { TenantRoles } from '../auth/decorators/tenant-roles.decorator';
+import { ActiveTenant } from '../auth/decorators/active-tenant.decorator';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+
 @Controller('configuracion')
-@UseGuards(AuthTokenGuard, RolesGuard)
+@UseGuards(AuthTokenGuard, TenantGuard, RolesGuard)
 export class ConfiguracionController {
   constructor(private readonly configService: ConfiguracionService) {}
 
   @Get()
-  @Roles(Role.SUPERADMIN, Role.ADMIN)
-  async findAll(@Query('page') page?: number, @Query('limit') limit?: number) {
-    return this.configService.findAll({ page, limit });
+  @TenantRoles(Role.ADMIN)
+  async findAll(
+    @ActiveTenant() tenant: TenantContext,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    return this.configService.findAll(tenant, { page, limit });
   }
 
   @Put('bulk')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
-  async updateMultiple(@Body() updates: Record<string, string>) {
-    return this.configService.updateMultiple(updates);
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR)
+  async updateMultiple(
+    @ActiveTenant() tenant: TenantContext,
+    @Body() updates: Record<string, string>,
+  ) {
+    return this.configService.updateMultiple(tenant, updates);
   }
 }

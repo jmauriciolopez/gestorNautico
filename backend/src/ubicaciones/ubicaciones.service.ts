@@ -8,24 +8,31 @@ import {
   PaginatedResult,
 } from '../common/pagination/pagination.helper';
 
+import { BaseTenantService } from '../compartido/bases/base-tenant.service';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+
 @Injectable()
-export class UbicacionesService {
+export class UbicacionesService extends BaseTenantService {
   constructor(
     @InjectRepository(Ubicacion)
     private readonly ubicacionRepo: Repository<Ubicacion>,
-  ) {}
+  ) {
+    super();
+  }
 
   async findAll(
+    tenant: TenantContext,
     query: PaginationQuery = {},
   ): Promise<PaginatedResult<Ubicacion>> {
     return paginate(this.ubicacionRepo, query, {
+      where: this.buildTenantWhere(tenant),
       relations: ['zonas', 'zonas.racks', 'zonas.racks.espacios'],
     });
   }
 
-  async findOne(id: number) {
+  async findOne(tenant: TenantContext, id: number) {
     const ubicacion = await this.ubicacionRepo.findOne({
-      where: { id },
+      where: this.buildTenantWhere(tenant, { id }),
       relations: ['zonas', 'zonas.racks', 'zonas.racks.espacios'],
     });
     if (!ubicacion)
@@ -33,19 +40,22 @@ export class UbicacionesService {
     return ubicacion;
   }
 
-  create(data: Partial<Ubicacion>) {
-    const ubicacion = this.ubicacionRepo.create(data);
+  create(tenant: TenantContext, data: Partial<Ubicacion>) {
+    const ubicacion = this.ubicacionRepo.create({
+      ...data,
+      guarderiaId: tenant.guarderiaId as number,
+    });
     return this.ubicacionRepo.save(ubicacion);
   }
 
-  async update(id: number, data: Partial<Ubicacion>) {
-    await this.findOne(id);
+  async update(tenant: TenantContext, id: number, data: Partial<Ubicacion>) {
+    await this.findOne(tenant, id);
     await this.ubicacionRepo.update(id, data);
-    return this.findOne(id);
+    return this.findOne(tenant, id);
   }
 
-  async remove(id: number) {
-    const ubicacion = await this.findOne(id);
+  async remove(tenant: TenantContext, id: number) {
+    const ubicacion = await this.findOne(tenant, id);
     return this.ubicacionRepo.remove(ubicacion);
   }
 }

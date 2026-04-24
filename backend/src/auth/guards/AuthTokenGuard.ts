@@ -22,6 +22,14 @@ export class AuthTokenGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest<Request>();
+
+    // Extraer y adjuntar guarderiaId del header siempre, incluso en rutas públicas
+    const guarderiaId = request.headers['x-guarderia-id'];
+    if (guarderiaId) {
+      request['guarderiaId'] = parseInt(guarderiaId as string, 10);
+    }
+
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),
@@ -30,8 +38,6 @@ export class AuthTokenGuard implements CanActivate {
     if (isPublic) {
       return true;
     }
-
-    const request = context.switchToHttp().getRequest<Request>();
     const token = this.extractToken(request);
 
     if (!token) {
@@ -41,10 +47,13 @@ export class AuthTokenGuard implements CanActivate {
 
     try {
       const secret = this.configService.get<string>('JWT_SECRET');
-      const payload: unknown = await this.jwtService.verifyAsync(token, {
+      const payload: any = await this.jwtService.verifyAsync(token, {
         secret,
       });
-      (request as Request & { user: unknown }).user = payload;
+
+      // Adjuntar usuario al request
+      request['user'] = payload;
+
       return true;
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown error';

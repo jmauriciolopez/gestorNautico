@@ -16,8 +16,11 @@ import {
 import { CreateEmbarcacionDto } from './dto/create-embarcacion.dto';
 import { UpdateEmbarcacionDto } from './dto/update-embarcacion.dto';
 
+import { BaseTenantService } from '../compartido/bases/base-tenant.service';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+
 @Injectable()
-export class EmbarcacionesService {
+export class EmbarcacionesService extends BaseTenantService {
   private readonly logger = new Logger(EmbarcacionesService.name);
 
   constructor(
@@ -26,9 +29,12 @@ export class EmbarcacionesService {
     @InjectRepository(Espacio)
     private readonly espacioRepo: Repository<Espacio>,
     private readonly dataSource: DataSource,
-  ) {}
+  ) {
+    super();
+  }
 
   async findAll(
+    tenant: TenantContext,
     query: PaginationQuery & { search?: string } = {},
   ): Promise<PaginatedResult<Embarcacion>> {
     const { search, ...pagination } = query;
@@ -39,17 +45,19 @@ export class EmbarcacionesService {
       .leftJoinAndSelect('embarcacion.espacio', 'espacio')
       .leftJoinAndSelect('espacio.rack', 'rack')
       .leftJoinAndSelect('rack.zona', 'zona')
+      .where(tenant.scope === 'guarderia' ? 'embarcacion.guarderiaId = :gId' : '1=1', { gId: tenant.guarderiaId })
       .addSelect((subQuery) => {
         return subQuery
           .select('COUNT(cargo.id)', 'count')
           .from('cargos', 'cargo')
           .where('cargo.cliente_id = embarcacion.clienteId')
-          .andWhere('cargo.pagado = :pagado', { pagado: false });
+          .andWhere('cargo.pagado = :pagado', { pagado: false })
+          .andWhere(tenant.scope === 'guarderia' ? 'cargo.guarderiaId = :gId' : '1=1', { gId: tenant.guarderiaId });
       }, 'deudaCount')
       .orderBy('embarcacion.createdAt', 'DESC');
 
     if (search) {
-      queryBuilder.where(
+      queryBuilder.andWhere(
         'embarcacion.nombre ILIKE :search OR embarcacion.matricula ILIKE :search OR cliente.nombre ILIKE :search',
         { search: `%${search}%` },
       );
@@ -79,9 +87,9 @@ export class EmbarcacionesService {
     };
   }
 
-  async findOne(id: number): Promise<Embarcacion> {
+  async findOne(tenant: TenantContext, id: number): Promise<Embarcacion> {
     const embarcacion = await this.embarcacionesRepository.findOne({
-      where: { id },
+      where: this.buildTenantWhere(tenant, { id }),
       relations: ['cliente', 'espacio', 'espacio.rack', 'espacio.rack.zona'],
     });
     if (!embarcacion) {
@@ -127,6 +135,7 @@ export class EmbarcacionesService {
   }
 
   async create(
+    tenant: TenantContext,
     dto: CreateEmbarcacionDto,
     manager?: EntityManager,
   ): Promise<Embarcacion> {
@@ -156,7 +165,7 @@ export class EmbarcacionesService {
       }
 
       const existing = await boatRepo.findOne({
-        where: { matricula: dto.matricula },
+        where: this.buildTenantWhere(tenant, { matricula: dto.matricula }),
       });
       if (existing) {
         throw new BadRequestException(
@@ -164,7 +173,10 @@ export class EmbarcacionesService {
         );
       }
 
-      const nuevaEmbarcacion = boatRepo.create(dto);
+      const nuevaEmbarcacion = boatRepo.create({
+        ...dto,
+        guarderiaId: tenant.guarderiaId as number,
+      });
       const saved = await boatRepo.save(nuevaEmbarcacion);
 
       if (saved.espacioId) {
@@ -179,6 +191,7 @@ export class EmbarcacionesService {
   }
 
   async update(
+    tenant: TenantContext,
     id: number,
     dto: UpdateEmbarcacionDto,
     manager?: EntityManager,
@@ -187,7 +200,7 @@ export class EmbarcacionesService {
       const boatRepo = mgr.getRepository(Embarcacion);
       const espRepo = mgr.getRepository(Espacio);
 
-      const embarcacion = await this.findOne(id);
+      const embarcacion = await this.findOne(tenant, id);
       const anteriorEspacioId = embarcacion.espacio?.id || null;
 
       const nuevaEslora = dto.eslora ?? embarcacion.eslora;
@@ -225,7 +238,7 @@ export class EmbarcacionesService {
       // Si cambia la matrícula, validar que no exista otra igual
       if (dto.matricula && dto.matricula !== embarcacion.matricula) {
         const existing = await boatRepo.findOne({
-          where: { matricula: dto.matricula },
+          where: this.buildTenantWhere(tenant, { matricula: dto.matricula }),
         });
         if (existing) {
           throw new BadRequestException(
@@ -264,19 +277,19 @@ export class EmbarcacionesService {
         }
       }
 
-      return await this.findOne(id);
+      return await this.findOne(tenant, id);
     };
 
     if (manager) return await work(manager);
     return await this.dataSource.transaction(work);
   }
 
-  async remove(id: number, manager?: EntityManager): Promise<void> {
+  async remove(tenant: TenantContext, id: number, manager?: EntityManager): Promise<void> {
     const work = async (mgr: EntityManager) => {
       const boatRepo = mgr.getRepository(Embarcacion);
       const espRepo = mgr.getRepository(Espacio);
 
-      const embarcacion = await this.findOne(id);
+      const embarcacion = await this.findOne(tenant, id);
       const espacioId = embarcacion.espacioId;
 
       // Liberar espacio si tenía uno

@@ -4,6 +4,8 @@ import { ILike, Repository } from 'typeorm';
 import { Cliente } from '../clientes/clientes.entity';
 import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
 import { Rack } from '../racks/rack.entity';
+import { BaseTenantService } from '../compartido/bases/base-tenant.service';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
 
 export interface SearchResult {
   clientes: Pick<Cliente, 'id' | 'nombre' | 'dni' | 'email'>[];
@@ -15,7 +17,7 @@ export interface SearchResult {
 }
 
 @Injectable()
-export class SearchService {
+export class SearchService extends BaseTenantService {
   constructor(
     @InjectRepository(Cliente)
     private readonly clienteRepo: Repository<Cliente>,
@@ -23,9 +25,11 @@ export class SearchService {
     private readonly embarcacionRepo: Repository<Embarcacion>,
     @InjectRepository(Rack)
     private readonly rackRepo: Repository<Rack>,
-  ) {}
+  ) {
+    super();
+  }
 
-  async search(query: string): Promise<SearchResult> {
+  async search(tenant: TenantContext, query: string): Promise<SearchResult> {
     if (!query || query.trim().length < 2) {
       return { clientes: [], embarcaciones: [], racks: [] };
     }
@@ -35,20 +39,23 @@ export class SearchService {
     const [clientes, embarcaciones, racks] = await Promise.all([
       this.clienteRepo.find({
         where: [
-          { nombre: ILike(term) },
-          { dni: ILike(term) },
-          { email: ILike(term) },
+          this.buildTenantWhere(tenant, { nombre: ILike(term) }),
+          this.buildTenantWhere(tenant, { dni: ILike(term) }),
+          this.buildTenantWhere(tenant, { email: ILike(term) }),
         ],
         select: ['id', 'nombre', 'dni', 'email'],
         take: 5,
       }),
       this.embarcacionRepo.find({
-        where: [{ nombre: ILike(term) }, { matricula: ILike(term) }],
+        where: [
+          this.buildTenantWhere(tenant, { nombre: ILike(term) }),
+          this.buildTenantWhere(tenant, { matricula: ILike(term) }),
+        ],
         select: ['id', 'nombre', 'matricula', 'tipo', 'estado_operativo'],
         take: 5,
       }),
       this.rackRepo.find({
-        where: [{ codigo: ILike(term) }],
+        where: [this.buildTenantWhere(tenant, { codigo: ILike(term) })],
         select: ['id', 'codigo'],
         take: 5,
       }),

@@ -4,7 +4,11 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  Index,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
+import { Guarderia } from '../guarderias/guarderia.entity';
 
 export enum Role {
   SUPERADMIN = 'SUPERADMIN', // Dueño del SaaS
@@ -38,6 +42,14 @@ export class User {
 
   @Column({ unique: true, nullable: true })
   email: string;
+
+  @Index()
+  @Column({ type: 'int', nullable: true })
+  guarderiaId: number;
+
+  @ManyToOne(() => Guarderia, { nullable: true })
+  @JoinColumn({ name: 'guarderiaId' })
+  guarderia: Guarderia;
 
   @CreateDateColumn()
   createdAt: Date;

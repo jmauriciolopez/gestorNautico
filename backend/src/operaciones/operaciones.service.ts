@@ -28,9 +28,13 @@ import { MovimientosService } from '../movimientos/movimientos.service';
 import { ConfiguracionService } from '../configuracion/configuracion.service';
 import { Pedido, EstadoPedido } from '../pedidos/pedidos.entity';
 import { TipoMovimiento } from '../movimientos/movimientos.entity';
+import { Guarderia } from '../guarderias/guarderia.entity';
+
+import { BaseTenantService } from '../compartido/bases/base-tenant.service';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
 
 @Injectable()
-export class OperacionesService {
+export class OperacionesService extends BaseTenantService {
   private readonly logger = new Logger(OperacionesService.name);
 
   constructor(
@@ -42,37 +46,50 @@ export class OperacionesService {
     private readonly embarcacionRepo: Repository<Embarcacion>,
     @InjectRepository(Pedido)
     private readonly pedidoRepo: Repository<Pedido>,
+    @InjectRepository(Guarderia)
+    private readonly guarderiaRepo: Repository<Guarderia>,
     private readonly notificacionesService: NotificacionesService,
     private readonly movimientosService: MovimientosService,
     private readonly configuracionService: ConfiguracionService,
-  ) {}
+  ) {
+    super();
+  }
 
-  async createPublic(dto: CreateSolicitudBajadaDto): Promise<SolicitudBajada> {
-    // 1. Validar Cliente por DNI
-    const cliente = await this.clienteRepo.findOne({ where: { dni: dto.dni } });
-    if (!cliente) {
-      throw new NotFoundException('DNI no registrado en el sistema');
+  async createPublic(
+    tenant: TenantContext,
+    dto: CreateSolicitudBajadaDto,
+  ): Promise<SolicitudBajada> {
+    if (!tenant || !tenant.guarderiaId) {
+      throw new BadRequestException('Se requiere identificación de guardería');
     }
 
-    // 2. Validar Embarcación por Matrícula y pertenencia
+    // 1. Validar Cliente por DNI dentro del tenant
+    const cliente = await this.clienteRepo.findOne({
+      where: this.buildTenantWhere(tenant, { dni: dto.dni }),
+    });
+    if (!cliente) {
+      throw new NotFoundException('DNI no registrado en esta guardería');
+    }
+
+    // 2. Validar Embarcación por Matrícula y pertenencia dentro del tenant
     const barco = await this.embarcacionRepo.findOne({
-      where: {
+      where: this.buildTenantWhere(tenant, {
         matricula: dto.matricula,
         cliente: { id: cliente.id },
-      },
+      }),
     });
     if (!barco) {
       throw new BadRequestException(
-        'Matrícula inválida o no pertenece al cliente indicado',
+        'Matrícula inválida o no pertenece al cliente indicado en esta guardería',
       );
     }
 
-    // 2c. Validar si ya existe una solicitud activa
+    // 2c. Validar si ya existe una solicitud activa dentro del tenant
     const solicitudActiva = await this.solicitudRepo.findOne({
-      where: {
+      where: this.buildTenantWhere(tenant, {
         embarcacion: { id: barco.id },
         estado: In([EstadoSolicitud.PENDIENTE, EstadoSolicitud.EN_AGUA]),
-      },
+      }),
     });
 
     if (solicitudActiva) {
@@ -81,12 +98,12 @@ export class OperacionesService {
       );
     }
 
-    // 2d. Validar si ya existe un pedido activo en el Monitor de Cola
+    // 2d. Validar si ya existe un pedido activo en el Monitor de Cola dentro del tenant
     const pedidoActivo = await this.pedidoRepo.findOne({
-      where: {
+      where: this.buildTenantWhere(tenant, {
         embarcacion: { id: barco.id },
         estado: In([EstadoPedido.PENDIENTE, EstadoPedido.EN_AGUA]),
-      },
+      }),
     });
 
     if (pedidoActivo) {
@@ -100,10 +117,12 @@ export class OperacionesService {
     const horaSolicitud = fechaHora.getHours() + fechaHora.getMinutes() / 60;
 
     const aperturaRaw = await this.configuracionService.getValor(
+      tenant,
       'HORARIO_APERTURA',
       '08:00',
     );
     const cierreRaw = await this.configuracionService.getValor(
+      tenant,
       'HORARIO_MAX_SUBIDA',
       '18:00',
     );
@@ -127,12 +146,13 @@ export class OperacionesService {
       fechaHoraDeseada: new Date(dto.fechaHoraDeseada),
       observaciones: dto.observaciones,
       estado: EstadoSolicitud.PENDIENTE,
+      guarderiaId: tenant.guarderiaId as number,
     });
 
     const guardada = await this.solicitudRepo.save(nueva);
 
     // 4. Notificar a Operadores inmediatamente
-    await this.notificacionesService.createForRole(Role.OPERADOR, {
+    await this.notificacionesService.createForRole(tenant, Role.OPERADOR, {
       titulo: 'Nueva Solicitud de Bajada (Portal Público)',
       mensaje: `El cliente ${cliente.nombre} ha solicitado bajar ${barco.nombre} para el ${new Date(dto.fechaHoraDeseada).toLocaleString()}.`,
     });
@@ -193,12 +213,19 @@ export class OperacionesService {
     }
   }
 
-  async findAll(query: PaginationQuery = {}, estado?: EstadoSolicitud) {
+  async findAll(
+    tenant: TenantContext,
+    query: PaginationQuery = {},
+    estado?: EstadoSolicitud,
+  ) {
+    const tenantFilter = this.buildTenantWhere(tenant);
+
     const where:
       | FindOptionsWhere<SolicitudBajada>
       | FindOptionsWhere<SolicitudBajada>[] = estado
-      ? { estado }
+      ? { ...tenantFilter, estado }
       : {
+          ...tenantFilter,
           estado: In([EstadoSolicitud.PENDIENTE, EstadoSolicitud.EN_AGUA]),
         };
 
@@ -211,9 +238,14 @@ export class OperacionesService {
     return paginate(this.solicitudRepo, query, options);
   }
 
-  async updateEstado(id: number, estado: EstadoSolicitud, motivo?: string) {
+  async updateEstado(
+    tenant: TenantContext,
+    id: number,
+    estado: EstadoSolicitud,
+    motivo?: string,
+  ) {
     const solicitud = await this.solicitudRepo.findOne({
-      where: { id },
+      where: this.buildTenantWhere(tenant, { id }),
       relations: ['cliente', 'embarcacion'],
     });
     if (!solicitud)
@@ -227,13 +259,13 @@ export class OperacionesService {
     const embarcacionId = pedido.embarcacion?.id || solicitud.embarcacionId;
 
     if (estado === EstadoSolicitud.EN_AGUA) {
-      await this.movimientosService.create({
+      await this.movimientosService.create(tenant, {
         embarcacionId,
         tipo: TipoMovimiento.SALIDA,
         observaciones: `Bajada marcada desde Monitor de Cola #${pedido.id}`,
       });
     } else if (estado === EstadoSolicitud.FINALIZADA) {
-      await this.movimientosService.create({
+      await this.movimientosService.create(tenant, {
         embarcacionId,
         tipo: TipoMovimiento.ENTRADA,
         observaciones: `Retorno a cuna marcado desde Monitor de Cola #${pedido.id}`,
@@ -245,7 +277,7 @@ export class OperacionesService {
     const email = solicitud.cliente.email;
 
     // Notificaciones internas
-    await this.notificacionesService.createForRole(Role.ADMIN, {
+    await this.notificacionesService.createForRole(tenant, Role.ADMIN, {
       titulo: `Operación ${estado}`,
       mensaje: `La embarcación "${barco}" cambió a estado ${estado}.`,
       tipo:
@@ -304,7 +336,7 @@ export class OperacionesService {
     }
 
     return this.solicitudRepo.findOne({
-      where: { id },
+      where: this.buildTenantWhere(tenant, { id }),
       relations: ['cliente', 'embarcacion'],
     });
   }

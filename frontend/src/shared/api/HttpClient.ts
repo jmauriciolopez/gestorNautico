@@ -28,6 +28,13 @@ class HttpClient {
                 if (token && config.headers) {
                     config.headers.Authorization = `Bearer ${token}`;
                 }
+
+                // Inyectar el ID de la guardería activa para multi-tenancy
+                const guarderiaId = localStorage.getItem('guarderiaId');
+                if (guarderiaId && config.headers) {
+                    config.headers['x-guarderia-id'] = guarderiaId;
+                }
+
                 return config;
             },
             (error) => Promise.reject(error)

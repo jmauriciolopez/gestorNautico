@@ -4,9 +4,15 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  Index,
+  ManyToOne,
+  JoinColumn,
+  Unique,
 } from 'typeorm';
+import { Guarderia } from '../guarderias/guarderia.entity';
 
 @Entity('clientes')
+@Unique(['dni', 'guarderiaId'])
 export class Cliente {
   @PrimaryGeneratedColumn()
   id: number;
@@ -14,7 +20,7 @@ export class Cliente {
   @Column()
   nombre: string;
 
-  @Column({ unique: true })
+  @Column()
   dni: string;
 
   @Column({ nullable: true })
@@ -37,6 +43,14 @@ export class Cliente {
 
   @Column({ nullable: true })
   responsableFamiliaId: number;
+
+  @Index()
+  @Column({ type: 'int' })
+  guarderiaId: number;
+
+  @ManyToOne(() => Guarderia, { nullable: false })
+  @JoinColumn({ name: 'guarderiaId' })
+  guarderia: Guarderia;
 
   @CreateDateColumn()
   createdAt: Date;

@@ -8,9 +8,11 @@ import {
 } from '../embarcaciones/embarcaciones.entity';
 import { Espacio } from '../espacios/espacio.entity';
 import { Pago } from '../pagos/pago.entity';
+import { BaseTenantService } from '../compartido/bases/base-tenant.service';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
 
 @Injectable()
-export class ReportesService {
+export class ReportesService extends BaseTenantService {
   constructor(
     @InjectRepository(Cargo)
     private readonly cargoRepo: Repository<Cargo>,
@@ -20,13 +22,15 @@ export class ReportesService {
     private readonly espacioRepo: Repository<Espacio>,
     @InjectRepository(Pago)
     private readonly pagoRepo: Repository<Pago>,
-  ) {}
+  ) {
+    super();
+  }
 
-  async getClientesMorosos(): Promise<any[]> {
+  async getClientesMorosos(tenant: TenantContext): Promise<any[]> {
     const hoy = new Date();
 
     const cargosVencidos = await this.cargoRepo.find({
-      where: { pagado: false, fechaVencimiento: LessThan(hoy) },
+      where: this.buildTenantWhere(tenant, { pagado: false, fechaVencimiento: LessThan(hoy) }),
       relations: ['cliente'],
       order: { fechaVencimiento: 'ASC' },
     });
@@ -81,9 +85,9 @@ export class ReportesService {
     );
   }
 
-  async getMensualidadesConDescuentos(): Promise<any[]> {
+  async getMensualidadesConDescuentos(tenant: TenantContext): Promise<any[]> {
     const embarcaciones = await this.embarcacionRepo.find({
-      where: { estado_operativo: EstadoEmbarcacion.EN_CUNA },
+      where: this.buildTenantWhere(tenant, { estado_operativo: EstadoEmbarcacion.EN_CUNA }),
       relations: ['cliente', 'espacio', 'espacio.rack'],
     });
 
@@ -117,8 +121,9 @@ export class ReportesService {
       .sort((a, b) => a.clienteNombre.localeCompare(b.clienteNombre));
   }
 
-  async getOcupacion(): Promise<any> {
+  async getOcupacion(tenant: TenantContext): Promise<any> {
     const espacios = await this.espacioRepo.find({
+      where: this.buildTenantWhere(tenant),
       relations: ['rack', 'rack.zona'],
     });
 
@@ -149,13 +154,15 @@ export class ReportesService {
   }
 
   async getIngresosMensuales(
+    tenant: TenantContext,
     startDate?: string,
     endDate?: string,
   ): Promise<{ mes: string; total: number }[]> {
     const query = this.pagoRepo
       .createQueryBuilder('p')
       .select("TO_CHAR(p.fecha, 'YYYY-MM')", 'mes')
-      .addSelect('SUM(p.monto)', 'total');
+      .addSelect('SUM(p.monto)', 'total')
+      .where('p.guarderiaId = :gId', { gId: tenant.guarderiaId });
 
     if (startDate) {
       query.andWhere('p.fecha >= :startDate', { startDate });
@@ -180,7 +187,7 @@ export class ReportesService {
     }));
   }
 
-  async getProximosVencimientos(): Promise<Cargo[]> {
+  async getProximosVencimientos(tenant: TenantContext): Promise<Cargo[]> {
     const hoy = new Date();
     const proximaSemana = new Date();
     proximaSemana.setDate(hoy.getDate() + 30);
@@ -189,6 +196,7 @@ export class ReportesService {
       .createQueryBuilder('c')
       .leftJoinAndSelect('c.cliente', 'cliente')
       .where('c.pagado = false')
+      .andWhere('c.guarderiaId = :gId', { gId: tenant.guarderiaId })
       .andWhere('c.fechaVencimiento >= :hoy', { hoy })
       .andWhere('c.fechaVencimiento <= :proximaSemana', { proximaSemana })
       .orderBy('c.fechaVencimiento', 'ASC')

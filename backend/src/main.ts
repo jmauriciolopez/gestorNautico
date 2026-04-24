@@ -7,6 +7,7 @@ import { HttpAdapterHost, BaseExceptionFilter } from '@nestjs/core';
 import { Catch, ArgumentsHost } from '@nestjs/common';
 import { exec } from 'child_process';
 import * as os from 'os';
+import { TenantInterceptor } from './common/interceptors/tenant.interceptor';
 
 function systemBeep() {
   try {
@@ -93,6 +94,8 @@ async function bootstrap() {
       },
     }),
   );
+
+  app.useGlobalInterceptors(new TenantInterceptor());
 
   const port = process.env.PORT || 3000;
   await app.listen(port, '0.0.0.0');

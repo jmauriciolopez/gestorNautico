@@ -15,37 +15,48 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../users/user.entity';
 import { CreateMovimientoDto } from './dto/create-movimiento.dto';
 
+import { TenantGuard } from '../auth/guards/tenant.guard';
+import { TenantRoles } from '../auth/decorators/tenant-roles.decorator';
+import { ActiveTenant } from '../auth/decorators/active-tenant.decorator';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+
 @Controller('movimientos')
-@UseGuards(AuthTokenGuard, RolesGuard)
+@UseGuards(AuthTokenGuard, TenantGuard, RolesGuard)
 export class MovimientosController {
   constructor(private readonly movimientosService: MovimientosService) {}
 
   @Get()
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
   findAll(
+    @ActiveTenant() tenant: TenantContext,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('search') search?: string,
     @Query('embarcacionId') embarcacionId?: number,
   ) {
-    return this.movimientosService.findAll({ page, limit, search, embarcacionId });
+    return this.movimientosService.findAll(tenant, {
+      page,
+      limit,
+      search,
+      embarcacionId,
+    });
   }
 
   @Get(':id')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
-  findOne(@Param('id') id: string) {
-    return this.movimientosService.findOne(+id);
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+  findOne(@ActiveTenant() tenant: TenantContext, @Param('id') id: string) {
+    return this.movimientosService.findOne(tenant, +id);
   }
 
   @Post()
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
-  create(@Body() data: CreateMovimientoDto) {
-    return this.movimientosService.create(data);
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+  create(@ActiveTenant() tenant: TenantContext, @Body() data: CreateMovimientoDto) {
+    return this.movimientosService.create(tenant, data);
   }
 
   @Delete(':id')
-  @Roles(Role.SUPERADMIN, Role.ADMIN)
-  remove(@Param('id') id: string) {
-    return this.movimientosService.remove(+id);
+  @TenantRoles(Role.ADMIN)
+  remove(@ActiveTenant() tenant: TenantContext, @Param('id') id: string) {
+    return this.movimientosService.remove(tenant, +id);
   }
 }

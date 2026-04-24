@@ -27,6 +27,7 @@ import { ConfiguracionModule } from './configuracion/configuracion.module';
 import { ReportesModule } from './reportes/reportes.module';
 import { MoraModule } from './mora/mora.module';
 import { ImportModule } from './import/import.module';
+import { GuarderiasModule } from './guarderias/guarderias.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/adapters/handlebars.adapter';
@@ -110,6 +111,7 @@ import { join } from 'path';
     ReportesModule,
     MoraModule,
     ImportModule,
+    GuarderiasModule,
   ],
 })
 export class AppModule {}

@@ -5,9 +5,11 @@ import {
   CreateDateColumn,
   ManyToOne,
   Index,
+  JoinColumn,
 } from 'typeorm';
 import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
 import { Espacio } from '../espacios/espacio.entity';
+import { Guarderia } from '../guarderias/guarderia.entity';
 
 export enum TipoMovimiento {
   ENTRADA = 'entrada',
@@ -25,10 +27,12 @@ export class Movimiento {
 
   @Index()
   @ManyToOne(() => Embarcacion)
+  @JoinColumn({ name: 'embarcacion_id' })
   embarcacion: Embarcacion;
 
   @Index()
   @ManyToOne(() => Espacio)
+  @JoinColumn({ name: 'espacio_id' })
   espacio: Espacio;
 
   @Index()
@@ -40,4 +44,12 @@ export class Movimiento {
 
   @Column({ default: false })
   fueraHora: boolean;
+
+  @Index()
+  @Column({ type: 'int' })
+  guarderiaId: number;
+
+  @ManyToOne(() => Guarderia, { nullable: false })
+  @JoinColumn({ name: 'guarderiaId' })
+  guarderia: Guarderia;
 }

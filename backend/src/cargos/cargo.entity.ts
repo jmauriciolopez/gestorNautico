@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { Cliente } from '../clientes/clientes.entity';
 import { Factura } from '../facturas/factura.entity';
+import { Guarderia } from '../guarderias/guarderia.entity';
 
 export enum TipoCargo {
   AMARRE = 'AMARRE',
@@ -55,6 +56,14 @@ export class Cargo {
   })
   @JoinColumn({ name: 'factura_id' })
   factura: Factura;
+
+  @Index()
+  @Column({ type: 'int' })
+  guarderiaId: number;
+
+  @ManyToOne(() => Guarderia, { nullable: false })
+  @JoinColumn({ name: 'guarderiaId' })
+  guarderia: Guarderia;
 
   @CreateDateColumn()
   createdAt: Date;

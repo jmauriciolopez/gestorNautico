@@ -1,12 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Not } from 'typeorm';
+import { Repository, Not, In } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Factura, EstadoFactura } from '../facturas/factura.entity';
 import { ConfiguracionService } from '../configuracion/configuracion.service';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import { Role } from '../users/user.entity';
 import { NotificacionTipo } from '../notificaciones/notificacion.entity';
+import { Guarderia } from '../guarderias/guarderia.entity';
+import { BaseTenantService } from '../compartido/bases/base-tenant.service';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
 
 export interface MoraResultado {
   diasAtraso: number;
@@ -17,26 +20,33 @@ export interface MoraResultado {
 }
 
 @Injectable()
-export class MoraService {
+export class MoraService extends BaseTenantService {
   private readonly logger = new Logger(MoraService.name);
 
   constructor(
     @InjectRepository(Factura)
     private readonly facturaRepo: Repository<Factura>,
+    @InjectRepository(Guarderia)
+    private readonly guarderiaRepo: Repository<Guarderia>,
     private readonly configService: ConfiguracionService,
     private readonly notificacionesService: NotificacionesService,
-  ) {}
+  ) {
+    super();
+  }
 
-  async getConfiguracion() {
+  async getConfiguracion(tenant: TenantContext) {
     const tasaInteres = await this.configService.getValorNumerico(
+      tenant,
       'MORA_TASA_INTERES',
       3,
     );
     const tasaRecargo = await this.configService.getValorNumerico(
+      tenant,
       'MORA_TASA_RECARGO',
       10,
     );
     const diasGracia = await this.configService.getValorNumerico(
+      tenant,
       'MORA_DIAS_GRACIA',
       5,
     );
@@ -48,9 +58,9 @@ export class MoraService {
     };
   }
 
-  async calcularMora(facturaId: number): Promise<MoraResultado> {
+  async calcularMora(tenant: TenantContext, facturaId: number): Promise<MoraResultado> {
     const factura = await this.facturaRepo.findOne({
-      where: { id: facturaId },
+      where: this.buildTenantWhere(tenant, { id: facturaId }),
       relations: ['cliente'],
     });
 
@@ -69,7 +79,7 @@ export class MoraService {
     }
 
     const { tasaInteres, tasaRecargo, diasGracia } =
-      await this.getConfiguracion();
+      await this.getConfiguracion(tenant);
 
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
@@ -108,9 +118,9 @@ export class MoraService {
     };
   }
 
-  async aplicarMora(facturaId: number): Promise<Factura> {
+  async aplicarMora(tenant: TenantContext, facturaId: number): Promise<Factura> {
     const factura = await this.facturaRepo.findOne({
-      where: { id: facturaId },
+      where: this.buildTenantWhere(tenant, { id: facturaId }),
       relations: ['cliente'],
     });
 
@@ -123,7 +133,7 @@ export class MoraService {
     }
 
     const { tasaInteres, tasaRecargo, diasGracia } =
-      await this.getConfiguracion();
+      await this.getConfiguracion(tenant);
 
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
@@ -169,26 +179,42 @@ export class MoraService {
       `Mora aplicada a factura ${factura.numero}: Interés ${interesMoratorio.toFixed(2)}, Recargo ${recargo.toFixed(2)}`,
     );
 
-    await this.notificacionesService.createForRole(Role.ADMIN, {
+    await this.notificacionesService.createForRole(tenant, Role.ADMIN, {
       titulo: 'Mora Aplicada',
       mensaje: `Se aplicó mora de ${totalMora} a la factura ${factura.numero} del cliente ${factura.cliente.nombre}.`,
       tipo: NotificacionTipo.ALERTA,
     });
 
     return this.facturaRepo.findOne({
-      where: { id: facturaId },
+      where: this.buildTenantWhere(tenant, { id: facturaId }),
       relations: ['cliente', 'cargos'],
     });
   }
 
   @Cron(CronExpression.EVERY_DAY_AT_1AM)
   async aplicarMoraAutomaticamente(): Promise<number> {
-    this.logger.log('Iniciando aplicación automática de mora...');
+    this.logger.log('Iniciando aplicación automática de mora para todos los tenants...');
+    const guarderias = await this.guarderiaRepo.find();
+    let totalAplicadas = 0;
 
+    for (const g of guarderias) {
+        const tenant: TenantContext = { 
+          guarderiaId: g.id, 
+          scope: 'guarderia',
+          role: Role.SUPERADMIN, // System context
+          userId: 0
+        };
+        totalAplicadas += await this.aplicarMoraPorTenant(tenant);
+    }
+
+    return totalAplicadas;
+  }
+
+  private async aplicarMoraPorTenant(tenant: TenantContext): Promise<number> {
     const facturasVencidas = await this.facturaRepo.find({
-      where: {
+      where: this.buildTenantWhere(tenant, {
         estado: EstadoFactura.PENDIENTE,
-      },
+      }),
       relations: ['cliente'],
     });
 
@@ -196,7 +222,7 @@ export class MoraService {
     hoy.setHours(0, 0, 0, 0);
 
     const { tasaInteres, tasaRecargo, diasGracia } =
-      await this.getConfiguracion();
+      await this.getConfiguracion(tenant);
 
     let aplicadas = 0;
 
@@ -235,28 +261,24 @@ export class MoraService {
 
       aplicadas++;
       this.logger.log(
-        `Mora actualizada en factura ${factura.numero}: +${interesMoratorio.toFixed(2)} interés`,
+        `[Tenant ${tenant.guarderiaId}] Mora actualizada en factura ${factura.numero}: +${interesMoratorio.toFixed(2)} interés`,
       );
     }
-
-    this.logger.log(
-      `Aplicación automática de mora completada. ${aplicadas} facturas actualizadas.`,
-    );
     return aplicadas;
   }
 
-  async getFacturasConMora() {
+  async getFacturasConMora(tenant: TenantContext) {
     return this.facturaRepo.find({
       where: [
-        { estado: EstadoFactura.PENDIENTE, interesMoratorio: Not(0) },
-        { estado: EstadoFactura.PENDIENTE, recargo: Not(0) },
+        this.buildTenantWhere(tenant, { estado: EstadoFactura.PENDIENTE, interesMoratorio: Not(0) }),
+        this.buildTenantWhere(tenant, { estado: EstadoFactura.PENDIENTE, recargo: Not(0) }),
       ],
       relations: ['cliente'],
       order: { fechaVencimiento: 'ASC' },
     });
   }
 
-  async getFacturasVencidasSinMora() {
+  async getFacturasVencidasSinMora(tenant: TenantContext) {
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
 
@@ -264,6 +286,7 @@ export class MoraService {
       .createQueryBuilder('f')
       .leftJoin('f.cliente', 'c')
       .where('f.estado = :estado', { estado: EstadoFactura.PENDIENTE })
+      .andWhere('f.guarderiaId = :gId', { gId: tenant.guarderiaId })
       .andWhere('f.fechaVencimiento < :hoy', { hoy })
       .andWhere('(f.interesMoratorio = 0 OR f.interesMoratorio IS NULL)')
       .andWhere('(f.recargo = 0 OR f.recargo IS NULL)')

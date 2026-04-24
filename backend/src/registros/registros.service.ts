@@ -12,17 +12,22 @@ import {
   PaginationQuery,
   PaginatedResult,
 } from '../common/pagination/pagination.helper';
+import { BaseTenantService } from '../compartido/bases/base-tenant.service';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
 
 @Injectable()
-export class RegistrosService {
+export class RegistrosService extends BaseTenantService {
   constructor(
     @InjectRepository(RegistroServicio)
     private readonly registroRepo: Repository<RegistroServicio>,
     private readonly cargosService: CargosService,
     private readonly notificacionesService: NotificacionesService,
-  ) {}
+  ) {
+    super();
+  }
 
   async findAll(
+    tenant: TenantContext,
     query: PaginationQuery & { search?: string; estado?: string } = {},
     embarcacionId?: number,
   ): Promise<PaginatedResult<RegistroServicio>> {
@@ -33,7 +38,7 @@ export class RegistrosService {
       order: { createdAt: 'DESC' },
     };
 
-    const where: FindOptionsWhere<RegistroServicio> = {};
+    const where: FindOptionsWhere<RegistroServicio> = this.buildTenantWhere(tenant);
 
     if (embarcacionId) {
       where.embarcacionId = embarcacionId;
@@ -55,9 +60,9 @@ export class RegistrosService {
     return paginate(this.registroRepo, pagination, options);
   }
 
-  async findOne(id: number) {
+  async findOne(tenant: TenantContext, id: number) {
     const registro = await this.registroRepo.findOne({
-      where: { id },
+      where: this.buildTenantWhere(tenant, { id }),
       relations: ['embarcacion', 'servicio', 'embarcacion.cliente'],
     });
     if (!registro)
@@ -67,8 +72,11 @@ export class RegistrosService {
     return registro;
   }
 
-  async create(data: Partial<RegistroServicio>) {
-    const registro = this.registroRepo.create(data);
+  async create(tenant: TenantContext, data: Partial<RegistroServicio>) {
+    const registro = this.registroRepo.create({
+      ...data,
+      guarderiaId: tenant.guarderiaId,
+    });
     const saved = await this.registroRepo.save(registro);
 
     // Cargar relaciones para la notificación
@@ -79,7 +87,7 @@ export class RegistrosService {
 
     if (completo) {
       // Notificar a operadores que hay un servicio programado
-      await this.notificacionesService.createForRole(Role.OPERADOR, {
+      await this.notificacionesService.createForRole(tenant, Role.OPERADOR, {
         titulo: 'Servicio Programado',
         mensaje: `${completo.servicio?.nombre ?? 'Servicio'} para "${completo.embarcacion?.nombre}" programado para el ${completo.fechaProgramada}.`,
         tipo: NotificacionTipo.INFO,
@@ -89,15 +97,15 @@ export class RegistrosService {
     return saved;
   }
 
-  async update(id: number, data: Partial<RegistroServicio>) {
-    await this.findOne(id);
-    await this.registroRepo.update(id, data);
-    return this.findOne(id);
+  async update(tenant: TenantContext, id: number, data: Partial<RegistroServicio>) {
+    await this.findOne(tenant, id);
+    await this.registroRepo.update({ id, guarderiaId: tenant.guarderiaId }, data);
+    return this.findOne(tenant, id);
   }
 
-  async complete(id: number, costoFinal?: number): Promise<RegistroServicio> {
+  async complete(tenant: TenantContext, id: number, costoFinal?: number): Promise<RegistroServicio> {
     const registro = await this.registroRepo.findOne({
-      where: { id },
+      where: this.buildTenantWhere(tenant, { id }),
       relations: ['embarcacion', 'embarcacion.cliente', 'servicio'],
     });
 
@@ -113,7 +121,7 @@ export class RegistrosService {
 
     // 1. Marcar como facturado y generar Cargo automático
     registro.facturado = true;
-    const cargo = await this.cargosService.create({
+    const cargo = await this.cargosService.create(tenant, {
       clienteId: registro.embarcacion.cliente.id,
       descripcion: `Servicio: ${registro.servicio.nombre} - ${registro.embarcacion.nombre}`,
       monto: registro.costoFinal || registro.servicio.precioBase,
@@ -126,7 +134,7 @@ export class RegistrosService {
     const saved = await this.registroRepo.save(registro);
 
     // 2. Notificación Interna (App In-box) para Admins
-    await this.notificacionesService.createForRole(Role.ADMIN, {
+    await this.notificacionesService.createForRole(tenant, Role.ADMIN, {
       titulo: 'Mantenimiento Finalizado',
       mensaje: `El servicio "${registro.servicio.nombre}" para "${registro.embarcacion.nombre}" ha sido completado.`,
       tipo: NotificacionTipo.EXITO,
@@ -151,8 +159,8 @@ export class RegistrosService {
     return saved;
   }
 
-  async remove(id: number) {
-    const registro = await this.findOne(id);
+  async remove(tenant: TenantContext, id: number) {
+    const registro = await this.findOne(tenant, id);
     return this.registroRepo.remove(registro);
   }
 }

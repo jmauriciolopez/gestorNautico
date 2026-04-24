@@ -23,43 +23,56 @@ interface RequestWithUser extends Request {
   };
 }
 
-@UseGuards(AuthTokenGuard)
+import { TenantGuard } from '../auth/guards/tenant.guard';
+import { ActiveTenant } from '../auth/decorators/active-tenant.decorator';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+
+@UseGuards(AuthTokenGuard, TenantGuard)
 @Controller('notificaciones')
 export class NotificacionesController {
   constructor(private readonly notificacionesService: NotificacionesService) {}
 
   @Get()
   async getMyNotifications(
+    @ActiveTenant() tenant: TenantContext,
     @Req() request: RequestWithUser,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
   ) {
     const userId = request.user.sub;
-    return this.notificacionesService.findAllByUser(userId, { page, limit });
+    return this.notificacionesService.findAllByUser(tenant, userId, {
+      page,
+      limit,
+    });
   }
 
   @Patch(':id/leer')
   async markAsRead(
+    @ActiveTenant() tenant: TenantContext,
     @Param('id') id: string,
     @Req() request: RequestWithUser,
   ): Promise<Notificacion> {
     const userId = request.user.sub;
-    return this.notificacionesService.markAsRead(+id, userId);
+    return this.notificacionesService.markAsRead(tenant, +id, userId);
   }
 
   @Post('leer-todas')
-  async markAllAsRead(@Req() request: RequestWithUser): Promise<void> {
+  async markAllAsRead(
+    @ActiveTenant() tenant: TenantContext,
+    @Req() request: RequestWithUser,
+  ): Promise<void> {
     const userId = request.user.sub;
-    return this.notificacionesService.markAllAsRead(userId);
+    return this.notificacionesService.markAllAsRead(tenant, userId);
   }
 
   @Delete(':id')
   async deleteNotification(
+    @ActiveTenant() tenant: TenantContext,
     @Param('id') id: string,
     @Req() request: RequestWithUser,
   ): Promise<void> {
     const userId = request.user.sub;
-    return this.notificacionesService.delete(+id, userId);
+    return this.notificacionesService.delete(tenant, +id, userId);
   }
 
   /**

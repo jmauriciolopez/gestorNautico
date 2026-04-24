@@ -12,11 +12,13 @@ import { Pago } from '../pagos/pago.entity';
 import { Zona } from '../zonas/zona.entity';
 import { Espacio } from '../espacios/espacio.entity';
 import { Rack } from '../racks/rack.entity';
-import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import { TipoCargo } from '../cargos/cargo.entity';
+import { NotificacionesService } from '../notificaciones/notificaciones.service';
+import { BaseTenantService } from '../compartido/bases/base-tenant.service';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
 
 @Injectable()
-export class DashboardService {
+export class DashboardService extends BaseTenantService {
   constructor(
     @InjectRepository(Cliente)
     private readonly clienteRepo: Repository<Cliente>,
@@ -35,21 +37,27 @@ export class DashboardService {
     @InjectRepository(Rack)
     private readonly rackRepo: Repository<Rack>,
     private readonly notificacionesService: NotificacionesService,
-  ) {}
+  ) {
+    super();
+  }
 
-  async getSummary() {
+  async getSummary(tenant: TenantContext) {
     const [totalClientes, totalBarcos] = await Promise.all([
-      this.clienteRepo.count(),
-      this.barcoRepo.count(),
+      this.clienteRepo.count({ where: this.buildTenantWhere(tenant) }),
+      this.barcoRepo.count({ where: this.buildTenantWhere(tenant) }),
     ]);
 
     // Ocupación
     const [enCuna, enAgua] = await Promise.all([
       this.barcoRepo.count({
-        where: { estado_operativo: EstadoEmbarcacion.EN_CUNA },
+        where: this.buildTenantWhere(tenant, {
+          estado_operativo: EstadoEmbarcacion.EN_CUNA,
+        }),
       }),
       this.barcoRepo.count({
-        where: { estado_operativo: EstadoEmbarcacion.EN_AGUA },
+        where: this.buildTenantWhere(tenant, {
+          estado_operativo: EstadoEmbarcacion.EN_AGUA,
+        }),
       }),
     ]);
 
@@ -59,10 +67,12 @@ export class DashboardService {
         .createQueryBuilder('c')
         .select('SUM(c.monto)', 'total')
         .where('c.pagado = :pagado', { pagado: false })
+        .andWhere('c.guarderiaId = :gId', { gId: tenant.guarderiaId })
         .getRawOne<{ total: string }>(),
       this.pagoRepo
         .createQueryBuilder('p')
         .select('SUM(p.monto)', 'total')
+        .where('p.guarderiaId = :gId', { gId: tenant.guarderiaId })
         .getRawOne<{ total: string }>(),
     ]);
 
@@ -72,11 +82,12 @@ export class DashboardService {
     // Actividad Reciente
     const [ultimosMovimientos, ultimasNotificaciones] = await Promise.all([
       this.movRepo.find({
+        where: this.buildTenantWhere(tenant),
         relations: ['embarcacion'],
         order: { fecha: 'DESC' },
         take: 6,
       }),
-      this.notificacionesService.findAllRecentGlobal(6),
+      this.notificacionesService.findAllRecentGlobal(tenant, 6),
     ]);
 
     const [
@@ -85,14 +96,14 @@ export class DashboardService {
       deudaDetalle,
       embarcacionesLibres,
     ] = await Promise.all([
-      this.getFinanzasSeries(),
-      this.getRecaudacionDetalleAll(),
-      this.getDeudaDetalleAll(),
+      this.getFinanzasSeries(tenant),
+      this.getRecaudacionDetalleAll(tenant),
+      this.getDeudaDetalleAll(tenant),
       this.barcoRepo.find({
-        where: {
+        where: this.buildTenantWhere(tenant, {
           espacioId: null,
           estado_operativo: Not(EstadoEmbarcacion.INACTIVA),
-        },
+        }),
         relations: ['cliente'],
       }),
     ]);
@@ -124,7 +135,7 @@ export class DashboardService {
     };
   }
 
-  private async getRecaudacionDetalleAll() {
+  private async getRecaudacionDetalleAll(tenant: TenantContext) {
     // 1 query: SUM agrupado por día/semana/mes usando DATE_TRUNC
     const now = new Date();
     const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -142,6 +153,7 @@ export class DashboardService {
         'SUM(p.monto) as sum',
       ])
       .where('p.fecha >= :monthStart', { monthStart })
+      .andWhere('p.guarderiaId = :gId', { gId: tenant.guarderiaId })
       .setParameter('weekStart', weekStart)
       .setParameter('dayStart', dayStart)
       .groupBy('1')
@@ -155,7 +167,7 @@ export class DashboardService {
     };
   }
 
-  private async getDeudaDetalleAll() {
+  private async getDeudaDetalleAll(tenant: TenantContext) {
     // 1 query: SUM + COUNT agrupado por bucket
     const now = new Date();
     const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -180,6 +192,7 @@ export class DashboardService {
       ])
       .where('c.pagado = false')
       .andWhere('c.fechaVencimiento < :monthStart', { monthStart })
+      .andWhere('c.guarderiaId = :gId', { gId: tenant.guarderiaId })
       .setParameter('weekStart', weekStart)
       .setParameter('dayStart', dayStart)
       .setParameter('vencidoEnd', vencidoEnd)
@@ -200,7 +213,7 @@ export class DashboardService {
     };
   }
 
-  private async getFinanzasSeries() {
+  private async getFinanzasSeries(tenant: TenantContext) {
     // 1 sola query SQL para los últimos 6 meses
     const now = new Date();
     const startWindow = new Date(now.getFullYear(), now.getMonth() - 5, 1);
@@ -213,6 +226,7 @@ export class DashboardService {
         'SUM(p.monto) as sum',
       ])
       .where('p.fecha >= :start', { start: startWindow })
+      .andWhere('p.guarderiaId = :gId', { gId: tenant.guarderiaId })
       .groupBy('mes_key, mes_label')
       .orderBy('mes_key', 'ASC')
       .getRawMany<{ mes_key: string; mes_label: string; sum: string }>();
@@ -233,7 +247,10 @@ export class DashboardService {
     return result;
   }
 
-  async getRecaudacionPorPeriodo(periodo: 'dia' | 'semana' | 'mes') {
+  async getRecaudacionPorPeriodo(
+    tenant: TenantContext,
+    periodo: 'dia' | 'semana' | 'mes',
+  ) {
     const now = new Date();
     let start: Date;
 
@@ -250,12 +267,16 @@ export class DashboardService {
       .createQueryBuilder('p')
       .select('SUM(p.monto)', 'total')
       .where('p.fecha BETWEEN :start AND :end', { start, end: now })
+      .andWhere('p.guarderiaId = :gId', { gId: tenant.guarderiaId })
       .getRawOne<{ total: string }>();
 
     return { total: Number(res?.total || 0), periodo };
   }
 
-  async getDeudaPorPeriodo(periodo: 'dia' | 'semana' | 'mes' | 'vencido') {
+  async getDeudaPorPeriodo(
+    tenant: TenantContext,
+    periodo: 'dia' | 'semana' | 'mes' | 'vencido',
+  ) {
     const now = new Date();
     let start: Date;
     let end: Date = now;
@@ -279,6 +300,7 @@ export class DashboardService {
       .addSelect('COUNT(c.id)', 'cantidad')
       .where('c.pagado = :pagado', { pagado: false })
       .andWhere('c.fechaVencimiento BETWEEN :start AND :end', { start, end })
+      .andWhere('c.guarderiaId = :gId', { gId: tenant.guarderiaId })
       .getRawOne<{ total: string; cantidad: string }>();
 
     return {
@@ -288,8 +310,9 @@ export class DashboardService {
     };
   }
 
-  async getRackMap() {
+  async getRackMap(tenant: TenantContext) {
     const zonas = await this.zonaRepo.find({
+      where: this.buildTenantWhere(tenant),
       relations: [
         'ubicacion',
         'racks',
@@ -327,19 +350,23 @@ export class DashboardService {
     }));
   }
 
-  async getOccupancyMetrics() {
+  async getOccupancyMetrics(tenant: TenantContext) {
     const [totalEspacios, ocupados] = await Promise.all([
-      this.espacioRepo.count(),
-      this.espacioRepo.count({ where: { ocupado: true } }),
+      this.espacioRepo.count({ where: this.buildTenantWhere(tenant) }),
+      this.espacioRepo.count({
+        where: this.buildTenantWhere(tenant, { ocupado: true }),
+      }),
     ]);
 
     const metrosOcupadosRes = await this.barcoRepo
       .createQueryBuilder('b')
       .select('SUM(b.eslora)', 'total')
       .where('b.espacioId IS NOT NULL')
+      .andWhere('b.guarderiaId = :gId', { gId: tenant.guarderiaId })
       .getRawOne<{ total: string }>();
 
     const porZona = await this.zonaRepo.find({
+      where: this.buildTenantWhere(tenant),
       relations: ['racks', 'racks.espacios'],
     });
 
@@ -368,7 +395,7 @@ export class DashboardService {
     };
   }
 
-  async getHistoricalProfitability(months: number = 12) {
+  async getHistoricalProfitability(tenant: TenantContext, months: number = 12) {
     const now = new Date();
     const startDate = new Date(
       now.getFullYear(),
@@ -386,6 +413,7 @@ export class DashboardService {
         'SUM(p.monto) as total',
       ])
       .where('p.fecha >= :start', { start: startDate })
+      .andWhere('p.guarderiaId = :gId', { gId: tenant.guarderiaId })
       .groupBy('mes_key, c.tipo')
       .orderBy('mes_key', 'ASC')
       .getRawMany<{ mes_key: string; tipo: TipoCargo; total: string }>();
@@ -421,7 +449,7 @@ export class DashboardService {
     return Array.from(dataByMonth.values());
   }
 
-  async getDemandPeaks() {
+  async getDemandPeaks(tenant: TenantContext) {
     const raw = await this.movRepo
       .createQueryBuilder('m')
       .select([
@@ -429,6 +457,7 @@ export class DashboardService {
         'EXTRACT(HOUR FROM m.fecha) as hora',
         'COUNT(m.id) as cantidad',
       ])
+      .where('m.guarderiaId = :gId', { gId: tenant.guarderiaId })
       .groupBy('dow, hora')
       .orderBy('dow', 'ASC')
       .addOrderBy('hora', 'ASC')
@@ -441,7 +470,7 @@ export class DashboardService {
     }));
   }
 
-  async getAverageCollectionTime() {
+  async getAverageCollectionTime(tenant: TenantContext) {
     const raw = await this.pagoRepo
       .createQueryBuilder('p')
       .leftJoin('p.cargo', 'c')
@@ -450,6 +479,7 @@ export class DashboardService {
         'avg_days',
       )
       .where('c."fechaEmision" IS NOT NULL')
+      .andWhere('p.guarderiaId = :gId', { gId: tenant.guarderiaId })
       .getRawOne<{ avg_days: string }>();
 
     return {
@@ -457,17 +487,19 @@ export class DashboardService {
     };
   }
 
-  async getRevenuePerMeter() {
+  async getRevenuePerMeter(tenant: TenantContext) {
     const [revenueRes, esloraRes] = await Promise.all([
       this.pagoRepo
         .createQueryBuilder('p')
         .select('SUM(p.monto)', 'total')
         .where("p.fecha >= DATE_TRUNC('month', CURRENT_DATE)")
+        .andWhere('p.guarderiaId = :gId', { gId: tenant.guarderiaId })
         .getRawOne<{ total: string }>(),
       this.barcoRepo
         .createQueryBuilder('b')
         .select('SUM(b.eslora)', 'total')
         .where('b.espacioId IS NOT NULL')
+        .andWhere('b.guarderiaId = :gId', { gId: tenant.guarderiaId })
         .getRawOne<{ total: string }>(),
     ]);
 
@@ -481,7 +513,7 @@ export class DashboardService {
     };
   }
 
-  async getTopVIPClients() {
+  async getTopVIPClients(tenant: TenantContext) {
     const raw = await this.pagoRepo
       .createQueryBuilder('p')
       .leftJoin('p.cliente', 'cl')
@@ -491,6 +523,7 @@ export class DashboardService {
         'SUM(p.monto) as total_pagado',
         'COUNT(p.id) as cantidad_pagos',
       ])
+      .where('p.guarderiaId = :gId', { gId: tenant.guarderiaId })
       .groupBy('cl.id, cl.nombre')
       .orderBy('total_pagado', 'DESC')
       .limit(10)

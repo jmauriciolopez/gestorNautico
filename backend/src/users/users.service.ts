@@ -13,28 +13,36 @@ import {
   paginate,
   PaginationQuery,
 } from '../common/pagination/pagination.helper';
+import { BaseTenantService } from '../compartido/bases/base-tenant.service';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
 
 @Injectable()
-export class UsersService {
+export class UsersService extends BaseTenantService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-  ) {}
+  ) {
+    super();
+  }
 
-  findAll(query: PaginationQuery = {}) {
+  findAll(tenant: TenantContext, query: PaginationQuery = {}) {
     return paginate(this.userRepository, query, {
+      where: this.buildTenantWhere(tenant),
       order: { id: 'ASC' },
     });
   }
 
-  async findOne(id: number) {
-    const user = await this.userRepository.findOneBy({ id });
+  async findOne(tenant: TenantContext, id: number) {
+    const user = await this.userRepository.findOne({
+      where: this.buildTenantWhere(tenant, { id }),
+    });
     if (!user)
       throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
     return user;
   }
 
-  async create(createUserDto: CreateUserDto) {
+  async create(tenant: TenantContext, createUserDto: CreateUserDto) {
+    // El nombre de usuario debe ser único en TODO el sistema
     const existingUser = await this.userRepository.findOneBy({
       usuario: createUserDto.usuario,
     });
@@ -49,17 +57,39 @@ export class UsersService {
       createUserDto.clave = await bcrypt.hash(createUserDto.clave, salt);
     }
 
-    const newUser = this.userRepository.create(createUserDto);
+    const newUser = this.userRepository.create({
+      ...createUserDto,
+      guarderiaId: tenant.guarderiaId as number,
+    });
     return await this.userRepository.save(newUser);
   }
 
   async createSuperAdmin(createUserDto: CreateUserDto) {
     const superAdminDto = { ...createUserDto, role: Role.SUPERADMIN };
-    return this.create(superAdminDto);
+    // Los SuperAdmins no tienen guarderiaId (null)
+    const existingUser = await this.userRepository.findOneBy({
+      usuario: createUserDto.usuario,
+    });
+    if (existingUser) {
+      throw new ConflictException(
+        `El usuario "${createUserDto.usuario}" ya existe`,
+      );
+    }
+
+    if (superAdminDto.clave) {
+      const salt = await bcrypt.genSalt();
+      superAdminDto.clave = await bcrypt.hash(superAdminDto.clave, salt);
+    }
+
+    const newUser = this.userRepository.create({
+      ...superAdminDto,
+      guarderiaId: null,
+    });
+    return await this.userRepository.save(newUser);
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto) {
-    const user = await this.findOne(id);
+  async update(tenant: TenantContext, id: number, updateUserDto: UpdateUserDto) {
+    const user = await this.findOne(tenant, id);
 
     if (updateUserDto.usuario && updateUserDto.usuario !== user.usuario) {
       const existingUser = await this.userRepository.findOneBy({
@@ -81,8 +111,8 @@ export class UsersService {
     return await this.userRepository.save(user);
   }
 
-  async remove(id: number) {
-    const user = await this.findOne(id);
+  async remove(tenant: TenantContext, id: number) {
+    const user = await this.findOne(tenant, id);
     await this.userRepository.remove(user);
     return { message: 'Usuario eliminado correctamente' };
   }
@@ -90,6 +120,7 @@ export class UsersService {
   findOneByEmail(email: string): Promise<User | null> {
     return this.userRepository.findOneBy({ email });
   }
+
   findOneByUsername(usuario: string): Promise<User | null> {
     return this.userRepository.findOneBy({ usuario });
   }

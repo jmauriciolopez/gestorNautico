@@ -19,6 +19,9 @@ export class Configuracion {
   @Column({ nullable: true })
   descripcion: string;
 
+  @Column({ type: 'int' })
+  guarderiaId: number;
+
   @UpdateDateColumn()
   updatedAt: Date;
 }

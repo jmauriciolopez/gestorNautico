@@ -11,13 +11,15 @@ import {
   Embarcacion,
   EstadoEmbarcacion,
 } from '../embarcaciones/embarcaciones.entity';
+import { BaseTenantService } from '../compartido/bases/base-tenant.service';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
 import {
   paginate,
   PaginationQuery,
 } from '../common/pagination/pagination.helper';
 
 @Injectable()
-export class EspaciosService implements OnApplicationBootstrap {
+export class EspaciosService extends BaseTenantService implements OnApplicationBootstrap {
   private readonly logger = new Logger(EspaciosService.name);
 
   constructor(
@@ -25,7 +27,9 @@ export class EspaciosService implements OnApplicationBootstrap {
     private readonly espacioRepo: Repository<Espacio>,
     @InjectRepository(Embarcacion)
     private readonly embarcacionRepo: Repository<Embarcacion>,
-  ) {}
+  ) {
+    super();
+  }
 
   async onApplicationBootstrap() {
     try {
@@ -88,15 +92,16 @@ export class EspaciosService implements OnApplicationBootstrap {
     return { corregidos };
   }
 
-  findAll(query: PaginationQuery = {}) {
+  findAll(tenant: TenantContext, query: PaginationQuery = {}) {
     return paginate(this.espacioRepo, query, {
+      where: this.buildTenantWhere(tenant),
       relations: ['rack', 'rack.zona', 'rack.zona.ubicacion'],
     });
   }
 
-  async findOne(id: number) {
+  async findOne(tenant: TenantContext, id: number) {
     const espacio = await this.espacioRepo.findOne({
-      where: { id },
+      where: this.buildTenantWhere(tenant, { id }),
       relations: ['rack', 'rack.zona', 'rack.zona.ubicacion'],
     });
     if (!espacio)
@@ -104,20 +109,23 @@ export class EspaciosService implements OnApplicationBootstrap {
     return espacio;
   }
 
-  create(data: Partial<Espacio>) {
-    const espacio = this.espacioRepo.create(data);
+  create(tenant: TenantContext, data: Partial<Espacio>) {
+    const espacio = this.espacioRepo.create({
+      ...data,
+      guarderiaId: tenant.guarderiaId as number,
+    });
     return this.espacioRepo.save(espacio);
   }
 
-  async update(id: number, data: Partial<Espacio>) {
-    await this.findOne(id);
+  async update(tenant: TenantContext, id: number, data: Partial<Espacio>) {
+    await this.findOne(tenant, id);
     await this.espacioRepo.update(id, data);
-    return this.findOne(id);
+    return this.findOne(tenant, id);
   }
 
-  async remove(id: number) {
+  async remove(tenant: TenantContext, id: number) {
     const espacio = await this.espacioRepo.findOne({
-      where: { id },
+      where: this.buildTenantWhere(tenant, { id }),
       relations: ['embarcacion'],
     });
     if (!espacio)
@@ -133,9 +141,12 @@ export class EspaciosService implements OnApplicationBootstrap {
     return this.espacioRepo.remove(espacio);
   }
 
-  async getEstadisticas() {
-    const total = await this.espacioRepo.count();
-    const ocupados = await this.espacioRepo.count({ where: { ocupado: true } });
+  async getEstadisticas(tenant: TenantContext) {
+    const where = this.buildTenantWhere(tenant);
+    const total = await this.espacioRepo.count({ where });
+    const ocupados = await this.espacioRepo.count({
+      where: { ...where, ocupado: true },
+    });
     const libres = total - ocupados;
     const porcentajeOcupacion = total > 0 ? (ocupados / total) * 100 : 0;
 

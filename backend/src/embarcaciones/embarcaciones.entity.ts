@@ -8,9 +8,11 @@ import {
   OneToOne,
   JoinColumn,
   Index,
+  Unique,
 } from 'typeorm';
 import { Cliente } from '../clientes/clientes.entity';
 import { Espacio } from '../espacios/espacio.entity';
+import { Guarderia } from '../guarderias/guarderia.entity';
 
 export enum EstadoEmbarcacion {
   EN_CUNA = 'EN_CUNA',
@@ -21,6 +23,7 @@ export enum EstadoEmbarcacion {
 }
 
 @Entity('embarcaciones')
+@Unique(['matricula', 'guarderiaId'])
 export class Embarcacion {
   @PrimaryGeneratedColumn()
   id: number;
@@ -28,7 +31,7 @@ export class Embarcacion {
   @Column()
   nombre: string;
 
-  @Column({ unique: true })
+  @Column()
   matricula: string;
 
   @Column({ nullable: true })
@@ -71,6 +74,14 @@ export class Embarcacion {
   @OneToOne(() => Espacio, (espacio) => espacio.embarcacion, { nullable: true })
   @JoinColumn({ name: 'espacioId' })
   espacio: Espacio;
+
+  @Index()
+  @Column({ type: 'int' })
+  guarderiaId: number;
+
+  @ManyToOne(() => Guarderia, { nullable: false })
+  @JoinColumn({ name: 'guarderiaId' })
+  guarderia: Guarderia;
 
   @CreateDateColumn()
   createdAt: Date;

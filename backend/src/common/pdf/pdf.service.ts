@@ -5,17 +5,18 @@ const PDFDocument = require('pdfkit-table');
 import { Factura } from '../../facturas/factura.entity';
 import { Pago } from '../../pagos/pago.entity';
 import { ConfiguracionService } from '../../configuracion/configuracion.service';
+import { TenantContext } from '../../compartido/interfaces/tenant-context.interface';
 
 @Injectable()
 export class PdfService {
   constructor(private readonly configService: ConfiguracionService) {}
 
-  async generateInvoice(factura: Factura): Promise<Buffer> {
+  async generateInvoice(tenant: TenantContext, factura: Factura): Promise<Buffer> {
     const [nombre, direccion, telefono, email] = await Promise.all([
-      this.configService.getValor('NOMBRE_GUARDERIA', 'Gestor Náutico'),
-      this.configService.getValor('DIRECCION', ''),
-      this.configService.getValor('TELEFONO', ''),
-      this.configService.getValor('EMAIL_GUARDERIA', ''),
+      this.configService.getValor(tenant, 'NOMBRE_GUARDERIA', 'Gestor Náutico'),
+      this.configService.getValor(tenant, 'DIRECCION', ''),
+      this.configService.getValor(tenant, 'TELEFONO', ''),
+      this.configService.getValor(tenant, 'EMAIL_GUARDERIA', ''),
     ]);
 
     const doc = new PDFDocument({ size: 'A4', margin: 50 });
@@ -168,8 +169,9 @@ export class PdfService {
     });
   }
 
-  async generateReceipt(pago: Pago): Promise<Buffer> {
+  async generateReceipt(tenant: TenantContext, pago: Pago): Promise<Buffer> {
     const nombre = await this.configService.getValor(
+      tenant,
       'NOMBRE_GUARDERIA',
       'Gestor Náutico',
     );

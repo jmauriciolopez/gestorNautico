@@ -8,14 +8,21 @@ import {
   PaginatedResult,
 } from '../common/pagination/pagination.helper';
 
+import { BaseTenantService } from '../compartido/bases/base-tenant.service';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+
 @Injectable()
-export class ConfiguracionService implements OnApplicationBootstrap {
+export class ConfiguracionService extends BaseTenantService
+  implements OnApplicationBootstrap
+{
   private readonly logger = new Logger(ConfiguracionService.name);
 
   constructor(
     @InjectRepository(Configuracion)
     private readonly configRepo: Repository<Configuracion>,
-  ) {}
+  ) {
+    super();
+  }
 
   async onApplicationBootstrap() {
     try {
@@ -106,38 +113,60 @@ export class ConfiguracionService implements OnApplicationBootstrap {
   }
 
   async findAll(
+    tenant: TenantContext,
     query: PaginationQuery = {},
   ): Promise<PaginatedResult<Configuracion>> {
-    return paginate(this.configRepo, query, { order: { clave: 'ASC' } });
+    return paginate(this.configRepo, query, {
+      where: this.buildTenantWhere(tenant),
+      order: { clave: 'ASC' },
+    });
   }
 
-  async findByClave(clave: string) {
-    return this.configRepo.findOne({ where: { clave } });
+  async findByClave(tenant: TenantContext, clave: string) {
+    return this.configRepo.findOne({
+      where: this.buildTenantWhere(tenant, { clave }),
+    });
   }
 
-  async getValor(clave: string, defaultValue = ''): Promise<string> {
-    const config = await this.findByClave(clave);
+  async getValor(
+    tenant: TenantContext,
+    clave: string,
+    defaultValue = '',
+  ): Promise<string> {
+    const config = await this.findByClave(tenant, clave);
     return config ? config.valor : defaultValue;
   }
 
-  async getValorNumerico(clave: string, defaultValue = 0): Promise<number> {
-    const valor = await this.getValor(clave);
+  async getValorNumerico(
+    tenant: TenantContext,
+    clave: string,
+    defaultValue = 0,
+  ): Promise<number> {
+    const valor = await this.getValor(tenant, clave);
     return valor ? Number(valor) : defaultValue;
   }
 
-  async update(clave: string, valor: string) {
-    const config = await this.configRepo.findOne({ where: { clave } });
+  async update(tenant: TenantContext, clave: string, valor: string) {
+    const config = await this.configRepo.findOne({
+      where: this.buildTenantWhere(tenant, { clave }),
+    });
     if (config) {
       config.valor = valor;
       return this.configRepo.save(config);
     }
-    return null;
+    // Si no existe para este tenant, lo creamos
+    const nueva = this.configRepo.create({
+      clave,
+      valor,
+      guarderiaId: tenant.guarderiaId as number,
+    });
+    return this.configRepo.save(nueva);
   }
 
-  async updateMultiple(updates: Record<string, string>) {
+  async updateMultiple(tenant: TenantContext, updates: Record<string, string>) {
     for (const [clave, valor] of Object.entries(updates)) {
-      await this.update(clave, valor);
+      await this.update(tenant, clave, valor);
     }
-    return this.findAll();
+    return this.findAll(tenant);
   }
 }

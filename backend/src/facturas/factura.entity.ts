@@ -8,9 +8,11 @@ import {
   OneToMany,
   JoinColumn,
   Index,
+  Unique,
 } from 'typeorm';
 import { Cliente } from '../clientes/clientes.entity';
 import { Cargo } from '../cargos/cargo.entity';
+import { Guarderia } from '../guarderias/guarderia.entity';
 
 export enum EstadoFactura {
   PENDIENTE = 'PENDIENTE',
@@ -19,11 +21,12 @@ export enum EstadoFactura {
 }
 
 @Entity('facturas')
+@Unique(['numero', 'guarderiaId'])
 export class Factura {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ unique: true })
+  @Column()
   numero: string;
 
   @Index()
@@ -57,6 +60,14 @@ export class Factura {
 
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   recargo: number;
+
+  @Index()
+  @Column({ type: 'int' })
+  guarderiaId: number;
+
+  @ManyToOne(() => Guarderia, { nullable: false })
+  @JoinColumn({ name: 'guarderiaId' })
+  guarderia: Guarderia;
 
   @Column({ type: 'date', nullable: true })
   fechaAplicacionMora: Date;

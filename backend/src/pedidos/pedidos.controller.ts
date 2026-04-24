@@ -17,38 +17,51 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../users/user.entity';
 
+import { TenantGuard } from '../auth/guards/tenant.guard';
+import { TenantRoles } from '../auth/decorators/tenant-roles.decorator';
+import { ActiveTenant } from '../auth/decorators/active-tenant.decorator';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+
 @Controller('pedidos')
-@UseGuards(AuthTokenGuard, RolesGuard)
+@UseGuards(AuthTokenGuard, TenantGuard, RolesGuard)
 export class PedidosController {
   constructor(private readonly pedidosService: PedidosService) {}
 
   @Get()
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
-  findAll(@Query('page') page?: number, @Query('limit') limit?: number) {
-    return this.pedidosService.findAll({ page, limit });
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+  findAll(
+    @ActiveTenant() tenant: TenantContext,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    return this.pedidosService.findAll(tenant, { page, limit });
   }
 
   @Get(':id')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
-  findOne(@Param('id') id: string) {
-    return this.pedidosService.findOne(+id);
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+  findOne(@ActiveTenant() tenant: TenantContext, @Param('id') id: string) {
+    return this.pedidosService.findOne(tenant, +id);
   }
 
   @Post()
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
-  create(@Body() data: CreatePedidoDto) {
-    return this.pedidosService.create(data);
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+  create(@ActiveTenant() tenant: TenantContext, @Body() data: CreatePedidoDto) {
+    return this.pedidosService.create(tenant, data);
   }
 
   @Patch(':id/estado')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
-  updateEstado(@Param('id') id: string, @Body() dto: UpdatePedidoEstadoDto) {
-    return this.pedidosService.updateEstado(+id, dto.estado);
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+  updateEstado(
+    @ActiveTenant() tenant: TenantContext,
+    @Param('id') id: string,
+    @Body() dto: UpdatePedidoEstadoDto,
+  ) {
+    return this.pedidosService.updateEstado(tenant, +id, dto.estado);
   }
 
   @Delete(':id')
-  @Roles(Role.SUPERADMIN, Role.ADMIN)
-  remove(@Param('id') id: string) {
-    return this.pedidosService.remove(+id);
+  @TenantRoles(Role.ADMIN)
+  remove(@ActiveTenant() tenant: TenantContext, @Param('id') id: string) {
+    return this.pedidosService.remove(tenant, +id);
   }
 }

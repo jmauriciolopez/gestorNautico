@@ -12,57 +12,72 @@ import {
 } from '@nestjs/common';
 import { RegistrosService } from './registros.service';
 import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
+import { TenantGuard } from '../auth/guards/tenant.guard';
+import { TenantRoles } from '../auth/decorators/tenant-roles.decorator';
 import { Role } from '../users/user.entity';
+import { ActiveTenant } from '../auth/decorators/active-tenant.decorator';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
 
 import { RegistroServicio } from './registro.entity';
 
 @Controller('registros')
-@UseGuards(AuthTokenGuard, RolesGuard)
+@UseGuards(AuthTokenGuard, TenantGuard)
 export class RegistrosController {
   constructor(private readonly registrosService: RegistrosService) {}
 
   @Get()
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+  @TenantRoles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
   findAll(
+    @ActiveTenant() tenant: TenantContext,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('embarcacionId') embarcacionId?: string,
   ) {
     return this.registrosService.findAll(
+      tenant,
       { page, limit },
       embarcacionId ? +embarcacionId : undefined,
     );
   }
 
   @Get(':id')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
-  findOne(@Param('id') id: string) {
-    return this.registrosService.findOne(+id);
+  @TenantRoles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+  findOne(@ActiveTenant() tenant: TenantContext, @Param('id') id: string) {
+    return this.registrosService.findOne(tenant, +id);
   }
 
   @Post()
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
-  create(@Body() data: Partial<RegistroServicio>) {
-    return this.registrosService.create(data);
+  @TenantRoles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+  create(
+    @ActiveTenant() tenant: TenantContext,
+    @Body() data: Partial<RegistroServicio>,
+  ) {
+    return this.registrosService.create(tenant, data);
   }
 
   @Put(':id')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
-  update(@Param('id') id: string, @Body() data: Partial<RegistroServicio>) {
-    return this.registrosService.update(+id, data);
+  @TenantRoles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+  update(
+    @ActiveTenant() tenant: TenantContext,
+    @Param('id') id: string,
+    @Body() data: Partial<RegistroServicio>,
+  ) {
+    return this.registrosService.update(tenant, +id, data);
   }
 
   @Patch(':id/completar')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
-  complete(@Param('id') id: string, @Body('costoFinal') costoFinal: number) {
-    return this.registrosService.complete(+id, costoFinal);
+  @TenantRoles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+  complete(
+    @ActiveTenant() tenant: TenantContext,
+    @Param('id') id: string,
+    @Body('costoFinal') costoFinal: number,
+  ) {
+    return this.registrosService.complete(tenant, +id, costoFinal);
   }
 
   @Delete(':id')
-  @Roles(Role.SUPERADMIN, Role.ADMIN)
-  remove(@Param('id') id: string) {
-    return this.registrosService.remove(+id);
+  @TenantRoles(Role.SUPERADMIN, Role.ADMIN)
+  remove(@ActiveTenant() tenant: TenantContext, @Param('id') id: string) {
+    return this.registrosService.remove(tenant, +id);
   }
 }

@@ -6,6 +6,8 @@ import {
   Embarcacion,
   EstadoEmbarcacion,
 } from '../embarcaciones/embarcaciones.entity';
+import { BaseTenantService } from '../compartido/bases/base-tenant.service';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
 
 export interface ImportResult {
   success: boolean;
@@ -38,7 +40,7 @@ export interface EmbarcacionImportRow {
 }
 
 @Injectable()
-export class ImportService {
+export class ImportService extends BaseTenantService {
   private readonly logger = new Logger(ImportService.name);
 
   constructor(
@@ -46,7 +48,9 @@ export class ImportService {
     private readonly clienteRepo: Repository<Cliente>,
     @InjectRepository(Embarcacion)
     private readonly embarcacionRepo: Repository<Embarcacion>,
-  ) {}
+  ) {
+    super();
+  }
 
   private parseCSV(content: string): string[][] {
     const lines = content.trim().split('\n');
@@ -81,7 +85,7 @@ export class ImportService {
     });
   }
 
-  async importClientes(csvContent: string): Promise<ImportResult> {
+  async importClientes(tenant: TenantContext, csvContent: string): Promise<ImportResult> {
     const result: ImportResult = {
       success: true,
       created: 0,
@@ -115,7 +119,7 @@ export class ImportService {
           }
 
           const existingCliente = await this.clienteRepo.findOne({
-            where: { dni: row.dni },
+            where: this.buildTenantWhere(tenant, { dni: row.dni }),
           });
 
           const activo = row.activo === 'true' || row.activo === '1';
@@ -148,6 +152,7 @@ export class ImportService {
               diaFacturacion: row.diaFacturacion ? diaFacturacion : 1,
               descuento: row.descuento ? descuento : 0,
               tipoCuota: row.tipoCuota || 'NINGUNA',
+              guarderiaId: tenant.guarderiaId,
             });
             result.created++;
           }
@@ -167,7 +172,7 @@ export class ImportService {
     return result;
   }
 
-  async importEmbarcaciones(csvContent: string): Promise<ImportResult> {
+  async importEmbarcaciones(tenant: TenantContext, csvContent: string): Promise<ImportResult> {
     const result: ImportResult = {
       success: true,
       created: 0,
@@ -201,7 +206,7 @@ export class ImportService {
           }
 
           const cliente = await this.clienteRepo.findOne({
-            where: { dni: row.dnidueno },
+            where: this.buildTenantWhere(tenant, { dni: row.dnidueno }),
           });
 
           if (!cliente) {
@@ -212,7 +217,7 @@ export class ImportService {
           }
 
           const existingEmbarcacion = await this.embarcacionRepo.findOne({
-            where: { matricula: row.matricula },
+            where: this.buildTenantWhere(tenant, { matricula: row.matricula }),
           });
 
           const eslora = row.eslora ? parseFloat(row.eslora) : undefined;
@@ -244,6 +249,7 @@ export class ImportService {
               estado_operativo:
                 (row.estado as EstadoEmbarcacion) || EstadoEmbarcacion.EN_CUNA,
               clienteId: cliente.id,
+              guarderiaId: tenant.guarderiaId,
             });
             await this.embarcacionRepo.save(nueva);
             result.created++;

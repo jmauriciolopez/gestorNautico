@@ -17,20 +17,26 @@ import { Role } from '../users/user.entity';
 import { CreateClienteDto } from './dto/create-cliente.dto';
 import { UpdateClienteDto } from './dto/update-cliente.dto';
 
+import { TenantRoles } from '../auth/decorators/tenant-roles.decorator';
+import { TenantGuard } from '../auth/guards/tenant.guard';
+import { ActiveTenant } from '../auth/decorators/active-tenant.decorator';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+
 @Controller('clientes')
-@UseGuards(AuthTokenGuard, RolesGuard)
-@Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+@UseGuards(AuthTokenGuard, TenantGuard, RolesGuard)
+@TenantRoles(Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
 export class ClientesController {
   constructor(private readonly clientesService: ClientesService) {}
 
   @Get()
   findAll(
+    @ActiveTenant() tenant: TenantContext,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('search') search?: string,
     @Query('onlyActive') onlyActive?: boolean,
   ) {
-    return this.clientesService.findAll({
+    return this.clientesService.findAll(tenant, {
       page,
       limit,
       search,
@@ -40,27 +46,31 @@ export class ClientesController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.clientesService.findOne(+id);
+  findOne(@ActiveTenant() tenant: TenantContext, @Param('id') id: string) {
+    return this.clientesService.findOne(tenant, +id);
   }
 
   @Get(':id/cuenta-corriente')
-  getCuentaCorriente(@Param('id') id: string) {
-    return this.clientesService.getCuentaCorriente(+id);
+  getCuentaCorriente(@ActiveTenant() tenant: TenantContext, @Param('id') id: string) {
+    return this.clientesService.getCuentaCorriente(tenant, +id);
   }
 
   @Post()
-  create(@Body() createClienteDto: CreateClienteDto) {
-    return this.clientesService.create(createClienteDto);
+  create(@ActiveTenant() tenant: TenantContext, @Body() createClienteDto: CreateClienteDto) {
+    return this.clientesService.create(tenant, createClienteDto);
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() updateClienteDto: UpdateClienteDto) {
-    return this.clientesService.update(+id, updateClienteDto);
+  update(
+    @ActiveTenant() tenant: TenantContext,
+    @Param('id') id: string,
+    @Body() updateClienteDto: UpdateClienteDto,
+  ) {
+    return this.clientesService.update(tenant, +id, updateClienteDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.clientesService.remove(+id);
+  remove(@ActiveTenant() tenant: TenantContext, @Param('id') id: string) {
+    return this.clientesService.remove(tenant, +id);
   }
 }
