@@ -21,7 +21,11 @@ export class ConfiguracionService implements OnApplicationBootstrap {
     try {
       await this.syncConfigs();
     } catch (error) {
-      this.logger.error(`Error al inicializar configuraciones: ${error.message}`);
+      this.logger.error(
+        `Error al inicializar configuraciones: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
     }
   }
 

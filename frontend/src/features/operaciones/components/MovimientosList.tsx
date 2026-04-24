@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import {
-  MapPin, Loader2, Plus, Calendar, ArrowRight, ArrowLeft,
+  MapPin, Loader2, Calendar, ArrowRight, ArrowLeft,
   History, FileText, Trash2, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { Movimiento, useMovimientosPaginados } from '../hooks/useOperaciones';
 import { NuevoMovimientoModal } from './NuevoMovimientoModal';
 import { ActionMenu } from '../../../shared/components/ActionMenu';
-import { useConfirm } from '../../../shared/context/ConfirmContext';
+import { useConfirm } from '../../../shared/hooks/useConfirm';
 
 const PAGE_SIZE = 20;
 
@@ -59,35 +59,6 @@ export function MovimientosList() {
 
   return (
     <div className="p-12 space-y-10">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-[var(--border-primary)]/40 pb-10">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-            <h3 className="text-2xl font-black text-[var(--text-primary)] uppercase tracking-tight">
-              Bitácora de Maniobras
-            </h3>
-          </div>
-          <p className="text-[10px] text-[var(--text-secondary)] font-black uppercase tracking-[0.3em] opacity-60">
-            Registro histórico de movimientos de flota
-          </p>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="px-6 py-3 bg-amber-500/10 border border-amber-500/20 rounded-[1.25rem] backdrop-blur-md">
-            <span className="text-[11px] font-black text-amber-500 uppercase tracking-[0.2em]">
-              {total} REGISTROS
-            </span>
-          </div>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-8 py-4 bg-amber-600 hover:bg-amber-500 text-white font-black rounded-2xl transition-all shadow-xl shadow-amber-900/40 active:scale-95 text-[10px] uppercase tracking-widest"
-          >
-            <Plus className="w-4 h-4" />
-            Registrar Operación Manual
-          </button>
-        </div>
-      </div>
-
       {/* Lista */}
       <div className={`grid grid-cols-1 gap-4 transition-opacity duration-200 ${isFetching ? 'opacity-60 pointer-events-none' : 'opacity-100'}`}>
         {movimientos.map((mov) => (

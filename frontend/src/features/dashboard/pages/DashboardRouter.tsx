@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { LayoutDashboard, Wrench } from 'lucide-react';
-import { useAuth } from '../../auth/context/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { Role } from '../../../types';
 import Dashboard from './Dashboard';
 import DashboardOperativo from './DashboardOperativo';

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, ConflictException } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
@@ -26,7 +27,7 @@ describe('CajasService', () => {
     save: jest.fn(),
     manager: {
       transaction: jest.fn((callback) =>
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         callback({
           findOne: jest.fn(),
           create: jest.fn(),
@@ -119,7 +120,7 @@ describe('CajasService', () => {
           create: jest.fn().mockReturnValue(mockCaja),
           save: jest.fn().mockResolvedValue(mockCaja),
         };
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return callback(tx);
       });
 
@@ -132,7 +133,7 @@ describe('CajasService', () => {
         const tx = {
           findOne: jest.fn().mockResolvedValue(mockCaja),
         };
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return callback(tx);
       });
 
@@ -149,7 +150,7 @@ describe('CajasService', () => {
             .fn()
             .mockResolvedValue({ ...mockCaja, estado: EstadoCaja.CERRADA }),
         };
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return callback(tx);
       });
 
@@ -163,7 +164,7 @@ describe('CajasService', () => {
         const tx = {
           findOne: jest.fn().mockResolvedValue(closedCaja),
         };
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return callback(tx);
       });
 
@@ -175,7 +176,7 @@ describe('CajasService', () => {
         const tx = {
           findOne: jest.fn().mockResolvedValue(null),
         };
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return callback(tx);
       });
 

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Search, Edit, Trash2, Ship, Loader2, MapPin, Activity, LayoutGrid, X } from 'lucide-react';
 import { useEmbarcaciones, Embarcacion } from '../hooks/useEmbarcaciones';
-import { useConfirm } from '../../../shared/context/ConfirmContext';
+import { useConfirm } from '../../../shared/hooks/useConfirm';
 import { RoleGuard } from '../../../components/auth/RoleGuard';
 import { Role } from '../../../types';
 import { PaginationControls } from '../../../shared/components/PaginationControls';

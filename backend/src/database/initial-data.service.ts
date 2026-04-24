@@ -17,7 +17,11 @@ export class InitialDataService implements OnApplicationBootstrap {
     try {
       await this.syncAll();
     } catch (error) {
-      this.logger.error(`Error durante la sincronización inicial de datos: ${error.message}`);
+      this.logger.error(
+        `Error durante la sincronización inicial de datos: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
     }
   }
 

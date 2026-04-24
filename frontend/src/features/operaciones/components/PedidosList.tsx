@@ -20,20 +20,7 @@ export function PedidosList({ pedidos, isLoading, onUpdateStatus, onDeletePedido
   }
   return (
     <div className="p-12 space-y-10">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-[var(--border-primary)]/40 pb-10">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
-            <h3 className="text-2xl font-black text-[var(--text-primary)] uppercase tracking-tight">Monitor de Operaciones</h3>
-          </div>
-          <p className="text-[10px] text-[var(--text-secondary)] font-black uppercase tracking-[0.3em] opacity-60">Cola de maniobras programadas en tiempo real</p>
-        </div>
-        <div className="px-6 py-3 bg-indigo-500/10 border border-indigo-500/20 rounded-[1.25rem] backdrop-blur-md">
-          <span className="text-[11px] font-black text-indigo-400 uppercase tracking-[0.2em]">{pedidos.length} ACTIVAS</span>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-6">
+<div className="grid grid-cols-1 gap-6">
         {pedidos
           .filter(p => p.estado === 'pendiente' || p.estado === 'en_agua')
           .map((pedido) => (

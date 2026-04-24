@@ -11,7 +11,7 @@ import { useRackMap } from '../hooks/useDashboard';
 import { MapaRacks } from '../components/MapaRacks';
 import { useEmbarcaciones } from '../../embarcaciones/hooks/useEmbarcaciones';
 import { useOperaciones } from '../../operaciones/hooks/useOperaciones';
-import { useAuth } from '../../auth/context/AuthContext';
+import { useAuth } from '../../auth/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 
@@ -78,7 +78,7 @@ const DashboardOperativo: React.FC = () => {
       });
       const msg = tipo === 'salida' ? 'Salida registrada - Embarcación en el agua' : 'Entrada registrada - Embarcación en cuna';
       toast.success(msg);
-    } catch (error: any) {
+    } catch {
       toast.error(`Error al registrar ${tipo}`);
     }
   };

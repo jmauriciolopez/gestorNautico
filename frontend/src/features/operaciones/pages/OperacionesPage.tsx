@@ -4,15 +4,17 @@ import { PedidosList } from '../components/PedidosList';
 import { MovimientosList } from '../components/MovimientosList';
 import { SolicitudesBajadaList } from '../components/SolicitudesBajadaList';
 import { NuevoPedidoModal } from '../components/NuevoPedidoModal';
-import { Activity, Plus, Ship, Clock, Anchor } from 'lucide-react';
-import { useConfirm } from '../../../shared/context/ConfirmContext';
+import { NuevoMovimientoModal } from '../components/NuevoMovimientoModal';
+import { Activity, Plus, Clock, Anchor, History } from 'lucide-react';
+import { useConfirm } from '../../../shared/hooks/useConfirm';
 
 type Tab = 'pedidos' | 'movimientos' | 'bajadas';
 
 export default function OperacionesPage() {
   const [activeTab, setActiveTab] = useState<Tab>('pedidos');
   const [isPedidoModalOpen, setIsPedidoModalOpen] = useState(false);
-  const { getPedidos, deletePedido, updatePedidoEstado, createPedido } = useOperaciones();
+  const [isMovimientoModalOpen, setIsMovimientoModalOpen] = useState(false);
+  const { getPedidos, deletePedido, updatePedidoEstado, createPedido, createMovimiento } = useOperaciones();
   const { getSolicitudes, updateEstado: updateSolicitudEstado } = useSolicitudesBajada();
   const confirm = useConfirm();
 
@@ -38,6 +40,11 @@ export default function OperacionesPage() {
     setIsPedidoModalOpen(false);
   };
 
+  const handleCreateMovimiento = async (data: any) => {
+    await createMovimiento.mutateAsync(data);
+    setIsMovimientoModalOpen(false);
+  };
+
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Premium Header - Glassmorphism & Depth */}
@@ -60,7 +67,18 @@ export default function OperacionesPage() {
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   <span className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.4em]">Logistics Terminal</span>
                 </div>
-                <h1 className="text-[3rem] font-black text-[var(--text-primary)] leading-none tracking-tight uppercase">Operaciones</h1>
+                <div className="flex items-baseline gap-4">
+                  <h1 className="text-[3rem] font-black text-[var(--text-primary)] leading-none tracking-tight uppercase">Operaciones</h1>
+                  <div className={`px-4 py-1 rounded-full border text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${
+                    activeTab === 'pedidos' ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' :
+                    activeTab === 'movimientos' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                    'bg-blue-500/10 text-blue-400 border-blue-500/20'
+                  }`}>
+                    {activeTab === 'pedidos' ? `${getPedidos.data?.length || 0} Activas` : 
+                     activeTab === 'movimientos' ? 'Bitácora' : 
+                     `${getSolicitudes.data?.length || 0} Solicitudes`}
+                  </div>
+                </div>
               </div>
             </div>
             <p className="max-w-2xl text-[var(--text-secondary)] text-sm font-medium leading-relaxed opacity-80 border-l-2 border-indigo-500/30 pl-6">
@@ -70,13 +88,23 @@ export default function OperacionesPage() {
           </div>
 
           <div className="flex items-center gap-4">
-            <button
-              onClick={() => setIsPedidoModalOpen(true)}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white px-12 py-5 rounded-[2rem] font-black text-xs uppercase tracking-[0.25em] shadow-2xl shadow-indigo-900/30 transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-4 group/btn"
-            >
-              <Plus className="w-5 h-5 group-hover/btn:rotate-90 transition-transform duration-500" />
-              Nueva Solicitud
-            </button>
+            {activeTab === 'movimientos' ? (
+              <button
+                onClick={() => setIsMovimientoModalOpen(true)}
+                className="bg-amber-600 hover:bg-amber-500 text-white px-12 py-5 rounded-[2rem] font-black text-xs uppercase tracking-[0.25em] shadow-2xl shadow-amber-900/30 transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-4 group/btn"
+              >
+                <Plus className="w-5 h-5" />
+                Registro Manual
+              </button>
+            ) : (
+              <button
+                onClick={() => setIsPedidoModalOpen(true)}
+                className="bg-indigo-600 hover:bg-indigo-500 text-white px-12 py-5 rounded-[2rem] font-black text-xs uppercase tracking-[0.25em] shadow-2xl shadow-indigo-900/30 transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-4 group/btn"
+              >
+                <Plus className="w-5 h-5 group-hover/btn:rotate-90 transition-transform duration-500" />
+                Nueva Solicitud
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -85,7 +113,7 @@ export default function OperacionesPage() {
       <div className="flex flex-wrap items-center gap-3 p-3 bg-[var(--bg-secondary)]/40 backdrop-blur-xl rounded-[2.5rem] border border-[var(--border-primary)]/60 w-fit shadow-2xl transition-all duration-500 hover:border-indigo-500/20">
         {[
           { id: 'pedidos', label: 'Monitor de Cola', icon: Clock, desc: 'Activas' },
-          { id: 'movimientos', label: 'Bitácora Histórica', icon: Ship, desc: 'Historial' },
+          { id: 'movimientos', label: 'Bitácora Histórica', icon: History, desc: 'Historial' },
           { id: 'bajadas', label: 'Solicitudes Web', icon: Activity, desc: 'Externas' },
         ].map((tab) => (
           <button
@@ -113,22 +141,6 @@ export default function OperacionesPage() {
       <main className="bg-[var(--bg-surface)]/60 backdrop-blur-2xl border border-[var(--border-primary)]/80 rounded-[3.5rem] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.5)] overflow-hidden relative transition-all duration-500 min-h-[600px]">
         <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500/5 via-transparent to-purple-500/5 pointer-events-none" />
         
-        <div className="px-12 py-10 border-b border-[var(--border-primary)]/60 bg-[var(--bg-secondary)]/10 flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative z-10">
-          <div className="flex items-center gap-5">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-500">
-              {activeTab === 'pedidos' ? <Clock className="w-6 h-6" /> : <Ship className="w-6 h-6" />}
-            </div>
-            <div>
-              <h3 className="text-base font-black text-[var(--text-primary)] uppercase tracking-[0.25em] leading-none mb-1">
-                {activeTab === 'pedidos' ? 'Monitor de Botadas en Vivo' : activeTab === 'movimientos' ? 'Bitácora de Maniobras' : 'Portal de Solicitudes Web'}
-              </h3>
-              <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-[0.15em] opacity-60">Sincronizado en tiempo real</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-          </div>
-        </div>
-
         <div className="relative z-10 transition-all duration-500">
           {activeTab === 'pedidos' && (
             <PedidosList
@@ -156,6 +168,12 @@ export default function OperacionesPage() {
         isOpen={isPedidoModalOpen}
         onClose={() => setIsPedidoModalOpen(false)}
         onSave={handleCreatePedido}
+      />
+
+      <NuevoMovimientoModal
+        isOpen={isMovimientoModalOpen}
+        onClose={() => setIsMovimientoModalOpen(false)}
+        onSuccess={handleCreateMovimiento}
       />
     </div>
   );

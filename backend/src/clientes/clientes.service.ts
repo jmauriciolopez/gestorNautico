@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ILike, Repository } from 'typeorm';
+import { ILike, Repository, FindManyOptions, FindOptionsWhere } from 'typeorm';
 import { Cliente } from './clientes.entity';
 import { Cargo } from '../cargos/cargo.entity';
 import { Pago } from '../pagos/pago.entity';
@@ -32,12 +32,12 @@ export class ClientesService {
   ): Promise<PaginatedResult<Cliente>> {
     const { search, onlyActive = true, ...pagination } = query;
 
-    const baseOptions: any = {
+    const baseOptions: FindManyOptions<Cliente> = {
       order: { createdAt: 'DESC' },
     };
 
     if (search) {
-      const searchConditions: any[] = [
+      const searchConditions: FindOptionsWhere<Cliente>[] = [
         {
           nombre: ILike(`%${search}%`),
           ...(onlyActive ? { activo: true } : {}),

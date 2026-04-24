@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
@@ -26,6 +27,7 @@ describe('EmbarcacionesService', () => {
   };
 
   let mockRepository: any;
+
   let mockEspacioRepo: any;
 
   beforeEach(async () => {

@@ -7,7 +7,7 @@ import { FacturaEditModal } from './FacturaEditModal';
 import { FacturaEmailModal } from './FacturaEmailModal';
 import { LiquidarFacturaModal } from './LiquidarFacturaModal';
 import { toast } from 'react-hot-toast';
-import { useConfirm } from '../../../shared/context/ConfirmContext';
+import { useConfirm } from '../../../shared/hooks/useConfirm';
 
 const PAGE_SIZE = 20;
 

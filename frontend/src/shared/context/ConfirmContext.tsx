@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useState, ReactNode } from 'react';
 
 interface ConfirmOptions {
   title?: string;
@@ -12,15 +12,7 @@ interface ConfirmContextType {
   confirm: (options: ConfirmOptions) => Promise<boolean>;
 }
 
-const ConfirmContext = createContext<ConfirmContextType | undefined>(undefined);
-
-export const useConfirm = () => {
-  const context = useContext(ConfirmContext);
-  if (!context) {
-    throw new Error('useConfirm must be used within a ConfirmProvider');
-  }
-  return context.confirm;
-};
+export const ConfirmContext = createContext<ConfirmContextType | undefined>(undefined);
 
 interface ConfirmProviderProps {
   children: ReactNode;

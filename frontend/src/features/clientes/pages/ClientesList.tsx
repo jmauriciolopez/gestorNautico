@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Search, Edit, Trash2, Loader2, Users, Receipt, Mail, Phone, ShieldCheck, ShieldAlert, ShieldPlus } from 'lucide-react';
-import { useConfirm } from '../../../shared/context/ConfirmContext';
+import { useConfirm } from '../../../shared/hooks/useConfirm';
 import { useClientes } from '../hooks/useClientes';
 import { RoleGuard } from '../../../components/auth/RoleGuard';
 import { Role } from '../../../types';

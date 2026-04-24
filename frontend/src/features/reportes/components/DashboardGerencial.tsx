@@ -1,6 +1,6 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, PieChart, Pie, Cell, ScatterChart, Scatter, ZAxis } from 'recharts';
 import { useOccupancyMetrics, useProfitabilityHistory, useDemandPeaks, useCollectionTime, useARPU, useVIPClients } from '../hooks/useReportes';
-import { Ship, DollarSign, TrendingUp, Activity, PieChart as PieIcon, Clock, Award, Ruler } from 'lucide-react';
+import { Ship, TrendingUp, Activity, PieChart as PieIcon, Clock, Award, Ruler } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];

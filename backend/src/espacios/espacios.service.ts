@@ -29,7 +29,11 @@ export class EspaciosService implements OnApplicationBootstrap {
       this.logger.log('Iniciando saneamiento automático de infraestructura...');
       await this.syncHealth();
     } catch (error) {
-      this.logger.error(`Error durante el saneamiento de espacios: ${error.message}`);
+      this.logger.error(
+        `Error durante el saneamiento de espacios: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
     }
   }
 

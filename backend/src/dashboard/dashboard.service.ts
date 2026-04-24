@@ -280,25 +280,38 @@ export class DashboardService {
 
   async getRackMap() {
     const zonas = await this.zonaRepo.find({
-      relations: ['ubicacion', 'racks', 'racks.espacios', 'racks.espacios.embarcacion'],
-      order: { id: 'ASC', racks: { codigo: 'ASC', espacios: { piso: 'ASC', fila: 'ASC', columna: 'ASC' } } },
+      relations: [
+        'ubicacion',
+        'racks',
+        'racks.espacios',
+        'racks.espacios.embarcacion',
+      ],
+      order: {
+        id: 'ASC',
+        racks: {
+          codigo: 'ASC',
+          espacios: { piso: 'ASC', fila: 'ASC', columna: 'ASC' },
+        },
+      },
     });
 
-    return zonas.map(zona => ({
+    return zonas.map((zona) => ({
       ...zona,
-      racks: zona.racks?.map(rack => ({
+      racks: zona.racks?.map((rack) => ({
         ...rack,
-        espacios: rack.espacios?.map(espacio => ({
+        espacios: rack.espacios?.map((espacio) => ({
           ...espacio,
-          embarcacion: espacio.embarcacion ? {
-            id: espacio.embarcacion.id,
-            nombre: espacio.embarcacion.nombre,
-            matricula: espacio.embarcacion.matricula,
-            eslora: espacio.embarcacion.eslora,
-            manga: espacio.embarcacion.manga,
-            tipo: espacio.embarcacion.tipo,
-            estado_operativo: espacio.embarcacion.estado_operativo,
-          } : null,
+          embarcacion: espacio.embarcacion
+            ? {
+                id: espacio.embarcacion.id,
+                nombre: espacio.embarcacion.nombre,
+                matricula: espacio.embarcacion.matricula,
+                eslora: espacio.embarcacion.eslora,
+                manga: espacio.embarcacion.manga,
+                tipo: espacio.embarcacion.tipo,
+                estado_operativo: espacio.embarcacion.estado_operativo,
+              }
+            : null,
         })),
       })),
     }));
