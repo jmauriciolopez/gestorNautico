@@ -7,6 +7,7 @@ import {
   ManyToOne,
   OneToMany,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { Cliente } from '../clientes/clientes.entity';
 import { Cargo } from '../cargos/cargo.entity';
@@ -25,6 +26,7 @@ export class Factura {
   @Column({ unique: true })
   numero: string;
 
+  @Index()
   @ManyToOne(() => Cliente, { nullable: false })
   @JoinColumn({ name: 'cliente_id' })
   cliente: Cliente;
@@ -32,12 +34,14 @@ export class Factura {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   total: number;
 
+  @Index()
   @Column({ type: 'date' })
   fechaEmision: Date;
 
   @Column({ type: 'date', nullable: true })
   fechaVencimiento: Date;
 
+  @Index()
   @Column({
     type: 'enum',
     enum: EstadoFactura,

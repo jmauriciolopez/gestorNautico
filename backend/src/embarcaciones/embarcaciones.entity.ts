@@ -53,6 +53,7 @@ export class Embarcacion {
   })
   estado_operativo: EstadoEmbarcacion;
 
+  @Index()
   @Column({ nullable: true })
   clienteId: number;
 

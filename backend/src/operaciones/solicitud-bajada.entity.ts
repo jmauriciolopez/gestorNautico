@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { Cliente } from '../clientes/clientes.entity';
 import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
@@ -22,6 +23,7 @@ export class SolicitudBajada {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Index()
   @Column()
   clienteId: number;
 
@@ -29,6 +31,7 @@ export class SolicitudBajada {
   @JoinColumn({ name: 'clienteId' })
   cliente: Cliente;
 
+  @Index()
   @Column()
   embarcacionId: number;
 
@@ -39,6 +42,7 @@ export class SolicitudBajada {
   @Column({ type: 'timestamp' })
   fechaHoraDeseada: Date;
 
+  @Index()
   @Column({
     type: 'enum',
     enum: EstadoSolicitud,

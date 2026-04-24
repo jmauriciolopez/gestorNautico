@@ -23,9 +23,11 @@ export class Movimiento {
   @Column()
   tipo: TipoMovimiento;
 
+  @Index()
   @ManyToOne(() => Embarcacion)
   embarcacion: Embarcacion;
 
+  @Index()
   @ManyToOne(() => Espacio)
   espacio: Espacio;
 

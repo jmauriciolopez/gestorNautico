@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
+  Index,
 } from 'typeorm';
 import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
 
@@ -20,12 +21,15 @@ export class Pedido {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Index()
   @Column({ default: EstadoPedido.PENDIENTE })
   estado: EstadoPedido;
 
+  @Index()
   @Column({ type: 'timestamp', nullable: true })
   fechaProgramada: Date;
 
+  @Index()
   @ManyToOne(() => Embarcacion)
   embarcacion: Embarcacion;
 

@@ -23,6 +23,7 @@ export class Cargo {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Index()
   @ManyToOne(() => Cliente, { nullable: false })
   @JoinColumn({ name: 'cliente_id' })
   cliente: Cliente;
@@ -47,6 +48,7 @@ export class Cargo {
   @Column({ type: 'enum', enum: TipoCargo, default: TipoCargo.OTROS })
   tipo: TipoCargo;
 
+  @Index()
   @ManyToOne(() => Factura, (factura) => factura.cargos, {
     nullable: true,
     onDelete: 'SET NULL',

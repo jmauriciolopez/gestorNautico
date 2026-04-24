@@ -4,6 +4,7 @@ import {
   PrimaryGeneratedColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { Rack } from '../racks/rack.entity';
 import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
@@ -29,6 +30,7 @@ export class Espacio {
   @Column({ type: 'int', nullable: true })
   columna: number;
 
+  @Index()
   @Column({ nullable: true })
   rackId: number;
 
