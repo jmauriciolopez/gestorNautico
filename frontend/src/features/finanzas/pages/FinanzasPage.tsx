@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { toast } from 'react-hot-toast';
 import { CreditCard, Receipt, Wallet, Plus, Activity, ChevronRight, Users } from 'lucide-react';
 import { useFinanzas } from '../hooks/useFinanzas';
 import { CargosList } from '../components/CargosList';
@@ -12,7 +11,6 @@ import { NuevoCargoModal } from '../components/NuevoCargoModal';
 import { RegistrarPagoModal } from '../components/RegistrarPagoModal';
 import { CuentasCorrientesList } from '../components/CuentasCorrientesList';
 import { Caja, Cargo } from '../hooks/useFinanzas';
-import type { AxiosError } from 'axios';
 
 export default function FinanzasPage() {
   const [activeTab, setActiveTab] = useState<'cargos' | 'pagos' | 'caja' | 'cuentas'>('cargos');
@@ -60,9 +58,9 @@ export default function FinanzasPage() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="space-y-8 p-3 md:p-6 animate-in fade-in slide-in-from-bottom-4 duration-700 overflow-x-hidden">
       {/* Premium Header */}
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 bg-[var(--bg-secondary)]/[0.3] p-8 rounded-[2.5rem] border border-[var(--border-primary)] relative overflow-hidden group">
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 bg-[var(--bg-secondary)]/[0.3] p-4 md:p-8 rounded-[2rem] md:rounded-[2.5rem] border border-[var(--border-primary)] relative overflow-hidden group">
         <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none group-hover:rotate-12 transition-transform duration-1000">
           <Wallet className="w-48 h-48 text-indigo-500" />
         </div>

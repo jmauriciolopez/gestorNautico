@@ -17,34 +17,55 @@ import { Role } from '../users/user.entity';
 import { CreateEmbarcacionDto } from './dto/create-embarcacion.dto';
 import { UpdateEmbarcacionDto } from './dto/update-embarcacion.dto';
 
+import { TenantGuard } from '../auth/guards/tenant.guard';
+import { TenantRoles } from '../auth/decorators/tenant-roles.decorator';
+import { ActiveTenant } from '../auth/decorators/active-tenant.decorator';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+
 @Controller('embarcaciones')
-@UseGuards(AuthTokenGuard, RolesGuard)
-@Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+@UseGuards(AuthTokenGuard, TenantGuard, RolesGuard)
 export class EmbarcacionesController {
   constructor(private readonly embarcacionesService: EmbarcacionesService) {}
 
   @Get()
-  findAll(@Query('page') page?: number, @Query('limit') limit?: number) {
-    return this.embarcacionesService.findAll({ page, limit });
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+  findAll(
+    @ActiveTenant() tenant: TenantContext,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('search') search?: string,
+  ) {
+    return this.embarcacionesService.findAll(tenant, { page, limit, search });
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.embarcacionesService.findOne(+id);
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+  findOne(@ActiveTenant() tenant: TenantContext, @Param('id') id: string) {
+    return this.embarcacionesService.findOne(tenant, +id);
   }
 
   @Post()
-  create(@Body() dto: CreateEmbarcacionDto) {
-    return this.embarcacionesService.create(dto);
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR)
+  create(
+    @ActiveTenant() tenant: TenantContext,
+    @Body() dto: CreateEmbarcacionDto,
+  ) {
+    return this.embarcacionesService.create(tenant, dto);
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateEmbarcacionDto) {
-    return this.embarcacionesService.update(+id, dto);
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR)
+  update(
+    @ActiveTenant() tenant: TenantContext,
+    @Param('id') id: string,
+    @Body() dto: UpdateEmbarcacionDto,
+  ) {
+    return this.embarcacionesService.update(tenant, +id, dto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.embarcacionesService.remove(+id);
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR)
+  remove(@ActiveTenant() tenant: TenantContext, @Param('id') id: string) {
+    return this.embarcacionesService.remove(tenant, +id);
   }
 }

@@ -111,8 +111,8 @@ export function UserForm({ initialData, onSubmit, onCancel }: Props) {
                             onChange={e => setFormData({ ...formData, role: e.target.value as Role })}
                         >
                             <option value={Role.OPERADOR}>Operador</option>
+                            <option value={Role.SUPERVISOR}>Supervisor</option>
                             <option value={Role.ADMIN}>Administrador</option>
-                            <option value={Role.SUPERADMIN}>Super Admin</option>
                         </select>
                     </div>
 

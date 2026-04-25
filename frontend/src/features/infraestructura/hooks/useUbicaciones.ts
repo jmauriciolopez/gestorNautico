@@ -1,5 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { httpClient } from '../../../shared/api/HttpClient';
+import { Paginated, selectData } from '../../../api/pagination';
+import { useActiveGuarderiaId } from '../../../shared/hooks/useActiveGuarderiaId';
+import { toast } from 'react-hot-toast';
 
 export interface Ubicacion {
   id: number;
@@ -47,21 +50,37 @@ export interface EstadisticasInfraestructura {
   porcentajeOcupacion: number;
 }
 
-export const useUbicaciones = () => {
+export const useUbicaciones = (options: {
+  pageUbicaciones?: number;
+  limitUbicaciones?: number;
+  pageZonas?: number;
+  limitZonas?: number;
+} = {}) => {
   const queryClient = useQueryClient();
+  const guarderiaId = useActiveGuarderiaId();
 
   const useUbicacionesQuery = useQuery({
-    queryKey: ['ubicaciones'],
-    queryFn: () => httpClient.get<Ubicacion[]>('/ubicaciones'),
+    queryKey: ['ubicaciones', guarderiaId, options.pageUbicaciones, options.limitUbicaciones],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (options.pageUbicaciones) params.append('page', String(options.pageUbicaciones));
+      if (options.limitUbicaciones) params.append('limit', String(options.limitUbicaciones));
+      return httpClient.get<Paginated<Ubicacion>>(`/ubicaciones?${params.toString()}`).then(selectData);
+    },
   });
 
   const useZonas = useQuery({
-    queryKey: ['zonas'],
-    queryFn: () => httpClient.get<Zona[]>('/zonas'),
+    queryKey: ['zonas', guarderiaId, options.pageZonas, options.limitZonas],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (options.pageZonas) params.append('page', String(options.pageZonas));
+      if (options.limitZonas) params.append('limit', String(options.limitZonas));
+      return httpClient.get<Paginated<Zona>>(`/zonas?${params.toString()}`).then(selectData);
+    },
   });
 
   const useEstadisticas = useQuery({
-    queryKey: ['infra-stats'],
+    queryKey: ['infra-stats', guarderiaId],
     queryFn: () => httpClient.get<EstadisticasInfraestructura>('/espacios/estadisticas'),
   });
 
@@ -137,5 +156,31 @@ export const useUbicaciones = () => {
     },
   });
 
-  return { useUbicacionesQuery, useZonas, useEstadisticas, createUbicacion, createZona, updateZona, deleteZona, createRack, updateRack, deleteRack, updateEspacio };
+  const syncHealth = useMutation({
+    mutationFn: () => httpClient.post<{ corregidos: number }>('/espacios/sync', {}),
+    onSuccess: (data) => {
+      toast.success(`Saneamiento completado. Registros corregidos: ${data.corregidos}`);
+      void queryClient.invalidateQueries({ queryKey: ['ubicaciones'] });
+      void queryClient.invalidateQueries({ queryKey: ['zonas'] });
+      void queryClient.invalidateQueries({ queryKey: ['infra-stats'] });
+    },
+    onError: (error: any) => {
+      toast.error(`Error en saneamiento: ${error.message}`);
+    },
+  });
+
+  return {
+    useUbicacionesQuery,
+    useZonas,
+    useEstadisticas,
+    createUbicacion,
+    createZona,
+    updateZona,
+    deleteZona,
+    createRack,
+    updateRack,
+    deleteRack,
+    updateEspacio,
+    syncHealth,
+  };
 };

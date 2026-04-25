@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Wrench, Plus, BookOpen, Activity, LayoutGrid, Layers, Loader2, ChevronRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { Wrench, Plus, BookOpen, Activity, LayoutGrid, Layers, Loader2, Search, Filter, Trash2 } from 'lucide-react';
 import { useServicios } from '../hooks/useServicios';
 import { CatalogoList } from '../components/CatalogoList';
 import { RegistrosList } from '../components/RegistrosList';
@@ -8,6 +8,8 @@ import { NuevoRegistroModal } from '../components/NuevoRegistroModal';
 import { RoleGuard } from '../../../components/auth/RoleGuard';
 import { Role } from '../../../types';
 import { ServicioCatalogo, RegistroServicio } from '../hooks/useServicios';
+import { useDebounce } from '../../../hooks/useDebounce';
+import { PaginationControls } from '../../../shared/components/PaginationControls';
 
 type Tab = 'registros' | 'catalogo';
 
@@ -16,10 +18,26 @@ export default function ServiciosPage() {
   const [isServicioModalOpen, setIsServicioModalOpen] = useState(false);
   const [isRegistroModalOpen, setIsRegistroModalOpen] = useState(false);
   const [editingServicio, setEditingServicio] = useState<ServicioCatalogo | null>(null);
+  
+  const [pageRegistros, setPageRegistros] = useState(1);
+  const [pageCatalogo, setPageCatalogo] = useState(1);
+
+  const [searchRegistros, setSearchRegistros] = useState('');
+  const [estadoRegistros, setEstadoRegistros] = useState('');
+  const debouncedSearchRegistros = useDebounce(searchRegistros, 400);
+
+  // Reset page when filters change
+  React.useEffect(() => {
+    setPageRegistros(1);
+  }, [debouncedSearchRegistros, estadoRegistros]);
 
   const {
-    getCatalogo,
+    catalogo,
+    metaCatalogo,
+    registros,
+    metaRegistros,
     getRegistros,
+    getCatalogo,
     completeRegistro,
     deleteServicioCatalogo,
     createServicioCatalogo,
@@ -27,7 +45,12 @@ export default function ServiciosPage() {
     createRegistro,
     updateRegistro,
     deleteRegistro
-  } = useServicios();
+  } = useServicios({
+    pageRegistros,
+    pageCatalogo,
+    searchRegistros: debouncedSearchRegistros,
+    estadoRegistros
+  });
 
   const handleComplete = async (id: number) => {
     await completeRegistro.mutateAsync({ id });
@@ -67,8 +90,8 @@ export default function ServiciosPage() {
     }
   };
 
-  const activeWorksCount = getRegistros.data?.filter(r => r.estado === 'EN_PROCESO' || r.estado === 'PENDIENTE').length || 0;
-  const catalogSize = getCatalogo.data?.length || 0;
+  const activeWorksCount = metaRegistros?.total || 0;
+  const catalogSize = metaCatalogo?.total || 0;
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -93,7 +116,7 @@ export default function ServiciosPage() {
             <div className="flex gap-8 mt-8">
               <div className="flex flex-col">
                 <span className="text-sm font-black text-[var(--text-primary)] tabular-nums">{activeWorksCount}</span>
-                <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest mt-1">Trabajos en Curso</span>
+                <span className="text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest mt-1">Registros Totales</span>
               </div>
               <div className="w-px h-8 bg-[var(--border-primary)] self-center" />
               <div className="flex flex-col">
@@ -104,7 +127,7 @@ export default function ServiciosPage() {
           </div>
         </div>
 
-        <RoleGuard allowedRoles={activeTab === 'registros' ? [Role.OPERADOR, Role.ADMIN, Role.SUPERADMIN] : [Role.ADMIN, Role.SUPERADMIN]}>
+        <RoleGuard allowedRoles={activeTab === 'registros' ? [Role.OPERADOR, Role.SUPERVISOR, Role.ADMIN, Role.SUPERADMIN] : [Role.ADMIN, Role.SUPERADMIN]}>
           <button
             onClick={handleOpenCreate}
             className="relative z-10 px-10 py-4 bg-indigo-600 hover:bg-indigo-500 text-[var(--text-primary)] rounded-2xl flex items-center gap-4 text-xs font-black uppercase tracking-[0.2em] shadow-2xl shadow-indigo-900/30 transition-all active:scale-95 group/btn"
@@ -157,7 +180,7 @@ export default function ServiciosPage() {
             </div>
           ) : (
             <>
-              <div className="p-8 border-b border-[var(--border-primary)] bg-[var(--bg-primary)]/20 flex items-center justify-between">
+              <div className="p-8 border-b border-[var(--border-primary)] bg-[var(--bg-primary)]/20 flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-2xl bg-indigo-600/10 flex items-center justify-center border border-indigo-500/20 text-indigo-500">
                     {activeTab === 'registros' ? <Activity className="w-5 h-5" /> : <BookOpen className="w-5 h-5" />}
@@ -169,29 +192,86 @@ export default function ServiciosPage() {
                     <p className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-tighter mt-1">Control de calidad y auditoría técnica</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest">
-                  <span>Mesa de Trabajo</span>
-                  <ChevronRight className="w-4 h-4 opacity-30" />
-                </div>
+
+                {/* Inline Filters for Registros */}
+                {activeTab === 'registros' && (
+                  <div className="flex flex-wrap items-center gap-4">
+                    <div className="relative w-full md:w-64">
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
+                      <input
+                        type="text"
+                        placeholder="BUSCAR NAVE O SERVICIO..."
+                        value={searchRegistros}
+                        onChange={(e) => setSearchRegistros(e.target.value.toUpperCase())}
+                        className="w-full bg-[var(--bg-primary)]/40 border border-[var(--border-primary)] rounded-2xl py-3 pl-12 pr-4 text-[10px] font-black tracking-widest text-[var(--text-primary)] focus:border-indigo-500/50 focus:outline-none transition-all placeholder:text-[var(--text-muted)]"
+                      />
+                    </div>
+                    <div className="flex items-center gap-3 bg-[var(--bg-primary)]/40 border border-[var(--border-primary)] rounded-2xl px-4 py-1.5 transition-colors">
+                      <Filter className="w-4 h-4 text-[var(--text-muted)]" />
+                      <select
+                        value={estadoRegistros}
+                        onChange={(e) => setEstadoRegistros(e.target.value)}
+                        className="bg-transparent text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest focus:outline-none py-1.5 cursor-pointer"
+                      >
+                        <option value="">TODOS LOS ESTADOS</option>
+                        <option value="PENDIENTE">PENDIENTE</option>
+                        <option value="EN_PROCESO">EN PROCESO</option>
+                        <option value="COMPLETADO">COMPLETADO</option>
+                        <option value="CANCELADO">CANCELADO</option>
+                      </select>
+                    </div>
+                    {(searchRegistros || estadoRegistros) && (
+                      <button
+                        onClick={() => { setSearchRegistros(''); setEstadoRegistros(''); }}
+                        className="p-3 text-rose-400 hover:bg-rose-500/10 rounded-2xl transition-all"
+                        title="Limpiar Filtros"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
               {activeTab === 'registros' ? (
-                <RegistrosList
-                  registros={getRegistros.data || []}
-                  isLoading={getRegistros.isLoading}
-                  onComplete={handleComplete}
-                  onUpdateStatus={handleUpdateRegistroStatus}
-                  onDelete={handleDeleteRegistro}
-                />
+                <>
+                  <RegistrosList
+                    registros={registros}
+                    isLoading={getRegistros.isLoading}
+                    onComplete={handleComplete}
+                    onUpdateStatus={handleUpdateRegistroStatus}
+                    onDelete={handleDeleteRegistro}
+                  />
+                  {metaRegistros && (
+                    <PaginationControls
+                      currentPage={pageRegistros}
+                      totalPages={metaRegistros.totalPages}
+                      onPageChange={setPageRegistros}
+                      totalItems={metaRegistros.total}
+                      pageSize={metaRegistros.limit}
+                    />
+                  )}
+                </>
               ) : (
-                <CatalogoList
-                  servicios={getCatalogo.data || []}
-                  isLoading={getCatalogo.isLoading}
-                  onDelete={handleDeleteCatalogo}
-                  onEdit={(svc: ServicioCatalogo) => {
-                    setEditingServicio(svc);
-                    setIsServicioModalOpen(true);
-                  }}
-                />
+                <>
+                  <CatalogoList
+                    servicios={catalogo}
+                    isLoading={getCatalogo.isLoading}
+                    onDelete={handleDeleteCatalogo}
+                    onEdit={(svc: ServicioCatalogo) => {
+                      setEditingServicio(svc);
+                      setIsServicioModalOpen(true);
+                    }}
+                  />
+                  {metaCatalogo && (
+                    <PaginationControls
+                      currentPage={pageCatalogo}
+                      totalPages={metaCatalogo.totalPages}
+                      onPageChange={setPageCatalogo}
+                      totalItems={metaCatalogo.total}
+                      pageSize={metaCatalogo.limit}
+                    />
+                  )}
+                </>
               )}
             </>
           )}

@@ -5,8 +5,12 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
+  ManyToOne,
+  JoinColumn,
+  Index,
 } from 'typeorm';
 import { Pago } from '../pagos/pago.entity';
+import { Guarderia } from '../guarderias/guarderia.entity';
 
 export enum EstadoCaja {
   ABIERTA = 'ABIERTA',
@@ -35,6 +39,14 @@ export class Caja {
 
   @OneToMany(() => Pago, (pago) => pago.caja)
   pagos: Pago[];
+
+  @Index()
+  @Column({ type: 'int' })
+  guarderiaId: number;
+
+  @ManyToOne(() => Guarderia, { nullable: false, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'guarderiaId' })
+  guarderia: Guarderia;
 
   @CreateDateColumn()
   createdAt: Date;

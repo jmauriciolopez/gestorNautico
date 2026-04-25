@@ -1,5 +1,5 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { useAuth } from '../../features/auth/context/AuthContext';
+import { useAuth } from '../../features/auth/hooks/useAuth';
 import { Role } from '../../types';
 
 interface ProtectedRouteProps {
@@ -22,9 +22,12 @@ export const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
-    if (allowedRoles && user && !allowedRoles.includes(user.role)) {
+    if (allowedRoles && user && user.role !== Role.SUPERADMIN && !allowedRoles.includes(user.role)) {
         return <Navigate to="/unauthorized" replace />;
     }
 
+    // El onboarding se manejará mediante un modal global en App.tsx
+    // para dar más protagonismo y evitar saltos de ruta.
+
     return <Outlet />;
-};
+}

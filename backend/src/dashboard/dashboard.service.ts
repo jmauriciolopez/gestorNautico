@@ -1,16 +1,24 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { Cliente } from '../clientes/clientes.entity';
-import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
+import {
+  Embarcacion,
+  EstadoEmbarcacion,
+} from '../embarcaciones/embarcaciones.entity';
 import { Movimiento } from '../movimientos/movimientos.entity';
 import { Cargo } from '../cargos/cargo.entity';
 import { Pago } from '../pagos/pago.entity';
 import { Zona } from '../zonas/zona.entity';
+import { Espacio } from '../espacios/espacio.entity';
+import { Rack } from '../racks/rack.entity';
+import { TipoCargo } from '../cargos/cargo.entity';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
+import { BaseTenantService } from '../compartido/bases/base-tenant.service';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
 
 @Injectable()
-export class DashboardService {
+export class DashboardService extends BaseTenantService {
   constructor(
     @InjectRepository(Cliente)
     private readonly clienteRepo: Repository<Cliente>,
@@ -24,32 +32,50 @@ export class DashboardService {
     private readonly pagoRepo: Repository<Pago>,
     @InjectRepository(Zona)
     private readonly zonaRepo: Repository<Zona>,
+    @InjectRepository(Espacio)
+    private readonly espacioRepo: Repository<Espacio>,
+    @InjectRepository(Rack)
+    private readonly rackRepo: Repository<Rack>,
     private readonly notificacionesService: NotificacionesService,
-  ) {}
+  ) {
+    super();
+  }
 
-  async getSummary() {
+  async getSummary(tenant: TenantContext) {
     const [totalClientes, totalBarcos] = await Promise.all([
-      this.clienteRepo.count(),
-      this.barcoRepo.count(),
+      this.clienteRepo.count({ where: this.buildTenantWhere(tenant) }),
+      this.barcoRepo.count({ where: this.buildTenantWhere(tenant) }),
     ]);
 
     // Ocupación
     const [enCuna, enAgua] = await Promise.all([
-      this.barcoRepo.count({ where: { estado: 'EN_CUNA' } }),
-      this.barcoRepo.count({ where: { estado: 'EN_AGUA' } }),
+      this.barcoRepo.count({
+        where: this.buildTenantWhere(tenant, {
+          estado_operativo: EstadoEmbarcacion.EN_CUNA,
+        }),
+      }),
+      this.barcoRepo.count({
+        where: this.buildTenantWhere(tenant, {
+          estado_operativo: EstadoEmbarcacion.EN_AGUA,
+        }),
+      }),
     ]);
 
     // Finanzas
+    const queryDeuda = this.cargoRepo
+      .createQueryBuilder('c')
+      .select('SUM(c.monto)', 'total')
+      .where('c.pagado = :pagado', { pagado: false });
+    this.applyTenantFilter(queryDeuda, tenant, 'c');
+
+    const queryRecaudacion = this.pagoRepo
+      .createQueryBuilder('p')
+      .select('SUM(p.monto)', 'total');
+    this.applyTenantFilter(queryRecaudacion, tenant, 'p');
+
     const [deudaRes, recaudacionRes] = await Promise.all([
-      this.cargoRepo
-        .createQueryBuilder('c')
-        .select('SUM(c.monto)', 'total')
-        .where('c.pagado = :pagado', { pagado: false })
-        .getRawOne(),
-      this.pagoRepo
-        .createQueryBuilder('p')
-        .select('SUM(p.monto)', 'total')
-        .getRawOne(),
+      queryDeuda.getRawOne<{ total: string }>(),
+      queryRecaudacion.getRawOne<{ total: string }>(),
     ]);
 
     const deudaTotal = Number(deudaRes?.total || 0);
@@ -58,11 +84,12 @@ export class DashboardService {
     // Actividad Reciente
     const [ultimosMovimientos, ultimasNotificaciones] = await Promise.all([
       this.movRepo.find({
+        where: this.buildTenantWhere(tenant),
         relations: ['embarcacion'],
         order: { fecha: 'DESC' },
         take: 6,
       }),
-      this.notificacionesService.findAllRecentGlobal(6),
+      this.notificacionesService.findAllRecentGlobal(tenant, 6),
     ]);
 
     const [
@@ -71,11 +98,14 @@ export class DashboardService {
       deudaDetalle,
       embarcacionesLibres,
     ] = await Promise.all([
-      this.getFinanzasSeries(),
-      this.getRecaudacionDetalleAll(),
-      this.getDeudaDetalleAll(),
+      this.getFinanzasSeries(tenant),
+      this.getRecaudacionDetalleAll(tenant),
+      this.getDeudaDetalleAll(tenant),
       this.barcoRepo.find({
-        where: { espacioId: null, estado: 'ACTIVA' },
+        where: this.buildTenantWhere(tenant, {
+          espacioId: null,
+          estado_operativo: Not(EstadoEmbarcacion.INACTIVA),
+        }),
         relations: ['cliente'],
       }),
     ]);
@@ -107,57 +137,131 @@ export class DashboardService {
     };
   }
 
-  private async getRecaudacionDetalleAll() {
-    const [dia, semana, mes] = await Promise.all([
-      this.getRecaudacionPorPeriodo('dia'),
-      this.getRecaudacionPorPeriodo('semana'),
-      this.getRecaudacionPorPeriodo('mes'),
-    ]);
-    return { dia: dia.total, semana: semana.total, mes: mes.total };
-  }
+  private async getRecaudacionDetalleAll(tenant: TenantContext) {
+    // 1 query: SUM agrupado por día/semana/mes usando DATE_TRUNC
+    const now = new Date();
+    const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const weekStart = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() - now.getDay(),
+    );
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  private async getDeudaDetalleAll() {
-    const [dia, semana, mes, vencido] = await Promise.all([
-      this.getDeudaPorPeriodo('dia'),
-      this.getDeudaPorPeriodo('semana'),
-      this.getDeudaPorPeriodo('mes'),
-      this.getDeudaPorPeriodo('vencido'),
-    ]);
+    const qb = this.pagoRepo
+      .createQueryBuilder('p')
+      .select([
+        "CASE WHEN p.fecha >= :monthStart THEN 'mes' WHEN p.fecha >= :weekStart THEN 'semana' WHEN p.fecha >= :dayStart THEN 'dia' ELSE 'pasado' END as case",
+        'SUM(p.monto) as sum',
+      ])
+      .where('p.fecha >= :monthStart', { monthStart });
+
+    this.applyTenantFilter(qb, tenant, 'p');
+
+    const raw = await qb
+      .setParameter('weekStart', weekStart)
+      .setParameter('dayStart', dayStart)
+      .groupBy('1')
+      .getRawMany<{ case: string; sum: string }>();
+
+    const byPeriodo = new Map(raw.map((r) => [r.case, Number(r.sum || 0)]));
     return {
-      dia: { total: dia.total, cantidad: dia.cantidad },
-      semana: { total: semana.total, cantidad: semana.cantidad },
-      mes: { total: mes.total, cantidad: mes.cantidad },
-      vencido: { total: vencido.total, cantidad: vencido.cantidad },
+      dia: byPeriodo.get('dia') ?? 0,
+      semana: byPeriodo.get('semana') ?? 0,
+      mes: byPeriodo.get('mes') ?? 0,
     };
   }
 
-  private async getFinanzasSeries() {
-    // Generar últimos 6 meses
+  private async getDeudaDetalleAll(tenant: TenantContext) {
+    // 1 query: SUM + COUNT agrupado por bucket
     const now = new Date();
-    const promises = [];
+    const dayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const weekStart = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() - now.getDay(),
+    );
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const vencidoEnd = new Date(
+      now.getFullYear(),
+      now.getMonth() - 1,
+      now.getDate(),
+    );
+
+    const qb = this.cargoRepo
+      .createQueryBuilder('c')
+      .select([
+        "CASE WHEN c.fechaVencimiento < :vencidoEnd THEN 'vencido' WHEN c.fechaVencimiento >= :monthStart THEN 'mes' WHEN c.fechaVencimiento >= :weekStart THEN 'semana' WHEN c.fechaVencimiento >= :dayStart THEN 'dia' ELSE 'pasado' END as case",
+        'SUM(c.monto) as sum',
+        'COUNT(c.id) as count',
+      ])
+      .where('c.pagado = false')
+      .andWhere('c.fechaVencimiento < :monthStart', { monthStart });
+
+    this.applyTenantFilter(qb, tenant, 'c');
+
+    const raw = await qb
+      .setParameter('weekStart', weekStart)
+      .setParameter('dayStart', dayStart)
+      .setParameter('vencidoEnd', vencidoEnd)
+      .groupBy('1')
+      .getRawMany<{ case: string; sum: string; count: string }>();
+
+    const byPeriodo = new Map(
+      raw.map((r) => [
+        r.case,
+        { total: Number(r.sum || 0), cantidad: Number(r.count || 0) },
+      ]),
+    );
+    return {
+      dia: byPeriodo.get('dia') ?? { total: 0, cantidad: 0 },
+      semana: byPeriodo.get('semana') ?? { total: 0, cantidad: 0 },
+      mes: byPeriodo.get('mes') ?? { total: 0, cantidad: 0 },
+      vencido: byPeriodo.get('vencido') ?? { total: 0, cantidad: 0 },
+    };
+  }
+
+  private async getFinanzasSeries(tenant: TenantContext) {
+    // 1 sola query SQL para los últimos 6 meses
+    const now = new Date();
+    const startWindow = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+
+    const qb = this.pagoRepo
+      .createQueryBuilder('p')
+      .select([
+        "TO_CHAR(p.fecha, 'YYYY-MM') as mes_key",
+        "TO_CHAR(p.fecha, 'Mon') as mes_label",
+        'SUM(p.monto) as sum',
+      ])
+      .where('p.fecha >= :start', { start: startWindow });
+
+    this.applyTenantFilter(qb, tenant, 'p');
+
+    const raw = await qb
+      .groupBy('mes_key, mes_label')
+      .orderBy('mes_key', 'ASC')
+      .getRawMany<{ mes_key: string; mes_label: string; sum: string }>();
+
+    // Rellenar meses sin movimientos con 0
+    const seriesMap = new Map(raw.map((r) => [r.mes_key, Number(r.sum || 0)]));
+    const result: { mes: string; monto: number }[] = [];
 
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const start = new Date(d.getFullYear(), d.getMonth(), 1);
-      const end = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59);
-
-      promises.push(
-        this.pagoRepo
-          .createQueryBuilder('p')
-          .select('SUM(p.monto)', 'total')
-          .where('p.fecha BETWEEN :start AND :end', { start, end })
-          .getRawOne()
-          .then(res => ({
-            mes: d.toLocaleString('es-AR', { month: 'short' }),
-            monto: Number(res?.total || 0)
-          }))
-      );
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      result.push({
+        mes: d.toLocaleString('es-AR', { month: 'short' }),
+        monto: seriesMap.get(key) ?? 0,
+      });
     }
-    
-    return Promise.all(promises);
+
+    return result;
   }
 
-  async getRecaudacionPorPeriodo(periodo: 'dia' | 'semana' | 'mes') {
+  async getRecaudacionPorPeriodo(
+    tenant: TenantContext,
+    periodo: 'dia' | 'semana' | 'mes',
+  ) {
     const now = new Date();
     let start: Date;
 
@@ -170,16 +274,22 @@ export class DashboardService {
       start = new Date(now.getFullYear(), now.getMonth(), 1);
     }
 
-    const res = await this.pagoRepo
+    const qb = this.pagoRepo
       .createQueryBuilder('p')
       .select('SUM(p.monto)', 'total')
-      .where('p.fecha BETWEEN :start AND :end', { start, end: now })
-      .getRawOne();
+      .where('p.fecha BETWEEN :start AND :end', { start, end: now });
+
+    this.applyTenantFilter(qb, tenant, 'p');
+
+    const res = await qb.getRawOne<{ total: string }>();
 
     return { total: Number(res?.total || 0), periodo };
   }
 
-  async getDeudaPorPeriodo(periodo: 'dia' | 'semana' | 'mes' | 'vencido') {
+  async getDeudaPorPeriodo(
+    tenant: TenantContext,
+    periodo: 'dia' | 'semana' | 'mes' | 'vencido',
+  ) {
     const now = new Date();
     let start: Date;
     let end: Date = now;
@@ -197,23 +307,27 @@ export class DashboardService {
       start = new Date(now.getFullYear(), now.getMonth(), 1);
     }
 
-    const res = await this.cargoRepo
+    const qb = this.cargoRepo
       .createQueryBuilder('c')
       .select('SUM(c.monto)', 'total')
       .addSelect('COUNT(c.id)', 'cantidad')
       .where('c.pagado = :pagado', { pagado: false })
-      .andWhere('c.fechaVencimiento BETWEEN :start AND :end', { start, end })
-      .getRawOne();
+      .andWhere('c.fechaVencimiento BETWEEN :start AND :end', { start, end });
 
-    return { 
-      total: Number(res?.total || 0), 
-      periodo, 
-      cantidad: Number(res?.cantidad || 0) 
+    this.applyTenantFilter(qb, tenant, 'c');
+
+    const res = await qb.getRawOne<{ total: string; cantidad: string }>();
+
+    return {
+      total: Number(res?.total || 0),
+      periodo,
+      cantidad: Number(res?.cantidad || 0),
     };
   }
 
-  async getRackMap() {
-    return this.zonaRepo.find({
+  async getRackMap(tenant: TenantContext) {
+    const zonas = await this.zonaRepo.find({
+      where: this.buildTenantWhere(tenant),
       relations: [
         'ubicacion',
         'racks',
@@ -224,13 +338,235 @@ export class DashboardService {
         id: 'ASC',
         racks: {
           codigo: 'ASC',
-          espacios: {
-            piso: 'ASC',
-            fila: 'ASC',
-            columna: 'ASC',
-          },
+          espacios: { piso: 'ASC', fila: 'ASC', columna: 'ASC' },
         },
-      } as any, // TypeORM nested order typing can be complex; maintaining 'as any' for now to ensure query correctness while keeping structure
+      },
     });
+
+    return zonas.map((zona) => ({
+      ...zona,
+      racks: zona.racks?.map((rack) => ({
+        ...rack,
+        espacios: rack.espacios?.map((espacio) => ({
+          ...espacio,
+          embarcacion: espacio.embarcacion
+            ? {
+                id: espacio.embarcacion.id,
+                nombre: espacio.embarcacion.nombre,
+                matricula: espacio.embarcacion.matricula,
+                eslora: espacio.embarcacion.eslora,
+                manga: espacio.embarcacion.manga,
+                tipo: espacio.embarcacion.tipo,
+                estado_operativo: espacio.embarcacion.estado_operativo,
+              }
+            : null,
+        })),
+      })),
+    }));
+  }
+
+  async getOccupancyMetrics(tenant: TenantContext) {
+    const [totalEspacios, ocupados] = await Promise.all([
+      this.espacioRepo.count({ where: this.buildTenantWhere(tenant) }),
+      this.espacioRepo.count({
+        where: this.buildTenantWhere(tenant, { ocupado: true }),
+      }),
+    ]);
+
+    const qb = this.barcoRepo
+      .createQueryBuilder('b')
+      .select('SUM(b.eslora)', 'total')
+      .where('b.espacioId IS NOT NULL');
+
+    this.applyTenantFilter(qb, tenant, 'b');
+
+    const metrosOcupadosRes = await qb.getRawOne<{ total: string }>();
+
+    const porZona = await this.zonaRepo.find({
+      where: this.buildTenantWhere(tenant),
+      relations: ['racks', 'racks.espacios'],
+    });
+
+    const ocupacionPorZona = porZona.map((zona) => {
+      const espacios = zona.racks.flatMap((r) => r.espacios);
+      const total = espacios.length;
+      const ocupados = espacios.filter((e) => e.ocupado).length;
+      return {
+        zona: zona.nombre,
+        total,
+        ocupados,
+        porcentaje: total > 0 ? (ocupados / total) * 100 : 0,
+      };
+    });
+
+    return {
+      global: {
+        totalEspacios,
+        ocupados,
+        libres: totalEspacios - ocupados,
+        porcentajeOcupacion:
+          totalEspacios > 0 ? (ocupados / totalEspacios) * 100 : 0,
+        metrosLinealesOcupados: Number(metrosOcupadosRes?.total || 0),
+      },
+      porZona: ocupacionPorZona,
+    };
+  }
+
+  async getHistoricalProfitability(tenant: TenantContext, months: number = 12) {
+    const now = new Date();
+    const startDate = new Date(
+      now.getFullYear(),
+      now.getMonth() - (months - 1),
+      1,
+    );
+
+    // Ingresos por categoría y mes
+    const qb = this.pagoRepo
+      .createQueryBuilder('p')
+      .leftJoin('p.cargo', 'c')
+      .select([
+        "TO_CHAR(p.fecha, 'YYYY-MM') as mes_key",
+        'c.tipo as tipo',
+        'SUM(p.monto) as total',
+      ])
+      .where('p.fecha >= :start', { start: startDate });
+
+    this.applyTenantFilter(qb, tenant, 'p');
+
+    const rawIngresos = await qb
+      .groupBy('mes_key, c.tipo')
+      .orderBy('mes_key', 'ASC')
+      .getRawMany<{ mes_key: string; tipo: TipoCargo; total: string }>();
+
+    // Procesar datos para Recharts
+    type MonthData = {
+      name: string;
+      total: number;
+      [key: string]: string | number;
+    };
+    const dataByMonth = new Map<string, MonthData>();
+
+    // Inicializar meses
+    for (let i = months - 1; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const label = d.toLocaleString('es-AR', {
+        month: 'short',
+        year: '2-digit',
+      });
+      dataByMonth.set(key, { name: label, total: 0 });
+    }
+
+    rawIngresos.forEach((row) => {
+      const monthData = dataByMonth.get(row.mes_key);
+      if (monthData) {
+        const tipo = row.tipo || 'OTROS';
+        monthData[tipo] = Number(row.total || 0);
+        monthData.total += Number(row.total || 0);
+      }
+    });
+
+    return Array.from(dataByMonth.values());
+  }
+
+  async getDemandPeaks(tenant: TenantContext) {
+    const qb = this.movRepo.createQueryBuilder('m').select([
+      "TO_CHAR(m.fecha, 'ID') as dow", // 1-7
+      'EXTRACT(HOUR FROM m.fecha) as hora',
+      'COUNT(m.id) as cantidad',
+    ]);
+
+    this.applyTenantFilter(qb, tenant, 'm');
+
+    const raw = await qb
+      .groupBy('dow, hora')
+      .orderBy('dow', 'ASC')
+      .addOrderBy('hora', 'ASC')
+      .getRawMany<{ dow: string; hora: string; cantidad: string }>();
+
+    return raw.map((r) => ({
+      dia: Number(r.dow),
+      hora: Number(r.hora),
+      cantidad: Number(r.cantidad),
+    }));
+  }
+
+  async getAverageCollectionTime(tenant: TenantContext) {
+    const qb = this.pagoRepo
+      .createQueryBuilder('p')
+      .leftJoin('p.cargo', 'c')
+      .select(
+        'AVG(EXTRACT(DAY FROM (p.fecha::timestamp - c."fechaEmision"::timestamp)))',
+        'avg_days',
+      )
+      .where('c."fechaEmision" IS NOT NULL');
+
+    this.applyTenantFilter(qb, tenant, 'p');
+
+    const raw = await qb.getRawOne<{ avg_days: string }>();
+
+    return {
+      promedioDias: Math.round(Number(raw?.avg_days || 0)),
+    };
+  }
+
+  async getRevenuePerMeter(tenant: TenantContext) {
+    const qbRevenue = this.pagoRepo
+      .createQueryBuilder('p')
+      .select('SUM(p.monto)', 'total')
+      .where("p.fecha >= DATE_TRUNC('month', CURRENT_DATE)");
+    this.applyTenantFilter(qbRevenue, tenant, 'p');
+
+    const qbEslora = this.barcoRepo
+      .createQueryBuilder('b')
+      .select('SUM(b.eslora)', 'total')
+      .where('b.espacioId IS NOT NULL');
+    this.applyTenantFilter(qbEslora, tenant, 'b');
+
+    const [revenueRes, esloraRes] = await Promise.all([
+      qbRevenue.getRawOne<{ total: string }>(),
+      qbEslora.getRawOne<{ total: string }>(),
+    ]);
+
+    const revenue = Number(revenueRes?.total || 0);
+    const eslora = Number(esloraRes?.total || 1); // Avoid division by zero
+
+    return {
+      revenueTotalMes: revenue,
+      esloraTotalOcupada: eslora,
+      arpu: Number((revenue / eslora).toFixed(2)),
+    };
+  }
+
+  async getTopVIPClients(tenant: TenantContext) {
+    const qb = this.pagoRepo
+      .createQueryBuilder('p')
+      .leftJoin('p.cliente', 'cl')
+      .select([
+        'cl.id as id',
+        'cl.nombre as nombre',
+        'SUM(p.monto) as total_pagado',
+        'COUNT(p.id) as cantidad_pagos',
+      ]);
+
+    this.applyTenantFilter(qb, tenant, 'p');
+
+    const raw = await qb
+      .groupBy('cl.id, cl.nombre')
+      .orderBy('total_pagado', 'DESC')
+      .limit(10)
+      .getRawMany<{
+        id: string;
+        nombre: string;
+        total_pagado: string;
+        cantidad_pagos: string;
+      }>();
+
+    return raw.map((r) => ({
+      id: Number(r.id),
+      nombre: r.nombre,
+      total: Number(r.total_pagado),
+      pagos: Number(r.cantidad_pagos),
+    }));
   }
 }

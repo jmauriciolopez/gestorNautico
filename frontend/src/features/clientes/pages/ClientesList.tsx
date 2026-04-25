@@ -1,16 +1,35 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Search, Edit, Trash2, Loader2, Users, Receipt, Mail, Phone, ShieldCheck, ShieldAlert, ShieldPlus } from 'lucide-react';
-import { useConfirm } from '../../../shared/context/ConfirmContext';
+import { useConfirm } from '../../../shared/hooks/useConfirm';
 import { useClientes } from '../hooks/useClientes';
 import { RoleGuard } from '../../../components/auth/RoleGuard';
 import { Role } from '../../../types';
+import { PaginationControls } from '../../../shared/components/PaginationControls';
+
+import { useDebounce } from '../../../hooks/useDebounce';
+import { useActiveGuarderiaId } from '../../../shared/hooks/useActiveGuarderiaId';
 
 export default function ClientesList() {
   const navigate = useNavigate();
+  const guarderiaId = useActiveGuarderiaId();
   const [search, setSearch] = useState('');
-  const { getClientes, deleteCliente, updateCliente } = useClientes();
-  const { data: clientes = [], isLoading } = getClientes;
+  const [page, setPage] = useState(1);
+  const debouncedSearch = useDebounce(search, 300);
+
+  // Reset when guarderia changes
+  React.useEffect(() => {
+    setPage(1);
+    setSearch('');
+  }, [guarderiaId]);
+
+  // Reset to page 1 when search changes
+  React.useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
+
+  const { clientes, meta, deleteCliente, updateCliente, getClientes } = useClientes({ page, search: debouncedSearch });
+  const { isLoading } = getClientes;
   const confirm = useConfirm();
 
   const handleDelete = async (id: number) => {
@@ -38,11 +57,6 @@ export default function ClientesList() {
     }
   };
 
-  const filteredClientes = clientes.filter(c =>
-    c.nombre.toLowerCase().includes(search.toLowerCase()) ||
-    c.dni.includes(search)
-  );
-
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-32 bg-[var(--bg-primary)]/20 rounded-[2.5rem] border border-[var(--border-primary)]">
@@ -53,7 +67,7 @@ export default function ClientesList() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="space-y-8 p-3 md:p-6 animate-in fade-in slide-in-from-bottom-4 duration-700 overflow-x-hidden">
       {/* Premium Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 bg-[var(--bg-secondary)]/[0.3] p-10 rounded-[2.5rem] border border-[var(--border-primary)] shadow-2xl relative overflow-hidden group transition-colors duration-300">
         <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none group-hover:scale-110 transition-transform duration-1000">
@@ -73,15 +87,17 @@ export default function ClientesList() {
           </div>
         </div>
 
-        <Link
-          to="/clientes/nuevo"
-          className="relative z-10 px-10 py-4 bg-indigo-600 hover:bg-indigo-500 text-[var(--text-primary)] rounded-2xl flex items-center gap-4 text-xs font-black uppercase tracking-[0.2em] shadow-2xl shadow-indigo-900/40 transition-all active:scale-95 group/btn"
-        >
-          <div className="p-1 bg-indigo-400/20 rounded-lg group-hover/btn:rotate-90 transition-transform">
-            <Plus className="w-4 h-4" />
-          </div>
-          Nuevo Cliente
-        </Link>
+        <RoleGuard allowedRoles={[Role.ADMIN, Role.SUPERADMIN, Role.SUPERVISOR]}>
+          <Link
+            to="/clientes/nuevo"
+            className="relative z-10 px-10 py-4 bg-indigo-600 hover:bg-indigo-500 text-[var(--text-primary)] rounded-2xl flex items-center gap-4 text-xs font-black uppercase tracking-[0.2em] shadow-2xl shadow-indigo-900/40 transition-all active:scale-95 group/btn"
+          >
+            <div className="p-1 bg-indigo-400/20 rounded-lg group-hover/btn:rotate-90 transition-transform">
+              <Plus className="w-4 h-4" />
+            </div>
+            Nuevo Cliente
+          </Link>
+        </RoleGuard>
       </div>
 
       {/* Grid Container */}
@@ -102,7 +118,7 @@ export default function ClientesList() {
           </div>
           <div className="hidden md:flex items-center gap-3 text-[var(--text-secondary)] text-[10px] font-black uppercase tracking-widest bg-[var(--bg-primary)]/40 px-4 py-2 rounded-xl border border-[var(--border-primary)] transition-colors duration-300">
             <Receipt className="w-3.5 h-3.5" />
-            Clientes: {filteredClientes.length}
+            Clientes: {meta?.total || 0}
           </div>
         </div>
 
@@ -114,12 +130,12 @@ export default function ClientesList() {
                 <th className="px-8 py-5 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Canales de Contacto</th>
                 <th className="px-8 py-5 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Estado</th>
                 <th className="px-8 py-5 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Cuota</th>
-                <th className="px-8 py-5 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] text-right">Mesa de Auditoría</th>
+                {/* <th className="px-8 py-5 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] text-right">Mesa de Auditoría</th> */}
                 <th className="px-8 py-5"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border-secondary)] transition-colors duration-300">
-              {filteredClientes.map((cliente) => (
+              {clientes.map((cliente) => (
                 <tr key={cliente.id} className={`group hover:bg-indigo-500/5 transition-all cursor-default ${!cliente.activo ? 'opacity-50 grayscale duration-700' : ''}`}>
                   <td className={`px-8 py-6 ${!cliente.activo ? 'pointer-events-none' : ''}`}>
                     <div className="flex flex-col">
@@ -160,26 +176,28 @@ export default function ClientesList() {
                       <span className="text-[10px] font-mono font-black text-[var(--text-secondary)] tracking-tighter">{cliente.tipoCuota}</span>
                     </div>
                   </td>
-                  <td className={`px-8 py-6 text-right ${!cliente.activo ? 'pointer-events-none' : ''}`}>
+                  {/* <td className={`px-8 py-6 text-right ${!cliente.activo ? 'pointer-events-none' : ''}`}>
                     <div className="inline-flex items-center gap-2 bg-[var(--bg-primary)]/60 px-3 py-1 rounded-lg border border-[var(--border-primary)] transition-colors duration-300">
                       <span className="text-[10px] font-mono font-black text-[var(--text-secondary)] tracking-tighter">{cliente.id.toString().padStart(4, '0')}</span>
                     </div>
-                  </td>
+                  </td> */}
 
-                  <td className="px-8 py-6 text-right">
-                    <div className="flex items-center justify-end gap-3">
-                      <button
-                        onClick={() => navigate(`/clientes/editar/${cliente.id}`)}
-                        className="p-3 bg-[var(--bg-primary)]/60 border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-indigo-400 hover:border-indigo-500/50 rounded-2xl transition-all active:scale-90 shadow-xl"
-                        title="Editar Expediente"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
+                  <td className="px-4 md:px-8 py-6 text-right">
+                    <div className="flex items-center justify-end gap-2 md:gap-3">
+                      <RoleGuard allowedRoles={[Role.ADMIN, Role.SUPERADMIN, Role.SUPERVISOR]}>
+                        <button
+                          onClick={() => navigate(`/clientes/editar/${cliente.id}`)}
+                          className="p-2 md:p-3 bg-[var(--bg-primary)]/60 border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-indigo-400 hover:border-indigo-500/50 rounded-xl md:rounded-2xl transition-all active:scale-90 shadow-xl"
+                          title="Editar Expediente"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                      </RoleGuard>
                       <RoleGuard allowedRoles={[Role.ADMIN, Role.SUPERADMIN]}>
                         {cliente.activo ? (
                           <button
                             onClick={() => handleDelete(cliente.id)}
-                            className="p-3 bg-[var(--bg-primary)]/60 border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-rose-500 hover:border-rose-500/50 rounded-2xl transition-all active:scale-90 shadow-xl"
+                            className="p-2 md:p-3 bg-[var(--bg-primary)]/60 border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-rose-500 hover:border-rose-500/50 rounded-xl md:rounded-2xl transition-all active:scale-90 shadow-xl"
                             title="Archivar Registro"
                             disabled={deleteCliente.isPending}
                           >
@@ -188,7 +206,7 @@ export default function ClientesList() {
                         ) : (
                           <button
                             onClick={() => handleActivar(cliente.id)}
-                            className="p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/20 hover:border-emerald-500/60 rounded-2xl transition-all active:scale-90 shadow-xl"
+                            className="p-2 md:p-3 bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 hover:bg-emerald-500/20 hover:border-emerald-500/60 rounded-xl md:rounded-2xl transition-all active:scale-90 shadow-xl"
                             title="Reactivar Cliente"
                             disabled={updateCliente.isPending}
                           >
@@ -200,7 +218,7 @@ export default function ClientesList() {
                   </td>
                 </tr>
               ))}
-              {filteredClientes.length === 0 && (
+              {clientes.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-8 py-32 text-center bg-[var(--bg-primary)]/10">
                     <div className="flex flex-col items-center gap-6">
@@ -208,7 +226,7 @@ export default function ClientesList() {
                         <Users className="w-10 h-10" />
                       </div>
                       <p className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] max-w-xs mx-auto">
-                        No se detectaron expedientes de clientes bajo criterios de búsqueda estipulados.
+                        No se encontraron clientes con los criterios de búsqueda.
                       </p>
                     </div>
                   </td>
@@ -217,6 +235,16 @@ export default function ClientesList() {
             </tbody>
           </table>
         </div>
+
+        {meta && (
+          <PaginationControls
+            currentPage={page}
+            totalPages={meta.totalPages}
+            onPageChange={setPage}
+            totalItems={meta.total}
+            pageSize={meta.limit}
+          />
+        )}
       </div>
     </div>
   );

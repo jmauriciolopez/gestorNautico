@@ -1,11 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { userService } from '../services/userService';
 import type { User } from '../../../types';
-import { useConfirm } from '../../../shared/context/ConfirmContext';
+import { useConfirm } from '../../../shared/hooks/useConfirm';
+import { useActiveGuarderiaId } from '../../../shared/hooks/useActiveGuarderiaId';
 
 export const useUsers = () => {
     const queryClient = useQueryClient();
     const confirm = useConfirm();
+    const guarderiaId = useActiveGuarderiaId();
 
     const { 
         data: users = [], 
@@ -13,7 +15,7 @@ export const useUsers = () => {
         error: queryError,
         refetch 
     } = useQuery({
-        queryKey: ['users'],
+        queryKey: ['users', guarderiaId],
         queryFn: () => userService.getAll(),
     });
 

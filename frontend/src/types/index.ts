@@ -11,5 +11,24 @@ export interface User {
     nombre: string;
     email: string;
     role: Role;
+    guarderiaId?: number; // Tenant actual del usuario
+    guarderia?: Guarderia; // Relación cargada
     token?: string;
+}
+
+export interface Guarderia {
+    id: number;
+    nombre: string;
+    contacto: string;
+    direccion?: string;
+    telefono?: string;
+    email?: string;
+    activo: boolean;
+    logo?: string;
+    ciudad?: string;
+    pais?: string;
+    latitud?: number;
+    longitud?: number;
+    trialStartedAt?: string;
+    finalizoOnboarding?: boolean;
 }

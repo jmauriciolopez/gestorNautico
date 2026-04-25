@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { BarChart2, AlertTriangle, TrendingDown, Activity, ChevronRight, RefreshCw } from 'lucide-react';
-import { useClientesMorosos, useMensualidades } from '../hooks/useReportes';
+import { useClientesMorosos, useMensualidades, useOcupacion } from '../hooks/useReportes';
 import { ClientesMorososList } from '../components/ClientesMorososList';
 import { MensualidadesTable } from '../components/MensualidadesTable';
+import { DashboardOcupacion } from '../components/DashboardOcupacion';
+import { DashboardIngresos } from '../components/DashboardIngresos';
+import { LayoutGrid, TrendingUp, AlertTriangle, TrendingDown, RefreshCw, Activity, BarChart2 } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 
-type Tab = 'morosos' | 'mensualidades';
+type Tab = 'morosos' | 'mensualidades' | 'ocupacion' | 'ingresos';
 
 export default function ReportesPage() {
   const [activeTab, setActiveTab] = useState<Tab>('morosos');
@@ -13,14 +15,17 @@ export default function ReportesPage() {
 
   const morosos = useClientesMorosos();
   const mensualidades = useMensualidades();
+  const ocupacion = useOcupacion();
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ['reportes'] });
   };
 
   const tabs = [
-    { id: 'morosos' as Tab, label: 'Clientes Morosos', icon: AlertTriangle, count: morosos.data?.length },
-    { id: 'mensualidades' as Tab, label: 'Mensualidades', icon: TrendingDown, count: mensualidades.data?.length },
+    { id: 'morosos' as Tab, label: 'Morosidad', icon: AlertTriangle, count: morosos.data?.length },
+    { id: 'mensualidades' as Tab, label: 'Mensualidades', icon: TrendingDown },
+    { id: 'ocupacion' as Tab, label: 'Ocupación', icon: LayoutGrid },
+    { id: 'ingresos' as Tab, label: 'Ingresos', icon: TrendingUp },
   ];
 
   return (
@@ -53,18 +58,16 @@ export default function ReportesPage() {
           <button
             key={id}
             onClick={() => setActiveTab(id)}
-            className={`flex items-center gap-3 px-6 py-3 text-[10px] font-black rounded-[1.25rem] transition-all uppercase tracking-widest ${
-              activeTab === id
+            className={`flex items-center gap-3 px-6 py-3 text-[10px] font-black rounded-[1.25rem] transition-all uppercase tracking-widest ${activeTab === id
                 ? 'bg-indigo-600 text-white shadow-2xl shadow-indigo-900/40'
                 : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)]/40'
-            }`}
+              }`}
           >
             <Icon className="w-4 h-4" />
             {label}
             {count !== undefined && (
-              <span className={`px-2 py-0.5 rounded-full text-[9px] font-black ${
-                activeTab === id ? 'bg-white/20 text-white' : 'bg-[var(--bg-surface)] text-[var(--text-muted)]'
-              }`}>
+              <span className={`px-2 py-0.5 rounded-full text-[9px] font-black ${activeTab === id ? 'bg-white/20 text-white' : 'bg-[var(--bg-surface)] text-[var(--text-muted)]'
+                }`}>
                 {count}
               </span>
             )}
@@ -81,16 +84,18 @@ export default function ReportesPage() {
             </div>
             <div>
               <h3 className="text-sm font-black text-[var(--text-primary)] uppercase tracking-widest leading-none">
-                {activeTab === 'morosos' ? 'Cartera Morosa' : 'Cuadro de Mensualidades con Descuentos'}
+                {activeTab === 'morosos' ? 'Cartera Morosa' :
+                  activeTab === 'mensualidades' ? 'Cuadro de Mensualidades' :
+                    activeTab === 'ocupacion' ? 'Ocupación de Infraestructura' :
+                      'Análisis de Ingresos'}
               </h3>
               <p className="text-[10px] text-[var(--text-secondary)] font-bold uppercase tracking-tighter mt-1">
-                {activeTab === 'morosos'
-                  ? 'Clientes con cargos vencidos sin pagar'
-                  : 'Tarifa base → descuentos → valor final por embarcación'}
+                {activeTab === 'morosos' ? 'Clientes con cargos vencidos sin pagar' :
+                  activeTab === 'mensualidades' ? 'Tarifa base → descuentos → valor final' :
+                    activeTab === 'ocupacion' ? 'Uso real de cunas y espacios por zona' :
+                      'Evolución de pagos confirmados por mes'}
               </p>
             </div>
-          </div>
-          <div className="flex items-center gap-2 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest">
           </div>
         </div>
 
@@ -99,6 +104,12 @@ export default function ReportesPage() {
         )}
         {activeTab === 'mensualidades' && (
           <MensualidadesTable data={mensualidades.data ?? []} isLoading={mensualidades.isLoading} />
+        )}
+        {activeTab === 'ocupacion' && (
+          <DashboardOcupacion data={ocupacion.data} isLoading={ocupacion.isLoading} />
+        )}
+        {activeTab === 'ingresos' && (
+          <DashboardIngresos />
         )}
       </div>
     </div>

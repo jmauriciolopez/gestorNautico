@@ -34,6 +34,9 @@ export class Catalogo {
   )
   registros: RegistroServicio[];
 
+  @Column({ type: 'int' })
+  guarderiaId: number;
+
   @CreateDateColumn()
   createdAt: Date;
 

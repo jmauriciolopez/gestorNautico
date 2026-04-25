@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { httpClient } from '../../../shared/api/HttpClient';
-import { Paginated, selectData } from '../../../api/pagination';
-import { Cliente } from '../../clientes/hooks/useClientes';
+import { Paginated } from '../../../api/pagination';
+import { EstadoEmbarcacion } from '../../../shared/types/enums';
+import { useActiveGuarderiaId } from '../../../shared/hooks/useActiveGuarderiaId';
 
 export interface Embarcacion {
   id: number;
@@ -12,27 +13,34 @@ export interface Embarcacion {
   eslora?: number;
   manga?: number;
   tipo: string;
-  estado: string;
+  estado_operativo: EstadoEmbarcacion;
   cliente?: Cliente;
   espacio?: any;
   espacioId?: number | null;
   descuento?: number;
+  tieneDeuda?: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
-export const useEmbarcaciones = () => {
+export const useEmbarcaciones = (options: { page?: number; limit?: number; search?: string } = {}) => {
   const queryClient = useQueryClient();
+  const guarderiaId = useActiveGuarderiaId();
 
   const getEmbarcaciones = useQuery({
-    queryKey: ['embarcaciones'],
-    queryFn: () => httpClient.get<Paginated<Embarcacion>>('/embarcaciones'),
-    select: selectData,
+    queryKey: ['embarcaciones', guarderiaId, options.page, options.limit, options.search],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (options.page) params.append('page', String(options.page));
+      if (options.limit) params.append('limit', String(options.limit));
+      if (options.search) params.append('search', options.search);
+      return httpClient.get<Paginated<Embarcacion>>(`/embarcaciones?${params.toString()}`);
+    },
   });
 
   const useEmbarcacion = (id: number) =>
     useQuery({
-      queryKey: ['embarcaciones', id],
+      queryKey: ['embarcaciones', guarderiaId, id],
       queryFn: () => httpClient.get<Embarcacion>(`/embarcaciones/${id}`),
       enabled: !!id,
     });
@@ -41,7 +49,11 @@ export const useEmbarcaciones = () => {
     mutationFn: (data: Partial<Embarcacion>) =>
       httpClient.post<Embarcacion>('/embarcaciones', data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['embarcaciones'] });
+      void queryClient.invalidateQueries({ queryKey: ['embarcaciones'], refetchType: 'all' });
+      void queryClient.invalidateQueries({ queryKey: ['zonas'], refetchType: 'all' });
+      void queryClient.invalidateQueries({ queryKey: ['ubicaciones'], refetchType: 'all' });
+      void queryClient.invalidateQueries({ queryKey: ['infra-stats'], refetchType: 'all' });
+      void queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'all' });
     },
   });
 
@@ -62,9 +74,21 @@ export const useEmbarcaciones = () => {
     mutationFn: (id: number) =>
       httpClient.delete(`/embarcaciones/${id}`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['embarcaciones'] });
+      void queryClient.invalidateQueries({ queryKey: ['embarcaciones'], refetchType: 'all' });
+      void queryClient.invalidateQueries({ queryKey: ['zonas'], refetchType: 'all' });
+      void queryClient.invalidateQueries({ queryKey: ['ubicaciones'], refetchType: 'all' });
+      void queryClient.invalidateQueries({ queryKey: ['infra-stats'], refetchType: 'all' });
+      void queryClient.invalidateQueries({ queryKey: ['dashboard'], refetchType: 'all' });
     },
   });
 
-  return { getEmbarcaciones, useEmbarcacion, createEmbarcacion, updateEmbarcacion, deleteEmbarcacion };
+  const embarcaciones = getEmbarcaciones.data?.data || [];
+  const meta = getEmbarcaciones.data ? {
+    total: getEmbarcaciones.data.total,
+    page: getEmbarcaciones.data.page,
+    limit: getEmbarcaciones.data.limit,
+    totalPages: getEmbarcaciones.data.totalPages
+  } : undefined;
+
+  return { getEmbarcaciones, embarcaciones, meta, useEmbarcacion, createEmbarcacion, updateEmbarcacion, deleteEmbarcacion };
 };

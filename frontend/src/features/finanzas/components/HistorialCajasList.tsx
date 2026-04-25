@@ -67,11 +67,11 @@ export function HistorialCajasList({ cajas, isLoading, onVerDetalle }: Historial
             <th className="px-8 py-5"></th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-800/40">
+        <tbody className="divide-y divide-[var(--border-primary)]/40">
           {isLoading ? (
-            <tr><td colSpan={6} className="px-8 py-20 text-center text-slate-600 font-bold bg-[var(--bg-secondary)]/20">Auditando cierres anteriores...</td></tr>
+            <tr><td colSpan={6} className="px-8 py-20 text-center text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)]/20">Auditando cierres anteriores...</td></tr>
           ) : sorted.length === 0 ? (
-            <tr><td colSpan={6} className="px-8 py-20 text-center text-slate-600 font-bold bg-[var(--bg-secondary)]/20">No se detectaron cierres históricos registrados.</td></tr>
+            <tr><td colSpan={6} className="px-8 py-20 text-center text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)]/20">No se detectaron cierres históricos registrados.</td></tr>
           ) : (
             sorted.map((caja) => {
               const totalRecaudado = caja.pagos?.reduce((sum, p) => sum + Number(p.monto), 0) || 0;
@@ -80,17 +80,17 @@ export function HistorialCajasList({ cajas, isLoading, onVerDetalle }: Historial
               const isExacto = Math.abs(diferencia) < 0.01;
 
               return (
-                <tr key={caja.id} className="group hover:bg-slate-800/30 transition-all cursor-default">
+                <tr key={caja.id} className="group hover:bg-[var(--bg-card-hover)] transition-all cursor-default">
                   <td className="px-8 py-5">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center border border-slate-700">
+                      <div className="w-8 h-8 rounded-lg bg-[var(--bg-elevated)] flex items-center justify-center border border-[var(--border-primary)]">
                         <Calendar className="w-3.5 h-3.5 text-[var(--text-secondary)]" />
                       </div>
                       <div className="flex flex-col">
                         <span className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-tight">
                           {new Date(caja.fechaApertura).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}
                         </span>
-                        <span className="text-[10px] text-slate-600 font-black uppercase tracking-widest mt-0.5">ESTADO: {caja.estado}</span>
+                        <span className="text-[10px] text-[var(--text-muted)] font-black uppercase tracking-widest mt-0.5">ESTADO: {caja.estado}</span>
                       </div>
                     </div>
                   </td>
@@ -111,7 +111,7 @@ export function HistorialCajasList({ cajas, isLoading, onVerDetalle }: Historial
                         </span>
                       </div>
                     ) : (
-                      <span className="text-[9px] font-black uppercase text-slate-700 tracking-widest italic">En curso...</span>
+                      <span className="text-[9px] font-black uppercase text-[var(--text-muted)] tracking-widest italic">En curso...</span>
                     )}
                   </td>
                   <td className="px-8 py-5 text-right font-black text-[var(--text-primary)] text-sm">
@@ -120,7 +120,7 @@ export function HistorialCajasList({ cajas, isLoading, onVerDetalle }: Historial
                   <td className="px-8 py-5 text-right">
                     <button
                       onClick={() => onVerDetalle(caja)}
-                      className="bg-slate-800 hover:bg-slate-700 text-[var(--text-secondary)] hover:text-[var(--text-primary)] p-2 rounded-xl transition-all active:scale-90 flex items-center gap-2 ml-auto"
+                      className="bg-[var(--bg-elevated)] hover:bg-[var(--bg-card-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] p-2 rounded-xl transition-all active:scale-90 flex items-center gap-2 ml-auto"
                     >
                       <Eye className="w-4 h-4" />
                     </button>

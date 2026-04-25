@@ -29,11 +29,12 @@
   --border-secondary:  rgba(255, 255, 255, 0.06);
   --border-strong:     rgba(255, 255, 255, 0.16);
 
-  /* Sombras */
-  --shadow-xs:         0 1px 2px rgba(0, 0, 0, 0.18);
-  --shadow-sm:         0 4px 12px rgba(0, 0, 0, 0.18);
-  --shadow-md:         0 12px 32px rgba(0, 0, 0, 0.24);
-  --shadow-lg:         0 24px 56px rgba(0, 0, 0, 0.30);
+  /* Sombras de Difusión (Premium) */
+  --shadow-xs:         0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-sm:         0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-md:         0 20px 48px rgba(0, 0, 0, 0.18);
+  --shadow-lg:         0 40px 80px -16px rgba(0, 0, 0, 0.30);
+  --shadow-premium:    0 32px 128px -16px rgba(0, 0, 0, 0.45);
 
   /* Acentos sistema */
   --accent-primary:    #6366f1;
@@ -42,17 +43,21 @@
   --accent-primary-ring: rgba(99, 102, 241, 0.32);
 
   /* Semánticos */
-  --accent-teal:       #19a67b;
-  --accent-teal-soft:  rgba(25, 166, 123, 0.14);
-  --accent-teal-line:  linear-gradient(90deg, #19a67b, #9fe1cb);
+  --accent-teal:       #10b981;
+  --accent-teal-soft:  rgba(16, 185, 129, 0.16);
+  --accent-teal-line:  linear-gradient(90deg, #10b981, #6ee7b7);
 
-  --accent-purple:      #8b7cf6;
-  --accent-purple-soft: rgba(139, 124, 246, 0.14);
-  --accent-purple-line: linear-gradient(90deg, #8b7cf6, #d9d4ff);
+  --accent-indigo:      #6366f1;
+  --accent-indigo-soft: rgba(99, 102, 241, 0.20);
+  --accent-indigo-line: linear-gradient(90deg, #6366f1, #a5b4fc);
 
-  --accent-amber:      #d08a24;
-  --accent-amber-soft: rgba(208, 138, 36, 0.14);
-  --accent-amber-line: linear-gradient(90deg, #d08a24, #ffd58a);
+  --accent-purple:      #8b5cf6;
+  --accent-purple-soft: rgba(139, 92, 246, 0.16);
+  --accent-purple-line: linear-gradient(90deg, #8b5cf6, #c4b5fd);
+
+  --accent-amber:      #f59e0b;
+  --accent-amber-soft: rgba(245, 158, 11, 0.16);
+  --accent-amber-line: linear-gradient(90deg, #f59e0b, #fcd34d);
 
   --accent-red:        #e45858;
   --accent-red-soft:   rgba(228, 88, 88, 0.14);
@@ -67,10 +72,10 @@
   /* Focus */
   --focus-ring:        0 0 0 4px var(--accent-primary-ring);
 
-  /* Layout */
-  --bento-radius:      18px;
-  --bento-gap:         14px;
-  --glass-blur:        14px;
+  /* Layout Bento 2.0 */
+  --bento-radius:      40px;
+  --bento-gap:         24px;
+  --glass-blur:        24px;
 
   /* Modales */
   --modal-overlay:     rgba(2, 6, 23, 0.72);
@@ -123,17 +128,21 @@
   --accent-primary-ring: rgba(91, 92, 240, 0.24);
 
   /* Semánticos */
-  --accent-teal:       #148f6a;
-  --accent-teal-soft:  rgba(20, 143, 106, 0.12);
-  --accent-teal-line:  linear-gradient(90deg, #148f6a, #9fe1cb);
+  --accent-teal:       #059669;
+  --accent-teal-soft:  rgba(5, 150, 105, 0.12);
+  --accent-teal-line:  linear-gradient(90deg, #059669, #6ee7b7);
 
-  --accent-purple:      #7b66f2;
-  --accent-purple-soft: rgba(123, 102, 242, 0.10);
-  --accent-purple-line: linear-gradient(90deg, #7b66f2, #d9d4ff);
+  --accent-indigo:      #4f46e5;
+  --accent-indigo-soft: rgba(79, 70, 229, 0.12);
+  --accent-indigo-line: linear-gradient(90deg, #4f46e5, #a5b4fc);
 
-  --accent-amber:      #b87418;
-  --accent-amber-soft: rgba(184, 116, 24, 0.12);
-  --accent-amber-line: linear-gradient(90deg, #b87418, #ffd58a);
+  --accent-purple:      #7c3aed;
+  --accent-purple-soft: rgba(124, 58, 237, 0.10);
+  --accent-purple-line: linear-gradient(90deg, #7c3aed, #c4b5fd);
+
+  --accent-amber:      #d97706;
+  --accent-amber-soft: rgba(217, 119, 6, 0.12);
+  --accent-amber-line: linear-gradient(90deg, #d97706, #fcd34d);
 
   --accent-red:        #d64747;
   --accent-red-soft:   rgba(214, 71, 71, 0.12);
@@ -242,10 +251,10 @@ select {
 }
 
 .kpi-value {
-  font-size: clamp(28px, 3vw, 36px);
+  font-size: clamp(32px, 4vw, 42px);
   line-height: 1;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  font-weight: 800;
+  letter-spacing: -0.04em;
   color: var(--text-primary);
 }
 
@@ -280,15 +289,31 @@ select {
 }
 
 .glass {
-  background: color-mix(in srgb, var(--bg-surface) 82%, transparent);
+  background: color-mix(in srgb, var(--bg-surface) 65%, transparent);
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
-  border: 1px solid var(--border-primary);
-  box-shadow: var(--shadow-sm);
-  transition:
-    background 0.25s ease,
-    border-color 0.25s ease,
-    box-shadow 0.25s ease;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: var(--shadow-premium);
+  position: relative;
+}
+
+.glass::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.12) 0%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
 }
 
 /* ─────────────────────────────────────────────

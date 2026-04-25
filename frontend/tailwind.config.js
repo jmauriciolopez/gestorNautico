@@ -28,6 +28,7 @@ export default {
           primary: "var(--accent-primary)",
           secondary: "var(--accent-secondary)",
           teal: "var(--accent-teal)",
+          indigo: "var(--accent-indigo)",
           purple: "var(--accent-purple)",
           amber: "var(--accent-amber)",
           red: "var(--accent-red)",

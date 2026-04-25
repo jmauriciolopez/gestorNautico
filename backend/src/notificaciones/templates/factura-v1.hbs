@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Nueva Factura {{numero}}</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f4f5;
+            margin: 0;
+            padding: 40px 20px;
+            color: #18181b;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            border: 1px solid #e4e4e7;
+        }
+        .header {
+            background-color: #4f46e5;
+            padding: 40px;
+            text-align: center;
+            color: white;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+        .content {
+            padding: 40px;
+        }
+        .greeting {
+            font-size: 18px;
+            margin-bottom: 24px;
+            font-weight: 600;
+        }
+        .text {
+            font-size: 15px;
+            line-height: 1.6;
+            color: #52525b;
+            margin-bottom: 30px;
+        }
+        .details-box {
+            background: #f4f4f5;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 30px;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+        .detail-row:last-child {
+            margin-bottom: 0;
+            padding-top: 12px;
+            border-top: 1px solid #e4e4e7;
+            font-weight: 700;
+            font-size: 16px;
+        }
+        .label {
+            color: #71717a;
+            font-weight: 500;
+        }
+        .value {
+            color: #18181b;
+            font-weight: 600;
+        }
+        .footer {
+            text-align: center;
+            padding: 30px;
+            background: #fafafa;
+            border-top: 1px solid #e4e4e7;
+            font-size: 13px;
+            color: #a1a1aa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Gestor Náutico</h1>
+        </div>
+        <div class="content">
+            <div class="greeting">Hola, {{cliente}}</div>
+            <div class="text">
+                Adjuntamos a este correo su nueva factura correspondiente a los servicios náuticos contratados. 
+                Agradecemos su preferencia y nos mantenemos a disposición ante cualquier consulta.
+            </div>
+            
+            <div class="details-box">
+                <div class="detail-row">
+                    <span class="label">Número de Factura</span>
+                    <span class="value">{{numero}}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Fecha de Emisión</span>
+                    <span class="value">{{fecha}}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Total a Pagar</span>
+                    <span class="value" style="color: #4f46e5;">$ {{total}}</span>
+                </div>
+            </div>
+
+            <div class="text" style="font-size: 14px; text-align: center;">
+                El documento PDF original con todo el detalle de los conceptos facturados se encuentra adjunto a este mensaje.
+            </div>
+        </div>
+        <div class="footer">
+            Este es un correo automático generado por el sistema de Facturación y Administración Náutica.<br>
+            Por favor no responda a este mensaje directamente.
+        </div>
+    </div>
+</body>
+</html>

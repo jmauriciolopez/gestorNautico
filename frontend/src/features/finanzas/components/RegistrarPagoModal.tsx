@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, CreditCard, DollarSign, User, Calendar, Receipt, Hash, Loader2 } from 'lucide-react';
+import { X, CreditCard, DollarSign, User, Calendar, Receipt, Hash, Loader2, ChevronDown } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import { toast } from 'react-hot-toast';
 import { useClientes } from '../../clientes/hooks/useClientes';
 import { useFinanzas, useCargos, Cargo } from '../hooks/useFinanzas';
@@ -9,6 +10,56 @@ interface RegistrarPagoModalProps {
   onClose: () => void;
   initialCargo?: Cargo | null;
 }
+
+const PortalSelect = ({ value, onChange, options }: { value: string, onChange: (v: string) => void, options: {value: string, label: string}[] }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const buttonRef = React.useRef<HTMLButtonElement>(null);
+  const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
+
+  const handleOpen = () => {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setCoords({ top: rect.bottom + 8, left: rect.left, width: rect.width });
+    }
+    setIsOpen(true);
+  };
+
+  return (
+    <div className="relative">
+      <button
+        ref={buttonRef}
+        type="button"
+        onClick={() => isOpen ? setIsOpen(false) : handleOpen()}
+        className="w-full bg-[var(--bg-elevated)] border border-[var(--border-primary)] rounded-2xl px-5 py-4 text-sm text-[var(--text-primary)] focus:outline-none focus:border-indigo-500/50 transition-all text-left flex justify-between items-center"
+      >
+        <span>{options.find(o => o.value === value)?.label || 'Seleccionar...'}</span>
+        <ChevronDown className={`w-4 h-4 opacity-50 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {isOpen && createPortal(
+        <div className="fixed inset-0 z-[200]" onClick={() => setIsOpen(false)}>
+          <div
+            className="absolute bg-[var(--bg-elevated)] border border-[var(--border-primary)] rounded-2xl shadow-2xl overflow-hidden py-2"
+            style={{ top: coords.top, left: coords.left, width: coords.width }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {options.map(o => (
+              <button
+                key={o.value}
+                type="button"
+                onClick={() => { onChange(o.value); setIsOpen(false); }}
+                className={`w-full text-left px-5 py-3 text-sm transition-colors hover:bg-[var(--bg-card-hover)] ${value === o.value ? 'text-indigo-400 font-bold bg-indigo-500/10' : 'text-[var(--text-primary)]'}`}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+        </div>,
+        document.body
+      )}
+    </div>
+  );
+};
 
 export function RegistrarPagoModal({ isOpen, onClose, initialCargo }: RegistrarPagoModalProps) {
   const { getClientes } = useClientes();
@@ -102,7 +153,7 @@ export function RegistrarPagoModal({ isOpen, onClose, initialCargo }: RegistrarP
               <p className="text-[10px] text-[var(--text-secondary)] font-black uppercase tracking-[0.25em] mt-1 opacity-60">Ingreso de valores a tesorería</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-3 hover:bg-slate-800 rounded-full text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all active:scale-90 border border-transparent hover:border-[var(--border-primary)]">
+          <button onClick={onClose} className="p-3 hover:bg-[var(--bg-card-hover)] rounded-full text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all active:scale-90 border border-transparent hover:border-[var(--border-primary)]">
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -115,12 +166,12 @@ export function RegistrarPagoModal({ isOpen, onClose, initialCargo }: RegistrarP
               </label>
               <select
                 required
-                className="w-full bg-slate-900/50 border border-[var(--border-primary)] rounded-2xl px-5 py-4 text-sm text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all appearance-none cursor-pointer"
+                className="w-full bg-[var(--bg-elevated)] border border-[var(--border-primary)] rounded-2xl px-5 py-4 text-sm text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all appearance-none cursor-pointer"
                 value={formData.clienteId}
                 onChange={(e) => setFormData({ ...formData, clienteId: e.target.value, cargoId: '' })}
               >
                 <option value="">Seleccionar Propietario...</option>
-                {getClientes.data?.map(c => (
+                {getClientes.data?.data?.map(c => (
                   <option key={c.id} value={c.id}>{c.nombre}</option>
                 ))}
               </select>
@@ -132,7 +183,7 @@ export function RegistrarPagoModal({ isOpen, onClose, initialCargo }: RegistrarP
                   <Receipt className="w-3 h-3 text-indigo-500" /> Cargos Pendientes
                 </label>
                 <select
-                  className="w-full bg-slate-900/50 border border-[var(--border-primary)] rounded-2xl px-5 py-4 text-sm text-[var(--text-primary)] focus:outline-none focus:border-indigo-500/50 transition-all cursor-pointer"
+                  className="w-full bg-[var(--bg-elevated)] border border-[var(--border-primary)] rounded-2xl px-5 py-4 text-sm text-[var(--text-primary)] focus:outline-none focus:border-indigo-500/50 transition-all cursor-pointer"
                   value={formData.cargoId}
                   onChange={(e) => setFormData({ ...formData, cargoId: e.target.value })}
                 >
@@ -155,7 +206,7 @@ export function RegistrarPagoModal({ isOpen, onClose, initialCargo }: RegistrarP
                 <input
                   required
                   type="number"
-                  className="w-full bg-slate-900/50 border border-[var(--border-primary)] rounded-2xl pl-10 pr-5 py-4 text-sm font-black text-[var(--text-primary)] focus:outline-none focus:border-emerald-500/50 transition-all placeholder:text-slate-700"
+                  className="w-full bg-[var(--bg-elevated)] border border-[var(--border-primary)] rounded-2xl pl-10 pr-5 py-4 text-sm font-black text-[var(--text-primary)] focus:outline-none focus:border-emerald-500/50 transition-all placeholder:text-[var(--text-muted)]"
                   placeholder="0.00"
                   value={formData.monto}
                   onChange={(e) => setFormData({ ...formData, monto: e.target.value })}
@@ -169,7 +220,7 @@ export function RegistrarPagoModal({ isOpen, onClose, initialCargo }: RegistrarP
               <input
                 type="text"
                 placeholder="Ej: Transf. 1928"
-                className="w-full bg-slate-900/50 border border-[var(--border-primary)] rounded-2xl px-5 py-4 text-sm text-[var(--text-primary)] focus:outline-none focus:border-indigo-500/50 transition-all placeholder:text-slate-700"
+                className="w-full bg-[var(--bg-elevated)] border border-[var(--border-primary)] rounded-2xl px-5 py-4 text-sm text-[var(--text-primary)] focus:outline-none focus:border-indigo-500/50 transition-all placeholder:text-[var(--text-muted)]"
                 value={formData.referencia}
                 onChange={(e) => setFormData({ ...formData, referencia: e.target.value })}
               />
@@ -181,16 +232,16 @@ export function RegistrarPagoModal({ isOpen, onClose, initialCargo }: RegistrarP
               <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest flex items-center gap-2 px-1">
                 Medio de Pago
               </label>
-              <select
-                className="w-full bg-slate-900/50 border border-[var(--border-primary)] rounded-2xl px-5 py-4 text-sm text-[var(--text-primary)] focus:outline-none focus:border-indigo-500/50 transition-all"
+              <PortalSelect
                 value={formData.metodoPago}
-                onChange={(e) => setFormData({ ...formData, metodoPago: e.target.value as any })}
-              >
-                <option value="EFECTIVO">EFECTIVO</option>
-                <option value="TRANSFERENCIA">TRANSFERENCIA</option>
-                <option value="TARJETA">TARJETA</option>
-                <option value="CHEQUE">CHEQUE</option>
-              </select>
+                onChange={(val) => setFormData({ ...formData, metodoPago: val as any })}
+                options={[
+                  { value: 'EFECTIVO', label: 'EFECTIVO' },
+                  { value: 'TRANSFERENCIA', label: 'TRANSFERENCIA' },
+                  { value: 'TARJETA', label: 'TARJETA' },
+                  { value: 'CHEQUE', label: 'CHEQUE' },
+                ]}
+              />
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest flex items-center gap-2 px-1">
@@ -198,7 +249,7 @@ export function RegistrarPagoModal({ isOpen, onClose, initialCargo }: RegistrarP
               </label>
               <input
                 type="date"
-                className="w-full bg-slate-900/50 border border-[var(--border-primary)] rounded-2xl px-5 py-4 text-sm text-[var(--text-primary)] focus:outline-none focus:border-indigo-500/50 transition-all [color-scheme:dark]"
+                className="w-full bg-[var(--bg-elevated)] border border-[var(--border-primary)] rounded-2xl px-5 py-4 text-sm text-[var(--text-primary)] focus:outline-none focus:border-indigo-500/50 transition-all [color-scheme:dark]"
                 value={formData.fecha}
                 onChange={(e) => setFormData({ ...formData, fecha: e.target.value })}
               />
@@ -209,7 +260,7 @@ export function RegistrarPagoModal({ isOpen, onClose, initialCargo }: RegistrarP
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-8 py-4 border border-[var(--border-primary)] text-[var(--text-secondary)] font-black text-[10px] uppercase tracking-[0.25em] rounded-2xl hover:bg-slate-800 hover:text-[var(--text-primary)] transition-all order-2 sm:order-1"
+              className="flex-1 px-8 py-4 border border-[var(--border-primary)] text-[var(--text-secondary)] font-black text-[10px] uppercase tracking-[0.25em] rounded-2xl hover:bg-[var(--bg-card-hover)] hover:text-[var(--text-primary)] transition-all order-2 sm:order-1"
             >
               Cancelar
             </button>

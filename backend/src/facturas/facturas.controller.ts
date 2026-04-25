@@ -18,10 +18,18 @@ import { Role } from '../users/user.entity';
 import { Response } from 'express';
 import { PdfService } from '../common/pdf/pdf.service';
 import { CreateFacturaDto, UpdateFacturaDto } from './dto/create-factura.dto';
-import { UpdateEstadoFacturaDto, SendEmailFacturaDto } from './dto/update-estado-factura.dto';
+import {
+  UpdateEstadoFacturaDto,
+  SendEmailFacturaDto,
+} from './dto/update-estado-factura.dto';
+
+import { TenantGuard } from '../auth/guards/tenant.guard';
+import { TenantRoles } from '../auth/decorators/tenant-roles.decorator';
+import { ActiveTenant } from '../auth/decorators/active-tenant.decorator';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
 
 @Controller('facturas')
-@UseGuards(AuthTokenGuard, RolesGuard)
+@UseGuards(AuthTokenGuard, TenantGuard, RolesGuard)
 export class FacturasController {
   constructor(
     private readonly facturasService: FacturasService,
@@ -29,17 +37,21 @@ export class FacturasController {
   ) {}
 
   @Get('next-numero')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
-  async getNextNumero() {
-    const nextNumero = await this.facturasService.generateNextNumero();
+  @TenantRoles(Role.ADMIN)
+  async getNextNumero(@ActiveTenant() tenant: TenantContext) {
+    const nextNumero = await this.facturasService.generateNextNumero(tenant);
     return { nextNumero };
   }
 
   @Get(':id/pdf')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
-  async downloadPdf(@Param('id') id: string, @Res() res: Response) {
-    const factura = await this.facturasService.findOne(+id);
-    const buffer = await this.pdfService.generateInvoice(factura);
+  @TenantRoles(Role.ADMIN)
+  async downloadPdf(
+    @ActiveTenant() tenant: TenantContext,
+    @Param('id') id: string,
+    @Res() res: Response,
+  ) {
+    const factura = await this.facturasService.findOne(tenant, +id);
+    const buffer = await this.pdfService.generateInvoice(tenant, factura);
 
     res.set({
       'Content-Type': 'application/pdf',
@@ -50,48 +62,88 @@ export class FacturasController {
     res.end(buffer);
   }
 
+  @Get('stats')
+  @TenantRoles(Role.ADMIN)
+  async getStats(
+    @ActiveTenant() tenant: TenantContext,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.facturasService.getStats(tenant, startDate, endDate);
+  }
+
   @Get()
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
-  findAll(@Query('page') page?: number, @Query('limit') limit?: number) {
-    return this.facturasService.findAll({ page, limit });
+  @TenantRoles(Role.ADMIN)
+  findAll(
+    @ActiveTenant() tenant: TenantContext,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+    @Query('search') search?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.facturasService.findAll(tenant, {
+      page,
+      limit,
+      search,
+      startDate,
+      endDate,
+    });
   }
 
   @Get(':id')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
-  findOne(@Param('id') id: string) {
-    return this.facturasService.findOne(+id);
+  @TenantRoles(Role.ADMIN)
+  findOne(@ActiveTenant() tenant: TenantContext, @Param('id') id: string) {
+    return this.facturasService.findOne(tenant, +id);
   }
 
   @Post()
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
-  create(@Body() data: CreateFacturaDto) {
-    return this.facturasService.create(data);
+  @TenantRoles(Role.ADMIN)
+  create(
+    @ActiveTenant() tenant: TenantContext,
+    @Body() data: CreateFacturaDto,
+  ) {
+    return this.facturasService.create(tenant, data);
   }
 
   @Patch(':id/estado')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
+  @TenantRoles(Role.ADMIN)
   updateEstado(
+    @ActiveTenant() tenant: TenantContext,
     @Param('id') id: string,
     @Body() dto: UpdateEstadoFacturaDto,
   ) {
-    return this.facturasService.updateEstado(+id, dto.estado, dto.metodoPago);
+    return this.facturasService.updateEstado(
+      tenant,
+      +id,
+      dto.estado,
+      dto.metodoPago,
+    );
   }
 
   @Patch(':id')
-  @Roles(Role.SUPERADMIN, Role.ADMIN)
-  update(@Param('id') id: string, @Body() data: UpdateFacturaDto) {
-    return this.facturasService.update(+id, data);
+  @TenantRoles(Role.ADMIN)
+  update(
+    @ActiveTenant() tenant: TenantContext,
+    @Param('id') id: string,
+    @Body() data: UpdateFacturaDto,
+  ) {
+    return this.facturasService.update(tenant, +id, data);
   }
 
   @Post(':id/send-email')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
-  sendEmail(@Param('id') id: string, @Body() dto: SendEmailFacturaDto) {
-    return this.facturasService.sendEmail(+id, dto.email);
+  @TenantRoles(Role.ADMIN)
+  sendEmail(
+    @ActiveTenant() tenant: TenantContext,
+    @Param('id') id: string,
+    @Body() dto: SendEmailFacturaDto,
+  ) {
+    return this.facturasService.sendEmail(tenant, +id, dto.email);
   }
 
   @Delete(':id')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
-  remove(@Param('id') id: string) {
-    return this.facturasService.remove(+id);
+  @TenantRoles(Role.ADMIN)
+  remove(@ActiveTenant() tenant: TenantContext, @Param('id') id: string) {
+    return this.facturasService.remove(tenant, +id);
   }
 }

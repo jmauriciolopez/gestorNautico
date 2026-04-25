@@ -10,8 +10,8 @@ interface Props {
 
 const ESTADO_CONFIG = {
   PENDIENTE:  { label: 'Pendiente',  color: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
-  CONFIRMADA: { label: 'Confirmada', color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' },
-  COMPLETADA: { label: 'Completada', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
+  EN_AGUA:    { label: 'En Agua',    color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' },
+  FINALIZADA: { label: 'Finalizada', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
   CANCELADA:  { label: 'Cancelada',  color: 'bg-rose-500/10 text-rose-400 border-rose-500/20' },
 };
 
@@ -28,20 +28,7 @@ export function SolicitudesBajadaList({ solicitudes, isLoading, onUpdateEstado }
 
   return (
     <div className="p-12 space-y-10">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-[var(--border-primary)]/40 pb-10">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
-            <h3 className="text-2xl font-black text-[var(--text-primary)] uppercase tracking-tight">Solicitudes Web</h3>
-          </div>
-          <p className="text-[10px] text-[var(--text-secondary)] font-black uppercase tracking-[0.3em] opacity-60">Gestión de lanzamientos solicitados por clientes vía App/Web</p>
-        </div>
-        <div className="px-6 py-3 bg-indigo-500/10 border border-indigo-500/20 rounded-[1.25rem] backdrop-blur-md">
-          <span className="text-[11px] font-black text-indigo-400 uppercase tracking-[0.2em]">{solicitudes.length} REGISTROS</span>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-6">
+<div className="grid grid-cols-1 gap-6">
         {isLoading ? (
           <div className="py-24 flex flex-col items-center gap-4">
              <div className="w-12 h-12 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin" />
@@ -56,9 +43,11 @@ export function SolicitudesBajadaList({ solicitudes, isLoading, onUpdateEstado }
             <p className="text-[var(--text-secondary)] text-xs font-black uppercase tracking-[0.25em] mt-3 opacity-60">No se han recibido nuevas solicitudes externas.</p>
           </div>
         ) : (
-          solicitudes.map(s => {
-            const cfg = ESTADO_CONFIG[s.estado];
-            const activa = s.estado === 'PENDIENTE' || s.estado === 'CONFIRMADA';
+          solicitudes
+            .filter(s => s.estado === 'PENDIENTE' || s.estado === 'EN_AGUA')
+            .map(s => {
+              const cfg = ESTADO_CONFIG[s.estado as keyof typeof ESTADO_CONFIG];
+            const activa = s.estado === 'PENDIENTE' || s.estado === 'EN_AGUA';
             return (
               <div key={s.id} className="group relative bg-[var(--bg-secondary)]/30 hover:bg-[var(--bg-secondary)]/50 p-8 rounded-[2.5rem] border border-[var(--border-primary)]/60 hover:border-indigo-500/40 transition-all duration-500 flex flex-col xl:flex-row xl:items-center justify-between gap-8 shadow-sm hover:shadow-2xl hover:shadow-indigo-900/10">
                 
@@ -91,9 +80,14 @@ export function SolicitudesBajadaList({ solicitudes, isLoading, onUpdateEstado }
                         <Clock className="w-3.5 h-3.5 text-indigo-500" />
                         {new Date(s.fechaHoraDeseada).toLocaleString('es-AR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                       </div>
+                      {s.motivoCancelacion && s.estado === 'CANCELADA' && (
+                        <div className="flex items-center gap-2.5 text-[10px] text-rose-400 font-bold italic truncate max-w-[250px] bg-rose-500/5 px-3 py-1.5 rounded-xl border border-rose-500/10">
+                          Motivo: "{s.motivoCancelacion}"
+                        </div>
+                      )}
                       {s.observaciones && (
-                        <div className="flex items-center gap-2.5 text-[10px] text-[var(--text-muted)] font-bold italic truncate max-w-[250px] bg-white/5 px-3 py-1.5 rounded-xl">
-                          "{s.observaciones}"
+                        <div className="flex items-center gap-2.5 text-[10px] text-indigo-400 font-bold italic truncate max-w-[250px] bg-indigo-500/5 px-3 py-1.5 rounded-xl border border-indigo-500/10">
+                          Nota: "{s.observaciones}"
                         </div>
                       )}
                     </div>
@@ -105,20 +99,20 @@ export function SolicitudesBajadaList({ solicitudes, isLoading, onUpdateEstado }
                     <>
                       {s.estado === 'PENDIENTE' && (
                         <button
-                          onClick={() => onUpdateEstado(s.id, 'CONFIRMADA')}
+                          onClick={() => onUpdateEstado(s.id, 'EN_AGUA')}
                           className="flex items-center gap-3 px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all hover:scale-[1.03] active:scale-95 shadow-lg shadow-indigo-900/30"
                         >
                           <CheckCircle2 className="w-4 h-4" />
-                          Confirmar
+                          Bajar a Agua
                         </button>
                       )}
-                      {s.estado === 'CONFIRMADA' && (
+                      {s.estado === 'EN_AGUA' && (
                         <button
-                          onClick={() => onUpdateEstado(s.id, 'COMPLETADA')}
+                          onClick={() => onUpdateEstado(s.id, 'FINALIZADA')}
                           className="flex items-center gap-3 px-8 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all hover:scale-[1.03] active:scale-95 shadow-lg shadow-emerald-900/30"
                         >
                           <CheckCircle2 className="w-4 h-4" />
-                          Completar
+                          Vuelta a Cuna
                         </button>
                       )}
                       <div className="w-[1px] h-8 bg-[var(--border-primary)] mx-2" />
@@ -130,11 +124,6 @@ export function SolicitudesBajadaList({ solicitudes, isLoading, onUpdateEstado }
                         Cancelar
                       </button>
                     </>
-                  )}
-                  {!activa && (
-                    <div className="px-8 py-3 text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest italic">
-                      Solicitud terminada
-                    </div>
                   )}
                 </div>
               </div>

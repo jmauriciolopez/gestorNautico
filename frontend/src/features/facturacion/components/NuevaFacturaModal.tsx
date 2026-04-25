@@ -106,7 +106,7 @@ export const NuevaFacturaModal: React.FC<NuevaFacturaModalProps> = ({ isOpen, on
                     required
                   >
                     <option value="">Elegir Cliente...</option>
-                    {getClientes.data?.map(c => (
+                    {getClientes.data?.data?.map(c => (
                       <option key={c.id} value={c.id}>{c.nombre} (DNI: {c.dni})</option>
                     ))}
                   </select>

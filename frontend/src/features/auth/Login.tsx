@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Eye, EyeOff, Lock, User as UserIcon, KeyRound, Anchor, Waves, LayoutDashboard } from 'lucide-react';
+import { AnimatePresence } from 'framer-motion';
 import { httpClient } from '../../shared/api/HttpClient';
+import { Signup } from './Signup';
 
 interface Props {
   onLoginSuccess: (token?: string) => void | Promise<void>;
@@ -14,6 +16,7 @@ export function Login({ onLoginSuccess }: Props) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showSignup, setShowSignup] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,9 +24,10 @@ export function Login({ onLoginSuccess }: Props) {
     setLoading(true);
     try {
       const response = await httpClient.post<{ accessToken: string }>('/auth/login', {
-        nombre: usuario,
+        identifier: usuario,
         password,
       });
+      
       onLoginSuccess(response.accessToken);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Credenciales inválidas');
@@ -168,7 +172,7 @@ export function Login({ onLoginSuccess }: Props) {
               </div>
             )}
 
-            {/* Usuario */}
+            {/* Usuario o Email */}
             <div className="relative">
               <UserIcon
                 size={15}
@@ -179,7 +183,7 @@ export function Login({ onLoginSuccess }: Props) {
                 type="text"
                 required
                 autoFocus
-                placeholder="Usuario"
+                placeholder="Usuario o Email"
                 value={usuario}
                 onChange={e => setUsuario(e.target.value)}
                 autoComplete="username"
@@ -255,6 +259,18 @@ export function Login({ onLoginSuccess }: Props) {
                 : 'Iniciar Sesión'
               }
             </button>
+
+            <div className="mt-4 text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
+              ¿No tenés una cuenta?{' '}
+              <button
+                type="button"
+                className="font-bold hover:underline transition-all"
+                style={{ color: 'var(--accent-primary)' }}
+                onClick={() => setShowSignup(true)}
+              >
+                Registrate acá
+              </button>
+            </div>
           </form>
 
           <p className="text-center text-xs mt-10" style={{ color: 'var(--text-muted)' }}>
@@ -262,6 +278,12 @@ export function Login({ onLoginSuccess }: Props) {
           </p>
         </div>
       </div>
+
+      <AnimatePresence>
+        {showSignup && (
+          <Signup onClose={() => setShowSignup(false)} />
+        )}
+      </AnimatePresence>
 
       <style>{`
         @keyframes shake {

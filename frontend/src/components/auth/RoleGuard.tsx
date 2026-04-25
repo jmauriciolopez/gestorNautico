@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { useAuth } from '../../features/auth/context/AuthContext';
+import { useAuth } from '../../features/auth/hooks/useAuth';
 import { Role } from '../../types';
 
 interface RoleGuardProps {
@@ -19,6 +19,10 @@ export const RoleGuard = ({ allowedRoles, children, fallback = null }: RoleGuard
 
     if (!isAuthenticated || !user) {
         return <>{fallback}</>;
+    }
+
+    if (user.role === Role.SUPERADMIN) {
+        return <>{children}</>;
     }
 
     if (!allowedRoles.includes(user.role)) {

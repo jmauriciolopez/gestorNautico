@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 import { X, Receipt, DollarSign, User, Calendar, Tag, Loader2 } from 'lucide-react';
 import { useClientes } from '../../clientes/hooks/useClientes';
-import { useFinanzas } from '../hooks/useFinanzas';
+import { useCargosPaginados } from '../hooks/useFinanzas';
 import { useConfiguracion } from '../../configuracion/hooks/useConfiguracion';
 
 interface NuevoCargoModalProps {
@@ -12,12 +12,13 @@ interface NuevoCargoModalProps {
 
 export function NuevoCargoModal({ isOpen, onClose }: NuevoCargoModalProps) {
   const { getClientes } = useClientes();
-  const { createCargo } = useFinanzas();
+  const { createCargo } = useCargosPaginados(1);
   const { getConfiguraciones } = useConfiguracion();
 
-  const diasVencimiento = Number(
-    getConfiguraciones.data?.find(c => c.clave === 'DIAS_VENCIMIENTO')?.valor ?? 15
-  );
+  const diasVencimiento = useMemo(() => {
+    const configs = getConfiguraciones.data?.data || [];
+    return Number(configs.find(c => c.clave === 'DIAS_VENCIMIENTO')?.valor ?? 15);
+  }, [getConfiguraciones.data]);
 
   const calcVencimiento = (emision: string) => {
     const d = new Date(emision);
@@ -104,9 +105,9 @@ export function NuevoCargoModal({ isOpen, onClose }: NuevoCargoModalProps) {
               value={formData.clienteId}
               onChange={(e) => setFormData({ ...formData, clienteId: e.target.value })}
             >
-              <option value="">Elegir Propietario...</option>
-              {getClientes.data?.map(c => (
-                <option key={c.id} value={c.id}>{c.nombre} (DNI: {c.dni})</option>
+              <option value="" disabled>Seleccionar cliente...</option>
+              {getClientes.data?.data?.map(c => (
+                <option key={c.id} value={c.id}>{c.nombre} ({c.documento})</option>
               ))}
             </select>
           </div>

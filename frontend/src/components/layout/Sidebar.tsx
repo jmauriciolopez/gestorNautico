@@ -14,8 +14,9 @@ import {
   HelpCircle,
   Anchor,
   BarChart2,
+  Building2,
 } from 'lucide-react';
-import { useAuth } from '../../features/auth/context/AuthContext';
+import { useAuth } from '../../features/auth/hooks/useAuth';
 import { Role } from '../../types';
 
 interface SidebarProps {
@@ -23,19 +24,35 @@ interface SidebarProps {
   onClose: () => void;
 }
 
-const navItems = [
-  { name: 'Dashboard', path: '/', icon: LayoutDashboard, roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR] },
-  { name: 'Clientes', path: '/clientes', icon: Users, roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR] },
-  { name: 'Embarcaciones', path: '/embarcaciones', icon: Ship, roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR] },
-  { name: 'Operaciones', path: '/operaciones', icon: Navigation, roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR] },
-  { name: 'Servicios', path: '/servicios', icon: Wrench, roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR] },
-  { name: 'Infraestructura', path: '/infraestructura', icon: LayoutGrid, roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR] },
-  { name: 'Finanzas', path: '/finanzas', icon: CircleDollarSign, roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR] },
-  { name: 'Facturación', path: '/facturacion', icon: FileText, roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR] },
-  { name: 'Reportes', path: '/reportes', icon: BarChart2, roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR] },
-  { name: 'Configuración', path: '/configuracion', icon: Settings, roles: [Role.SUPERADMIN, Role.ADMIN] },
-  { name: 'Usuarios', path: '/usuarios', icon: ShieldCheck, roles: [Role.SUPERADMIN] },
-  { name: 'Ayuda', path: '/ayuda', icon: HelpCircle, roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR] },
+const navGroups = [
+  {
+    title: 'Operativo',
+    items: [
+      { name: 'Dashboard', path: '/', icon: LayoutDashboard, roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR] },
+      { name: 'Operaciones', path: '/operaciones', icon: Navigation, roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR] },
+      { name: 'Clientes', path: '/clientes', icon: Users, roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR] },
+      { name: 'Embarcaciones', path: '/embarcaciones', icon: Ship, roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR] },
+    ]
+  },
+  {
+    title: 'Gestión',
+    items: [
+      { name: 'Servicios', path: '/servicios', icon: Wrench, roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR] },
+      { name: 'Finanzas', path: '/finanzas', icon: CircleDollarSign, roles: [Role.SUPERADMIN, Role.ADMIN] },
+      { name: 'Facturación', path: '/facturacion', icon: FileText, roles: [Role.SUPERADMIN, Role.ADMIN] },
+      { name: 'Reportes', path: '/reportes', icon: BarChart2, roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR] },
+      { name: 'Infraestructura', path: '/infraestructura', icon: LayoutGrid, roles: [Role.SUPERADMIN, Role.ADMIN] },
+    ]
+  },
+  {
+    title: 'Sistema',
+    items: [
+      { name: 'Usuarios', path: '/usuarios', icon: ShieldCheck, roles: [Role.SUPERADMIN, Role.ADMIN] },
+      { name: 'Sedes', path: '/sedes', icon: Building2, roles: [Role.SUPERADMIN] },
+      { name: 'Configuración', path: '/configuracion', icon: Settings, roles: [Role.SUPERADMIN, Role.ADMIN] },
+      { name: 'Ayuda', path: '/ayuda', icon: HelpCircle, roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR] },
+    ]
+  }
 ];
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
@@ -45,7 +62,12 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const isActive = (path: string) =>
     path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
 
-  const filtered = navItems.filter(item => !item.roles || (user && item.roles.includes(user.role)));
+  const filteredGroups = navGroups
+    .map(group => ({
+      ...group,
+      items: group.items.filter(item => user && item.roles.includes(user.role))
+    }))
+    .filter(group => group.items.length > 0);
 
   const handleCloseMobile = () => {
     if (window.innerWidth < 768) onClose();
@@ -119,25 +141,32 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         </button>
       </div>
 
-      <nav className="flex-1 overflow-y-auto custom-scrollbar px-3 py-3">
-        <div className="space-y-1">
-          {filtered.map(({ name, path, icon: Icon }) => {
-            const active = isActive(path);
+      <nav className="flex-1 overflow-y-auto custom-scrollbar px-3 py-3 space-y-6">
+        {filteredGroups.map(group => (
+          <div key={group.title} className="space-y-1.5">
+            <h3 className="px-3 text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.15em] mb-2">
+              {group.title}
+            </h3>
+            <div className="space-y-1">
+              {group.items.map(({ name, path, icon: Icon }) => {
+                const active = isActive(path);
 
-            return (
-              <Link
-                key={path}
-                to={path}
-                onClick={handleCloseMobile}
-                className={`nav-item ${active ? 'active' : ''}`}
-                aria-current={active ? 'page' : undefined}
-              >
-                <Icon size={19} className="shrink-0" />
-                <span className="nav-item-label">{name}</span>
-              </Link>
-            );
-          })}
-        </div>
+                return (
+                  <Link
+                    key={path}
+                    to={path}
+                    onClick={handleCloseMobile}
+                    className={`nav-item ${active ? 'active' : ''}`}
+                    aria-current={active ? 'page' : undefined}
+                  >
+                    <Icon size={19} className="shrink-0" />
+                    <span className="nav-item-label">{name}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {user && (

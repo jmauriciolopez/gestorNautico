@@ -1,22 +1,27 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
-  Ship, MapPin, Loader2, Plus, Calendar, ArrowRight, ArrowLeft,
+  MapPin, Loader2, Calendar, ArrowRight, ArrowLeft,
   History, FileText, Trash2, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { Movimiento, useMovimientosPaginados } from '../hooks/useOperaciones';
 import { NuevoMovimientoModal } from './NuevoMovimientoModal';
 import { ActionMenu } from '../../../shared/components/ActionMenu';
-import { useConfirm } from '../../../shared/context/ConfirmContext';
+import { useConfirm } from '../../../shared/hooks/useConfirm';
 
 const PAGE_SIZE = 20;
 
 export function MovimientosList() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const search = searchParams.get('search') || '';
+  const embarcacionId = searchParams.get('embarcacionId') ? Number(searchParams.get('embarcacionId')) : undefined;
+  
   const [page, setPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const confirm = useConfirm();
-
-  const { query, createMovimiento } = useMovimientosPaginados(page, PAGE_SIZE);
+ 
+  const { query, deleteMovimiento } = useMovimientosPaginados(page, PAGE_SIZE, search, embarcacionId);
   const { data, isLoading, isFetching } = query;
   const movimientos: Movimiento[] = data?.data ?? [];
   const totalPages = data?.totalPages ?? 1;
@@ -29,18 +34,16 @@ export function MovimientosList() {
       confirmText: 'Eliminar',
       variant: 'danger',
     });
+    
     if (confirmed) {
       try {
-        const token = localStorage.getItem('token');
-        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-        await fetch(`${baseUrl}/movimientos/${mov.id}`, {
-          method: 'DELETE',
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        // Restar una página si quedó vacía
-        if (movimientos.length === 1 && page > 1) setPage(p => p - 1);
-        else query.refetch();
+        await deleteMovimiento.mutateAsync(mov.id);
+        // Si la página quedó vacía (y no es la primera), retroceder
+        if (movimientos.length === 1 && page > 1) {
+          setPage(p => p - 1);
+        }
       } catch (e) {
+        // El error ya lo maneja la mutación con toast
         console.error(e);
       }
     }
@@ -59,34 +62,30 @@ export function MovimientosList() {
 
   return (
     <div className="p-12 space-y-10">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-[var(--border-primary)]/40 pb-10">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-            <h3 className="text-2xl font-black text-[var(--text-primary)] uppercase tracking-tight">
-              Bitácora de Maniobras
-            </h3>
-          </div>
-          <p className="text-[10px] text-[var(--text-secondary)] font-black uppercase tracking-[0.3em] opacity-60">
-            Registro histórico de movimientos de flota
-          </p>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="px-6 py-3 bg-amber-500/10 border border-amber-500/20 rounded-[1.25rem] backdrop-blur-md">
-            <span className="text-[11px] font-black text-amber-500 uppercase tracking-[0.2em]">
-              {total} REGISTROS
-            </span>
+      {/* Header con Filtros Activos si existen */}
+      {(search || embarcacionId) && (
+        <div className="flex items-center justify-between bg-amber-500/10 border border-amber-500/20 p-6 rounded-2xl animate-in fade-in zoom-in-95 duration-500">
+          <div className="flex items-center gap-4">
+            <div className="p-2 bg-amber-500/20 rounded-xl">
+              <History className="w-5 h-5 text-amber-500" />
+            </div>
+            <div>
+              <p className="text-xs font-black text-amber-500 uppercase tracking-widest">Filtro de Bitácora Activo</p>
+              <p className="text-sm text-[var(--text-primary)] font-bold">
+                Mostrando resultados para: <span className="text-amber-500">"{search || `ID Embarcación: ${embarcacionId}`}"</span>
+              </p>
+            </div>
           </div>
           <button
-            onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 px-8 py-4 bg-amber-600 hover:bg-amber-500 text-white font-black rounded-2xl transition-all shadow-xl shadow-amber-900/40 active:scale-95 text-[10px] uppercase tracking-widest"
+            onClick={() => {
+              setSearchParams({});
+            }}
+            className="px-6 py-2 bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all active:scale-95 shadow-lg shadow-amber-900/20"
           >
-            <Plus className="w-4 h-4" />
-            Registrar Operación Manual
+            Limpiar Filtros
           </button>
         </div>
-      </div>
+      )}
 
       {/* Lista */}
       <div className={`grid grid-cols-1 gap-4 transition-opacity duration-200 ${isFetching ? 'opacity-60 pointer-events-none' : 'opacity-100'}`}>

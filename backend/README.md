@@ -44,6 +44,22 @@ $ npm run start:dev
 $ npm run start:prod
 ```
 
+## Database Management
+
+### Database Reset (From Scratch)
+To completely wipe the database schema and start fresh:
+```bash
+$ npm run db:reset
+```
+This script drops the `public` schema and recreates it. After running this, restart the application with `npm run start:dev` for TypeORM to recreate the tables via `synchronize: true`.
+
+### Demo Seeding (Sample Data)
+To populate the database with a complete set of demo data (clients, boats, historical invoices):
+```bash
+$ npm run seed:demo
+```
+**Warning:** This script will truncate existing data in the database before inserting demo records.
+
 ## Run tests
 
 ```bash

@@ -2,12 +2,13 @@ import {
   IsString,
   IsNumber,
   IsOptional,
-  IsIn,
   Min,
   Max,
   ValidateIf,
+  IsEnum,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { EstadoEmbarcacion } from '../embarcaciones.entity';
 
 export class UpdateEmbarcacionDto {
   @IsOptional()
@@ -43,8 +44,8 @@ export class UpdateEmbarcacionDto {
   tipo?: string;
 
   @IsOptional()
-  @IsIn(['EN_CUNA', 'EN_AGUA', 'MANTENIMIENTO', 'INACTIVA'])
-  estado?: string;
+  @IsEnum(EstadoEmbarcacion)
+  estado_operativo?: EstadoEmbarcacion;
 
   @IsOptional()
   @ValidateIf((o: UpdateEmbarcacionDto) => o.clienteId !== null)

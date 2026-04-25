@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { httpClient } from '../../../shared/api/HttpClient';
+import { useActiveGuarderiaId } from '../../../shared/hooks/useActiveGuarderiaId';
 
 export interface DashboardSummary {
   stats: {
@@ -58,21 +59,24 @@ export interface RackMap {
         eslora: number;
         manga: number;
         tipo: string;
+        estado_operativo: string;
       };
     }[];
   }[];
 }
 
 export const useDashboard = () => {
+  const guarderiaId = useActiveGuarderiaId();
   return useQuery<DashboardSummary>({
-    queryKey: ['dashboard', 'summary'],
+    queryKey: ['dashboard', guarderiaId, 'summary'],
     queryFn: () => httpClient.get('/dashboard/summary'),
   });
 };
 
 export const useRackMap = () => {
+  const guarderiaId = useActiveGuarderiaId();
   return useQuery<RackMap[]>({
-    queryKey: ['dashboard', 'rack-map'],
+    queryKey: ['dashboard', guarderiaId, 'rack-map'],
     queryFn: () => httpClient.get('/dashboard/rack-map'),
   });
 };
@@ -81,15 +85,17 @@ export type PeriodoRecaudacion = 'dia' | 'semana' | 'mes';
 export type PeriodoDeuda = 'dia' | 'semana' | 'mes' | 'vencido';
 
 export const useRecaudacion = (periodo: PeriodoRecaudacion) => {
+  const guarderiaId = useActiveGuarderiaId();
   return useQuery<{ total: number; periodo: string }>({
-    queryKey: ['dashboard', 'recaudacion', periodo],
+    queryKey: ['dashboard', guarderiaId, 'recaudacion', periodo],
     queryFn: () => httpClient.get(`/dashboard/recaudacion?periodo=${periodo}`),
   });
 };
 
 export const useDeuda = (periodo: PeriodoDeuda) => {
+  const guarderiaId = useActiveGuarderiaId();
   return useQuery<{ total: number; periodo: string; cantidad: number }>({
-    queryKey: ['dashboard', 'deuda', periodo],
+    queryKey: ['dashboard', guarderiaId, 'deuda', periodo],
     queryFn: () => httpClient.get(`/dashboard/deuda?periodo=${periodo}`),
   });
 };

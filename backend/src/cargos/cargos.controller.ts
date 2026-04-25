@@ -15,20 +15,27 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../users/user.entity';
 import { CreateCargoDto } from './dto/create-cargo.dto';
 
+import { TenantGuard } from '../auth/guards/tenant.guard';
+import { TenantRoles } from '../auth/decorators/tenant-roles.decorator';
+import { ActiveTenant } from '../auth/decorators/active-tenant.decorator';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+
 @Controller('cargos')
-@UseGuards(AuthTokenGuard, RolesGuard)
+@UseGuards(AuthTokenGuard, TenantGuard, RolesGuard)
 export class CargosController {
   constructor(private readonly cargosService: CargosService) {}
 
   @Get()
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
   findAll(
+    @ActiveTenant() tenant: TenantContext,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('clienteId') clienteId?: string,
     @Query('soloSinFacturar') soloSinFacturar?: string,
   ) {
     return this.cargosService.findAll(
+      tenant,
       { page, limit },
       clienteId ? +clienteId : undefined,
       soloSinFacturar === 'true',
@@ -36,20 +43,20 @@ export class CargosController {
   }
 
   @Get(':id')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
-  findOne(@Param('id') id: string) {
-    return this.cargosService.findOne(+id);
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+  findOne(@ActiveTenant() tenant: TenantContext, @Param('id') id: string) {
+    return this.cargosService.findOne(tenant, +id);
   }
 
   @Post()
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
-  create(@Body() data: CreateCargoDto) {
-    return this.cargosService.create(data);
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR)
+  create(@ActiveTenant() tenant: TenantContext, @Body() data: CreateCargoDto) {
+    return this.cargosService.create(tenant, data);
   }
 
   @Delete(':id')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
-  remove(@Param('id') id: string) {
-    return this.cargosService.remove(+id);
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR)
+  remove(@ActiveTenant() tenant: TenantContext, @Param('id') id: string) {
+    return this.cargosService.remove(tenant, +id);
   }
 }

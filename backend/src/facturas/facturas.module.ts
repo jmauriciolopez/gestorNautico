@@ -16,7 +16,15 @@ import { CajasModule } from '../cajas/cajas.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Factura, Cargo, Cliente, Embarcacion, Rack, Espacio, Pago]),
+    TypeOrmModule.forFeature([
+      Factura,
+      Cargo,
+      Cliente,
+      Embarcacion,
+      Rack,
+      Espacio,
+      Pago,
+    ]),
     CargosModule,
     NotificacionesModule,
     CajasModule,

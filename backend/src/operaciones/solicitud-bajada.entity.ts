@@ -6,15 +6,17 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { Cliente } from '../clientes/clientes.entity';
 import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
+import { Guarderia } from '../guarderias/guarderia.entity';
 
 export enum EstadoSolicitud {
-  PENDIENTE = 'PENDIENTE',
-  CONFIRMADA = 'CONFIRMADA',
-  COMPLETADA = 'COMPLETADA',
-  CANCELADA = 'CANCELADA',
+  PENDIENTE = 'PENDIENTE', // Solicitada
+  EN_AGUA = 'EN_AGUA', // Marca bajada (en el agua)
+  FINALIZADA = 'FINALIZADA', // Vuelta a la cuna (completada)
+  CANCELADA = 'CANCELADA', // Cancelada
 }
 
 @Entity('solicitudes_bajada')
@@ -22,6 +24,7 @@ export class SolicitudBajada {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Index()
   @Column()
   clienteId: number;
 
@@ -29,6 +32,7 @@ export class SolicitudBajada {
   @JoinColumn({ name: 'clienteId' })
   cliente: Cliente;
 
+  @Index()
   @Column()
   embarcacionId: number;
 
@@ -39,6 +43,7 @@ export class SolicitudBajada {
   @Column({ type: 'timestamp' })
   fechaHoraDeseada: Date;
 
+  @Index()
   @Column({
     type: 'enum',
     enum: EstadoSolicitud,
@@ -51,6 +56,14 @@ export class SolicitudBajada {
 
   @Column({ default: false })
   emailConfirmado: boolean;
+
+  @Index()
+  @Column({ type: 'int' })
+  guarderiaId: number;
+
+  @ManyToOne(() => Guarderia, { nullable: false, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'guarderiaId' })
+  guarderia: Guarderia;
 
   @CreateDateColumn()
   createdAt: Date;

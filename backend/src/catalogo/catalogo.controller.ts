@@ -11,44 +11,58 @@ import {
 } from '@nestjs/common';
 import { CatalogoService } from './catalogo.service';
 import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
+import { TenantGuard } from '../auth/guards/tenant.guard';
+import { TenantRoles } from '../auth/decorators/tenant-roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../users/user.entity';
+import { ActiveTenant } from '../auth/decorators/active-tenant.decorator';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
 
 import { Catalogo } from './catalogo.entity';
 
 @Controller('catalogo')
-@UseGuards(AuthTokenGuard, RolesGuard)
+@UseGuards(AuthTokenGuard, TenantGuard, RolesGuard)
 export class CatalogoController {
   constructor(private readonly catalogoService: CatalogoService) {}
 
   @Get()
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
-  findAll(@Query('page') page?: number, @Query('limit') limit?: number) {
-    return this.catalogoService.findAll({ page, limit });
+  @TenantRoles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+  findAll(
+    @ActiveTenant() tenant: TenantContext,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    return this.catalogoService.findAll(tenant, { page, limit });
   }
 
   @Get(':id')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
-  findOne(@Param('id') id: string) {
-    return this.catalogoService.findOne(+id);
+  @TenantRoles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+  findOne(@ActiveTenant() tenant: TenantContext, @Param('id') id: string) {
+    return this.catalogoService.findOne(tenant, +id);
   }
 
   @Post()
-  @Roles(Role.SUPERADMIN, Role.ADMIN)
-  create(@Body() data: Partial<Catalogo>) {
-    return this.catalogoService.create(data);
+  @TenantRoles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
+  create(
+    @ActiveTenant() tenant: TenantContext,
+    @Body() data: Partial<Catalogo>,
+  ) {
+    return this.catalogoService.create(tenant, data);
   }
 
   @Put(':id')
-  @Roles(Role.SUPERADMIN, Role.ADMIN)
-  update(@Param('id') id: string, @Body() data: Partial<Catalogo>) {
-    return this.catalogoService.update(+id, data);
+  @TenantRoles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
+  update(
+    @ActiveTenant() tenant: TenantContext,
+    @Param('id') id: string,
+    @Body() data: Partial<Catalogo>,
+  ) {
+    return this.catalogoService.update(tenant, +id, data);
   }
 
   @Delete(':id')
-  @Roles(Role.SUPERADMIN)
-  remove(@Param('id') id: string) {
-    return this.catalogoService.remove(+id);
+  @TenantRoles(Role.SUPERADMIN)
+  remove(@ActiveTenant() tenant: TenantContext, @Param('id') id: string) {
+    return this.catalogoService.remove(tenant, +id);
   }
 }

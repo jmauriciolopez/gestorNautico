@@ -15,44 +15,57 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../users/user.entity';
 import { AbrirCajaDto, CerrarCajaDto } from './dto/caja-operacion.dto';
 
+import { TenantGuard } from '../auth/guards/tenant.guard';
+import { TenantRoles } from '../auth/decorators/tenant-roles.decorator';
+import { ActiveTenant } from '../auth/decorators/active-tenant.decorator';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+
 @Controller('cajas')
-@UseGuards(AuthTokenGuard, RolesGuard)
+@UseGuards(AuthTokenGuard, TenantGuard, RolesGuard)
 export class CajasController {
   constructor(private readonly cajasService: CajasService) {}
 
   @Get()
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
-  findAll(@Query('page') page?: number, @Query('limit') limit?: number) {
-    return this.cajasService.findAll({ page, limit });
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR)
+  findAll(
+    @ActiveTenant() tenant: TenantContext,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    return this.cajasService.findAll(tenant, { page, limit });
   }
 
   @Get('abierta')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
-  findAbierta() {
-    return this.cajasService.findAbierta();
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+  findAbierta(@ActiveTenant() tenant: TenantContext) {
+    return this.cajasService.findAbierta(tenant);
   }
 
   @Get('resumen')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
-  getResumen() {
-    return this.cajasService.getResumen();
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+  getResumen(@ActiveTenant() tenant: TenantContext) {
+    return this.cajasService.getResumen(tenant);
   }
 
   @Post('abrir')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
-  abrir(@Body() dto: AbrirCajaDto) {
-    return this.cajasService.abrir(dto.saldoInicial ?? 0);
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR)
+  abrir(@ActiveTenant() tenant: TenantContext, @Body() dto: AbrirCajaDto) {
+    return this.cajasService.abrir(tenant, dto.saldoInicial ?? 0);
   }
 
   @Patch(':id/cerrar')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
-  cerrar(@Param('id') id: string, @Body() dto: CerrarCajaDto) {
-    return this.cajasService.cerrar(+id, dto.saldoFinal);
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR)
+  cerrar(
+    @ActiveTenant() tenant: TenantContext,
+    @Param('id') id: string,
+    @Body() dto: CerrarCajaDto,
+  ) {
+    return this.cajasService.cerrar(tenant, +id, dto.saldoFinal);
   }
 
   @Get(':id')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
-  findOne(@Param('id') id: string) {
-    return this.cajasService.findOne(+id);
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR)
+  findOne(@ActiveTenant() tenant: TenantContext, @Param('id') id: string) {
+    return this.cajasService.findOne(tenant, +id);
   }
 }

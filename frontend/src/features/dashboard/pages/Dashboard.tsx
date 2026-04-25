@@ -10,6 +10,7 @@ import {
   Wallet,
   Settings,
   CreditCard,
+  TrendingUp,
 } from 'lucide-react';
 import {
   XAxis,
@@ -26,13 +27,17 @@ import {
   type PeriodoRecaudacion,
   type PeriodoDeuda,
 } from '../hooks/useDashboard';
+import { useOperaciones } from '../../operaciones/hooks/useOperaciones';
 import { MapaRacks } from '../components/MapaRacks';
+import { DashboardGerencial } from '../../reportes/components/DashboardGerencial';
 import { useNavigate } from 'react-router-dom';
 import { DashboardSkeleton } from '../components/DashboardSkeleton';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { RegistrarPagoModal } from '../../finanzas/components/RegistrarPagoModal';
 import { httpClient } from '../../../shared/api/HttpClient';
 import { toast } from 'react-hot-toast';
+import { RoleGuard } from '../../../components/auth/RoleGuard';
+import { Role } from '../../../types';
 
 interface StatCardProps {
   title: string;
@@ -111,21 +116,21 @@ const ToggleChip = ({
   const activeStyles =
     tone === 'amber'
       ? {
-          background: 'var(--accent-amber-soft)',
-          color: 'var(--accent-amber)',
-          border: '1px solid color-mix(in srgb, var(--accent-amber) 18%, transparent)',
-        }
+        background: 'var(--accent-amber-soft)',
+        color: 'var(--accent-amber)',
+        border: '1px solid color-mix(in srgb, var(--accent-amber) 18%, transparent)',
+      }
       : tone === 'red'
         ? {
-            background: 'var(--accent-red-soft)',
-            color: 'var(--accent-red)',
-            border: '1px solid color-mix(in srgb, var(--accent-red) 18%, transparent)',
-          }
+          background: 'var(--accent-red-soft)',
+          color: 'var(--accent-red)',
+          border: '1px solid color-mix(in srgb, var(--accent-red) 18%, transparent)',
+        }
         : {
-            background: 'var(--accent-primary-soft)',
-            color: 'var(--accent-primary)',
-            border: '1px solid color-mix(in srgb, var(--accent-primary) 18%, transparent)',
-          };
+          background: 'var(--accent-primary-soft)',
+          color: 'var(--accent-primary)',
+          border: '1px solid color-mix(in srgb, var(--accent-primary) 18%, transparent)',
+        };
 
   return (
     <button
@@ -135,10 +140,10 @@ const ToggleChip = ({
         active
           ? activeStyles
           : {
-              background: 'var(--bg-elevated)',
-              color: 'var(--text-secondary)',
-              border: '1px solid var(--border-secondary)',
-            }
+            background: 'var(--bg-elevated)',
+            color: 'var(--text-secondary)',
+            border: '1px solid var(--border-secondary)',
+          }
       }
     >
       {label}
@@ -149,12 +154,13 @@ const ToggleChip = ({
 const Dashboard: React.FC = () => {
   const { data, isLoading, isError } = useDashboard();
   const { data: rackMapData, isLoading: isMapLoading } = useRackMap();
+  const { createMovimiento } = useOperaciones();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
   // Mutation para asignar (reemplaza useEmbarcaciones para ser atómico)
   const updateEmbarcacion = useMutation({
-    mutationFn: ({ id, data }: { id: number; data: any }) => 
+    mutationFn: ({ id, data }: { id: number; data: any }) =>
       httpClient.put(`/embarcaciones/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
@@ -167,12 +173,26 @@ const Dashboard: React.FC = () => {
   const [periodoRecaudacion, setPeriodoRecaudacion] = useState<PeriodoRecaudacion>('mes');
   const [periodoDeuda, setPeriodoDeuda] = useState<PeriodoDeuda>('mes');
 
-  const handleAsignarBarco = async (embarcacionId: number, espacioId: number) => {
+const handleAsignarBarco = async (embarcacionId: number, espacioId: number) => {
     try {
       await updateEmbarcacion.mutateAsync({ id: embarcacionId, data: { espacioId } });
       toast.success('Embarcación asignada correctamente');
     } catch (error: any) {
       toast.error(error?.response?.data?.message || 'Error al asignar la embarcación');
+    }
+  };
+
+  const handleRegistrarSalida = async (embarcacionId: number, tipo: 'entrada' | 'salida' = 'salida') => {
+    try {
+      await createMovimiento.mutateAsync({ 
+        embarcacionId, 
+        tipo,
+        observaciones: `Registro de ${tipo} desde mapa de racks`
+      });
+      const msg = tipo === 'salida' ? 'Salida registrada - Embarcación en el agua' : 'Entrada registrada - Embarcación en cuna';
+      toast.success(msg);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || `Error al registrar ${tipo}`);
     }
   };
 
@@ -270,7 +290,8 @@ const Dashboard: React.FC = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-              <button
+              <RoleGuard allowedRoles={[Role.ADMIN, Role.SUPERADMIN]}>
+                <button
                 onClick={() => setIsPagoModalOpen(true)}
                 className="btn"
                 style={{
@@ -281,6 +302,7 @@ const Dashboard: React.FC = () => {
                 <CreditCard size={15} />
                 Registrar pago
               </button>
+              </RoleGuard>
 
               <button
                 onClick={() => navigate('/operaciones')}
@@ -371,7 +393,7 @@ const Dashboard: React.FC = () => {
               <div>
                 <p className="section-title">Rendimiento financiero</p>
                 <p className="text-ui-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
-                  Evolución de recaudación auditada.
+                  Evolución de recaudación.
                 </p>
               </div>
 
@@ -478,13 +500,15 @@ const Dashboard: React.FC = () => {
                 </p>
               </div>
 
-              <button
+              <RoleGuard allowedRoles={[Role.ADMIN, Role.SUPERADMIN]}>
+                <button
                 onClick={() => navigate('/configuracion')}
                 className="icon-button"
                 title="Configuración"
               >
                 <Settings size={15} />
-              </button>
+                </button>
+              </RoleGuard>
             </div>
 
             <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 max-h-[340px] pr-1">
@@ -552,10 +576,10 @@ const Dashboard: React.FC = () => {
                 style={
                   is3D
                     ? {
-                        background: 'linear-gradient(135deg, #534AB7, #3C3489)',
-                        color: '#EEEDFE',
-                        borderColor: 'transparent',
-                      }
+                      background: 'linear-gradient(135deg, #534AB7, #3C3489)',
+                      color: '#EEEDFE',
+                      borderColor: 'transparent',
+                    }
                     : undefined
                 }
               >
@@ -584,14 +608,33 @@ const Dashboard: React.FC = () => {
                 <span className="section-subtitle">Sincronizando topología...</span>
               </div>
             ) : (
-              <MapaRacks
+<MapaRacks
                 data={rackMapData || []}
                 embarcacionesLibres={embarcacionesLibres}
                 onAsignar={handleAsignarBarco}
+                onRegistrarSalida={handleRegistrarSalida}
                 is3D={is3D}
               />
             )}
           </div>
+        </section>
+
+        {/* Dashboard Gerencial - Métricas Avanzadas */}
+        <section className="space-y-4">
+          <div className="bento-card p-5 md:p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500">
+                <TrendingUp className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="section-title">Inteligencia de Negocio</p>
+                <p className="text-ui-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+                  Métricas avanzadas y análisis predictivo
+                </p>
+              </div>
+            </div>
+          </div>
+          <DashboardGerencial />
         </section>
 
         <div className="h-8" />

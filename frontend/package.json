@@ -8,6 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
     "test:browser": "vitest --browser.enabled --browser.name=chromium",
     "test:ui": "vitest --ui"
   },

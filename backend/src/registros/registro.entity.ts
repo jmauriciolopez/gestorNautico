@@ -6,9 +6,11 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { Catalogo } from '../catalogo/catalogo.entity';
 import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
+import { Guarderia } from '../guarderias/guarderia.entity';
 
 export enum EstadoServicio {
   PENDIENTE = 'PENDIENTE',
@@ -60,6 +62,14 @@ export class RegistroServicio {
 
   @Column({ nullable: true })
   facturaId: number;
+
+  @Index()
+  @Column({ type: 'int' })
+  guarderiaId: number;
+
+  @ManyToOne(() => Guarderia, { nullable: false, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'guarderiaId' })
+  guarderia: Guarderia;
 
   @CreateDateColumn()
   createdAt: Date;

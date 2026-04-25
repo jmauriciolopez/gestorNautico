@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { httpClient } from '../../../shared/api/HttpClient';
 import { Paginated, selectData } from '../../../api/pagination';
+import { useActiveGuarderiaId } from '../../../shared/hooks/useActiveGuarderiaId';
 
 export interface Cargo {
   id: number;
@@ -53,9 +54,10 @@ export function useCargosPaginados(
   soloSinFacturar = false,
 ) {
   const queryClient = useQueryClient();
+  const guarderiaId = useActiveGuarderiaId();
 
   const query = useQuery({
-    queryKey: ['cargos', page, limit, { clienteId, soloSinFacturar }],
+    queryKey: ['cargos', guarderiaId, page, limit, { clienteId, soloSinFacturar }],
     queryFn: (): Promise<Paginated<Cargo>> => {
       const params = new URLSearchParams({
         page: String(page),
@@ -90,9 +92,10 @@ export function useCargosPaginados(
 /** Paginated pagos hook — self-contained */
 export function usePagosPaginados(page: number, limit = PAGOS_PAGE_SIZE) {
   const queryClient = useQueryClient();
+  const guarderiaId = useActiveGuarderiaId();
 
   const query = useQuery({
-    queryKey: ['pagos', page, limit],
+    queryKey: ['pagos', guarderiaId, page, limit],
     queryFn: (): Promise<Paginated<Pago>> =>
       httpClient.get<Paginated<Pago>>(`/pagos?page=${page}&limit=${limit}`),
     placeholderData: (prev) => prev,
@@ -115,8 +118,9 @@ export function usePagosPaginados(page: number, limit = PAGOS_PAGE_SIZE) {
 
 /** Keep backward-compat for useCargos (used in FacturaEditModal etc.) */
 export function useCargos(clienteId?: number, soloSinFacturar: boolean = false) {
+  const guarderiaId = useActiveGuarderiaId();
   return useQuery<Cargo[]>({
-    queryKey: ['cargos', { clienteId, soloSinFacturar }],
+    queryKey: ['cargos', guarderiaId, { clienteId, soloSinFacturar }],
     queryFn: () => {
       const params = new URLSearchParams();
       if (clienteId) params.append('clienteId', clienteId.toString());
@@ -128,8 +132,9 @@ export function useCargos(clienteId?: number, soloSinFacturar: boolean = false) 
   });
 }
 
-export function useFinanzas() {
+export function useFinanzas(options: { pageCajas?: number; limitCajas?: number } = {}) {
   const queryClient = useQueryClient();
+  const guarderiaId = useActiveGuarderiaId();
 
   const createPago = useMutation({
     mutationFn: (data: Partial<Pago> & { clienteId: number; cargoId?: number; cajaId?: number }) =>
@@ -143,7 +148,7 @@ export function useFinanzas() {
   });
 
   const getCajaResumen = useQuery<CajaResumen>({
-    queryKey: ['caja-resumen'],
+    queryKey: ['caja-resumen', guarderiaId],
     queryFn: () => httpClient.get<CajaResumen>('/cajas/resumen'),
   });
 
@@ -166,8 +171,13 @@ export function useFinanzas() {
   });
 
   const getCajas = useQuery<Caja[]>({
-    queryKey: ['cajas'],
-    queryFn: () => httpClient.get<Paginated<Caja>>('/cajas').then(selectData),
+    queryKey: ['cajas', guarderiaId, options.pageCajas, options.limitCajas],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (options.pageCajas) params.append('page', String(options.pageCajas));
+      if (options.limitCajas) params.append('limit', String(options.limitCajas));
+      return httpClient.get<Paginated<Caja>>(`/cajas?${params.toString()}`).then(selectData);
+    },
   });
 
   return { createPago, getCajaResumen, abrirCaja, cerrarCaja, getCajas };

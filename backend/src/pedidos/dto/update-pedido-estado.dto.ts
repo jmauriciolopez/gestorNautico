@@ -1,7 +1,8 @@
-import { IsIn, IsNotEmpty } from 'class-validator';
+import { IsEnum, IsNotEmpty } from 'class-validator';
+import { EstadoPedido } from '../pedidos.entity';
 
 export class UpdatePedidoEstadoDto {
   @IsNotEmpty()
-  @IsIn(['pendiente', 'en_proceso', 'completado', 'cancelado'])
-  estado: string;
+  @IsEnum(EstadoPedido)
+  estado: EstadoPedido;
 }

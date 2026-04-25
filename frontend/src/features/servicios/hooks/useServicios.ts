@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { httpClient } from '../../../shared/api/HttpClient';
-import { Paginated, selectData } from '../../../api/pagination';
+import { Paginated } from '../../../api/pagination';
+import { useActiveGuarderiaId } from '../../../shared/hooks/useActiveGuarderiaId';
 
 export interface ServicioCatalogo {
   id: number;
@@ -30,14 +31,43 @@ export interface RegistroServicio {
   updatedAt: string;
 }
 
-export function useServicios() {
+export function useServicios(options: { 
+  pageCatalogo?: number; 
+  limitCatalogo?: number;
+  pageRegistros?: number;
+  limitRegistros?: number;
+  searchRegistros?: string;
+  estadoRegistros?: string;
+} = {}) {
   const queryClient = useQueryClient();
+  const guarderiaId = useActiveGuarderiaId();
 
-  const getCatalogo = useQuery<ServicioCatalogo[]>({
-    queryKey: ['catalogo'],
-    queryFn: () => httpClient.get<Paginated<ServicioCatalogo>>('/catalogo'),
-    select: selectData,
+  const getCatalogo = useQuery({
+    queryKey: ['catalogo', guarderiaId, options.pageCatalogo, options.limitCatalogo],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (options.pageCatalogo) params.append('page', String(options.pageCatalogo));
+      if (options.limitCatalogo) params.append('limit', String(options.limitCatalogo));
+      return httpClient.get<Paginated<ServicioCatalogo>>(`/catalogo?${params.toString()}`);
+    },
   });
+
+  const getRegistros = useQuery({
+    queryKey: ['registros', guarderiaId, options.pageRegistros, options.limitRegistros, options.searchRegistros, options.estadoRegistros],
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (options.pageRegistros) params.append('page', String(options.pageRegistros));
+      if (options.limitRegistros) params.append('limit', String(options.limitRegistros));
+      if (options.searchRegistros) params.append('search', options.searchRegistros);
+      if (options.estadoRegistros) params.append('estado', options.estadoRegistros);
+      return httpClient.get<Paginated<RegistroServicio>>(`/registros?${params.toString()}`);
+    },
+  });
+
+  const catalogo = getCatalogo.data?.data || [];
+  const metaCatalogo = getCatalogo.data?.meta;
+  const registros = getRegistros.data?.data || [];
+  const metaRegistros = getRegistros.data?.meta;
 
   const createServicioCatalogo = useMutation({
     mutationFn: (data: Partial<ServicioCatalogo>) =>
@@ -54,11 +84,6 @@ export function useServicios() {
   const deleteServicioCatalogo = useMutation({
     mutationFn: (id: number) => httpClient.delete(`/catalogo/${id}`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['catalogo'] }),
-  });
-
-  const getRegistros = useQuery<RegistroServicio[]>({
-    queryKey: ['registros'],
-    queryFn: () => httpClient.get<RegistroServicio[]>('/registros'),
   });
 
   const createRegistro = useMutation({
@@ -84,5 +109,10 @@ export function useServicios() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['registros'] }),
   });
 
-  return { getCatalogo, createServicioCatalogo, updateServicioCatalogo, deleteServicioCatalogo, getRegistros, createRegistro, updateRegistro, completeRegistro, deleteRegistro };
+  return { 
+    getCatalogo, catalogo, metaCatalogo, 
+    getRegistros, registros, metaRegistros,
+    createServicioCatalogo, updateServicioCatalogo, deleteServicioCatalogo, 
+    createRegistro, updateRegistro, completeRegistro, deleteRegistro 
+  };
 }

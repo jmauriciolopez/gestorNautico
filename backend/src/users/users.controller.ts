@@ -17,21 +17,31 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../users/user.entity';
 
+import { TenantRoles } from '../auth/decorators/tenant-roles.decorator';
+import { TenantGuard } from '../auth/guards/tenant.guard';
+import { ActiveTenant } from '../auth/decorators/active-tenant.decorator';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+import { GlobalRoute } from '../auth/decorators/global-route.decorator';
+
 @Controller('users')
+@UseGuards(AuthTokenGuard, TenantGuard, RolesGuard)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  @UseGuards(AuthTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN)
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
+  @TenantRoles(Role.SUPERADMIN, Role.ADMIN)
+  create(
+    @ActiveTenant() tenant: TenantContext,
+    @Body() createUserDto: CreateUserDto,
+  ) {
+    return this.usersService.create(tenant, createUserDto);
   }
 
   @Post('superadmin')
+  @TenantRoles(Role.SUPERADMIN)
+  @GlobalRoute()
   createSuperAdmin(
     @Body() createUserDto: CreateUserDto,
     @Headers('x-api-key') apiKey: string,
@@ -43,33 +53,40 @@ export class UsersController {
   }
 
   @Get()
-  @UseGuards(AuthTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN)
-  findAll(@Query('page') page?: number, @Query('limit') limit?: number) {
-    return this.usersService.findAll({ page, limit });
+  @TenantRoles(Role.SUPERADMIN, Role.ADMIN)
+  findAll(
+    @ActiveTenant() tenant: TenantContext,
+    @Query('page') page?: number,
+    @Query('limit') limit?: number,
+  ) {
+    return this.usersService.findAll(tenant, { page, limit });
   }
 
   @Get(':id')
-  @UseGuards(AuthTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN)
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.findOne(id);
+  @TenantRoles(Role.SUPERADMIN, Role.ADMIN)
+  findOne(
+    @ActiveTenant() tenant: TenantContext,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.usersService.findOne(tenant, id);
   }
 
   @Patch(':id')
-  @UseGuards(AuthTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN)
+  @TenantRoles(Role.SUPERADMIN, Role.ADMIN)
   update(
+    @ActiveTenant() tenant: TenantContext,
     @Param('id', ParseIntPipe) id: number,
     @Body() updateUserDto: UpdateUserDto,
   ) {
-    return this.usersService.update(id, updateUserDto);
+    return this.usersService.update(tenant, id, updateUserDto);
   }
 
   @Delete(':id')
-  @UseGuards(AuthTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN)
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.remove(id);
+  @TenantRoles(Role.SUPERADMIN, Role.ADMIN)
+  remove(
+    @ActiveTenant() tenant: TenantContext,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.usersService.remove(tenant, id);
   }
 }

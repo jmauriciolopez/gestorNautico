@@ -6,9 +6,11 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { Cliente } from '../clientes/clientes.entity';
 import { Factura } from '../facturas/factura.entity';
+import { Guarderia } from '../guarderias/guarderia.entity';
 
 export enum TipoCargo {
   AMARRE = 'AMARRE',
@@ -22,7 +24,8 @@ export class Cargo {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @ManyToOne(() => Cliente, { nullable: false, eager: true })
+  @Index()
+  @ManyToOne(() => Cliente, { nullable: false })
   @JoinColumn({ name: 'cliente_id' })
   cliente: Cliente;
 
@@ -35,21 +38,32 @@ export class Cargo {
   @Column({ type: 'date' })
   fechaEmision: Date;
 
+  @Index()
   @Column({ type: 'date', nullable: true })
   fechaVencimiento: Date;
 
+  @Index()
   @Column({ default: false })
   pagado: boolean;
 
   @Column({ type: 'enum', enum: TipoCargo, default: TipoCargo.OTROS })
   tipo: TipoCargo;
 
+  @Index()
   @ManyToOne(() => Factura, (factura) => factura.cargos, {
     nullable: true,
     onDelete: 'SET NULL',
   })
   @JoinColumn({ name: 'factura_id' })
   factura: Factura;
+
+  @Index()
+  @Column({ type: 'int' })
+  guarderiaId: number;
+
+  @ManyToOne(() => Guarderia, { nullable: false, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'guarderiaId' })
+  guarderia: Guarderia;
 
   @CreateDateColumn()
   createdAt: Date;

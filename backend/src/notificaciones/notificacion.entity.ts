@@ -43,6 +43,9 @@ export class Notificacion {
   @Column()
   usuarioId: number;
 
+  @Column({ type: 'int' })
+  guarderiaId: number;
+
   @CreateDateColumn()
   createdAt: Date;
 }

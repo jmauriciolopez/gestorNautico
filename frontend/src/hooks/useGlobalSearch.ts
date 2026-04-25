@@ -4,7 +4,7 @@ import { useDebounce } from './useDebounce';
 
 export interface SearchResults {
   clientes: { id: number; nombre: string; dni: string; email: string }[];
-  embarcaciones: { id: number; nombre: string; matricula: string; tipo: string; estado: string }[];
+  embarcaciones: { id: number; nombre: string; matricula: string; tipo: string; estado_operativo: string }[];
   racks: { id: number; codigo: string }[];
 }
 

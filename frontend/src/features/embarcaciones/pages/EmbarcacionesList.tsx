@@ -1,16 +1,42 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Search, Edit, Trash2, Ship, Loader2, MapPin, Activity, LayoutGrid, X } from 'lucide-react';
-import { useEmbarcaciones } from '../hooks/useEmbarcaciones';
-import { useConfirm } from '../../../shared/context/ConfirmContext';
+import { useEmbarcaciones, Embarcacion } from '../hooks/useEmbarcaciones';
+import { useConfirm } from '../../../shared/hooks/useConfirm';
 import { RoleGuard } from '../../../components/auth/RoleGuard';
 import { Role } from '../../../types';
+import { PaginationControls } from '../../../shared/components/PaginationControls';
+
+import { useDebounce } from '../../../hooks/useDebounce';
+import { EstadoEmbarcacion } from '../../../shared/types/enums';
+import { useActiveGuarderiaId } from '../../../shared/hooks/useActiveGuarderiaId';
 
 export default function EmbarcacionesList() {
   const navigate = useNavigate();
+  const guarderiaId = useActiveGuarderiaId();
   const [search, setSearch] = useState('');
-  const { getEmbarcaciones, deleteEmbarcacion } = useEmbarcaciones();
-  const { data: embarcaciones = [], isLoading } = getEmbarcaciones;
+  const [page, setPage] = useState(1);
+  const debouncedSearch = useDebounce(search, 300);
+
+  // Reset when guarderia changes
+  React.useEffect(() => {
+    setPage(1);
+    setSearch('');
+  }, [guarderiaId]);
+
+  // Reset to page 1 when search changes
+  React.useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
+
+  const { getEmbarcaciones, deleteEmbarcacion } = useEmbarcaciones({
+    page,
+    search: debouncedSearch,
+  });
+
+  const { isLoading, data } = getEmbarcaciones;
+  const embarcaciones = data?.data || [];
+  const meta = data?.meta;
   const confirm = useConfirm();
 
   const handleDelete = async (id: number) => {
@@ -26,12 +52,6 @@ export default function EmbarcacionesList() {
     }
   };
 
-  const filtered = embarcaciones.filter(e =>
-    e.nombre.toLowerCase().includes(search.toLowerCase()) ||
-    e.matricula.toLowerCase().includes(search.toLowerCase()) ||
-    e.cliente?.nombre?.toLowerCase().includes(search.toLowerCase())
-  );
-
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-32 bg-[var(--bg-primary)]/20 rounded-[2.5rem] border border-[var(--border-primary)]">
@@ -42,7 +62,7 @@ export default function EmbarcacionesList() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="space-y-8 p-3 md:p-6 animate-in fade-in slide-in-from-bottom-4 duration-700 overflow-x-hidden">
       {/* Premium Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 bg-[var(--bg-secondary)]/[0.3] p-10 rounded-[2.5rem] border border-[var(--border-primary)] shadow-2xl relative overflow-hidden group transition-colors duration-300">
         <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none group-hover:scale-110 transition-transform duration-1000">
@@ -62,15 +82,17 @@ export default function EmbarcacionesList() {
           </div>
         </div>
 
-        <Link
-          to="/embarcaciones/nueva"
-          className="relative z-10 px-10 py-4 bg-indigo-600 hover:bg-indigo-500 text-[var(--text-primary)] rounded-2xl flex items-center gap-4 text-xs font-black uppercase tracking-[0.2em] shadow-2xl shadow-indigo-900/40 transition-all active:scale-95 group/btn"
-        >
-          <div className="p-1 bg-indigo-400/20 rounded-lg group-hover/btn:rotate-90 transition-transform">
-            <Plus className="w-4 h-4" />
-          </div>
-          Nueva Embarcación
-        </Link>
+        <RoleGuard allowedRoles={[Role.ADMIN, Role.SUPERADMIN, Role.SUPERVISOR]}>
+          <Link
+            to="/embarcaciones/nueva"
+            className="relative z-10 px-10 py-4 bg-indigo-600 hover:bg-indigo-500 text-[var(--text-primary)] rounded-2xl flex items-center gap-4 text-xs font-black uppercase tracking-[0.2em] shadow-2xl shadow-indigo-900/40 transition-all active:scale-95 group/btn"
+          >
+            <div className="p-1 bg-indigo-400/20 rounded-lg group-hover/btn:rotate-90 transition-transform">
+              <Plus className="w-4 h-4" />
+            </div>
+            Nueva Embarcación
+          </Link>
+        </RoleGuard>
       </div>
 
       {/* Grid Container */}
@@ -91,7 +113,7 @@ export default function EmbarcacionesList() {
           </div>
           <div className="hidden md:flex items-center gap-3 text-[var(--text-secondary)] text-[10px] font-black uppercase tracking-widest bg-[var(--bg-primary)]/40 px-4 py-2 rounded-xl border border-[var(--border-primary)] transition-colors duration-300">
             <LayoutGrid className="w-3.5 h-3.5" />
-            Total: {filtered.length}
+            Total: {meta?.total || 0}
           </div>
         </div>
 
@@ -108,8 +130,8 @@ export default function EmbarcacionesList() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border-secondary)] transition-colors duration-300">
-              {filtered.map((emb) => (
-                <tr key={emb.id} className={`group hover:bg-indigo-500/5 transition-all cursor-default ${emb.estado === 'INACTIVA' ? 'opacity-40 grayscale' : ''}`}>
+              {embarcaciones.map((emb: Embarcacion) => (
+                <tr key={emb.id} className={`group hover:bg-indigo-500/5 transition-all cursor-default ${emb.estado_operativo === EstadoEmbarcacion.INACTIVA ? 'opacity-40 grayscale' : ''}`}>
                   <td className="px-8 py-6">
                     <div className="flex items-center gap-5">
                       <div className="w-12 h-12 rounded-[1.25rem] bg-[var(--bg-secondary)]/50 border border-[var(--border-primary)] flex items-center justify-center text-[var(--text-secondary)] group-hover:bg-indigo-600 group-hover:text-[var(--text-primary)] group-hover:shadow-lg group-hover:shadow-indigo-900/40 transition-all duration-300">
@@ -158,26 +180,28 @@ export default function EmbarcacionesList() {
                     )}
                   </td>
                   <td className="px-8 py-6">
-                    <span className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-[0.15em] border inline-block ${emb.estado === 'EN_CUNA' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
-                      emb.estado === 'EN_AGUA' ? 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20' :
-                        emb.estado === 'MANTENIMIENTO' ? 'bg-purple-500/10 text-purple-500 border-purple-500/20' :
-                          'bg-slate-800/40 text-[var(--text-secondary)] border-slate-700/50'
+                    <span className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-[0.15em] border inline-block ${emb.estado_operativo === EstadoEmbarcacion.EN_CUNA ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' :
+                      emb.estado_operativo === EstadoEmbarcacion.EN_AGUA ? 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20' :
+                        emb.estado_operativo === EstadoEmbarcacion.EN_MANTENIMIENTO ? 'bg-purple-500/10 text-purple-500 border-purple-500/20' :
+                          'bg-[var(--bg-primary)]/40 text-[var(--text-secondary)] border-[var(--border-primary)]/50'
                       }`}>
-                      {emb.estado.replace('_', ' ')}
+                      {emb.estado_operativo.replace(/_/g, ' ')}
                     </span>
                   </td>
-                  <td className="px-8 py-6 text-right">
-                    <div className="flex items-center justify-end gap-3">
-                      <button
-                        onClick={() => navigate(`/embarcaciones/editar/${emb.id}`)}
-                        className="p-3 bg-[var(--bg-primary)]/60 border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-indigo-500 hover:border-indigo-500/50 rounded-2xl transition-all active:scale-90 shadow-xl"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
+                  <td className="px-4 md:px-8 py-6 text-right">
+                    <div className="flex items-center justify-end gap-2 md:gap-3">
+                      <RoleGuard allowedRoles={[Role.ADMIN, Role.SUPERADMIN, Role.SUPERVISOR]}>
+                        <button
+                          onClick={() => navigate(`/embarcaciones/editar/${emb.id}`)}
+                          className="p-2 md:p-3 bg-[var(--bg-primary)]/60 border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-indigo-500 hover:border-indigo-500/50 rounded-xl md:rounded-2xl transition-all active:scale-90 shadow-xl"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                      </RoleGuard>
                       <RoleGuard allowedRoles={[Role.ADMIN, Role.SUPERADMIN]}>
                         <button
                           onClick={() => handleDelete(emb.id)}
-                          className="p-3 bg-[var(--bg-primary)]/60 border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-rose-500 hover:border-rose-500/50 rounded-2xl transition-all active:scale-90 shadow-xl"
+                          className="p-2 md:p-3 bg-[var(--bg-primary)]/60 border border-[var(--border-primary)] text-[var(--text-secondary)] hover:text-rose-500 hover:border-rose-500/50 rounded-xl md:rounded-2xl transition-all active:scale-90 shadow-xl"
                           disabled={deleteEmbarcacion.isPending}
                         >
                           <Trash2 className="w-4 h-4" />
@@ -187,15 +211,15 @@ export default function EmbarcacionesList() {
                   </td>
                 </tr>
               ))}
-              {filtered.length === 0 && (
+              {embarcaciones.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-8 py-32 text-center bg-[var(--bg-primary)]/10">
                     <div className="flex flex-col items-center gap-6">
-                      <div className="w-20 h-20 rounded-[2.5rem] bg-[var(--bg-primary)]/40 border border-[var(--border-primary)] flex items-center justify-center text-slate-700">
+                      <div className="w-20 h-20 rounded-[2.5rem] bg-[var(--bg-primary)]/40 border border-[var(--border-primary)] flex items-center justify-center text-[var(--text-secondary)]">
                         <Ship className="w-10 h-10" />
                       </div>
                       <p className="text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em] max-w-xs mx-auto">
-                        No se detectaron unidades registradas bajo criterios de búsqueda estipulados.
+                        No se encontraron unidades con los criterios de búsqueda.
                       </p>
                     </div>
                   </td>
@@ -204,6 +228,16 @@ export default function EmbarcacionesList() {
             </tbody>
           </table>
         </div>
+
+        {meta && (
+          <PaginationControls
+            currentPage={page}
+            totalPages={meta.totalPages}
+            onPageChange={setPage}
+            totalItems={meta.total}
+            pageSize={meta.limit}
+          />
+        )}
       </div>
     </div>
   );

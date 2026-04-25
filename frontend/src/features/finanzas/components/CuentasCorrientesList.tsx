@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { Search, ChevronDown, ChevronRight, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Search, ChevronDown, ChevronRight } from 'lucide-react';
 import { useClientes } from '../../clientes/hooks/useClientes';
 import { CuentaCorrientePanel } from '../../clientes/components/CuentaCorrientePanel';
 
 export function CuentasCorrientesList() {
   const { getClientes } = useClientes();
-  const clientes = (getClientes.data || []).filter(c => c.activo);
+  const clientes = (getClientes.data?.data || []).filter(c => c.activo);
   const [search, setSearch] = useState('');
   const [expandedId, setExpandedId] = useState<number | null>(null);
 

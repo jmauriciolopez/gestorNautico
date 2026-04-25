@@ -7,6 +7,7 @@ import { useClientes } from '../../clientes/hooks/useClientes';
 import { useUbicaciones } from '../../infraestructura/hooks/useUbicaciones';
 import UbicacionPickerModal from '../components/UbicacionPickerModal';
 import { queryClient } from '../../../api/queryClient';
+import { EstadoEmbarcacion } from '../../../shared/types/enums';
 
 export default function EmbarcacionForm() {
   const navigate = useNavigate();
@@ -19,7 +20,8 @@ export default function EmbarcacionForm() {
 
   const embarcacionQuery = useEmbarcacion(Number(id));
   const { data: embarcacion, isLoading: isFetchingEmb } = embarcacionQuery;
-  const { data: clientes = [], isLoading: isFetchingClientes } = getClientes;
+  const { data: clientesData, isLoading: isFetchingClientes } = getClientes;
+  const clientes = clientesData?.data || [];
   const { data: zonas = [], isLoading: isFetchingZonas } = useZonas;
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -31,7 +33,7 @@ export default function EmbarcacionForm() {
     tipo: 'Lancha',
     clienteId: '',
     espacioId: '',
-    estado: 'EN_CUNA',
+    estado_operativo: EstadoEmbarcacion.EN_CUNA,
     descuento: '0'
   });
 
@@ -58,7 +60,7 @@ export default function EmbarcacionForm() {
         tipo: embarcacion.tipo || 'Lancha',
         clienteId: String(embarcacion.cliente?.id || ''),
         espacioId: String(embarcacion.espacio?.id || ''),
-        estado: embarcacion.estado || 'EN_CUNA',
+        estado_operativo: embarcacion.estado_operativo || EstadoEmbarcacion.EN_CUNA,
         descuento: embarcacion.descuento !== undefined ? String(embarcacion.descuento) : '0'
       });
     }
@@ -108,7 +110,7 @@ export default function EmbarcacionForm() {
   const isPending = createEmbarcacion.isPending || updateEmbarcacion.isPending;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 p-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="max-w-4xl mx-auto space-y-8 p-3 md:p-6 animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-x-hidden">
       <div className="flex items-center gap-6">
         <Link to="/embarcaciones" className="p-3 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-2xl hover:bg-[var(--bg-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all active:scale-95 shadow-lg">
           <ArrowLeft className="w-5 h-5" />
@@ -238,7 +240,7 @@ export default function EmbarcacionForm() {
                     ...prev,
                     espacioId: espacioId ? String(espacioId) : '',
                     // Si se quita la ubicación, cambiar estado a EN_AGUA automáticamente
-                    estado: espacioId ? prev.estado : 'EN_AGUA'
+                    estado_operativo: espacioId ? prev.estado_operativo : EstadoEmbarcacion.EN_AGUA
                   }));
                 }}
                 currentEspacioId={formData.espacioId ? Number(formData.espacioId) : undefined}
@@ -252,17 +254,22 @@ export default function EmbarcacionForm() {
             <div className="space-y-3 col-span-full">
               <label className="block text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest ml-1">Estado Operativo Actual</label>
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
-                {['EN_CUNA', 'EN_AGUA', 'MANTENIMIENTO', 'INACTIVA'].map((estado) => (
+                {[
+                  EstadoEmbarcacion.EN_CUNA,
+                  EstadoEmbarcacion.EN_AGUA,
+                  EstadoEmbarcacion.EN_MANTENIMIENTO,
+                  EstadoEmbarcacion.INACTIVA,
+                ].map((estado) => (
                   <button
                     key={estado}
                     type="button"
-                    onClick={() => setFormData({ ...formData, estado })}
-                    className={`px-4 py-3 rounded-xl border font-bold text-xs transition-all ${formData.estado === estado
+                    onClick={() => setFormData({ ...formData, estado_operativo: estado })}
+                    className={`px-4 py-3 rounded-xl border font-bold text-xs transition-all ${formData.estado_operativo === estado
                       ? 'bg-blue-600 border-blue-500 text-[var(--text-primary)] shadow-lg shadow-blue-600/20'
                       : 'bg-[var(--bg-primary)] border-[var(--border-primary)] text-[var(--text-secondary)] hover:border-blue-500/40'
                       }`}
                   >
-                    {estado.replace('_', ' ')}
+                    {estado.replace(/_/g, ' ')}
                   </button>
                 ))}
               </div>

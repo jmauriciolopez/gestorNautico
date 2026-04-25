@@ -8,7 +8,9 @@ import {
   Settings,
   Activity,
   ChevronRight,
-  Search
+  Search,
+  ShieldCheck,
+  RefreshCcw
 } from 'lucide-react';
 import { InfraestructuraStats } from '../components/InfraestructuraStats';
 import { MapaOcupacion } from '../components/MapaOcupacion';
@@ -18,6 +20,7 @@ import { AsignarEmbarcacionModal } from '../components/AsignarEmbarcacionModal';
 import { LiberarEspacioModal } from '../components/LiberarEspacioModal';
 import { RoleGuard } from '../../../components/auth/RoleGuard';
 import { Role } from '../../../types';
+import { EstadoEmbarcacion } from '../../../shared/types/enums';
 
 export default function InfraestructuraPage() {
   const {
@@ -31,13 +34,14 @@ export default function InfraestructuraPage() {
     createRack,
     updateRack,
     deleteRack,
-    updateEspacio
+    updateEspacio,
+    syncHealth
   } = useUbicaciones();
 
   const { getEmbarcaciones, updateEmbarcacion } = useEmbarcaciones();
-  const embarcaciones = getEmbarcaciones.data || [];
+  const embarcaciones = getEmbarcaciones.data?.data || [];
 
-  const embarcacionesLibres = embarcaciones.filter((e: any) => !e.espacioId && e.estado !== 'INACTIVA');
+  const embarcacionesLibres = embarcaciones.filter((e: any) => !e.espacioId && e.estado_operativo !== EstadoEmbarcacion.INACTIVA);
 
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<'mapa' | 'config'>('mapa');
@@ -149,13 +153,13 @@ export default function InfraestructuraPage() {
     if (!selectedSpaceState) return;
     try {
       if (embarcacionId) {
-        const keepsSpace = nuevoEstado === 'EN_CUNA';
+        const keepsSpace = nuevoEstado === EstadoEmbarcacion.EN_CUNA;
 
         await updateEmbarcacion.mutateAsync({
           id: embarcacionId,
           data: {
             espacioId: keepsSpace ? selectedSpaceState.id : null,
-            estado: nuevoEstado
+            estado_operativo: nuevoEstado as EstadoEmbarcacion
           }
         });
       } else {
@@ -183,28 +187,30 @@ export default function InfraestructuraPage() {
   const stats = useEstadisticas.data || { total: 0, ocupados: 0, libres: 0, porcentajeOcupacion: 0 };
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="space-y-8 p-3 md:p-6 animate-in fade-in slide-in-from-bottom-4 duration-700 overflow-x-hidden">
       {/* Header & Stats Section */}
       <InfraestructuraStats stats={stats} />
 
       {/* Navigation Tabs */}
-      <div className="flex flex-wrap gap-2 p-2 bg-[var(--bg-secondary)]/[0.5] rounded-[2rem] border border-[var(--border-primary)] w-fit shadow-xl transition-colors duration-300">
+      <div className="flex gap-2 p-2 bg-[var(--bg-secondary)]/[0.5] rounded-[2rem] border border-[var(--border-primary)] w-fit shadow-xl transition-colors duration-300 overflow-x-auto">
         <button
           onClick={() => setActiveTab('mapa')}
-          className={`flex items-center gap-3 px-8 py-3 rounded-[1.25rem] text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'mapa' ? 'bg-indigo-600 text-[var(--text-primary)] shadow-2xl shadow-indigo-900/40' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)]/40'
+          className={`flex items-center gap-2 md:gap-3 px-4 md:px-8 py-3 rounded-[1.25rem] text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'mapa' ? 'bg-indigo-600 text-[var(--text-primary)] shadow-2xl shadow-indigo-900/40' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)]/40'
             }`}
         >
           <MapIcon size={16} />
-          Mapa de Ocupación
+          <span className="hidden sm:inline">Mapa de Ocupación</span>
+          <span className="sm:hidden">Mapa</span>
         </button>
         <RoleGuard allowedRoles={[Role.ADMIN, Role.SUPERADMIN]}>
           <button
             onClick={() => setActiveTab('config')}
-            className={`flex items-center gap-3 px-8 py-3 rounded-[1.25rem] text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'config' ? 'bg-indigo-600 text-[var(--text-primary)] shadow-2xl shadow-indigo-900/40' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)]/40'
+            className={`flex items-center gap-2 md:gap-3 px-4 md:px-8 py-3 rounded-[1.25rem] text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'config' ? 'bg-indigo-600 text-[var(--text-primary)] shadow-2xl shadow-indigo-900/40' : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-primary)]/40'
               }`}
           >
             <Settings size={16} />
-            Parámetros Globales
+            <span className="hidden sm:inline">Parámetros Globales</span>
+            <span className="sm:hidden">Config</span>
           </button>
         </RoleGuard>
       </div>
@@ -240,17 +246,29 @@ export default function InfraestructuraPage() {
           </div>
           <div className="flex items-center gap-4">
             {activeTab === 'mapa' && (
-              <button
-                onClick={() => setIs3D(!is3D)}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl border transition-all font-black text-[9px] uppercase tracking-widest ${
-                  is3D 
-                  ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-900/40' 
-                  : 'bg-[var(--bg-primary)]/40 border-[var(--border-primary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-indigo-500/50'
-                }`}
-              >
-                <Activity className={`w-3.5 h-3.5 ${is3D ? 'animate-pulse' : ''}`} />
-                Vista 3D {is3D ? 'Activa' : 'Inactiva'}
-              </button>
+              <div className="flex items-center gap-4">
+                <RoleGuard allowedRoles={[Role.ADMIN, Role.SUPERADMIN]}>
+                  <button
+                    onClick={() => syncHealth.mutate()}
+                    disabled={syncHealth.isPending}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-2xl border bg-emerald-600/10 border-emerald-500/20 text-emerald-500 hover:bg-emerald-600 hover:text-white transition-all font-black text-[9px] uppercase tracking-widest disabled:opacity-50"
+                    title="Sanear integridad de ocupación"
+                  >
+                    {syncHealth.isPending ? <RefreshCcw className="w-3.5 h-3.5 animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5" />}
+                    <span className="hidden xl:inline">Sanear Datos</span>
+                  </button>
+                </RoleGuard>
+                <button
+                  onClick={() => setIs3D(!is3D)}
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl border transition-all font-black text-[9px] uppercase tracking-widest ${is3D
+                      ? 'bg-indigo-600 border-indigo-400 text-white shadow-lg shadow-indigo-900/40'
+                      : 'bg-[var(--bg-primary)]/40 border-[var(--border-primary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-indigo-500/50'
+                    }`}
+                >
+                  <Activity className={`w-3.5 h-3.5 ${is3D ? 'animate-pulse' : ''}`} />
+                  <span className="hidden xl:inline">Vista 3D {is3D ? 'Activa' : 'Inactiva'}</span>
+                </button>
+              </div>
             )}
             <div className="hidden sm:flex items-center gap-2 text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest">
               <span>Centro de Control</span>

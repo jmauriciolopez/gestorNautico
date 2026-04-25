@@ -18,8 +18,13 @@ import { Role } from '../users/user.entity';
 import { Response } from 'express';
 import { PdfService } from '../common/pdf/pdf.service';
 
+import { TenantGuard } from '../auth/guards/tenant.guard';
+import { TenantRoles } from '../auth/decorators/tenant-roles.decorator';
+import { ActiveTenant } from '../auth/decorators/active-tenant.decorator';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+
 @Controller('pagos')
-@UseGuards(AuthTokenGuard, RolesGuard)
+@UseGuards(AuthTokenGuard, TenantGuard, RolesGuard)
 export class PagosController {
   constructor(
     private readonly pagosService: PagosService,
@@ -27,10 +32,14 @@ export class PagosController {
   ) {}
 
   @Get(':id/pdf')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
-  async downloadPdf(@Param('id') id: string, @Res() res: Response) {
-    const pago = await this.pagosService.findOne(+id);
-    const buffer = await this.pdfService.generateReceipt(pago);
+  @TenantRoles(Role.ADMIN)
+  async downloadPdf(
+    @ActiveTenant() tenant: TenantContext,
+    @Param('id') id: string,
+    @Res() res: Response,
+  ) {
+    const pago = await this.pagosService.findOne(tenant, +id);
+    const buffer = await this.pdfService.generateReceipt(tenant, pago);
 
     res.set({
       'Content-Type': 'application/pdf',
@@ -42,29 +51,30 @@ export class PagosController {
   }
 
   @Get()
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+  @TenantRoles(Role.ADMIN)
   findAll(
+    @ActiveTenant() tenant: TenantContext,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
   ) {
-    return this.pagosService.findAll({ page, limit });
+    return this.pagosService.findAll(tenant, { page, limit });
   }
 
   @Get(':id')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
-  findOne(@Param('id') id: string) {
-    return this.pagosService.findOne(+id);
+  @TenantRoles(Role.ADMIN)
+  findOne(@ActiveTenant() tenant: TenantContext, @Param('id') id: string) {
+    return this.pagosService.findOne(tenant, +id);
   }
 
   @Post()
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
-  create(@Body() data: CreatePagoDto) {
-    return this.pagosService.create(data);
+  @TenantRoles(Role.ADMIN)
+  create(@ActiveTenant() tenant: TenantContext, @Body() data: CreatePagoDto) {
+    return this.pagosService.create(tenant, data);
   }
 
   @Delete(':id')
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
-  remove(@Param('id') id: string) {
-    return this.pagosService.remove(+id);
+  @TenantRoles(Role.ADMIN)
+  remove(@ActiveTenant() tenant: TenantContext, @Param('id') id: string) {
+    return this.pagosService.remove(tenant, +id);
   }
 }

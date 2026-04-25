@@ -4,9 +4,19 @@ import { UsersService } from './users.service';
 import { User, Role } from './user.entity';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
+import * as bcrypt from 'bcrypt';
+
+jest.mock('bcrypt');
 
 describe('UsersService', () => {
   let service: UsersService;
+
+  const mockTenant = {
+    guarderiaId: 1,
+    scope: 'guarderia' as any,
+    role: 'SUPERADMIN' as any,
+    userId: 1,
+  } as any;
 
   const mockUser = {
     id: 1,
@@ -20,6 +30,7 @@ describe('UsersService', () => {
 
   const mockRepository = {
     find: jest.fn().mockResolvedValue([mockUser]),
+    findAndCount: jest.fn().mockResolvedValue([[mockUser], 1]),
     findOneBy: jest.fn().mockResolvedValue(mockUser),
     findOne: jest.fn().mockResolvedValue(mockUser),
     create: jest.fn().mockReturnValue(mockUser),
@@ -46,6 +57,8 @@ describe('UsersService', () => {
     }).compile();
 
     service = module.get<UsersService>(UsersService);
+    (bcrypt.hash as jest.Mock).mockResolvedValue('hashed_password');
+    (bcrypt.genSalt as jest.Mock).mockResolvedValue('salt');
   });
 
   it('should be defined', () => {
@@ -53,22 +66,24 @@ describe('UsersService', () => {
   });
 
   describe('findAll', () => {
-    it('should return an array of users', async () => {
-      const result = await service.findAll();
-      expect(result).toEqual([mockUser]);
-      expect(mockRepository.find).toHaveBeenCalled();
+    it('should return paginated users', async () => {
+      const result = await service.findAll(mockTenant);
+      expect(result.data).toEqual([mockUser]);
+      expect(mockRepository.findAndCount).toHaveBeenCalled();
     });
   });
 
   describe('findOne', () => {
     it('should return a user', async () => {
-      const result = await service.findOne(1);
+      const result = await service.findOne(mockTenant, 1);
       expect(result).toEqual(mockUser);
     });
 
     it('should throw NotFoundException', async () => {
       mockRepository.findOneBy.mockResolvedValueOnce(null);
-      await expect(service.findOne(999)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(mockTenant, 999)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -81,23 +96,23 @@ describe('UsersService', () => {
         clave: 'abc',
         nombre: 'New',
       };
-      const result = await service.create(dto as CreateUserDto);
+      const result = await service.create(mockTenant, dto);
       expect(mockRepository.save).toHaveBeenCalled();
       expect(result.id).toBe(1);
     });
 
     it('should throw ConflictException if username exists', async () => {
       const dto = { usuario: 'testuser' };
-      await expect(service.create(dto as CreateUserDto)).rejects.toThrow(
-        ConflictException,
-      );
+      await expect(
+        service.create(mockTenant, dto as CreateUserDto),
+      ).rejects.toThrow(ConflictException);
     });
   });
 
   describe('update', () => {
     it('should update a user', async () => {
       const dto = { nombre: 'Updated' };
-      const result = await service.update(1, dto);
+      const result = await service.update(mockTenant, 1, dto);
       expect(mockRepository.save).toHaveBeenCalled();
       expect(result.nombre).toBe('Updated');
     });
@@ -105,7 +120,7 @@ describe('UsersService', () => {
 
   describe('remove', () => {
     it('should remove a user', async () => {
-      const result = await service.remove(1);
+      const result = await service.remove(mockTenant, 1);
       expect(mockRepository.remove).toHaveBeenCalled();
       expect(result.message).toBe('Usuario eliminado correctamente');
     });

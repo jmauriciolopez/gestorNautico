@@ -1,0 +1,6 @@
+nombre,dni,email,telefono,activo,diaFacturacion,descuento,tipoCuota
+Juan Perez,12345678,juan.perez@mail.com,+549111234567,true,1,0,INDIVIDUAL
+Maria Gonzalez,87654321,maria.gonzalez@mail.com,+5491155551234,true,15,10,FAMILIAR
+Carlos Rodriguez,22334455,carlos.r@mail.com,,true,1,0,NINGUNA
+Ana Martinez,33445566,ana.martinez@mail.com,+5491166667777,false,1,0,INDIVIDUAL
+Luis Garcia,44556677,luis.garcia@mail.com,+5491177778888,true,1,5,FAMILIAR

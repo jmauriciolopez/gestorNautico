@@ -12,12 +12,15 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "lint": "npm run typecheck && eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "typecheck": "tsc --noEmit",
+    "db:reset": "node scripts/db-reset.js",
+    "seed:demo": "node scripts/seed-demo.js"
   },
   "dependencies": {
     "@nestjs-modules/mailer": "^2.3.4",
@@ -42,7 +45,7 @@
     "typeorm": "^0.3.20"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.4",
+    "@eslint/js": "^9.21.0",
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.1",
@@ -50,7 +53,8 @@
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.14",
-    "@types/node": "^22.10.7",
+    "@types/multer": "^1.4.12",
+    "@types/node": "^22.19.17",
     "@types/pdfkit": "^0.17.5",
     "@types/supertest": "^6.0.2",
     "eslint": "^9.18.0",
@@ -65,6 +69,6 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.7.3",
-    "typescript-eslint": "^8.57.2"
+    "typescript-eslint": "^8.59.0"
   }
 }

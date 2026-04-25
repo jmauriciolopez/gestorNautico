@@ -12,6 +12,7 @@ import { NotificacionesService } from '../notificaciones/notificaciones.service'
 import { NotificacionTipo } from '../notificaciones/notificacion.entity';
 import { Role } from '../users/user.entity';
 import { ConfiguracionService } from '../configuracion/configuracion.service';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
 
 @Injectable()
 export class AutomaticBillingService {
@@ -39,60 +40,89 @@ export class AutomaticBillingService {
    */
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async generateMonthlyMooringFees() {
-    this.logger.log('Iniciando generación automática de cargos de amarre...');
+    this.logger.log(
+      'Iniciando generación automática de cargos de amarre para todos los tenants...',
+    );
+    const guarderias = await this.facturaRepo.manager.find('Guarderia');
+
+    for (const g of guarderias) {
+      const tenant: TenantContext = {
+        guarderiaId: g.id,
+        scope: 'guarderia',
+        role: Role.SUPERADMIN,
+        userId: 0,
+      };
+      await this.processMonthlyMooringFeesPerTenant(tenant);
+    }
+  }
+
+  private async processMonthlyMooringFeesPerTenant(tenant: TenantContext) {
     const today = new Date();
     const todayDay = today.getDate();
 
-    const diasVencimiento = await this.configuracionService.getValorNumerico('DIAS_VENCIMIENTO', 15);
+    const diasVencimiento = await this.configuracionService.getValorNumerico(
+      tenant,
+      'DIAS_VENCIMIENTO',
+      15,
+    );
     const fechaVencimiento = new Date(today);
     fechaVencimiento.setDate(fechaVencimiento.getDate() + diasVencimiento);
 
-    // 1. Buscar clientes que facturan hoy
+    // 1. Buscar clientes que facturan hoy para este tenant
     const clientesAFacturar = await this.clienteRepo.find({
-      where: { diaFacturacion: todayDay, activo: true },
+      where: {
+        diaFacturacion: todayDay,
+        activo: true,
+        guarderiaId: tenant.guarderiaId,
+      },
     });
 
+    if (clientesAFacturar.length === 0) return;
+
     this.logger.log(
-      `Procesando facturación para ${clientesAFacturar.length} clientes.`,
+      `Procesando facturación para ${clientesAFacturar.length} clientes en Guardería ID: ${tenant.guarderiaId}.`,
     );
 
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59);
+    const endOfMonth = new Date(
+      today.getFullYear(),
+      today.getMonth() + 1,
+      0,
+      23,
+      59,
+      59,
+    );
 
     for (const cliente of clientesAFacturar) {
-      this.logger.log(`Procesando Cliente: ${cliente.nombre}`);
       const cargoIds: number[] = [];
 
       // A. Procesar Embarcaciones en Racks
       const embarcaciones = await this.embarcacionRepo.find({
-        where: { cliente: { id: cliente.id } },
+        where: {
+          cliente: { id: cliente.id },
+          guarderiaId: tenant.guarderiaId,
+        },
         relations: ['espacio', 'espacio.rack'],
       });
 
       for (const barco of embarcaciones) {
         if (barco.espacio && barco.espacio.rack) {
-          // VALIDACIÓN: Verificar si ya existe un cargo de amarre para este barco en el mes actual
           const cargoExistente = await this.cargoRepo.findOne({
             where: {
               cliente: { id: cliente.id },
               tipo: TipoCargo.AMARRE,
               descripcion: Like(`%${barco.matricula}%`),
               fechaEmision: Between(startOfMonth, endOfMonth),
+              guarderiaId: tenant.guarderiaId,
             },
           });
 
-          if (cargoExistente) {
-            this.logger.warn(
-              `Omisión: El amarre para ${barco.nombre} (${barco.matricula}) ya fue facturado este mes (Cargo ID: ${cargoExistente.id}).`,
-            );
-            continue;
-          }
+          if (cargoExistente) continue;
 
           const rack = barco.espacio.rack;
           const tarifaBase = Number(rack.tarifaBase || 0);
 
           if (tarifaBase > 0) {
-            // Aplicar descuentos
             const descCliente = Number(cliente.descuento || 0);
             const descBarco = Number(barco.descuento || 0);
             const subtotal =
@@ -106,6 +136,7 @@ export class AutomaticBillingService {
               pagado: false,
               fechaEmision: new Date(),
               fechaVencimiento,
+              guarderiaId: tenant.guarderiaId,
             });
             const guardado = await this.cargoRepo.save(nuevoCargo);
             cargoIds.push(guardado.id);
@@ -115,21 +146,20 @@ export class AutomaticBillingService {
 
       // B. Procesar Cuota (Individual/Familiar)
       if (cliente.tipoCuota === 'INDIVIDUAL') {
-        // VALIDACIÓN: Verificar existencia de cuota individual este mes
         const cuotaExistente = await this.cargoRepo.findOne({
           where: {
             cliente: { id: cliente.id },
             tipo: TipoCargo.SERVICIOS,
             descripcion: Like('%Individual%'),
             fechaEmision: Between(startOfMonth, endOfMonth),
+            guarderiaId: tenant.guarderiaId,
           },
         });
 
-        if (cuotaExistente) {
-          this.logger.warn(`Omisión: Cuota Individual ya facturada para ${cliente.nombre}.`);
-        } else {
+        if (!cuotaExistente) {
           const montoIndividual =
             await this.configuracionService.getValorNumerico(
+              tenant,
               'CUOTA_INDIVIDUAL',
               50,
             );
@@ -141,6 +171,7 @@ export class AutomaticBillingService {
             pagado: false,
             fechaEmision: new Date(),
             fechaVencimiento,
+            guarderiaId: tenant.guarderiaId,
           });
           const guardado = await this.cargoRepo.save(cargoCuota);
           cargoIds.push(guardado.id);
@@ -149,23 +180,23 @@ export class AutomaticBillingService {
         cliente.tipoCuota === 'FAMILIAR' &&
         cliente.id === cliente.responsableFamiliaId
       ) {
-        // VALIDACIÓN: Verificar existencia de cuota familiar este mes
         const cuotaExistente = await this.cargoRepo.findOne({
           where: {
             cliente: { id: cliente.id },
             tipo: TipoCargo.SERVICIOS,
             descripcion: Like('%Familiar%'),
             fechaEmision: Between(startOfMonth, endOfMonth),
+            guarderiaId: tenant.guarderiaId,
           },
         });
 
-        if (cuotaExistente) {
-          this.logger.warn(`Omisión: Cuota Familiar ya facturada para ${cliente.nombre}.`);
-        } else {
-          const montoFamiliar = await this.configuracionService.getValorNumerico(
-            'CUOTA_FAMILIAR',
-            120,
-          );
+        if (!cuotaExistente) {
+          const montoFamiliar =
+            await this.configuracionService.getValorNumerico(
+              tenant,
+              'CUOTA_FAMILIAR',
+              120,
+            );
           const cargoCuota = this.cargoRepo.create({
             descripcion: 'Cuota Grupo Familiar',
             monto: montoFamiliar,
@@ -174,6 +205,7 @@ export class AutomaticBillingService {
             pagado: false,
             fechaEmision: new Date(),
             fechaVencimiento,
+            guarderiaId: tenant.guarderiaId,
           });
           const guardado = await this.cargoRepo.save(cargoCuota);
           cargoIds.push(guardado.id);
@@ -186,7 +218,8 @@ export class AutomaticBillingService {
           cliente: { id: cliente.id },
           factura: null,
           pagado: false,
-          tipo: TipoCargo.OTROS, // Only unscheduled consumptions
+          tipo: TipoCargo.OTROS,
+          guarderiaId: tenant.guarderiaId,
         },
       });
       cargoIds.push(...consumosPendientes.map((c) => c.id));
@@ -194,57 +227,120 @@ export class AutomaticBillingService {
       // D. Crear Factura si hay cargos
       if (cargoIds.length > 0) {
         try {
-          await this.facturasService.create({
+          await this.facturasService.create(tenant, {
             clienteId: cliente.id,
             fechaEmision: today.toISOString(),
             cargoIds,
             observaciones: 'Facturación automática mensual por sistema.',
           });
-          this.logger.log(`Factura generada con éxito para ${cliente.nombre}`);
         } catch (error: unknown) {
-          const errMsg =
-            error instanceof Error ? error.message : 'Unknown error';
           this.logger.error(
-            `Error generando factura para ${cliente.nombre}: ${errMsg}`,
+            `Error generando factura para ${cliente.nombre} en tenant ${tenant.guarderiaId}: ${error instanceof Error ? error.message : 'Unknown'}`,
           );
         }
       }
     }
-
-    this.logger.log('Proceso de facturación automática finalizado.');
   }
 
   /**
-   * Auditoría de facturas vencidas
+   * Auditoría de facturas vencidas y aplicación de recargos/intereses
    */
   @Cron(CronExpression.EVERY_DAY_AT_9AM)
   async checkOverdueInvoices() {
-    this.logger.log('Iniciando auditoría diaria de deudas...');
-    const now = new Date();
+    this.logger.log(
+      'Iniciando auditoría diaria de deudas para todos los tenants...',
+    );
+    const guarderias = await this.facturaRepo.manager.find('Guarderia');
 
-    // Busca facturas PENDIENTES cuya fechaVencimiento ya pasó
-    // (usa fechaVencimiento de los cargos asociados como proxy)
-    // Alternativa simplificada: facturas emitidas hace más de 15 días sin pagar
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - 15);
+    for (const g of guarderias) {
+      const tenant: TenantContext = {
+        guarderiaId: g.id,
+        scope: 'guarderia',
+        role: Role.SUPERADMIN,
+        userId: 0,
+      };
+      await this.checkOverdueInvoicesPerTenant(tenant);
+    }
+  }
+
+  private async checkOverdueInvoicesPerTenant(tenant: TenantContext) {
+    const now = new Date();
 
     const overdueInvoices = await this.facturaRepo.find({
       where: {
         estado: EstadoFactura.PENDIENTE,
-        fechaEmision: LessThan(cutoffDate),
+        fechaVencimiento: LessThan(now),
+        guarderiaId: tenant.guarderiaId,
       },
-      relations: ['cliente'],
+      relations: ['cliente', 'cargos'],
     });
 
+    if (overdueInvoices.length === 0) return;
+
+    // Configuración de Mora
+    const tasaInteresMensual = await this.configuracionService.getValorNumerico(
+      tenant,
+      'MORA_TASA_INTERES',
+      3,
+    );
+    const tasaRecargoFijo = await this.configuracionService.getValorNumerico(
+      tenant,
+      'MORA_TASA_RECARGO',
+      10,
+    );
+    const diasGracia = await this.configuracionService.getValorNumerico(
+      tenant,
+      'MORA_DIAS_GRACIA',
+      5,
+    );
+    const baseUrl = await this.configuracionService.getValor(
+      tenant,
+      'PUBLIC_URL',
+      'https://app.gestornautico.com',
+    );
+
     for (const factura of overdueInvoices) {
-      await this.notificacionesService.createForRole(Role.ADMIN, {
+      const fechaVto = new Date(factura.fechaVencimiento);
+      const diffTime = Math.abs(now.getTime() - fechaVto.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays > diasGracia) {
+        let huboCambios = false;
+        const totalCargos = (factura.cargos ?? []).reduce(
+          (sum, c) => sum + Number(c.monto),
+          0,
+        );
+
+        if (Number(factura.recargo) === 0 && tasaRecargoFijo > 0) {
+          factura.recargo = totalCargos * (tasaRecargoFijo / 100);
+          huboCambios = true;
+        }
+
+        const nuevoInteres =
+          totalCargos * (tasaInteresMensual / 100) * (diffDays / 30);
+        if (Math.abs(Number(factura.interesMoratorio) - nuevoInteres) > 0.01) {
+          factura.interesMoratorio = nuevoInteres;
+          factura.fechaAplicacionMora = now;
+          huboCambios = true;
+        }
+
+        if (huboCambios) {
+          factura.total =
+            totalCargos +
+            Number(factura.recargo) +
+            Number(factura.interesMoratorio);
+          await this.facturaRepo.save(factura);
+        }
+      }
+
+      // Notificaciones
+      await this.notificacionesService.createForRole(tenant, Role.ADMIN, {
         titulo: 'Factura Vencida',
-        mensaje: `La factura ${factura.numero} de ${factura.cliente.nombre} lleva más de 7 días.`,
+        mensaje: `La factura ${factura.numero} de ${factura.cliente.nombre} está vencida (${diffDays} días). Total actual: $${Number(factura.total).toLocaleString('es-AR')}`,
         tipo: NotificacionTipo.ALERTA,
       });
 
       if (factura.cliente.email) {
-        const baseUrl = process.env.PUBLIC_URL || 'https://app.gestornautico.com';
         await this.notificacionesService.sendEmailNotification(
           factura.cliente.email,
           'Recordatorio de Pago',

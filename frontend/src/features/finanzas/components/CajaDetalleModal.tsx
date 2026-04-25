@@ -1,4 +1,4 @@
-import { X, Receipt, Clock, CreditCard, ChevronRight, History } from 'lucide-react';
+import { X, Receipt, Clock, CreditCard, History } from 'lucide-react';
 import { Caja } from '../hooks/useFinanzas';
 
 interface CajaDetalleModalProps {
@@ -76,7 +76,7 @@ export function CajaDetalleModal({ caja, isOpen, onClose }: CajaDetalleModalProp
           <div className="flex items-center justify-between mb-6">
             <h4 className="text-[11px] font-black text-[var(--text-secondary)] uppercase tracking-widest flex items-center gap-2">
               Libro de Operaciones
-              <span className="bg-slate-800 text-[var(--text-secondary)] px-2 py-0.5 rounded text-[10px] border border-slate-700">
+              <span className="bg-[var(--bg-elevated)] text-[var(--text-secondary)] px-2 py-0.5 rounded text-[10px] border border-[var(--border-primary)]">
                 {caja.pagos?.length || 0} ingresos
               </span>
             </h4>
@@ -84,17 +84,17 @@ export function CajaDetalleModal({ caja, isOpen, onClose }: CajaDetalleModalProp
 
           {(!caja.pagos || caja.pagos.length === 0) ? (
             <div className="py-24 text-center">
-              <div className="w-16 h-16 rounded-[2rem] bg-[var(--bg-secondary)] border border-[var(--border-primary)] flex items-center justify-center mx-auto mb-4 text-slate-700">
+              <div className="w-16 h-16 rounded-[2rem] bg-[var(--bg-secondary)] border border-[var(--border-primary)] flex items-center justify-center mx-auto mb-4 text-[var(--text-muted)]">
                 <Clock className="w-8 h-8" />
               </div>
-              <p className="text-slate-600 font-black uppercase text-[10px] tracking-widest">Sin movimientos de tesorería registrados.</p>
+              <p className="text-[var(--text-muted)] font-black uppercase text-[10px] tracking-widest">Sin movimientos de tesorería registrados.</p>
             </div>
           ) : (
             <div className="space-y-3">
               {[...(caja.pagos || [])].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((pago: any) => (
-                <div key={pago.id} className="flex items-center justify-between p-5 bg-[var(--bg-secondary)]/40 border border-[var(--border-primary)]/60 rounded-2xl hover:border-slate-700 transition-all group">
+                <div key={pago.id} className="flex items-center justify-between p-5 bg-[var(--bg-secondary)]/40 border border-[var(--border-primary)]/60 rounded-2xl hover:border-[var(--border-primary)] transition-all group">
                   <div className="flex items-center gap-5">
-                    <div className="w-10 h-10 bg-[var(--bg-primary)] rounded-xl flex items-center justify-center text-slate-600 group-hover:text-indigo-400 transition-colors border border-slate-900">
+                    <div className="w-10 h-10 bg-[var(--bg-primary)] rounded-xl flex items-center justify-center text-[var(--text-muted)] group-hover:text-indigo-400 transition-colors border border-[var(--border-primary)]">
                       <CreditCard className="w-5 h-5" />
                     </div>
                     <div>
@@ -102,12 +102,12 @@ export function CajaDetalleModal({ caja, isOpen, onClose }: CajaDetalleModalProp
                         <span className="font-black text-[var(--text-primary)] text-sm uppercase tracking-tight group-hover:text-blue-400 transition-colors">
                           {pago.cliente?.nombre || 'S/D'}
                         </span>
-                        <div className="w-1 h-1 rounded-full bg-slate-800" />
+                        <div className="w-1 h-1 rounded-full bg-[var(--border-primary)]" />
                         <span className="text-[9px] font-black uppercase text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20 tracking-widest">
                           {extractVesselName(pago)}
                         </span>
-                        <div className="w-1 h-1 rounded-full bg-slate-800" />
-                        <span className="text-[9px] font-black uppercase text-slate-500 tracking-widest underline decoration-indigo-500/30 underline-offset-4">
+                        <div className="w-1 h-1 rounded-full bg-[var(--border-primary)]" />
+                        <span className="text-[9px] font-black uppercase text-[var(--text-muted)] tracking-widest underline decoration-indigo-500/30 underline-offset-4">
                           {pago.metodoPago}
                         </span>
                       </div>
@@ -119,7 +119,7 @@ export function CajaDetalleModal({ caja, isOpen, onClose }: CajaDetalleModalProp
                   </div>
                   <div className="text-right">
                     <span className="text-lg font-black text-indigo-400 tracking-tighter block">+{formatCurrency(Number(pago.monto))}</span>
-                    <span className="text-[9px] text-slate-700 font-black uppercase tracking-widest">TRX ID: {pago.id}</span>
+                    <span className="text-[9px] text-[var(--text-muted)] font-black uppercase tracking-widest">TRX ID: {pago.id}</span>
                   </div>
                 </div>
               ))}

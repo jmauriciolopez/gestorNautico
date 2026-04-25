@@ -20,6 +20,11 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../users/user.entity';
 
+import { TenantGuard } from '../auth/guards/tenant.guard';
+import { TenantRoles } from '../auth/decorators/tenant-roles.decorator';
+import { ActiveTenant } from '../auth/decorators/active-tenant.decorator';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+
 @Controller('operaciones')
 export class OperacionesController {
   constructor(private readonly operacionesService: OperacionesService) {}
@@ -27,27 +32,37 @@ export class OperacionesController {
   @Public()
   @Post('bajada-publica')
   @HttpCode(HttpStatus.CREATED)
-  async createSolicitudPublica(@Body() dto: CreateSolicitudBajadaDto) {
-    return this.operacionesService.createPublic(dto);
+  async createSolicitudPublica(
+    @ActiveTenant() tenant: TenantContext,
+    @Body() dto: CreateSolicitudBajadaDto,
+  ) {
+    return this.operacionesService.createPublic(tenant, dto);
   }
 
   @Get('solicitudes')
-  @UseGuards(AuthTokenGuard)
+  @UseGuards(AuthTokenGuard, TenantGuard)
   async findAllSolicitudes(
+    @ActiveTenant() tenant: TenantContext,
     @Query('page') page?: number,
     @Query('limit') limit?: number,
     @Query('estado') estado?: EstadoSolicitud,
   ) {
-    return this.operacionesService.findAll({ page, limit }, estado);
+    return this.operacionesService.findAll(tenant, { page, limit }, estado);
   }
 
   @Patch('solicitudes/:id/estado')
-  @UseGuards(AuthTokenGuard, RolesGuard)
-  @Roles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+  @UseGuards(AuthTokenGuard, TenantGuard, RolesGuard)
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
   async updateEstadoSolicitud(
+    @ActiveTenant() tenant: TenantContext,
     @Param('id') id: string,
     @Body() dto: UpdateEstadoSolicitudDto,
   ) {
-    return this.operacionesService.updateEstado(+id, dto.estado, dto.motivo);
+    return this.operacionesService.updateEstado(
+      tenant,
+      +id,
+      dto.estado,
+      dto.motivo,
+    );
   }
 }

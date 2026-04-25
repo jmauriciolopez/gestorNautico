@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Layers, Plus, Loader2, Grid2X2, MapPin, Edit3, Check, X } from 'lucide-react';
 import { Ubicacion, Zona } from '../hooks/useUbicaciones';
-import { useConfirm } from '../../../shared/context/ConfirmContext';
+import { useConfirm } from '../../../shared/hooks/useConfirm';
 
 interface ConfiguracionZonasProps {
   ubicaciones: Ubicacion[];

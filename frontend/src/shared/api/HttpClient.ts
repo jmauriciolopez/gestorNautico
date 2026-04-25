@@ -28,6 +28,13 @@ class HttpClient {
                 if (token && config.headers) {
                     config.headers.Authorization = `Bearer ${token}`;
                 }
+
+                // Inyectar el ID de la guardería activa para multi-tenancy
+                const guarderiaId = localStorage.getItem('guarderiaId');
+                if (guarderiaId && config.headers) {
+                    config.headers['x-guarderia-id'] = guarderiaId;
+                }
+
                 return config;
             },
             (error) => Promise.reject(error)
@@ -52,15 +59,54 @@ class HttpClient {
                 
                 if (data?.message) {
                     messageBody = Array.isArray(data.message) 
-                        ? data.message[0] // Tomar el primero si hay varios, para no saturar
+                        ? data.message.join('. ') 
                         : data.message;
                 } else if (status) {
                     switch (status) {
                         case 400: messageBody = 'La solicitud no es válida.'; break;
+                        case 401: messageBody = 'Sesión expirada o no válida.'; break;
                         case 403: messageBody = 'Acceso denegado.'; break;
-                        case 404: messageBody = 'No encontrado.'; break;
+                        case 404: messageBody = 'Recurso no encontrado.'; break;
                         case 500: messageBody = 'Error interno del servidor.'; break;
                     }
+                }
+
+                // 3. Manejar errores de Tenant (403/404 con mensajes específicos)
+                // Si el error menciona guardería o acceso denegado por multi-tenancy
+                const isTenantError = (status === 403 || status === 404) && 
+                    (messageBody.toLowerCase().includes('guardería') || 
+                     messageBody.toLowerCase().includes('tenant'));
+                
+                if (isTenantError) {
+                    console.warn('[HttpClient] Tenant error detected, redirecting to selector...');
+                    // Redirigir al selector de guardería (se definirá en rutas)
+                    window.location.href = '/select-tenant';
+                    return Promise.reject(error);
+                }
+
+                // Función para reproducir un 'beep' en el navegador
+                try {
+                    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+                    if (AudioContext) {
+                        const ctx = new AudioContext();
+                        const oscillator = ctx.createOscillator();
+                        const gainNode = ctx.createGain();
+                        
+                        oscillator.type = 'triangle';
+                        oscillator.frequency.setValueAtTime(300, ctx.currentTime); // Tono de error (grave)
+                        oscillator.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.2); // Caída rápida
+                        
+                        gainNode.gain.setValueAtTime(0.5, ctx.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+                        
+                        oscillator.connect(gainNode);
+                        gainNode.connect(ctx.destination);
+                        
+                        oscillator.start();
+                        oscillator.stop(ctx.currentTime + 0.2);
+                    }
+                } catch (e) {
+                    console.error('Audio api no soportada o bloqueada', e);
                 }
 
                 // Mostrar Toast único
@@ -76,6 +122,17 @@ class HttpClient {
 
     public setUnauthorizedCallback(callback: () => void) {
         this.unauthorizedCallback = callback;
+    }
+
+    /**
+     * Actualiza la guardería activa en el almacenamiento local y para futuras peticiones
+     */
+    public setGuarderiaActiva(id: string | number | null) {
+        if (id !== null && id !== undefined && id !== '') {
+            localStorage.setItem('guarderiaId', id.toString());
+        } else {
+            localStorage.removeItem('guarderiaId');
+        }
     }
 
     async get<T>(url: string, config?: AxiosRequestConfig): Promise<T> {

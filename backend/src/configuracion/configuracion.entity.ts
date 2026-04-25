@@ -3,14 +3,16 @@ import {
   Column,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
+  Unique,
 } from 'typeorm';
 
 @Entity('configuracion')
+@Unique(['clave', 'guarderiaId'])
 export class Configuracion {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ unique: true })
+  @Column()
   clave: string;
 
   @Column()
@@ -18,6 +20,9 @@ export class Configuracion {
 
   @Column({ nullable: true })
   descripcion: string;
+
+  @Column({ type: 'int' })
+  guarderiaId: number;
 
   @UpdateDateColumn()
   updatedAt: Date;

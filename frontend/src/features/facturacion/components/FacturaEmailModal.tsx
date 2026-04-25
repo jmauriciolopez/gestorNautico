@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { httpClient } from '../../../shared/api/HttpClient';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, X, Send, AlertCircle, CheckCircle2, Loader2, ChevronRight } from 'lucide-react';
@@ -26,30 +27,14 @@ export const FacturaEmailModal: React.FC<FacturaEmailModalProps> = ({ factura, o
     setStatus('idle');
     
     try {
-      const token = localStorage.getItem('token');
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-      
-      const response = await fetch(`${baseUrl}/facturas/${factura.id}/send-email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ email })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al enviar el email');
-      }
-
+      await httpClient.post(`/facturas/${factura.id}/send-email`, { email });
       setStatus('success');
       setTimeout(() => {
         onSuccess();
         onClose();
       }, 2000);
     } catch (error: any) {
-      setErrorMessage(error.message);
+      setErrorMessage(error.response?.data?.message || error.message || 'Error al enviar el email');
       setStatus('error');
     } finally {
       setIsSending(false);

@@ -7,6 +7,13 @@ import { JwtService } from '@nestjs/jwt';
 describe('AuthController', () => {
   let controller: AuthController;
 
+  const mockTenant = {
+    guarderiaId: 1,
+    scope: 'guarderia' as any,
+    role: 'SUPERADMIN' as any,
+    userId: 1,
+  } as any;
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
