@@ -12,6 +12,8 @@ import { Ubicacion } from '../ubicaciones/ubicacion.entity';
 import { Zona } from '../zonas/zona.entity';
 import { Rack } from '../racks/rack.entity';
 import { Espacio } from '../espacios/espacio.entity';
+import { Guarderia } from '../guarderias/guarderia.entity';
+import { SeedGuarderiaService } from './seed-guarderia.service';
 
 @Injectable()
 export class SeederService {

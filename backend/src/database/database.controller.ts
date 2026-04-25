@@ -1,3 +1,4 @@
+import { Controller, Post, Get } from '@nestjs/common';
 import { SeederService } from './seeder.service';
 import { MigrationService } from './migration.service';
 
