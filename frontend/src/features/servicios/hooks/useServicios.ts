@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { httpClient } from '../../../shared/api/HttpClient';
 import { Paginated } from '../../../api/pagination';
+import { useActiveGuarderiaId } from '../../../shared/hooks/useActiveGuarderiaId';
 
 export interface ServicioCatalogo {
   id: number;
@@ -39,9 +40,10 @@ export function useServicios(options: {
   estadoRegistros?: string;
 } = {}) {
   const queryClient = useQueryClient();
+  const guarderiaId = useActiveGuarderiaId();
 
   const getCatalogo = useQuery({
-    queryKey: ['catalogo', options.pageCatalogo, options.limitCatalogo],
+    queryKey: ['catalogo', guarderiaId, options.pageCatalogo, options.limitCatalogo],
     queryFn: () => {
       const params = new URLSearchParams();
       if (options.pageCatalogo) params.append('page', String(options.pageCatalogo));
@@ -51,7 +53,7 @@ export function useServicios(options: {
   });
 
   const getRegistros = useQuery({
-    queryKey: ['registros', options.pageRegistros, options.limitRegistros, options.searchRegistros, options.estadoRegistros],
+    queryKey: ['registros', guarderiaId, options.pageRegistros, options.limitRegistros, options.searchRegistros, options.estadoRegistros],
     queryFn: () => {
       const params = new URLSearchParams();
       if (options.pageRegistros) params.append('page', String(options.pageRegistros));

@@ -72,7 +72,7 @@ async function bootstrap() {
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders:
-      'Content-Type, Accept, Authorization, X-Requested-With, Cookie',
+      'Content-Type, Accept, Authorization, X-Requested-With, Cookie, x-guarderia-id',
     exposedHeaders: 'Set-Cookie',
     optionsSuccessStatus: 204,
   });

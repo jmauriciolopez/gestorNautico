@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { httpClient } from '../../../shared/api/HttpClient';
-import { type User } from '../../../types';
+import { type User, Role } from '../../../types';
 import { AuthContext } from './AuthContext';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -19,14 +19,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             const userData = await httpClient.get<User>('/auth/me');
             setUser(userData);
             
-            // Si el usuario tiene una guardería asignada y no hay una activa, la seteamos por defecto
+            // Sincronización de Tenant
             const currentTenant = localStorage.getItem('guarderiaId');
-            if (userData.guarderiaId && !currentTenant) {
+            
+            // Si no es SuperAdmin, forzamos su guarderiaId asignado
+            if (userData.role !== Role.SUPERADMIN && userData.guarderiaId) {
+                if (currentTenant !== userData.guarderiaId.toString()) {
+                    httpClient.setGuarderiaActiva(userData.guarderiaId);
+                }
+            } 
+            // Si es SuperAdmin y no hay una activa, la dejamos en null (Global) o mantenemos la actual
+            else if (userData.guarderiaId && !currentTenant) {
                 httpClient.setGuarderiaActiva(userData.guarderiaId);
             }
         } catch (error) {
             console.error('Error verificando sesión:', error);
             localStorage.removeItem('token');
+            localStorage.removeItem('guarderiaId');
             setUser(null);
         } finally {
             setIsInitializing(false);
@@ -36,6 +45,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     useEffect(() => {
         httpClient.setUnauthorizedCallback(() => {
             localStorage.removeItem('token');
+            localStorage.removeItem('guarderiaId');
             setUser(null);
         });
 
@@ -51,6 +61,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const logout = () => {
         localStorage.removeItem('token');
+        localStorage.removeItem('guarderiaId');
         setUser(null);
         httpClient.post('/auth/logout').catch(() => {});
     };

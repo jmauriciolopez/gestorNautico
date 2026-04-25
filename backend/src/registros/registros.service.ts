@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, ILike, FindManyOptions, FindOptionsWhere } from 'typeorm';
 import { RegistroServicio, EstadoServicio } from './registro.entity';
@@ -14,12 +14,18 @@ import {
 } from '../common/pagination/pagination.helper';
 import { BaseTenantService } from '../compartido/bases/base-tenant.service';
 import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
+import { Catalogo } from '../catalogo/catalogo.entity';
 
 @Injectable()
 export class RegistrosService extends BaseTenantService {
   constructor(
     @InjectRepository(RegistroServicio)
     private readonly registroRepo: Repository<RegistroServicio>,
+    @InjectRepository(Embarcacion)
+    private readonly embarcacionRepo: Repository<Embarcacion>,
+    @InjectRepository(Catalogo)
+    private readonly catalogoRepo: Repository<Catalogo>,
     private readonly cargosService: CargosService,
     private readonly notificacionesService: NotificacionesService,
   ) {
@@ -73,6 +79,30 @@ export class RegistrosService extends BaseTenantService {
   }
 
   async create(tenant: TenantContext, data: Partial<RegistroServicio>) {
+    // Validar que la embarcación pertenezca al tenant
+    if (data.embarcacionId) {
+      const embarcacion = await this.embarcacionRepo.findOne({
+        where: this.buildTenantWhere(tenant, { id: data.embarcacionId }),
+      });
+      if (!embarcacion) {
+        throw new BadRequestException(
+          `La embarcación ${data.embarcacionId} no pertenece a esta sede`,
+        );
+      }
+    }
+
+    // Validar que el servicio del catálogo pertenezca al tenant
+    if (data.servicioId) {
+      const servicio = await this.catalogoRepo.findOne({
+        where: this.buildTenantWhere(tenant, { id: data.servicioId }),
+      });
+      if (!servicio) {
+        throw new BadRequestException(
+          `El servicio ${data.servicioId} no pertenece a esta sede`,
+        );
+      }
+    }
+
     const registro = this.registroRepo.create({
       ...data,
       guarderiaId: tenant.guarderiaId,

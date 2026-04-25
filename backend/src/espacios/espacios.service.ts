@@ -34,7 +34,8 @@ export class EspaciosService extends BaseTenantService implements OnApplicationB
   async onApplicationBootstrap() {
     try {
       this.logger.log('Iniciando saneamiento automático de infraestructura...');
-      await this.syncHealth();
+      // Boot-time sync: global, runs without tenant context (system-level only)
+      await this.syncHealthGlobal();
     } catch (error) {
       this.logger.error(
         `Error durante el saneamiento de espacios: ${
@@ -44,8 +45,12 @@ export class EspaciosService extends BaseTenantService implements OnApplicationB
     }
   }
 
-  async syncHealth() {
-    this.logger.log('Ejecutando diagnóstico de integridad de espacios...');
+  /**
+   * Saneamiento GLOBAL (solo para arranque del sistema o uso exclusivo de SuperAdmin).
+   * No debe ser expuesto como endpoint accesible por Admins.
+   */
+  async syncHealthGlobal() {
+    this.logger.log('Ejecutando diagnóstico GLOBAL de integridad de espacios...');
     let corregidos = 0;
 
     // 1. Limpiar embarcaciones INACTIVAS que aún tengan espacioId
@@ -88,6 +93,62 @@ export class EspaciosService extends BaseTenantService implements OnApplicationB
 
     this.logger.log(
       `Saneamiento finalizado. Registros corregidos: ${corregidos}`,
+    );
+    return { corregidos };
+  }
+
+  /**
+   * Saneamiento SCOPED al tenant del usuario que lo solicita.
+   * Este es el método seguro para exponer como endpoint.
+   */
+  async syncHealth(tenant: TenantContext) {
+    this.logger.log(`Ejecutando diagnóstico de integridad para guardería ${tenant.guarderiaId}...`);
+    let corregidos = 0;
+
+    const where = this.buildTenantWhere(tenant);
+
+    // 1. Limpiar embarcaciones INACTIVAS con espacioId en este tenant
+    const inactivasConEspacio = await this.embarcacionRepo.find({
+      where: {
+        ...where,
+        estado_operativo: EstadoEmbarcacion.INACTIVA,
+        espacioId: Not(IsNull()),
+      },
+    });
+
+    for (const emb of inactivasConEspacio) {
+      await this.embarcacionRepo.update(emb.id, { espacioId: null });
+      this.logger.warn(
+        `[Tenant ${tenant.guarderiaId}] Limpiada referencia de espacio en embarcación INACTIVA: ${emb.nombre}`,
+      );
+      corregidos++;
+    }
+
+    // 2. Saneamiento de espacios ocupados de este tenant
+    const espaciosOcupados = await this.espacioRepo.find({
+      where: { ...where, ocupado: true },
+    });
+
+    for (const espacio of espaciosOcupados) {
+      const tieneEmbarcacionActiva = await this.embarcacionRepo.findOne({
+        where: {
+          ...where,
+          espacioId: espacio.id,
+          estado_operativo: Not(EstadoEmbarcacion.INACTIVA),
+        },
+      });
+
+      if (!tieneEmbarcacionActiva) {
+        await this.espacioRepo.update(espacio.id, { ocupado: false });
+        this.logger.error(
+          `[Tenant ${tenant.guarderiaId}] Saneado espacio fantasma: ${espacio.numero}`,
+        );
+        corregidos++;
+      }
+    }
+
+    this.logger.log(
+      `[Tenant ${tenant.guarderiaId}] Saneamiento finalizado. Registros corregidos: ${corregidos}`,
     );
     return { corregidos };
   }

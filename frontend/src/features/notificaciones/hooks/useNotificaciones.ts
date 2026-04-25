@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { httpClient } from '../../../shared/api/HttpClient';
 
 import { Paginated, selectData } from '../../../api/pagination';
+import { useActiveGuarderiaId } from '../../../shared/hooks/useActiveGuarderiaId';
 
 export interface Notificacion {
   id: number;
@@ -14,9 +15,10 @@ export interface Notificacion {
 
 export function useNotificaciones(options: { page?: number; limit?: number } = {}) {
   const queryClient = useQueryClient();
+  const guarderiaId = useActiveGuarderiaId();
 
   const getNotificaciones = useQuery<Notificacion[]>({
-    queryKey: ['notificaciones', options.page, options.limit],
+    queryKey: ['notificaciones', guarderiaId, options.page, options.limit],
     queryFn: async () => {
       try {
         const params = new URLSearchParams();

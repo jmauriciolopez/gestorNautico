@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast';
 import { httpClient } from '../../../shared/api/HttpClient';
 import { Paginated, selectData } from '../../../api/pagination';
 import { EstadoPedido, TipoMovimiento, EstadoSolicitud } from '../../../shared/types/enums';
+import { useActiveGuarderiaId } from '../../../shared/hooks/useActiveGuarderiaId';
 
 export interface Pedido {
   id: number;
@@ -57,6 +58,7 @@ export function useOperaciones(options: {
   limitSolicitudes?: number;
 } = {}) {
   const queryClient = useQueryClient();
+  const guarderiaId = useActiveGuarderiaId();
 
   const invalidateAll = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['pedidos'] });
@@ -67,7 +69,7 @@ export function useOperaciones(options: {
   }, [queryClient]);
 
   const getPedidos = useQuery<Pedido[]>({
-    queryKey: ['pedidos', options.pagePedidos, options.limitPedidos],
+    queryKey: ['pedidos', guarderiaId, options.pagePedidos, options.limitPedidos],
     queryFn: () => {
       const params = new URLSearchParams();
       if (options.pagePedidos) params.append('page', String(options.pagePedidos));
@@ -105,7 +107,7 @@ export function useOperaciones(options: {
   });
 
   const getMovimientos = useQuery({
-    queryKey: ['movimientos', options.pageMovimientos, options.limitMovimientos],
+    queryKey: ['movimientos', guarderiaId, options.pageMovimientos, options.limitMovimientos],
     queryFn: (): Promise<Movimiento[]> => {
       const params = new URLSearchParams();
       if (options.pageMovimientos) params.append('page', String(options.pageMovimientos));
@@ -128,6 +130,7 @@ const MOVIMIENTOS_PAGE_SIZE = 20;
 
 export function useMovimientosPaginados(page: number, limit = MOVIMIENTOS_PAGE_SIZE, search?: string, embarcacionId?: number) {
   const queryClient = useQueryClient();
+  const guarderiaId = useActiveGuarderiaId();
   
   const invalidate = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['movimientos'] });
@@ -137,7 +140,7 @@ export function useMovimientosPaginados(page: number, limit = MOVIMIENTOS_PAGE_S
   }, [queryClient]);
 
   const query = useQuery({
-    queryKey: ['movimientos', page, limit, search, embarcacionId],
+    queryKey: ['movimientos', guarderiaId, page, limit, search, embarcacionId],
     queryFn: (): Promise<Paginated<Movimiento>> => {
       const params = new URLSearchParams();
       params.append('page', String(page));
@@ -169,9 +172,10 @@ export function useMovimientosPaginados(page: number, limit = MOVIMIENTOS_PAGE_S
 
 export function useSolicitudesBajada(options: { page?: number; limit?: number } = {}) {
   const queryClient = useQueryClient();
+  const guarderiaId = useActiveGuarderiaId();
 
   const getSolicitudes = useQuery({
-    queryKey: ['solicitudes-bajada', options.page, options.limit],
+    queryKey: ['solicitudes-bajada', guarderiaId, options.page, options.limit],
     queryFn: (): Promise<SolicitudBajada[]> => {
       const params = new URLSearchParams();
       if (options.page) params.append('page', String(options.page));

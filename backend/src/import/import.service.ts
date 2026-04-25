@@ -94,6 +94,12 @@ export class ImportService extends BaseTenantService {
     };
 
     try {
+      if (!tenant.guarderiaId) {
+        result.errors.push('Debe seleccionar una sede para realizar la importación');
+        result.success = false;
+        return result;
+      }
+
       const lines = this.parseCSV(csvContent);
       if (lines.length < 2) {
         result.errors.push(
@@ -181,6 +187,12 @@ export class ImportService extends BaseTenantService {
     };
 
     try {
+      if (!tenant.guarderiaId) {
+        result.errors.push('Debe seleccionar una sede para realizar la importación');
+        result.success = false;
+        return result;
+      }
+
       const lines = this.parseCSV(csvContent);
       if (lines.length < 2) {
         result.errors.push(

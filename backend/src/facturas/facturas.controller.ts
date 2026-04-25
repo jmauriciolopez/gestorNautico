@@ -37,14 +37,14 @@ export class FacturasController {
   ) {}
 
   @Get('next-numero')
-  @TenantRoles(Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+  @TenantRoles(Role.ADMIN)
   async getNextNumero(@ActiveTenant() tenant: TenantContext) {
     const nextNumero = await this.facturasService.generateNextNumero(tenant);
     return { nextNumero };
   }
 
   @Get(':id/pdf')
-  @TenantRoles(Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+  @TenantRoles(Role.ADMIN)
   async downloadPdf(
     @ActiveTenant() tenant: TenantContext,
     @Param('id') id: string,
@@ -63,7 +63,7 @@ export class FacturasController {
   }
 
   @Get('stats')
-  @TenantRoles(Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+  @TenantRoles(Role.ADMIN)
   async getStats(
     @ActiveTenant() tenant: TenantContext,
     @Query('startDate') startDate?: string,
@@ -73,7 +73,7 @@ export class FacturasController {
   }
 
   @Get()
-  @TenantRoles(Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+  @TenantRoles(Role.ADMIN)
   findAll(
     @ActiveTenant() tenant: TenantContext,
     @Query('page') page?: number,
@@ -92,19 +92,19 @@ export class FacturasController {
   }
 
   @Get(':id')
-  @TenantRoles(Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+  @TenantRoles(Role.ADMIN)
   findOne(@ActiveTenant() tenant: TenantContext, @Param('id') id: string) {
     return this.facturasService.findOne(tenant, +id);
   }
 
   @Post()
-  @TenantRoles(Role.ADMIN, Role.SUPERVISOR)
+  @TenantRoles(Role.ADMIN)
   create(@ActiveTenant() tenant: TenantContext, @Body() data: CreateFacturaDto) {
     return this.facturasService.create(tenant, data);
   }
 
   @Patch(':id/estado')
-  @TenantRoles(Role.ADMIN, Role.SUPERVISOR)
+  @TenantRoles(Role.ADMIN)
   updateEstado(
     @ActiveTenant() tenant: TenantContext,
     @Param('id') id: string,
@@ -129,7 +129,7 @@ export class FacturasController {
   }
 
   @Post(':id/send-email')
-  @TenantRoles(Role.ADMIN, Role.SUPERVISOR)
+  @TenantRoles(Role.ADMIN)
   sendEmail(
     @ActiveTenant() tenant: TenantContext,
     @Param('id') id: string,
@@ -139,7 +139,7 @@ export class FacturasController {
   }
 
   @Delete(':id')
-  @TenantRoles(Role.ADMIN, Role.SUPERVISOR)
+  @TenantRoles(Role.ADMIN)
   remove(@ActiveTenant() tenant: TenantContext, @Param('id') id: string) {
     return this.facturasService.remove(tenant, +id);
   }

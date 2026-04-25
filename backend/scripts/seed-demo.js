@@ -1,4 +1,4 @@
-﻿/**
+/**
  * seed-demo.js
  * Ejecutar desde la carpeta backend:
  *   node scripts/seed-demo.js
@@ -76,17 +76,17 @@ async function main() {
 
     // ── 2. Infraestructura ─────────────────────────────────────────────────
     const { rows: [ub] } = await db.query(
-      `INSERT INTO ubicaciones (nombre, descripcion) VALUES ($1,$2) RETURNING id`,
-      ['Puerto Demo','Sede de demostración']
+      `INSERT INTO ubicaciones (nombre, descripcion, "guarderiaId") VALUES ($1,$2,$3) RETURNING id`,
+      ['Puerto Demo','Sede de demostración', 1]
     );
     const { rows: [zona] } = await db.query(
-      `INSERT INTO zonas (nombre, "ubicacionId") VALUES ($1,$2) RETURNING id`,
-      ['Guardería Demo', ub.id]
+      `INSERT INTO zonas (nombre, "ubicacionId", "guarderiaId") VALUES ($1,$2,$3) RETURNING id`,
+      ['Guardería Demo', ub.id, 1]
     );
     const { rows: [rack] } = await db.query(
-      `INSERT INTO racks (codigo, "zonaId", pisos, filas, columnas, alto, ancho, largo, "tarifaBase")
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
-      ['MOD-DEMO', zona.id, 3, 5, 2, 3, 3, 12, 0]
+      `INSERT INTO racks (codigo, "zonaId", pisos, filas, columnas, alto, ancho, largo, "tarifaBase", "guarderiaId")
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
+      ['MOD-DEMO', zona.id, 3, 5, 2, 3, 3, 12, 0, 1]
     );
 
     // 30 espacios (3 pisos × 5 filas × 2 columnas)
@@ -96,9 +96,9 @@ async function main() {
       for (let f = 1; f <= 5; f++) {
         for (let c = 1; c <= 2; c++) {
           const { rows: [esp] } = await db.query(
-            `INSERT INTO espacios (numero, "rackId", piso, fila, columna, ocupado)
-             VALUES ($1,$2,$3,$4,$5,false) RETURNING id`,
-            [`CUNA-${String(num).padStart(2,'0')}`, rack.id, p, f, c]
+            `INSERT INTO espacios (numero, "rackId", piso, fila, columna, ocupado, "guarderiaId")
+             VALUES ($1,$2,$3,$4,$5,false,$6) RETURNING id`,
+            [`CUNA-${String(num).padStart(2,'0')}`, rack.id, p, f, c, 1]
           );
           espacioIds.push(esp.id);
           num++;
@@ -109,9 +109,9 @@ async function main() {
 
     // ── 3. Caja ────────────────────────────────────────────────────────────
     const { rows: [caja] } = await db.query(
-      `INSERT INTO cajas ("saldoInicial", "saldoFinal", estado, "fechaApertura")
-       VALUES ($1, 0, 'ABIERTA', NOW()) RETURNING id`,
-      [100000]
+      `INSERT INTO cajas ("saldoInicial", "saldoFinal", estado, "fechaApertura", "guarderiaId")
+       VALUES ($1, 0, 'ABIERTA', NOW(), $2) RETURNING id`,
+      [100000, 1]
     );
 
     // ── 4. Clientes ────────────────────────────────────────────────────────
@@ -119,13 +119,14 @@ async function main() {
     for (let i = 0; i < 25; i++) {
       const nombre = NOMBRES[i];
       const { rows: [cl] } = await db.query(
-        `INSERT INTO clientes (nombre, telefono, email, dni, activo, "diaFacturacion", descuento, "tipoCuota")
-         VALUES ($1,$2,$3,$4,true,1,0,'NINGUNA') RETURNING id`,
+        `INSERT INTO clientes (nombre, telefono, email, dni, activo, "diaFacturacion", descuento, "tipoCuota", "guarderiaId")
+         VALUES ($1,$2,$3,$4,true,1,0,'NINGUNA',$5) RETURNING id`,
         [
           nombre,
           `11${rndInt(10000000,99999999)}`,
           `${nombre.toLowerCase().replace(/ /g,'.')}@demo.com`,
           `${rndInt(10000000,40000000)}`,
+          1
         ]
       );
       clienteIds.push(cl.id);
@@ -150,9 +151,9 @@ async function main() {
 
       const { rows: [emb] } = await db.query(
         `INSERT INTO embarcaciones
-           (nombre, matricula, marca, modelo, eslora, manga, tipo, estado,
-            "clienteId", "espacioId", "createdAt", "updatedAt")
-         VALUES ($1,$2,$3,$4,$5,$6,$7,'EN_CUNA',$8,$9,$10,$10) RETURNING id`,
+           (nombre, matricula, marca, modelo, eslora, manga, tipo, estado_operativo,
+            "clienteId", "espacioId", "createdAt", "updatedAt", "guarderiaId")
+         VALUES ($1,$2,$3,$4,$5,$6,$7,'EN_CUNA',$8,$9,$10,$10,$11) RETURNING id`,
         [
           `Embarcación ${i+1}`,
           `MAT-${String(i+1).padStart(3,'0')}`,
@@ -163,6 +164,7 @@ async function main() {
           clienteId,
           espacioId,
           createdAt14MonthsAgo,
+          1
         ]
       );
       embarcacionIds.push(emb.id);
@@ -202,13 +204,14 @@ async function main() {
 
         // Crear factura
         const { rows: [factura] } = await db.query(
-          `INSERT INTO facturas (numero, "cliente_id", total, "fechaEmision", estado)
-           VALUES ($1,$2,$3,$4,'PENDIENTE') RETURNING id`,
+          `INSERT INTO facturas (numero, "cliente_id", total, "fechaEmision", estado, "guarderiaId")
+           VALUES ($1,$2,$3,$4,'PENDIENTE',$5) RETURNING id`,
           [
             `F-${String(facturaNum++).padStart(5,'0')}`,
             clienteId,
             montoTotal,
             toDate(fechaEmision),
+            1
           ]
         );
 
@@ -218,8 +221,8 @@ async function main() {
           const { rows: [cargo] } = await db.query(
             `INSERT INTO cargos
                (cliente_id, descripcion, monto, "fechaEmision", "fechaVencimiento",
-                pagado, tipo, factura_id)
-             VALUES ($1,$2,$3,$4,$5,false,'AMARRE',$6) RETURNING id`,
+                pagado, tipo, factura_id, "guarderiaId")
+             VALUES ($1,$2,$3,$4,$5,false,'AMARRE',$6,$7) RETURNING id`,
             [
               clienteId,
               `Amarre mensual - Emb. ${embId}`,
@@ -227,6 +230,7 @@ async function main() {
               toDate(fechaEmision),
               toDate(fechaVenc),
               factura.id,
+              1
             ]
           );
           cargoIds.push(cargo.id);
@@ -246,8 +250,8 @@ async function main() {
 
           await db.query(
             `INSERT INTO pagos
-               (cliente_id, caja_id, monto, fecha, "metodoPago", comprobante)
-             VALUES ($1,$2,$3,$4,$5,$6)`,
+               (cliente_id, caja_id, monto, fecha, "metodoPago", comprobante, "guarderiaId")
+             VALUES ($1,$2,$3,$4,$5,$6,$7)`,
             [
               clienteId,
               caja.id,
@@ -255,6 +259,7 @@ async function main() {
               toDate(fechaPago),
               rnd(['EFECTIVO','TRANSFERENCIA','TARJETA']),
               `COMP-${String(facturaNum).padStart(5,'0')}`,
+              1
             ]
           );
 

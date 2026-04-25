@@ -39,10 +39,15 @@ export class ZonasService extends BaseTenantService {
     return zona;
   }
 
-  create(tenant: TenantContext, data: Partial<Zona>) {
+  async create(tenant: TenantContext, data: Partial<Zona>) {
     if (data.ubicacionId === 0) {
       data.ubicacionId = null;
     }
+
+    if (data.ubicacionId) {
+      await this.validateRelation(this.zonaRepo.manager.getRepository('Ubicacion'), tenant, data.ubicacionId, 'Ubicación');
+    }
+
     const zona = this.zonaRepo.create({
       ...data,
       guarderiaId: tenant.guarderiaId as number,
@@ -55,6 +60,11 @@ export class ZonasService extends BaseTenantService {
     if (data.ubicacionId === 0) {
       data.ubicacionId = null;
     }
+
+    if (data.ubicacionId) {
+      await this.validateRelation(this.zonaRepo.manager.getRepository('Ubicacion'), tenant, data.ubicacionId, 'Ubicación');
+    }
+
     await this.zonaRepo.update(id, data);
     return this.findOne(tenant, id);
   }

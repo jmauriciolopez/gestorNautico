@@ -183,7 +183,7 @@ export class CajasService extends BaseTenantService {
       totalEfectivo: unknown;
     }
 
-    const raw = await this.cajaRepo.manager
+    const qb = this.cajaRepo.manager
       .createQueryBuilder()
       .select('COALESCE(SUM(p.monto), 0)', 'totalRecaudado')
       .addSelect(
@@ -191,13 +191,11 @@ export class CajasService extends BaseTenantService {
         'totalEfectivo',
       )
       .from('pagos', 'p')
-      .where('p.caja_id = :cajaId', { cajaId: cajaAbierta.id })
-      .andWhere('p.guarderia_id = :guarderiaId', {
-        guarderiaId: tenant.guarderiaId,
-      })
-      .getRawOne<CajasRawAgg>();
+      .where('p.caja_id = :cajaId', { cajaId: cajaAbierta.id });
 
-    const agg = raw;
+    this.applyTenantFilter(qb, tenant, 'p');
+
+    const agg = await qb.getRawOne<CajasRawAgg>();
 
     return {
       id: cajaAbierta.id,

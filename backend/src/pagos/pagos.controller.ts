@@ -32,7 +32,7 @@ export class PagosController {
   ) {}
 
   @Get(':id/pdf')
-  @TenantRoles(Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+  @TenantRoles(Role.ADMIN)
   async downloadPdf(
     @ActiveTenant() tenant: TenantContext,
     @Param('id') id: string,
@@ -51,7 +51,7 @@ export class PagosController {
   }
 
   @Get()
-  @TenantRoles(Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+  @TenantRoles(Role.ADMIN)
   findAll(
     @ActiveTenant() tenant: TenantContext,
     @Query('page') page?: number,
@@ -61,19 +61,19 @@ export class PagosController {
   }
 
   @Get(':id')
-  @TenantRoles(Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+  @TenantRoles(Role.ADMIN)
   findOne(@ActiveTenant() tenant: TenantContext, @Param('id') id: string) {
     return this.pagosService.findOne(tenant, +id);
   }
 
   @Post()
-  @TenantRoles(Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
+  @TenantRoles(Role.ADMIN)
   create(@ActiveTenant() tenant: TenantContext, @Body() data: CreatePagoDto) {
     return this.pagosService.create(tenant, data);
   }
 
   @Delete(':id')
-  @TenantRoles(Role.ADMIN, Role.SUPERVISOR)
+  @TenantRoles(Role.ADMIN)
   remove(@ActiveTenant() tenant: TenantContext, @Param('id') id: string) {
     return this.pagosService.remove(tenant, +id);
   }

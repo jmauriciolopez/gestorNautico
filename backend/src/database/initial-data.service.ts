@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { User, Role } from '../users/user.entity';
 import { Guarderia } from '../guarderias/guarderia.entity';
 import { SeedGuarderiaService } from './seed-guarderia.service';
+import { ConfiguracionService } from '../configuracion/configuracion.service';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -14,6 +15,7 @@ export class InitialDataService implements OnApplicationBootstrap {
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
     private readonly seedGuarderiaService: SeedGuarderiaService,
+    private readonly configService: ConfiguracionService,
   ) {}
 
   async onApplicationBootstrap() {
@@ -34,6 +36,7 @@ export class InitialDataService implements OnApplicationBootstrap {
     );
     const defaultGuarderia = await this.seedGuarderiaService.ensureDefaultGuarderia();
     await this.ensureInitialUsers(defaultGuarderia);
+    await this.configService.syncConfigs(defaultGuarderia.id);
     this.logger.log('✅ Master Data Sync: Completed');
   }
 

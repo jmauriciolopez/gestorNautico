@@ -36,6 +36,8 @@ import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { RegistrarPagoModal } from '../../finanzas/components/RegistrarPagoModal';
 import { httpClient } from '../../../shared/api/HttpClient';
 import { toast } from 'react-hot-toast';
+import { RoleGuard } from '../../../components/auth/RoleGuard';
+import { Role } from '../../../types';
 
 interface StatCardProps {
   title: string;
@@ -288,7 +290,8 @@ const handleAsignarBarco = async (embarcacionId: number, espacioId: number) => {
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-              <button
+              <RoleGuard allowedRoles={[Role.ADMIN, Role.SUPERADMIN]}>
+                <button
                 onClick={() => setIsPagoModalOpen(true)}
                 className="btn"
                 style={{
@@ -299,6 +302,7 @@ const handleAsignarBarco = async (embarcacionId: number, espacioId: number) => {
                 <CreditCard size={15} />
                 Registrar pago
               </button>
+              </RoleGuard>
 
               <button
                 onClick={() => navigate('/operaciones')}
@@ -496,13 +500,15 @@ const handleAsignarBarco = async (embarcacionId: number, espacioId: number) => {
                 </p>
               </div>
 
-              <button
+              <RoleGuard allowedRoles={[Role.ADMIN, Role.SUPERADMIN]}>
+                <button
                 onClick={() => navigate('/configuracion')}
                 className="icon-button"
                 title="Configuración"
               >
                 <Settings size={15} />
-              </button>
+                </button>
+              </RoleGuard>
             </div>
 
             <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3 max-h-[340px] pr-1">

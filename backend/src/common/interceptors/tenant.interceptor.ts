@@ -32,6 +32,14 @@ export class TenantInterceptor implements NestInterceptor {
     const scope =
       user.role === Role.SUPERADMIN && !guarderiaId ? 'global' : 'guarderia';
 
+    // Para roles no-SuperAdmin: el guarderiaId del header DEBE coincidir con el del token
+    // Esto previene que un usuario intente acceder a datos de otra sede enviando un header diferente
+    if (user.role !== Role.SUPERADMIN && user.guarderiaId && guarderiaId) {
+      if (Number(guarderiaId) !== Number(user.guarderiaId)) {
+        throw new ForbiddenException('No tienes acceso a esta guardería');
+      }
+    }
+
     // Construir contexto del tenant
     request['tenant'] = {
       guarderiaId: guarderiaId || user.guarderiaId || null,

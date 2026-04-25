@@ -5,6 +5,7 @@ import { useAuth } from '../../auth/hooks/useAuth';
 import { useQueryClient } from '@tanstack/react-query';
 import { Building2, ChevronDown } from 'lucide-react';
 import { Role } from '../../../types';
+import { emitGuarderiaChange } from '../../../shared/hooks/useActiveGuarderiaId';
 
 /**
  * Componente que permite a los SUPERADMIN cambiar de guardería (tenant) dinámicamente.
@@ -27,7 +28,11 @@ export const GuarderiaSelector = () => {
         };
 
         window.addEventListener('storage', checkStorage);
-        return () => window.removeEventListener('storage', checkStorage);
+        window.addEventListener('guarderia-change', checkStorage);
+        return () => {
+            window.removeEventListener('storage', checkStorage);
+            window.removeEventListener('guarderia-change', checkStorage);
+        };
     }, [selectedId]);
 
     // Solo mostrar para SUPERADMIN
@@ -39,6 +44,9 @@ export const GuarderiaSelector = () => {
         
         // 5.4 Persistir guarderiaIdActivo en localStorage vía HttpClient
         httpClient.setGuarderiaActiva(newId);
+        
+        // Emitir evento para que hooks reactivos se enteren
+        emitGuarderiaChange();
         
         // 5.5 Forzar refetch al cambiar de guardería invalidando todas las queries
         // Esto hará que todas las tablas y dashboards se recarguen con el nuevo x-guarderia-id

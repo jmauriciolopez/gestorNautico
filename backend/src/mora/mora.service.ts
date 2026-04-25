@@ -282,14 +282,17 @@ export class MoraService extends BaseTenantService {
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
 
-    return this.facturaRepo
+    const qb = this.facturaRepo
       .createQueryBuilder('f')
       .leftJoin('f.cliente', 'c')
       .where('f.estado = :estado', { estado: EstadoFactura.PENDIENTE })
-      .andWhere('f.guarderiaId = :gId', { gId: tenant.guarderiaId })
       .andWhere('f.fechaVencimiento < :hoy', { hoy })
       .andWhere('(f.interesMoratorio = 0 OR f.interesMoratorio IS NULL)')
-      .andWhere('(f.recargo = 0 OR f.recargo IS NULL)')
+      .andWhere('(f.recargo = 0 OR f.recargo IS NULL)');
+
+    this.applyTenantFilter(qb, tenant, 'f');
+
+    return qb
       .select(['f.id', 'f.numero', 'f.total', 'f.fechaVencimiento', 'c.nombre'])
       .getMany();
   }

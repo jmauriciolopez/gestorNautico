@@ -26,7 +26,7 @@ export class ConfiguracionController {
   }
 
   @Put('bulk')
-  @TenantRoles(Role.ADMIN, Role.SUPERVISOR)
+  @TenantRoles(Role.ADMIN)
   async updateMultiple(
     @ActiveTenant() tenant: TenantContext,
     @Body() updates: Record<string, string>,

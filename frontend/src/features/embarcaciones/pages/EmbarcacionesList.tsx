@@ -9,12 +9,20 @@ import { PaginationControls } from '../../../shared/components/PaginationControl
 
 import { useDebounce } from '../../../hooks/useDebounce';
 import { EstadoEmbarcacion } from '../../../shared/types/enums';
+import { useActiveGuarderiaId } from '../../../shared/hooks/useActiveGuarderiaId';
 
 export default function EmbarcacionesList() {
   const navigate = useNavigate();
+  const guarderiaId = useActiveGuarderiaId();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const debouncedSearch = useDebounce(search, 300);
+
+  // Reset when guarderia changes
+  React.useEffect(() => {
+    setPage(1);
+    setSearch('');
+  }, [guarderiaId]);
 
   // Reset to page 1 when search changes
   React.useEffect(() => {

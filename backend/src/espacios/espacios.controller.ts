@@ -12,7 +12,6 @@ import {
 import { EspaciosService } from './espacios.service';
 import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../users/user.entity';
 
 import { Espacio } from './espacio.entity';
@@ -38,9 +37,9 @@ export class EspaciosController {
   }
 
   @Post('sync')
-  @Roles(Role.SUPERADMIN, Role.ADMIN) // Global roles for sync
-  syncHealth() {
-    return this.espaciosService.syncHealth();
+  @TenantRoles(Role.SUPERADMIN, Role.ADMIN)
+  syncHealth(@ActiveTenant() tenant: TenantContext) {
+    return this.espaciosService.syncHealth(tenant);
   }
 
   @Get('estadisticas')

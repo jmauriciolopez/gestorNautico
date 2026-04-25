@@ -7,6 +7,7 @@ import { Role } from '../users/user.entity';
 
 import { TenantGuard } from '../auth/guards/tenant.guard';
 import { TenantRoles } from '../auth/decorators/tenant-roles.decorator';
+import { AllowGlobal } from '../compartido/decorators/allow-global.decorator';
 import { ActiveTenant } from '../auth/decorators/active-tenant.decorator';
 import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
 
@@ -16,6 +17,7 @@ export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}
 
   @Get('summary')
+  @AllowGlobal()
   @TenantRoles(Role.ADMIN, Role.SUPERVISOR)
   async getSummary(@ActiveTenant() tenant: TenantContext) {
     return this.dashboardService.getSummary(tenant);
@@ -46,37 +48,37 @@ export class DashboardController {
   }
 
   @Get('gerencial/ocupacion')
-  @TenantRoles(Role.ADMIN)
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR)
   async getOccupancyMetrics(@ActiveTenant() tenant: TenantContext) {
     return this.dashboardService.getOccupancyMetrics(tenant);
   }
 
   @Get('gerencial/rentabilidad')
-  @TenantRoles(Role.ADMIN)
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR)
   async getHistoricalProfitability(@ActiveTenant() tenant: TenantContext) {
     return this.dashboardService.getHistoricalProfitability(tenant);
   }
 
   @Get('gerencial/picos-demanda')
-  @TenantRoles(Role.ADMIN)
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR)
   async getDemandPeaks(@ActiveTenant() tenant: TenantContext) {
     return this.dashboardService.getDemandPeaks(tenant);
   }
 
   @Get('gerencial/tiempo-cobro')
-  @TenantRoles(Role.ADMIN)
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR)
   async getAverageCollectionTime(@ActiveTenant() tenant: TenantContext) {
     return this.dashboardService.getAverageCollectionTime(tenant);
   }
 
   @Get('gerencial/arpu')
-  @TenantRoles(Role.ADMIN)
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR)
   async getRevenuePerMeter(@ActiveTenant() tenant: TenantContext) {
     return this.dashboardService.getRevenuePerMeter(tenant);
   }
 
   @Get('gerencial/vip-clients')
-  @TenantRoles(Role.ADMIN)
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR)
   async getTopVIPClients(@ActiveTenant() tenant: TenantContext) {
     return this.dashboardService.getTopVIPClients(tenant);
   }

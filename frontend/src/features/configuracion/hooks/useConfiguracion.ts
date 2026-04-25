@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { httpClient } from '../../../shared/api/HttpClient';
 import { Paginated } from '../../../api/pagination';
+import { useActiveGuarderiaId } from '../../../shared/hooks/useActiveGuarderiaId';
 
 export interface Configuracion {
   id: number;
@@ -12,9 +13,10 @@ export interface Configuracion {
 
 export const useConfiguracion = () => {
   const queryClient = useQueryClient();
+  const guarderiaId = useActiveGuarderiaId();
 
   const getConfiguraciones = useQuery({
-    queryKey: ['configuracion'],
+    queryKey: ['configuracion', guarderiaId],
     queryFn: () => httpClient.get<Paginated<Configuracion>>('/configuracion'),
   });
 

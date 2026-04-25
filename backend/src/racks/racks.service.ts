@@ -61,6 +61,10 @@ export class RacksService extends BaseTenantService {
   }
 
   async create(tenant: TenantContext, data: Partial<Rack>) {
+    if (data.zonaId) {
+      await this.validateRelation(this.rackRepo.manager.getRepository('Zona'), tenant, data.zonaId, 'Zona');
+    }
+
     const rack = this.rackRepo.create({
       ...data,
       guarderiaId: tenant.guarderiaId as number,
@@ -121,6 +125,10 @@ export class RacksService extends BaseTenantService {
       if (rack.espacios.length > 0) {
         await this.desvincularYEliminarEspacios(rack.espacios);
       }
+    }
+
+    if (data.zonaId && data.zonaId !== rack.zonaId) {
+      await this.validateRelation(this.rackRepo.manager.getRepository('Zona'), tenant, data.zonaId, 'Zona');
     }
 
     // Actualizar rack

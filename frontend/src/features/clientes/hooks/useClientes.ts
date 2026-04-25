@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { httpClient } from '../../../shared/api/HttpClient';
 import { Paginated } from '../../../api/pagination';
+import { useActiveGuarderiaId } from '../../../shared/hooks/useActiveGuarderiaId';
 
 export interface Cliente {
   id: number;
@@ -20,9 +21,10 @@ export interface Cliente {
 
 export const useClientes = (options: { page?: number; limit?: number; search?: string } = {}) => {
   const queryClient = useQueryClient();
+  const guarderiaId = useActiveGuarderiaId();
 
   const getClientes = useQuery({
-    queryKey: ['clientes', options.page, options.limit, options.search],
+    queryKey: ['clientes', guarderiaId, options.page, options.limit, options.search],
     queryFn: () => {
       const params = new URLSearchParams();
       if (options.page) params.append('page', String(options.page));
@@ -43,7 +45,7 @@ export const useClientes = (options: { page?: number; limit?: number; search?: s
 
   const useCliente = (id: number) =>
     useQuery({
-      queryKey: ['clientes', id],
+      queryKey: ['clientes', guarderiaId, id],
       queryFn: () => httpClient.get<Cliente>(`/clientes/${id}`),
       enabled: !!id,
     });

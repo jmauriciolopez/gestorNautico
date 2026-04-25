@@ -24,11 +24,11 @@ import { TenantContext } from '../compartido/interfaces/tenant-context.interface
 
 @Controller('embarcaciones')
 @UseGuards(AuthTokenGuard, TenantGuard, RolesGuard)
-@TenantRoles(Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
 export class EmbarcacionesController {
   constructor(private readonly embarcacionesService: EmbarcacionesService) {}
 
   @Get()
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
   findAll(
     @ActiveTenant() tenant: TenantContext,
     @Query('page') page?: number,
@@ -39,16 +39,19 @@ export class EmbarcacionesController {
   }
 
   @Get(':id')
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
   findOne(@ActiveTenant() tenant: TenantContext, @Param('id') id: string) {
     return this.embarcacionesService.findOne(tenant, +id);
   }
 
   @Post()
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR)
   create(@ActiveTenant() tenant: TenantContext, @Body() dto: CreateEmbarcacionDto) {
     return this.embarcacionesService.create(tenant, dto);
   }
 
   @Put(':id')
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR)
   update(
     @ActiveTenant() tenant: TenantContext,
     @Param('id') id: string,
@@ -58,6 +61,7 @@ export class EmbarcacionesController {
   }
 
   @Delete(':id')
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR)
   remove(@ActiveTenant() tenant: TenantContext, @Param('id') id: string) {
     return this.embarcacionesService.remove(tenant, +id);
   }

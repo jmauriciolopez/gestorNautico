@@ -23,6 +23,7 @@ import { TenantRoles } from '../auth/decorators/tenant-roles.decorator';
 import { TenantGuard } from '../auth/guards/tenant.guard';
 import { ActiveTenant } from '../auth/decorators/active-tenant.decorator';
 import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+import { GlobalRoute } from '../auth/decorators/global-route.decorator';
 
 @Controller('users')
 @UseGuards(AuthTokenGuard, TenantGuard, RolesGuard)
@@ -37,6 +38,7 @@ export class UsersController {
 
   @Post('superadmin')
   @TenantRoles(Role.SUPERADMIN)
+  @GlobalRoute()
   createSuperAdmin(
     @Body() createUserDto: CreateUserDto,
     @Headers('x-api-key') apiKey: string,

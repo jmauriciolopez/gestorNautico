@@ -8,12 +8,20 @@ import { Role } from '../../../types';
 import { PaginationControls } from '../../../shared/components/PaginationControls';
 
 import { useDebounce } from '../../../hooks/useDebounce';
+import { useActiveGuarderiaId } from '../../../shared/hooks/useActiveGuarderiaId';
 
 export default function ClientesList() {
   const navigate = useNavigate();
+  const guarderiaId = useActiveGuarderiaId();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const debouncedSearch = useDebounce(search, 300);
+
+  // Reset when guarderia changes
+  React.useEffect(() => {
+    setPage(1);
+    setSearch('');
+  }, [guarderiaId]);
 
   // Reset to page 1 when search changes
   React.useEffect(() => {

@@ -161,8 +161,9 @@ export class ReportesService extends BaseTenantService {
     const query = this.pagoRepo
       .createQueryBuilder('p')
       .select("TO_CHAR(p.fecha, 'YYYY-MM')", 'mes')
-      .addSelect('SUM(p.monto)', 'total')
-      .where('p.guarderiaId = :gId', { gId: tenant.guarderiaId });
+      .addSelect('SUM(p.monto)', 'total');
+
+    this.applyTenantFilter(query, tenant, 'p');
 
     if (startDate) {
       query.andWhere('p.fecha >= :startDate', { startDate });
@@ -192,11 +193,14 @@ export class ReportesService extends BaseTenantService {
     const proximaSemana = new Date();
     proximaSemana.setDate(hoy.getDate() + 30);
 
-    return this.cargoRepo
+    const qb = this.cargoRepo
       .createQueryBuilder('c')
       .leftJoinAndSelect('c.cliente', 'cliente')
-      .where('c.pagado = false')
-      .andWhere('c.guarderiaId = :gId', { gId: tenant.guarderiaId })
+      .where('c.pagado = false');
+
+    this.applyTenantFilter(qb, tenant, 'c');
+
+    return qb
       .andWhere('c.fechaVencimiento >= :hoy', { hoy })
       .andWhere('c.fechaVencimiento <= :proximaSemana', { proximaSemana })
       .orderBy('c.fechaVencimiento', 'ASC')

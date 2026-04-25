@@ -15,10 +15,13 @@ import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../users/user.entity';
+import { TenantGuard } from '../auth/guards/tenant.guard';
+import { GlobalRoute } from '../auth/decorators/global-route.decorator';
 
 @Controller('guarderias')
-@UseGuards(AuthTokenGuard, RolesGuard)
+@UseGuards(AuthTokenGuard, TenantGuard, RolesGuard)
 @Roles(Role.SUPERADMIN)
+@GlobalRoute()
 export class GuarderiaController {
   constructor(private readonly guarderiaService: GuarderiaService) {}
 

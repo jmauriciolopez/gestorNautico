@@ -3,10 +3,12 @@ import {
   ExecutionContext,
   ForbiddenException,
   Injectable,
+  BadRequestException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Role } from '../../users/user.entity';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
+import { IS_GLOBAL_ROUTE_KEY } from '../decorators/global-route.decorator';
 
 @Injectable()
 export class TenantGuard implements CanActivate {
@@ -22,17 +24,33 @@ export class TenantGuard implements CanActivate {
       return true;
     }
 
+    const isGlobal = this.reflector.getAllAndOverride<boolean>(
+      IS_GLOBAL_ROUTE_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+
     const request = context.switchToHttp().getRequest();
     const user = request.user;
     const guarderiaIdHeader = request.guarderiaId;
+    const method = request.method;
 
     if (!user) {
       throw new ForbiddenException('Usuario no autenticado');
     }
 
-    // El SuperAdmin puede ver todo (global) si no envía header, 
-    // o filtrar por una guardería específica si la envía.
+    // Definir si es una operación de escritura
+    const isWriteOperation = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(
+      method,
+    );
+
+    // El SuperAdmin puede ver todo (global) si no envía header (GET), 
+    // pero para escribir DEBE seleccionar una guardería, a menos que la ruta sea Global.
     if (user.role === Role.SUPERADMIN) {
+      if (isWriteOperation && !isGlobal && !guarderiaIdHeader) {
+        throw new BadRequestException(
+          'Para realizar esta operación debe seleccionar una guardería específica (Modo Global de escritura no permitido).',
+        );
+      }
       return true;
     }
 

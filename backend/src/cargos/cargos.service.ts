@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Raw, FindOptionsWhere } from 'typeorm';
 import { Cargo } from './cargo.entity';
@@ -11,12 +11,15 @@ import {
 
 import { BaseTenantService } from '../compartido/bases/base-tenant.service';
 import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+import { Cliente } from '../clientes/clientes.entity';
 
 @Injectable()
 export class CargosService extends BaseTenantService {
   constructor(
     @InjectRepository(Cargo)
     private readonly cargoRepo: Repository<Cargo>,
+    @InjectRepository(Cliente)
+    private readonly clienteRepo: Repository<Cliente>,
   ) {
     super();
   }
@@ -53,6 +56,17 @@ export class CargosService extends BaseTenantService {
 
   async create(tenant: TenantContext, data: CreateCargoDto) {
     const { clienteId, ...rest } = data;
+
+    // Validar que el cliente pertenezca al tenant
+    const cliente = await this.clienteRepo.findOne({
+      where: this.buildTenantWhere(tenant, { id: clienteId }),
+    });
+    if (!cliente) {
+      throw new BadRequestException(
+        `El cliente ${clienteId} no pertenece a esta sede`,
+      );
+    }
+
     const nuevo = this.cargoRepo.create({
       ...rest,
       cliente: { id: clienteId },

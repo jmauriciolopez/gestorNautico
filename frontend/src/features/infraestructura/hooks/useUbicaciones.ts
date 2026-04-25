@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { httpClient } from '../../../shared/api/HttpClient';
 import { Paginated, selectData } from '../../../api/pagination';
+import { useActiveGuarderiaId } from '../../../shared/hooks/useActiveGuarderiaId';
+import { toast } from 'react-hot-toast';
 
 export interface Ubicacion {
   id: number;
@@ -55,9 +57,10 @@ export const useUbicaciones = (options: {
   limitZonas?: number;
 } = {}) => {
   const queryClient = useQueryClient();
+  const guarderiaId = useActiveGuarderiaId();
 
   const useUbicacionesQuery = useQuery({
-    queryKey: ['ubicaciones', options.pageUbicaciones, options.limitUbicaciones],
+    queryKey: ['ubicaciones', guarderiaId, options.pageUbicaciones, options.limitUbicaciones],
     queryFn: () => {
       const params = new URLSearchParams();
       if (options.pageUbicaciones) params.append('page', String(options.pageUbicaciones));
@@ -67,7 +70,7 @@ export const useUbicaciones = (options: {
   });
 
   const useZonas = useQuery({
-    queryKey: ['zonas', options.pageZonas, options.limitZonas],
+    queryKey: ['zonas', guarderiaId, options.pageZonas, options.limitZonas],
     queryFn: () => {
       const params = new URLSearchParams();
       if (options.pageZonas) params.append('page', String(options.pageZonas));
@@ -77,7 +80,7 @@ export const useUbicaciones = (options: {
   });
 
   const useEstadisticas = useQuery({
-    queryKey: ['infra-stats'],
+    queryKey: ['infra-stats', guarderiaId],
     queryFn: () => httpClient.get<EstadisticasInfraestructura>('/espacios/estadisticas'),
   });
 

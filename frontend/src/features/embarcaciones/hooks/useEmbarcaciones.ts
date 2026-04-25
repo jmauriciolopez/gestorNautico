@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { httpClient } from '../../../shared/api/HttpClient';
 import { Paginated } from '../../../api/pagination';
 import { EstadoEmbarcacion } from '../../../shared/types/enums';
+import { useActiveGuarderiaId } from '../../../shared/hooks/useActiveGuarderiaId';
 
 export interface Embarcacion {
   id: number;
@@ -24,9 +25,10 @@ export interface Embarcacion {
 
 export const useEmbarcaciones = (options: { page?: number; limit?: number; search?: string } = {}) => {
   const queryClient = useQueryClient();
+  const guarderiaId = useActiveGuarderiaId();
 
   const getEmbarcaciones = useQuery({
-    queryKey: ['embarcaciones', options.page, options.limit, options.search],
+    queryKey: ['embarcaciones', guarderiaId, options.page, options.limit, options.search],
     queryFn: () => {
       const params = new URLSearchParams();
       if (options.page) params.append('page', String(options.page));
@@ -38,7 +40,7 @@ export const useEmbarcaciones = (options: { page?: number; limit?: number; searc
 
   const useEmbarcacion = (id: number) =>
     useQuery({
-      queryKey: ['embarcaciones', id],
+      queryKey: ['embarcaciones', guarderiaId, id],
       queryFn: () => httpClient.get<Embarcacion>(`/embarcaciones/${id}`),
       enabled: !!id,
     });

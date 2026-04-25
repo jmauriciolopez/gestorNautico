@@ -24,11 +24,11 @@ import { TenantContext } from '../compartido/interfaces/tenant-context.interface
 
 @Controller('clientes')
 @UseGuards(AuthTokenGuard, TenantGuard, RolesGuard)
-@TenantRoles(Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
 export class ClientesController {
   constructor(private readonly clientesService: ClientesService) {}
 
   @Get()
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
   findAll(
     @ActiveTenant() tenant: TenantContext,
     @Query('page') page?: number,
@@ -46,21 +46,25 @@ export class ClientesController {
   }
 
   @Get(':id')
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
   findOne(@ActiveTenant() tenant: TenantContext, @Param('id') id: string) {
     return this.clientesService.findOne(tenant, +id);
   }
 
   @Get(':id/cuenta-corriente')
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
   getCuentaCorriente(@ActiveTenant() tenant: TenantContext, @Param('id') id: string) {
     return this.clientesService.getCuentaCorriente(tenant, +id);
   }
 
   @Post()
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR)
   create(@ActiveTenant() tenant: TenantContext, @Body() createClienteDto: CreateClienteDto) {
     return this.clientesService.create(tenant, createClienteDto);
   }
 
   @Put(':id')
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR)
   update(
     @ActiveTenant() tenant: TenantContext,
     @Param('id') id: string,
@@ -70,6 +74,7 @@ export class ClientesController {
   }
 
   @Delete(':id')
+  @TenantRoles(Role.ADMIN, Role.SUPERVISOR)
   remove(@ActiveTenant() tenant: TenantContext, @Param('id') id: string) {
     return this.clientesService.remove(tenant, +id);
   }

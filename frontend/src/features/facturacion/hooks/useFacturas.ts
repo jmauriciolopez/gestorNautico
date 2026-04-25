@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { httpClient } from '../../../shared/api/HttpClient';
 import { Paginated } from '../../../api/pagination';
+import { useActiveGuarderiaId } from '../../../shared/hooks/useActiveGuarderiaId';
 
 export interface Factura {
   id: number;
@@ -31,10 +32,11 @@ export function useFacturasPaginadas(
   filters: { search?: string; startDate?: string; endDate?: string } = {}
 ) {
   const queryClient = useQueryClient();
+  const guarderiaId = useActiveGuarderiaId();
   const { search, startDate, endDate } = filters;
 
   const query = useQuery({
-    queryKey: ['facturas', page, limit, search, startDate, endDate],
+    queryKey: ['facturas', guarderiaId, page, limit, search, startDate, endDate],
     queryFn: (): Promise<Paginated<Factura>> => {
       let url = `/facturas?page=${page}&limit=${limit}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
@@ -92,8 +94,9 @@ export interface FacturaStats {
 
 /** Global stats for Facturacion dashboard */
 export function useFacturasStats(startDate?: string, endDate?: string) {
+  const guarderiaId = useActiveGuarderiaId();
   return useQuery<FacturaStats>({
-    queryKey: ['facturas', 'stats', startDate, endDate],
+    queryKey: ['facturas', guarderiaId, 'stats', startDate, endDate],
     queryFn: () => {
       let url = '/facturas/stats';
       if (startDate || endDate) {
@@ -111,9 +114,10 @@ export function useFacturasStats(startDate?: string, endDate?: string) {
 /** Kept for backward-compat (NuevaFacturaModal, FacturacionPage) */
 export function useFacturas() {
   const queryClient = useQueryClient();
+  const guarderiaId = useActiveGuarderiaId();
 
   const getNextNumero = useQuery<{ nextNumero: string }>({
-    queryKey: ['facturas', 'next-numero'],
+    queryKey: ['facturas', guarderiaId, 'next-numero'],
     queryFn: () => httpClient.get<{ nextNumero: string }>('/facturas/next-numero'),
   });
 

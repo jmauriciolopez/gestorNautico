@@ -127,7 +127,7 @@ export default function ServiciosPage() {
           </div>
         </div>
 
-        <RoleGuard allowedRoles={activeTab === 'registros' ? [Role.OPERADOR, Role.ADMIN, Role.SUPERADMIN] : [Role.ADMIN, Role.SUPERADMIN]}>
+        <RoleGuard allowedRoles={activeTab === 'registros' ? [Role.OPERADOR, Role.SUPERVISOR, Role.ADMIN, Role.SUPERADMIN] : [Role.ADMIN, Role.SUPERADMIN]}>
           <button
             onClick={handleOpenCreate}
             className="relative z-10 px-10 py-4 bg-indigo-600 hover:bg-indigo-500 text-[var(--text-primary)] rounded-2xl flex items-center gap-4 text-xs font-black uppercase tracking-[0.2em] shadow-2xl shadow-indigo-900/30 transition-all active:scale-95 group/btn"

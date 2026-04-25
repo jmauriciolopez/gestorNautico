@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { httpClient } from '../../../shared/api/HttpClient';
+import { useActiveGuarderiaId } from '../../../shared/hooks/useActiveGuarderiaId';
 
 export interface ClienteMoroso {
   clienteId: number;
@@ -28,17 +29,21 @@ export interface MensualidadDescuento {
   totalFinal: number;
 }
 
-export const useClientesMorosos = () =>
-  useQuery<ClienteMoroso[]>({
-    queryKey: ['reportes', 'morosos'],
+export const useClientesMorosos = () => {
+  const guarderiaId = useActiveGuarderiaId();
+  return useQuery<ClienteMoroso[]>({
+    queryKey: ['reportes', guarderiaId, 'morosos'],
     queryFn: () => httpClient.get('/reportes/morosos'),
   });
+};
 
-export const useMensualidades = () =>
-  useQuery<MensualidadDescuento[]>({
-    queryKey: ['reportes', 'mensualidades'],
+export const useMensualidades = () => {
+  const guarderiaId = useActiveGuarderiaId();
+  return useQuery<MensualidadDescuento[]>({
+    queryKey: ['reportes', guarderiaId, 'mensualidades'],
     queryFn: () => httpClient.get('/reportes/mensualidades'),
   });
+};
 
 export interface OcupacionReport {
   total: number;
@@ -53,20 +58,23 @@ export interface OcupacionReport {
   }[];
 }
 
-export const useOcupacion = () =>
-  useQuery<OcupacionReport>({
-    queryKey: ['reportes', 'ocupacion'],
+export const useOcupacion = () => {
+  const guarderiaId = useActiveGuarderiaId();
+  return useQuery<OcupacionReport>({
+    queryKey: ['reportes', guarderiaId, 'ocupacion'],
     queryFn: () => httpClient.get('/reportes/ocupacion'),
   });
+};
 
 export interface IngresoReport {
   mes: string;
   total: number;
 }
 
-export const useIngresos = (params: { startDate?: string; endDate?: string } = {}) =>
-  useQuery<IngresoReport[]>({
-    queryKey: ['reportes', 'ingresos', params],
+export const useIngresos = (params: { startDate?: string; endDate?: string } = {}) => {
+  const guarderiaId = useActiveGuarderiaId();
+  return useQuery<IngresoReport[]>({
+    queryKey: ['reportes', guarderiaId, 'ingresos', params],
     queryFn: () => {
       const searchParams = new URLSearchParams();
       if (params.startDate) searchParams.append('startDate', params.startDate);
@@ -74,45 +82,60 @@ export const useIngresos = (params: { startDate?: string; endDate?: string } = {
       return httpClient.get(`/reportes/ingresos?${searchParams.toString()}`);
     },
   });
+};
 
-export const useProximosVencimientos = () =>
-  useQuery<any[]>({
-    queryKey: ['reportes', 'vencimientos'],
+export const useProximosVencimientos = () => {
+  const guarderiaId = useActiveGuarderiaId();
+  return useQuery<any[]>({
+    queryKey: ['reportes', guarderiaId, 'vencimientos'],
     queryFn: () => httpClient.get('/reportes/vencimientos'),
   });
+};
 
-export const useOccupancyMetrics = () =>
-  useQuery({
-    queryKey: ['dashboard', 'gerencial', 'ocupacion'],
+export const useOccupancyMetrics = () => {
+  const guarderiaId = useActiveGuarderiaId();
+  return useQuery({
+    queryKey: ['dashboard', guarderiaId, 'gerencial', 'ocupacion'],
     queryFn: () => httpClient.get('/dashboard/gerencial/ocupacion'),
   });
+};
 
-export const useProfitabilityHistory = () =>
-  useQuery({
-    queryKey: ['dashboard', 'gerencial', 'rentabilidad'],
+export const useProfitabilityHistory = () => {
+  const guarderiaId = useActiveGuarderiaId();
+  return useQuery({
+    queryKey: ['dashboard', guarderiaId, 'gerencial', 'rentabilidad'],
     queryFn: () => httpClient.get('/dashboard/gerencial/rentabilidad'),
   });
+};
 
-export const useDemandPeaks = () =>
-  useQuery({
-    queryKey: ['dashboard', 'gerencial', 'picos-demanda'],
+export const useDemandPeaks = () => {
+  const guarderiaId = useActiveGuarderiaId();
+  return useQuery({
+    queryKey: ['dashboard', guarderiaId, 'gerencial', 'picos-demanda'],
     queryFn: () => httpClient.get('/dashboard/gerencial/picos-demanda'),
   });
+};
 
-export const useCollectionTime = () =>
-  useQuery({
-    queryKey: ['dashboard', 'gerencial', 'tiempo-cobro'],
+export const useCollectionTime = () => {
+  const guarderiaId = useActiveGuarderiaId();
+  return useQuery({
+    queryKey: ['dashboard', guarderiaId, 'gerencial', 'tiempo-cobro'],
     queryFn: () => httpClient.get('/dashboard/gerencial/tiempo-cobro'),
   });
+};
 
-export const useARPU = () =>
-  useQuery({
-    queryKey: ['dashboard', 'gerencial', 'arpu'],
+export const useARPU = () => {
+  const guarderiaId = useActiveGuarderiaId();
+  return useQuery({
+    queryKey: ['dashboard', guarderiaId, 'gerencial', 'arpu'],
     queryFn: () => httpClient.get('/dashboard/gerencial/arpu'),
   });
+};
 
-export const useVIPClients = () =>
-  useQuery({
-    queryKey: ['dashboard', 'gerencial', 'vip-clients'],
+export const useVIPClients = () => {
+  const guarderiaId = useActiveGuarderiaId();
+  return useQuery({
+    queryKey: ['dashboard', guarderiaId, 'gerencial', 'vip-clients'],
     queryFn: () => httpClient.get('/dashboard/gerencial/vip-clients'),
   });
+};

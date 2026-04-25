@@ -141,6 +141,14 @@ export class FacturasService extends BaseTenantService {
       throw new BadRequestException('Se debe seleccionar al menos un cargo');
     }
 
+    // Validar que el cliente pertenezca al tenant
+    const cliente = await this.clienteRepo.findOne({
+      where: this.buildTenantWhere(tenant, { id: clienteId }),
+    });
+    if (!cliente) {
+      throw new BadRequestException(`El cliente ${clienteId} no pertenece a esta sede`);
+    }
+
     return await this.dataSource.transaction(async (manager) => {
       // 1. Obtener los cargos y validar (dentro de transacción)
       const cargos = await manager.find(Cargo, {
@@ -465,10 +473,9 @@ export class FacturasService extends BaseTenantService {
       .createQueryBuilder('f')
       .select('f.estado', 'estado')
       .addSelect('SUM(f.total)', 'total')
-      .addSelect('COUNT(f.id)', 'cantidad')
-      .where('f.guarderiaId = :guarderiaId', {
-        guarderiaId: tenant.guarderiaId,
-      });
+      .addSelect('COUNT(f.id)', 'cantidad');
+
+    this.applyTenantFilter(qb, tenant, 'f');
 
     if (startDate) {
       qb.andWhere('f.fechaEmision >= :startDate', {

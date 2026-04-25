@@ -171,8 +171,7 @@ export class ClientesService extends BaseTenantService {
     await this.findOne(tenant, id); // valida que existe y pertenece al tenant
 
     // Totales con aggregates SQL (compatibilidad multi-DB)
-    const [cargoAgg, pagoAgg, vencidoAgg] = await Promise.all([
-      this.cargoRepository
+    const qbCargo = this.cargoRepository
         .createQueryBuilder('c')
         .select('SUM(c.monto)', 'total')
         .addSelect('COUNT(c.id)', 'cantidad')
@@ -180,24 +179,28 @@ export class ClientesService extends BaseTenantService {
           'SUM(CASE WHEN c.pagado = false THEN 1 ELSE 0 END)',
           'impagos',
         )
-        .where('c.cliente_id = :id', { id })
-        .andWhere(tenant.scope === 'guarderia' ? 'c.guarderiaId = :gId' : '1=1', { gId: tenant.guarderiaId })
-        .getRawOne<{ total: string; cantidad: string; impagos: string }>(),
-      this.pagoRepository
+        .where('c.cliente_id = :id', { id });
+    this.applyTenantFilter(qbCargo, tenant, 'c');
+
+    const qbPago = this.pagoRepository
         .createQueryBuilder('p')
         .select('SUM(p.monto)', 'total')
         .addSelect('MAX(p.fecha)', 'ultimaFecha')
-        .where('p.cliente_id = :id', { id })
-        .andWhere(tenant.scope === 'guarderia' ? 'p.guarderiaId = :gId' : '1=1', { gId: tenant.guarderiaId })
-        .getRawOne<{ total: string; ultimaFecha: string }>(),
-      this.cargoRepository
+        .where('p.cliente_id = :id', { id });
+    this.applyTenantFilter(qbPago, tenant, 'p');
+
+    const qbVencido = this.cargoRepository
         .createQueryBuilder('c')
         .select('SUM(c.monto)', 'total')
         .where('c.cliente_id = :id', { id })
         .andWhere('c.pagado = false')
-        .andWhere('c.fechaVencimiento < :now', { now: new Date() })
-        .andWhere(tenant.scope === 'guarderia' ? 'c.guarderiaId = :gId' : '1=1', { gId: tenant.guarderiaId })
-        .getRawOne<{ total: string }>(),
+        .andWhere('c.fechaVencimiento < :now', { now: new Date() });
+    this.applyTenantFilter(qbVencido, tenant, 'c');
+
+    const [cargoAgg, pagoAgg, vencidoAgg] = await Promise.all([
+      qbCargo.getRawOne<{ total: string; cantidad: string; impagos: string }>(),
+      qbPago.getRawOne<{ total: string; ultimaFecha: string }>(),
+      qbVencido.getRawOne<{ total: string }>(),
     ]);
 
     const totalCargado = Number(cargoAgg?.total || 0);

@@ -56,7 +56,7 @@ export class PedidosService extends BaseTenantService {
           .from('cargos', 'cargo')
           .where('cargo.cliente_id = embarcacion.clienteId')
           .andWhere('cargo.pagado = :pagado', { pagado: false })
-          .andWhere('cargo.guarderia_id = :guarderiaId', {
+          .andWhere('cargo.guarderiaId = :guarderiaId', {
             guarderiaId: tenant.guarderiaId,
           });
       }, 'deudaCount')
@@ -99,7 +99,7 @@ export class PedidosService extends BaseTenantService {
           .from('cargos', 'cargo')
           .where('cargo.cliente_id = embarcacion.clienteId')
           .andWhere('cargo.pagado = :pagado', { pagado: false })
-          .andWhere('cargo.guarderia_id = :guarderiaId', {
+          .andWhere('cargo.guarderiaId = :guarderiaId', {
             guarderiaId: tenant.guarderiaId,
           });
       }, 'deudaCount')

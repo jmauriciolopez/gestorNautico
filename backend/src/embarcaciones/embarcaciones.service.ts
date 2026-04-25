@@ -44,17 +44,21 @@ export class EmbarcacionesService extends BaseTenantService {
       .leftJoinAndSelect('embarcacion.cliente', 'cliente')
       .leftJoinAndSelect('embarcacion.espacio', 'espacio')
       .leftJoinAndSelect('espacio.rack', 'rack')
-      .leftJoinAndSelect('rack.zona', 'zona')
-      .where(tenant.scope === 'guarderia' ? 'embarcacion.guarderiaId = :gId' : '1=1', { gId: tenant.guarderiaId })
-      .addSelect((subQuery) => {
-        return subQuery
-          .select('COUNT(cargo.id)', 'count')
-          .from('cargos', 'cargo')
-          .where('cargo.cliente_id = embarcacion.clienteId')
-          .andWhere('cargo.pagado = :pagado', { pagado: false })
-          .andWhere(tenant.scope === 'guarderia' ? 'cargo.guarderiaId = :gId' : '1=1', { gId: tenant.guarderiaId });
-      }, 'deudaCount')
-      .orderBy('embarcacion.createdAt', 'DESC');
+      .leftJoinAndSelect('rack.zona', 'zona');
+
+    this.applyTenantFilter(queryBuilder, tenant, 'embarcacion');
+
+    queryBuilder.addSelect((subQuery) => {
+      const sq = subQuery
+        .select('COUNT(cargo.id)', 'count')
+        .from('cargos', 'cargo')
+        .where('cargo.cliente_id = embarcacion.clienteId')
+        .andWhere('cargo.pagado = :pagado', { pagado: false });
+      
+      this.applyTenantFilter(sq, tenant, 'cargo');
+      return sq;
+    }, 'deudaCount')
+    .orderBy('embarcacion.createdAt', 'DESC');
 
     if (search) {
       queryBuilder.andWhere(
@@ -99,6 +103,7 @@ export class EmbarcacionesService extends BaseTenantService {
   }
 
   private async validarDimensionesUbicacion(
+    tenant: TenantContext,
     espacioId: number,
     eslora: number,
     manga: number,
@@ -109,11 +114,15 @@ export class EmbarcacionesService extends BaseTenantService {
     const espRepo = manager ? manager.getRepository(Espacio) : this.espacioRepo;
 
     const espacio = await espRepo.findOne({
-      where: { id: espacioId },
+      where: this.buildTenantWhere(tenant, { id: espacioId }),
       relations: ['rack'],
     });
 
-    if (!espacio || !espacio.rack) return;
+    if (!espacio) {
+      throw new BadRequestException(`El espacio ${espacioId} no pertenece a esta sede o no existe`);
+    }
+    
+    if (!espacio.rack) return;
 
     const largo = Number(espacio.rack.largo);
     const ancho = Number(espacio.rack.ancho);
@@ -145,6 +154,7 @@ export class EmbarcacionesService extends BaseTenantService {
 
       if (dto.espacioId) {
         await this.validarDimensionesUbicacion(
+          tenant,
           dto.espacioId,
           dto.eslora || 0,
           dto.manga || 0,
@@ -152,10 +162,21 @@ export class EmbarcacionesService extends BaseTenantService {
         );
       }
 
-      // Validar que el espacio no esté ocupado por otra embarcación
+      // Validar que el cliente pertenezca al tenant
+      if (dto.clienteId) {
+        const clienteRepo = mgr.getRepository('Cliente');
+        const cliente = await clienteRepo.findOne({
+          where: this.buildTenantWhere(tenant, { id: dto.clienteId }),
+        });
+        if (!cliente) {
+          throw new BadRequestException(`El cliente ${dto.clienteId} no pertenece a esta sede`);
+        }
+      }
+
+      // Validar que el espacio no esté ocupado por otra embarcación (en el mismo tenant)
       if (dto.espacioId) {
         const boatWithSpace = await boatRepo.findOne({
-          where: { espacioId: dto.espacioId },
+          where: this.buildTenantWhere(tenant, { espacioId: dto.espacioId }),
         });
         if (boatWithSpace) {
           throw new BadRequestException(
@@ -216,6 +237,7 @@ export class EmbarcacionesService extends BaseTenantService {
 
       if (nuevoEspacioId) {
         await this.validarDimensionesUbicacion(
+          tenant,
           nuevoEspacioId,
           nuevaEslora,
           nuevaManga,
@@ -223,10 +245,21 @@ export class EmbarcacionesService extends BaseTenantService {
         );
       }
 
-      // Validar que el nuevo espacio no esté ocupado por otra embarcación
+      // Validar que el nuevo cliente pertenezca al tenant
+      if (dto.clienteId && dto.clienteId !== embarcacion.clienteId) {
+        const clienteRepo = mgr.getRepository('Cliente');
+        const cliente = await clienteRepo.findOne({
+          where: this.buildTenantWhere(tenant, { id: dto.clienteId }),
+        });
+        if (!cliente) {
+          throw new BadRequestException(`El cliente ${dto.clienteId} no pertenece a esta sede`);
+        }
+      }
+
+      // Validar que el nuevo espacio no esté ocupado por otra embarcación (en el mismo tenant)
       if (nuevoEspacioId && nuevoEspacioId !== embarcacion.espacioId) {
         const boatWithSpace = await boatRepo.findOne({
-          where: { espacioId: nuevoEspacioId },
+          where: this.buildTenantWhere(tenant, { espacioId: nuevoEspacioId }),
         });
         if (boatWithSpace) {
           throw new BadRequestException(

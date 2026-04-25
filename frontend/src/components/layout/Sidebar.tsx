@@ -40,7 +40,7 @@ const navGroups = [
       { name: 'Servicios', path: '/servicios', icon: Wrench, roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR] },
       { name: 'Finanzas', path: '/finanzas', icon: CircleDollarSign, roles: [Role.SUPERADMIN, Role.ADMIN] },
       { name: 'Facturación', path: '/facturacion', icon: FileText, roles: [Role.SUPERADMIN, Role.ADMIN] },
-      { name: 'Reportes', path: '/reportes', icon: BarChart2, roles: [Role.SUPERADMIN, Role.ADMIN] },
+      { name: 'Reportes', path: '/reportes', icon: BarChart2, roles: [Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR] },
       { name: 'Infraestructura', path: '/infraestructura', icon: LayoutGrid, roles: [Role.SUPERADMIN, Role.ADMIN] },
     ]
   },
