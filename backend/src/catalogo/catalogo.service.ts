@@ -46,7 +46,10 @@ export class CatalogoService extends BaseTenantService {
 
   async update(tenant: TenantContext, id: number, data: Partial<Catalogo>) {
     await this.findOne(tenant, id);
-    await this.catalogoRepo.update({ id, guarderiaId: tenant.guarderiaId }, data);
+    await this.catalogoRepo.update(
+      { id, guarderiaId: tenant.guarderiaId },
+      data,
+    );
     return this.findOne(tenant, id);
   }
 

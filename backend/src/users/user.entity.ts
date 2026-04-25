@@ -7,6 +7,7 @@ import {
   Index,
   ManyToOne,
   JoinColumn,
+  Unique,
 } from 'typeorm';
 import { Guarderia } from '../guarderias/guarderia.entity';
 
@@ -18,6 +19,7 @@ export enum Role {
 }
 
 @Entity('users')
+@Unique(['usuario', 'guarderiaId'])
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
@@ -28,7 +30,7 @@ export class User {
   @Column({ length: 150, nullable: true })
   apellido: string;
 
-  @Column({ length: 50, unique: true })
+  @Column({ length: 50 })
   usuario: string;
 
   @Column({ length: 255 })
@@ -47,7 +49,7 @@ export class User {
   @Column({ type: 'int', nullable: true })
   guarderiaId: number;
 
-  @ManyToOne(() => Guarderia, { nullable: true })
+  @ManyToOne(() => Guarderia, { nullable: true, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'guarderiaId' })
   guarderia: Guarderia;
 

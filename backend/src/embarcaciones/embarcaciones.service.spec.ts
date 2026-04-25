@@ -17,7 +17,6 @@ describe('EmbarcacionesService', () => {
     userId: 1,
   } as any;
 
-
   const mockEmbarcacion = {
     id: 1,
     nombre: 'Test Boat',
@@ -137,7 +136,9 @@ describe('EmbarcacionesService', () => {
     it('should throw NotFoundException if embarcacion not found', async () => {
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne(mockTenant, 999)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(mockTenant, 999)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 

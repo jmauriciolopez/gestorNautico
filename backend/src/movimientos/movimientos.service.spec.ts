@@ -3,7 +3,10 @@ import { MovimientosService } from './movimientos.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Movimiento, TipoMovimiento } from './movimientos.entity';
 import { Pedido, EstadoPedido } from '../pedidos/pedidos.entity';
-import { SolicitudBajada, EstadoSolicitud } from '../operaciones/solicitud-bajada.entity';
+import {
+  SolicitudBajada,
+  EstadoSolicitud,
+} from '../operaciones/solicitud-bajada.entity';
 import { EmbarcacionesService } from '../embarcaciones/embarcaciones.service';
 import { EspaciosService } from '../espacios/espacios.service';
 import { ConfiguracionService } from '../configuracion/configuracion.service';
@@ -52,7 +55,10 @@ describe('MovimientosService', () => {
         MovimientosService,
         { provide: getRepositoryToken(Movimiento), useFactory: mockRepository },
         { provide: getRepositoryToken(Pedido), useFactory: mockRepository },
-        { provide: getRepositoryToken(SolicitudBajada), useFactory: mockRepository },
+        {
+          provide: getRepositoryToken(SolicitudBajada),
+          useFactory: mockRepository,
+        },
         {
           provide: EmbarcacionesService,
           useValue: {
@@ -108,17 +114,21 @@ describe('MovimientosService', () => {
     it('should filter by search', async () => {
       movimientoRepo.findAndCount.mockResolvedValue([[], 0]);
       await service.findAll(mockTenant, { search: 'test' });
-      expect(movimientoRepo.findAndCount).toHaveBeenCalledWith(expect.objectContaining({
-        where: expect.any(Array)
-      }));
+      expect(movimientoRepo.findAndCount).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.any(Array),
+        }),
+      );
     });
 
     it('should filter by embarcacionId', async () => {
       movimientoRepo.findAndCount.mockResolvedValue([[], 0]);
       await service.findAll(mockTenant, { embarcacionId: 1 });
-      expect(movimientoRepo.findAndCount).toHaveBeenCalledWith(expect.objectContaining({
-        where: { embarcacion: { id: 1 } }
-      }));
+      expect(movimientoRepo.findAndCount).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { embarcacion: { id: 1 } },
+        }),
+      );
     });
   });
 
@@ -131,7 +141,9 @@ describe('MovimientosService', () => {
 
     it('should throw NotFoundException if movement not found', async () => {
       movimientoRepo.findOne.mockResolvedValue(null);
-      await expect(service.findOne(mockTenant, 1)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(mockTenant, 1)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -159,24 +171,32 @@ describe('MovimientosService', () => {
 
       const result = await service.create(mockTenant, dto);
       expect(result).toBeDefined();
-      expect(embarcacionesService.update).toHaveBeenCalledWith(1, { estado_operativo: EstadoEmbarcacion.EN_CUNA }, undefined);
+      expect(embarcacionesService.update).toHaveBeenCalledWith(
+        1,
+        { estado_operativo: EstadoEmbarcacion.EN_CUNA },
+        undefined,
+      );
       expect(pedidoRepo.create).toHaveBeenCalled();
       expect(pedidoRepo.save).toHaveBeenCalled();
     });
 
     it('should handle ENTRADA movement with existing pedido', async () => {
       pedidoRepo.findOne.mockResolvedValue({ id: 5 });
-      
+
       await service.create(mockTenant, dto);
-      expect(pedidoRepo.update).toHaveBeenCalledWith(5, { estado: EstadoPedido.FINALIZADO });
+      expect(pedidoRepo.update).toHaveBeenCalledWith(5, {
+        estado: EstadoPedido.FINALIZADO,
+      });
     });
 
     it('should handle ENTRADA movement with existing solicitud', async () => {
       pedidoRepo.findOne.mockResolvedValue(null);
       solicitudRepo.findOne.mockResolvedValue({ id: 8 });
-      
+
       await service.create(mockTenant, dto);
-      expect(solicitudRepo.update).toHaveBeenCalledWith(8, { estado: EstadoSolicitud.FINALIZADA });
+      expect(solicitudRepo.update).toHaveBeenCalledWith(8, {
+        estado: EstadoSolicitud.FINALIZADA,
+      });
     });
 
     it('should mark as fueraHora if after hours', async () => {
@@ -190,11 +210,13 @@ describe('MovimientosService', () => {
       global.Date = mockDate as any;
 
       configuracionService.getValor.mockResolvedValue('18:00');
-      
+
       await service.create(mockTenant, dto);
-      expect(movimientoRepo.create).toHaveBeenCalledWith(expect.objectContaining({
-        fueraHora: true
-      }));
+      expect(movimientoRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          fueraHora: true,
+        }),
+      );
 
       global.Date = realDate;
     });
@@ -202,18 +224,22 @@ describe('MovimientosService', () => {
     it('should handle SALIDA movement with existing pedido', async () => {
       const salidaDto = { ...dto, tipo: TipoMovimiento.SALIDA };
       pedidoRepo.findOne.mockResolvedValue({ id: 5 });
-      
+
       await service.create(mockTenant, salidaDto);
-      expect(pedidoRepo.update).toHaveBeenCalledWith(5, { estado: EstadoPedido.EN_AGUA });
+      expect(pedidoRepo.update).toHaveBeenCalledWith(5, {
+        estado: EstadoPedido.EN_AGUA,
+      });
     });
 
     it('should handle SALIDA movement with existing solicitud', async () => {
       const salidaDto = { ...dto, tipo: TipoMovimiento.SALIDA };
       pedidoRepo.findOne.mockResolvedValue(null);
       solicitudRepo.findOne.mockResolvedValue({ id: 8 });
-      
+
       await service.create(mockTenant, salidaDto);
-      expect(solicitudRepo.update).toHaveBeenCalledWith(8, { estado: EstadoSolicitud.EN_AGUA });
+      expect(solicitudRepo.update).toHaveBeenCalledWith(8, {
+        estado: EstadoSolicitud.EN_AGUA,
+      });
     });
 
     it('should create a SALIDA movement and update boat status', async () => {
@@ -222,7 +248,11 @@ describe('MovimientosService', () => {
       solicitudRepo.findOne.mockResolvedValue(null);
 
       await service.create(mockTenant, salidaDto);
-      expect(embarcacionesService.update).toHaveBeenCalledWith(1, { estado_operativo: EstadoEmbarcacion.EN_AGUA }, undefined);
+      expect(embarcacionesService.update).toHaveBeenCalledWith(
+        1,
+        { estado_operativo: EstadoEmbarcacion.EN_AGUA },
+        undefined,
+      );
       expect(pedidoRepo.create).toHaveBeenCalled();
     });
 
@@ -235,13 +265,19 @@ describe('MovimientosService', () => {
     });
 
     it('should handle missing space correctly', async () => {
-      embarcacionesService.findOne.mockResolvedValue({ id: 1, nombre: 'Boat', espacio: null });
+      embarcacionesService.findOne.mockResolvedValue({
+        id: 1,
+        nombre: 'Boat',
+        espacio: null,
+      });
       const noSpaceDto = { ...dto, espacioId: null };
-      
+
       await service.create(mockTenant, noSpaceDto);
-      expect(movimientoRepo.create).toHaveBeenCalledWith(expect.objectContaining({
-        espacio: null
-      }));
+      expect(movimientoRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          espacio: null,
+        }),
+      );
     });
 
     it('should remove a movement', async () => {

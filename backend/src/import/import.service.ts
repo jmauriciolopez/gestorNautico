@@ -85,7 +85,10 @@ export class ImportService extends BaseTenantService {
     });
   }
 
-  async importClientes(tenant: TenantContext, csvContent: string): Promise<ImportResult> {
+  async importClientes(
+    tenant: TenantContext,
+    csvContent: string,
+  ): Promise<ImportResult> {
     const result: ImportResult = {
       success: true,
       created: 0,
@@ -95,7 +98,9 @@ export class ImportService extends BaseTenantService {
 
     try {
       if (!tenant.guarderiaId) {
-        result.errors.push('Debe seleccionar una sede para realizar la importación');
+        result.errors.push(
+          'Debe seleccionar una sede para realizar la importación',
+        );
         result.success = false;
         return result;
       }
@@ -178,7 +183,10 @@ export class ImportService extends BaseTenantService {
     return result;
   }
 
-  async importEmbarcaciones(tenant: TenantContext, csvContent: string): Promise<ImportResult> {
+  async importEmbarcaciones(
+    tenant: TenantContext,
+    csvContent: string,
+  ): Promise<ImportResult> {
     const result: ImportResult = {
       success: true,
       created: 0,
@@ -188,7 +196,9 @@ export class ImportService extends BaseTenantService {
 
     try {
       if (!tenant.guarderiaId) {
-        result.errors.push('Debe seleccionar una sede para realizar la importación');
+        result.errors.push(
+          'Debe seleccionar una sede para realizar la importación',
+        );
         result.success = false;
         return result;
       }

@@ -34,7 +34,8 @@ export class InitialDataService implements OnApplicationBootstrap {
     this.logger.log(
       '🌱 Sincronizando datos maestros iniciales (Master Data)...',
     );
-    const defaultGuarderia = await this.seedGuarderiaService.ensureDefaultGuarderia();
+    const defaultGuarderia =
+      await this.seedGuarderiaService.ensureDefaultGuarderia();
     await this.ensureInitialUsers(defaultGuarderia);
     await this.configService.syncConfigs(defaultGuarderia.id);
     this.logger.log('✅ Master Data Sync: Completed');

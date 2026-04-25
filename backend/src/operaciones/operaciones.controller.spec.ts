@@ -31,9 +31,11 @@ describe('OperacionesController', () => {
         },
       ],
     })
-    .overrideGuard(AuthTokenGuard).useValue({ canActivate: () => true })
-    .overrideGuard(RolesGuard).useValue({ canActivate: () => true })
-    .compile();
+      .overrideGuard(AuthTokenGuard)
+      .useValue({ canActivate: () => true })
+      .overrideGuard(RolesGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<OperacionesController>(OperacionesController);
     service = module.get<OperacionesService>(OperacionesService);
@@ -45,7 +47,11 @@ describe('OperacionesController', () => {
 
   describe('createSolicitudPublica', () => {
     it('should call service.createPublic', async () => {
-      const dto = { dni: '123', matricula: 'MAT', fechaHoraDeseada: new Date().toISOString() };
+      const dto = {
+        dni: '123',
+        matricula: 'MAT',
+        fechaHoraDeseada: new Date().toISOString(),
+      };
       await controller.createSolicitudPublica(mockTenant, dto);
       expect(service.createPublic).toHaveBeenCalledWith(mockTenant, dto);
     });
@@ -53,8 +59,17 @@ describe('OperacionesController', () => {
 
   describe('findAllSolicitudes', () => {
     it('should call service.findAll', async () => {
-      await controller.findAllSolicitudes(mockTenant, 1, 10, EstadoSolicitud.PENDIENTE);
-      expect(service.findAll).toHaveBeenCalledWith(mockTenant, { page: 1, limit: 10 }, EstadoSolicitud.PENDIENTE);
+      await controller.findAllSolicitudes(
+        mockTenant,
+        1,
+        10,
+        EstadoSolicitud.PENDIENTE,
+      );
+      expect(service.findAll).toHaveBeenCalledWith(
+        mockTenant,
+        { page: 1, limit: 10 },
+        EstadoSolicitud.PENDIENTE,
+      );
     });
   });
 
@@ -62,7 +77,12 @@ describe('OperacionesController', () => {
     it('should call service.updateEstado', async () => {
       const dto = { estado: EstadoSolicitud.EN_AGUA, motivo: 'test' };
       await controller.updateEstadoSolicitud(mockTenant, '1', dto);
-      expect(service.updateEstado).toHaveBeenCalledWith(mockTenant, 1, dto.estado, dto.motivo);
+      expect(service.updateEstado).toHaveBeenCalledWith(
+        mockTenant,
+        1,
+        dto.estado,
+        dto.motivo,
+      );
     });
   });
 });

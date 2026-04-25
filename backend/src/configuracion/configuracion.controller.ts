@@ -9,9 +9,11 @@ import { TenantGuard } from '../auth/guards/tenant.guard';
 import { TenantRoles } from '../auth/decorators/tenant-roles.decorator';
 import { ActiveTenant } from '../auth/decorators/active-tenant.decorator';
 import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+import { GlobalRoute } from '../auth/decorators/global-route.decorator';
 
 @Controller('configuracion')
 @UseGuards(AuthTokenGuard, TenantGuard, RolesGuard)
+@GlobalRoute()
 export class ConfiguracionController {
   constructor(private readonly configService: ConfiguracionService) {}
 

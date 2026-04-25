@@ -5,5 +5,6 @@ export interface AuthContextType {
     isAuthenticated: boolean;
     isInitializing: boolean;
     login: (token?: string) => Promise<void>;
+    signup: (token?: string) => Promise<void>;
     logout: () => void;
 }

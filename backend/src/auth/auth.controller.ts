@@ -14,6 +14,7 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { AuthResponse } from './auth-response.entity';
 import { ConfigService } from '@nestjs/config';
+import { SignupDto } from './dto/signup.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -31,7 +32,27 @@ export class AuthController {
   ): Promise<AuthResponse> {
     const ip =
       request.ip || (request.headers['x-forwarded-for'] as string) || 'unknown';
+    
     const authData = await this.authService.login(loginDto, ip);
+
+    const isProd = this.configService.get<string>('NODE_ENV') === 'production';
+    response.cookie('token', authData.accessToken, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: isProd ? 'none' : ('lax' as const),
+      path: '/',
+      maxAge: (Number(authData.expiresIn) || 3600) * 1000,
+    });
+
+    return authData;
+  }
+
+  @Post('signup')
+  async signup(
+    @Body() signupDto: SignupDto,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<AuthResponse> {
+    const authData = await this.authService.signup(signupDto);
 
     const isProd = this.configService.get<string>('NODE_ENV') === 'production';
     response.cookie('token', authData.accessToken, {

@@ -146,7 +146,7 @@ export class OperacionesService extends BaseTenantService {
       fechaHoraDeseada: new Date(dto.fechaHoraDeseada),
       observaciones: dto.observaciones,
       estado: EstadoSolicitud.PENDIENTE,
-      guarderiaId: tenant.guarderiaId as number,
+      guarderiaId: tenant.guarderiaId,
     });
 
     const guardada = await this.solicitudRepo.save(nueva);

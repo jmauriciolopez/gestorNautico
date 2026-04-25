@@ -53,13 +53,19 @@ export class ClientesController {
 
   @Get(':id/cuenta-corriente')
   @TenantRoles(Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
-  getCuentaCorriente(@ActiveTenant() tenant: TenantContext, @Param('id') id: string) {
+  getCuentaCorriente(
+    @ActiveTenant() tenant: TenantContext,
+    @Param('id') id: string,
+  ) {
     return this.clientesService.getCuentaCorriente(tenant, +id);
   }
 
   @Post()
   @TenantRoles(Role.ADMIN, Role.SUPERVISOR)
-  create(@ActiveTenant() tenant: TenantContext, @Body() createClienteDto: CreateClienteDto) {
+  create(
+    @ActiveTenant() tenant: TenantContext,
+    @Body() createClienteDto: CreateClienteDto,
+  ) {
     return this.clientesService.create(tenant, createClienteDto);
   }
 

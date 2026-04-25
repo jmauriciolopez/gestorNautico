@@ -101,7 +101,9 @@ describe('CajasService', () => {
     it('should throw NotFoundException if caja not found', async () => {
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne(mockTenant, 999)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(mockTenant, 999)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -146,7 +148,9 @@ describe('CajasService', () => {
         return callback(tx);
       });
 
-      await expect(service.abrir(mockTenant, 1000)).rejects.toThrow(ConflictException);
+      await expect(service.abrir(mockTenant, 1000)).rejects.toThrow(
+        ConflictException,
+      );
     });
   });
 
@@ -177,7 +181,9 @@ describe('CajasService', () => {
         return callback(tx);
       });
 
-      await expect(service.cerrar(mockTenant, 1, 1500)).rejects.toThrow(ConflictException);
+      await expect(service.cerrar(mockTenant, 1, 1500)).rejects.toThrow(
+        ConflictException,
+      );
     });
 
     it('should throw NotFoundException if caja not found', async () => {

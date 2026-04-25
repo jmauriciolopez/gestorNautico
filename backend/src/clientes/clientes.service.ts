@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ILike, Repository, FindManyOptions, FindOptionsWhere } from 'typeorm';
 import { Cliente } from './clientes.entity';
@@ -146,7 +150,7 @@ export class ClientesService extends BaseTenantService {
     }
     const nuevoCliente = this.clientesRepository.create({
       ...createClienteDto,
-      guarderiaId: tenant.guarderiaId as number,
+      guarderiaId: tenant.guarderiaId,
     });
     return this.clientesRepository.save(nuevoCliente);
   }
@@ -172,29 +176,26 @@ export class ClientesService extends BaseTenantService {
 
     // Totales con aggregates SQL (compatibilidad multi-DB)
     const qbCargo = this.cargoRepository
-        .createQueryBuilder('c')
-        .select('SUM(c.monto)', 'total')
-        .addSelect('COUNT(c.id)', 'cantidad')
-        .addSelect(
-          'SUM(CASE WHEN c.pagado = false THEN 1 ELSE 0 END)',
-          'impagos',
-        )
-        .where('c.cliente_id = :id', { id });
+      .createQueryBuilder('c')
+      .select('SUM(c.monto)', 'total')
+      .addSelect('COUNT(c.id)', 'cantidad')
+      .addSelect('SUM(CASE WHEN c.pagado = false THEN 1 ELSE 0 END)', 'impagos')
+      .where('c.cliente_id = :id', { id });
     this.applyTenantFilter(qbCargo, tenant, 'c');
 
     const qbPago = this.pagoRepository
-        .createQueryBuilder('p')
-        .select('SUM(p.monto)', 'total')
-        .addSelect('MAX(p.fecha)', 'ultimaFecha')
-        .where('p.cliente_id = :id', { id });
+      .createQueryBuilder('p')
+      .select('SUM(p.monto)', 'total')
+      .addSelect('MAX(p.fecha)', 'ultimaFecha')
+      .where('p.cliente_id = :id', { id });
     this.applyTenantFilter(qbPago, tenant, 'p');
 
     const qbVencido = this.cargoRepository
-        .createQueryBuilder('c')
-        .select('SUM(c.monto)', 'total')
-        .where('c.cliente_id = :id', { id })
-        .andWhere('c.pagado = false')
-        .andWhere('c.fechaVencimiento < :now', { now: new Date() });
+      .createQueryBuilder('c')
+      .select('SUM(c.monto)', 'total')
+      .where('c.cliente_id = :id', { id })
+      .andWhere('c.pagado = false')
+      .andWhere('c.fechaVencimiento < :now', { now: new Date() });
     this.applyTenantFilter(qbVencido, tenant, 'c');
 
     const [cargoAgg, pagoAgg, vencidoAgg] = await Promise.all([

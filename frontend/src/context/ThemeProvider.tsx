@@ -5,17 +5,21 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
     const storedValue = localStorage.getItem('theme') as Theme;
     if (storedValue) return storedValue;
-    return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+    // Forzamos 'light' como predeterminado según solicitud del usuario
+    return 'light';
   });
 
   useEffect(() => {
     localStorage.setItem('theme', theme);
     const root = window.document.documentElement;
-    if (theme === 'light') {
-      root.classList.add('light');
-    } else {
-      root.classList.remove('light');
-    }
+    
+    // Remover ambas clases primero
+    root.classList.remove('light', 'dark');
+    // Agregar la actual
+    root.classList.add(theme);
+    
+    // Opcional: Actualizar el color-scheme del navegador
+    root.style.colorScheme = theme;
   }, [theme]);
 
   const toggleTheme = () => {

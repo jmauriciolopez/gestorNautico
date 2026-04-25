@@ -62,12 +62,17 @@ export class RacksService extends BaseTenantService {
 
   async create(tenant: TenantContext, data: Partial<Rack>) {
     if (data.zonaId) {
-      await this.validateRelation(this.rackRepo.manager.getRepository('Zona'), tenant, data.zonaId, 'Zona');
+      await this.validateRelation(
+        this.rackRepo.manager.getRepository('Zona'),
+        tenant,
+        data.zonaId,
+        'Zona',
+      );
     }
 
     const rack = this.rackRepo.create({
       ...data,
-      guarderiaId: tenant.guarderiaId as number,
+      guarderiaId: tenant.guarderiaId,
     });
     const savedRack = await this.rackRepo.save(rack);
 
@@ -89,7 +94,7 @@ export class RacksService extends BaseTenantService {
               columna: c,
               rackId: savedRack.id,
               ocupado: false,
-              guarderiaId: tenant.guarderiaId as number,
+              guarderiaId: tenant.guarderiaId,
             }),
           );
         }
@@ -128,7 +133,12 @@ export class RacksService extends BaseTenantService {
     }
 
     if (data.zonaId && data.zonaId !== rack.zonaId) {
-      await this.validateRelation(this.rackRepo.manager.getRepository('Zona'), tenant, data.zonaId, 'Zona');
+      await this.validateRelation(
+        this.rackRepo.manager.getRepository('Zona'),
+        tenant,
+        data.zonaId,
+        'Zona',
+      );
     }
 
     // Actualizar rack
@@ -159,7 +169,7 @@ export class RacksService extends BaseTenantService {
                 columna: c,
                 rackId: updatedRack.id,
                 ocupado: false,
-                guarderiaId: tenant.guarderiaId as number,
+                guarderiaId: tenant.guarderiaId,
               }),
             );
           }
@@ -190,11 +200,11 @@ export class RacksService extends BaseTenantService {
     // Usar delete directo para mayor seguridad con claves foráneas
     await this.espacioRepo.delete({
       rackId: id,
-      guarderiaId: tenant.guarderiaId as number,
+      guarderiaId: tenant.guarderiaId,
     });
     await this.rackRepo.delete({
       id,
-      guarderiaId: tenant.guarderiaId as number,
+      guarderiaId: tenant.guarderiaId,
     });
 
     return { success: true };

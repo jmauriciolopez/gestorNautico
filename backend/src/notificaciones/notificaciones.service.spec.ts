@@ -16,7 +16,6 @@ describe('NotificacionesService', () => {
     userId: 1,
   } as any;
 
-
   const mockNotificacion = {
     id: 1,
     titulo: 'Test Notification',
@@ -77,7 +76,7 @@ describe('NotificacionesService', () => {
         'test@example.com',
         'Test Subject',
         'test-template',
-        { name: 'Test' } as any,
+        { name: 'Test' },
       );
       expect(mockMailerService.sendMail).toHaveBeenCalled();
     });
@@ -169,7 +168,9 @@ describe('NotificacionesService', () => {
     it('should throw NotFoundException if notification not found', async () => {
       mockRepository.delete.mockResolvedValue({ affected: 0 });
 
-      await expect(service.delete(mockTenant, 999, 1)).rejects.toThrow(NotFoundException);
+      await expect(service.delete(mockTenant, 999, 1)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 

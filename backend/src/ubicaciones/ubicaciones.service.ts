@@ -43,7 +43,7 @@ export class UbicacionesService extends BaseTenantService {
   create(tenant: TenantContext, data: Partial<Ubicacion>) {
     const ubicacion = this.ubicacionRepo.create({
       ...data,
-      guarderiaId: tenant.guarderiaId as number,
+      guarderiaId: tenant.guarderiaId,
     });
     return this.ubicacionRepo.save(ubicacion);
   }

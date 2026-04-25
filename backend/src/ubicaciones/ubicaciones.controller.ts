@@ -21,9 +21,11 @@ import { TenantGuard } from '../auth/guards/tenant.guard';
 import { TenantRoles } from '../auth/decorators/tenant-roles.decorator';
 import { ActiveTenant } from '../auth/decorators/active-tenant.decorator';
 import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+import { GlobalRoute } from '../auth/decorators/global-route.decorator';
 
 @Controller('ubicaciones')
 @UseGuards(AuthTokenGuard, TenantGuard, RolesGuard)
+@GlobalRoute()
 export class UbicacionesController {
   constructor(private readonly ubicacionesService: UbicacionesService) {}
 
@@ -45,7 +47,10 @@ export class UbicacionesController {
 
   @Post()
   @TenantRoles(Role.ADMIN)
-  create(@ActiveTenant() tenant: TenantContext, @Body() data: Partial<Ubicacion>) {
+  create(
+    @ActiveTenant() tenant: TenantContext,
+    @Body() data: Partial<Ubicacion>,
+  ) {
     return this.ubicacionesService.create(tenant, data);
   }
 

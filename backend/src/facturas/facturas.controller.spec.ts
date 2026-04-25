@@ -37,8 +37,7 @@ describe('FacturasController', () => {
         { provide: AuthTokenGuard, useValue: { canActivate: () => true } },
         { provide: RolesGuard, useValue: { canActivate: () => true } },
       ],
-    })
-    .compile();
+    }).compile();
 
     controller = module.get<FacturasController>(FacturasController);
     service = module.get<FacturasService>(FacturasService);
@@ -50,15 +49,32 @@ describe('FacturasController', () => {
 
   describe('findAll', () => {
     it('should call service.findAll', async () => {
-      await controller.findAll(mockTenant, 1, 10, 'search', '2024-01-01', '2024-01-31');
-      expect(service.findAll).toHaveBeenCalledWith(mockTenant, { page: 1, limit: 10, search: 'search', startDate: '2024-01-01', endDate: '2024-01-31' });
+      await controller.findAll(
+        mockTenant,
+        1,
+        10,
+        'search',
+        '2024-01-01',
+        '2024-01-31',
+      );
+      expect(service.findAll).toHaveBeenCalledWith(mockTenant, {
+        page: 1,
+        limit: 10,
+        search: 'search',
+        startDate: '2024-01-01',
+        endDate: '2024-01-31',
+      });
     });
   });
 
   describe('getStats', () => {
     it('should call service.getStats', async () => {
       await controller.getStats(mockTenant, '2024-01-01', '2024-01-31');
-      expect(service.getStats).toHaveBeenCalledWith(mockTenant, '2024-01-01', '2024-01-31');
+      expect(service.getStats).toHaveBeenCalledWith(
+        mockTenant,
+        '2024-01-01',
+        '2024-01-31',
+      );
     });
   });
 
@@ -74,14 +90,23 @@ describe('FacturasController', () => {
     it('should call service.updateEstado', async () => {
       const dto = { estado: EstadoFactura.PAGADA };
       await controller.updateEstado(mockTenant, '1', dto);
-      expect(service.updateEstado).toHaveBeenCalledWith(mockTenant, 1, dto.estado, undefined);
+      expect(service.updateEstado).toHaveBeenCalledWith(
+        mockTenant,
+        1,
+        dto.estado,
+        undefined,
+      );
     });
   });
 
   describe('sendEmail', () => {
     it('should call service.sendEmail', async () => {
       await controller.sendEmail(mockTenant, '1', { email: 'test@test.com' });
-      expect(service.sendEmail).toHaveBeenCalledWith(mockTenant, 1, 'test@test.com');
+      expect(service.sendEmail).toHaveBeenCalledWith(
+        mockTenant,
+        1,
+        'test@test.com',
+      );
     });
   });
 });

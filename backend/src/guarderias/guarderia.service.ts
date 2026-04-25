@@ -50,9 +50,4 @@ export class GuarderiaService {
     await this.guarderiaRepository.save(guarderia);
   }
 
-  async findBySlug(slug: string): Promise<Guarderia | null> {
-    return this.guarderiaRepository.findOne({
-      where: { slug, activo: true },
-    });
-  }
 }

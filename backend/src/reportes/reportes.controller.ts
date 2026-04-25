@@ -34,7 +34,11 @@ export class ReportesController {
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
   ): Promise<any[]> {
-    return this.reportesService.getIngresosMensuales(tenant, startDate, endDate);
+    return this.reportesService.getIngresosMensuales(
+      tenant,
+      startDate,
+      endDate,
+    );
   }
 
   @Get('vencimientos')

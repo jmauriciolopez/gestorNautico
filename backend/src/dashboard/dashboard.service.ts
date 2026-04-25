@@ -470,13 +470,11 @@ export class DashboardService extends BaseTenantService {
   }
 
   async getDemandPeaks(tenant: TenantContext) {
-    const qb = this.movRepo
-      .createQueryBuilder('m')
-      .select([
-        "TO_CHAR(m.fecha, 'ID') as dow", // 1-7
-        'EXTRACT(HOUR FROM m.fecha) as hora',
-        'COUNT(m.id) as cantidad',
-      ]);
+    const qb = this.movRepo.createQueryBuilder('m').select([
+      "TO_CHAR(m.fecha, 'ID') as dow", // 1-7
+      'EXTRACT(HOUR FROM m.fecha) as hora',
+      'COUNT(m.id) as cantidad',
+    ]);
 
     this.applyTenantFilter(qb, tenant, 'm');
 

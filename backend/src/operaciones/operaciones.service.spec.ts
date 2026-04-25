@@ -50,9 +50,15 @@ describe('OperacionesService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         OperacionesService,
-        { provide: getRepositoryToken(SolicitudBajada), useFactory: mockRepository },
+        {
+          provide: getRepositoryToken(SolicitudBajada),
+          useFactory: mockRepository,
+        },
         { provide: getRepositoryToken(Cliente), useFactory: mockRepository },
-        { provide: getRepositoryToken(Embarcacion), useFactory: mockRepository },
+        {
+          provide: getRepositoryToken(Embarcacion),
+          useFactory: mockRepository,
+        },
         { provide: getRepositoryToken(Pedido), useFactory: mockRepository },
         {
           provide: NotificacionesService,
@@ -118,20 +124,26 @@ describe('OperacionesService', () => {
 
     it('should throw NotFoundException if client not found', async () => {
       clienteRepo.findOne.mockResolvedValue(null);
-      await expect(service.createPublic(mockTenant, dto)).rejects.toThrow(NotFoundException);
+      await expect(service.createPublic(mockTenant, dto)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should throw BadRequestException if boat not found', async () => {
       clienteRepo.findOne.mockResolvedValue({ id: 1 });
       embarcacionRepo.findOne.mockResolvedValue(null);
-      await expect(service.createPublic(mockTenant, dto)).rejects.toThrow(BadRequestException);
+      await expect(service.createPublic(mockTenant, dto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException if active solicitud exists', async () => {
       clienteRepo.findOne.mockResolvedValue({ id: 1 });
       embarcacionRepo.findOne.mockResolvedValue({ id: 1 });
       solicitudRepo.findOne.mockResolvedValue({ id: 2 });
-      await expect(service.createPublic(mockTenant, dto)).rejects.toThrow(BadRequestException);
+      await expect(service.createPublic(mockTenant, dto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException if active pedido exists', async () => {
@@ -139,7 +151,9 @@ describe('OperacionesService', () => {
       embarcacionRepo.findOne.mockResolvedValue({ id: 1 });
       solicitudRepo.findOne.mockResolvedValue(null);
       pedidoRepo.findOne.mockResolvedValue({ id: 3 });
-      await expect(service.createPublic(mockTenant, dto)).rejects.toThrow(BadRequestException);
+      await expect(service.createPublic(mockTenant, dto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException if outside operating hours', async () => {
@@ -152,7 +166,9 @@ describe('OperacionesService', () => {
         if (key === 'HORARIO_MAX_SUBIDA') return '23:00';
         return null;
       });
-      await expect(service.createPublic(mockTenant, dto)).rejects.toThrow(BadRequestException);
+      await expect(service.createPublic(mockTenant, dto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -171,9 +187,11 @@ describe('OperacionesService', () => {
       solicitudRepo.findAndCount.mockResolvedValue(mockData);
 
       await service.findAll(mockTenant, {}, EstadoSolicitud.PENDIENTE);
-      expect(solicitudRepo.findAndCount).toHaveBeenCalledWith(expect.objectContaining({
-        where: { estado: EstadoSolicitud.PENDIENTE }
-      }));
+      expect(solicitudRepo.findAndCount).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { estado: EstadoSolicitud.PENDIENTE },
+        }),
+      );
     });
   });
 
@@ -182,7 +200,9 @@ describe('OperacionesService', () => {
       solicitudRepo.findOne.mockResolvedValue(mockSolicitud);
       await service.updateEstado(mockTenant, 1, EstadoSolicitud.EN_AGUA);
 
-      expect(solicitudRepo.update).toHaveBeenCalledWith(1, { estado: EstadoSolicitud.EN_AGUA });
+      expect(solicitudRepo.update).toHaveBeenCalledWith(1, {
+        estado: EstadoSolicitud.EN_AGUA,
+      });
       expect(movimientosService.create).toHaveBeenCalled();
     });
 
@@ -190,55 +210,76 @@ describe('OperacionesService', () => {
       solicitudRepo.findOne.mockResolvedValue(mockSolicitud);
       await service.updateEstado(mockTenant, 1, EstadoSolicitud.FINALIZADA);
 
-      expect(solicitudRepo.update).toHaveBeenCalledWith(1, { estado: EstadoSolicitud.FINALIZADA });
+      expect(solicitudRepo.update).toHaveBeenCalledWith(1, {
+        estado: EstadoSolicitud.FINALIZADA,
+      });
       expect(movimientosService.create).toHaveBeenCalled();
     });
 
     it('should handle email sending error gracefully', async () => {
       solicitudRepo.findOne.mockResolvedValue(mockSolicitud);
-      notificacionesService.sendEmailNotification.mockRejectedValue(new Error('Email error'));
-      
+      notificacionesService.sendEmailNotification.mockRejectedValue(
+        new Error('Email error'),
+      );
+
       await service.updateEstado(mockTenant, 1, EstadoSolicitud.EN_AGUA);
-      
+
       expect(solicitudRepo.update).toHaveBeenCalled();
       // Should not throw
     });
 
     it('should throw NotFoundException if solicitud not found', async () => {
       solicitudRepo.findOne.mockResolvedValue(null);
-      await expect(service.updateEstado(mockTenant, 1, EstadoSolicitud.EN_AGUA)).rejects.toThrow(NotFoundException);
+      await expect(
+        service.updateEstado(mockTenant, 1, EstadoSolicitud.EN_AGUA),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
   describe('processDelayedConfirmations', () => {
     it('should process pending confirmations', async () => {
-      const solWithEmail = { ...mockSolicitud, cliente: { email: 'test@test.com', nombre: 'Test' } };
+      const solWithEmail = {
+        ...mockSolicitud,
+        cliente: { email: 'test@test.com', nombre: 'Test' },
+      };
       solicitudRepo.find.mockResolvedValue([solWithEmail]);
-      
+
       await service.processDelayedConfirmations();
-      
+
       expect(notificacionesService.sendEmailNotification).toHaveBeenCalled();
       expect(solicitudRepo.update).toHaveBeenCalled();
     });
 
     it('should handle email error in cron job', async () => {
-      const solWithEmail = { ...mockSolicitud, cliente: { email: 'test@test.com', nombre: 'Test' } };
+      const solWithEmail = {
+        ...mockSolicitud,
+        cliente: { email: 'test@test.com', nombre: 'Test' },
+      };
       solicitudRepo.find.mockResolvedValue([solWithEmail]);
-      notificacionesService.sendEmailNotification.mockRejectedValue(new Error('Cron email error'));
-      
+      notificacionesService.sendEmailNotification.mockRejectedValue(
+        new Error('Cron email error'),
+      );
+
       await service.processDelayedConfirmations();
-      
+
       // Should not throw, should log error (mocked as no-op or handled by logger)
-      expect(solicitudRepo.update).not.toHaveBeenCalledWith(1, { emailConfirmado: true });
+      expect(solicitudRepo.update).not.toHaveBeenCalledWith(1, {
+        emailConfirmado: true,
+      });
     });
 
     it('should mark as confirmed if no email', async () => {
-      const solNoEmail = { ...mockSolicitud, cliente: { email: null, nombre: 'Test' } };
+      const solNoEmail = {
+        ...mockSolicitud,
+        cliente: { email: null, nombre: 'Test' },
+      };
       solicitudRepo.find.mockResolvedValue([solNoEmail]);
-      
+
       await service.processDelayedConfirmations();
-      
-      expect(solicitudRepo.update).toHaveBeenCalledWith(1, { emailConfirmado: true });
+
+      expect(solicitudRepo.update).toHaveBeenCalledWith(1, {
+        emailConfirmado: true,
+      });
     });
   });
 });

@@ -62,7 +62,8 @@ export class SeederService {
     }
 
     // 2. Restaurar Datos Maestros (Usuarios Admin, etc.)
-    const defaultGuarderia = await this.seedGuarderiaService.ensureDefaultGuarderia();
+    const defaultGuarderia =
+      await this.seedGuarderiaService.ensureDefaultGuarderia();
     await this.initialDataService.syncAll();
 
     // 3. Restaurar Configuraciones Globales
@@ -77,8 +78,8 @@ export class SeederService {
       }),
     );
     const zona = await this.zonaRepo.save(
-      this.zonaRepo.create({ 
-        nombre: 'Guardería Principal', 
+      this.zonaRepo.create({
+        nombre: 'Guardería Principal',
         ubicacion: ub,
         guarderia: defaultGuarderia,
       }),

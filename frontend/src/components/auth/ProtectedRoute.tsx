@@ -26,5 +26,8 @@ export const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
         return <Navigate to="/unauthorized" replace />;
     }
 
+    // El onboarding se manejará mediante un modal global en App.tsx
+    // para dar más protagonismo y evitar saltos de ruta.
+
     return <Outlet />;
-};
+}

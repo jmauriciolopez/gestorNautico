@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, ILike, FindManyOptions, FindOptionsWhere } from 'typeorm';
 import { RegistroServicio, EstadoServicio } from './registro.entity';
@@ -44,7 +48,8 @@ export class RegistrosService extends BaseTenantService {
       order: { createdAt: 'DESC' },
     };
 
-    const where: FindOptionsWhere<RegistroServicio> = this.buildTenantWhere(tenant);
+    const where: FindOptionsWhere<RegistroServicio> =
+      this.buildTenantWhere(tenant);
 
     if (embarcacionId) {
       where.embarcacionId = embarcacionId;
@@ -127,13 +132,21 @@ export class RegistrosService extends BaseTenantService {
     return saved;
   }
 
-  async update(tenant: TenantContext, id: number, data: Partial<RegistroServicio>) {
+  async update(
+    tenant: TenantContext,
+    id: number,
+    data: Partial<RegistroServicio>,
+  ) {
     await this.findOne(tenant, id);
     await this.registroRepo.update(this.buildTenantWhere(tenant, { id }), data);
     return this.findOne(tenant, id);
   }
 
-  async complete(tenant: TenantContext, id: number, costoFinal?: number): Promise<RegistroServicio> {
+  async complete(
+    tenant: TenantContext,
+    id: number,
+    costoFinal?: number,
+  ): Promise<RegistroServicio> {
     const registro = await this.registroRepo.findOne({
       where: this.buildTenantWhere(tenant, { id }),
       relations: ['embarcacion', 'embarcacion.cliente', 'servicio'],

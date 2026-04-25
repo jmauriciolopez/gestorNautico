@@ -60,8 +60,19 @@ import { MigrationService } from './migration.service';
     ]),
     ConfiguracionModule,
   ],
-  providers: [SeederService, InitialDataService, SeedGuarderiaService, MigrationService],
+  providers: [
+    SeederService,
+    InitialDataService,
+    SeedGuarderiaService,
+    MigrationService,
+  ],
   controllers: [SeederController],
-  exports: [SeederService, InitialDataService, SeedGuarderiaService, MigrationService, TypeOrmModule],
+  exports: [
+    SeederService,
+    InitialDataService,
+    SeedGuarderiaService,
+    MigrationService,
+    TypeOrmModule,
+  ],
 })
 export class DatabaseModule {}

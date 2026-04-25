@@ -13,7 +13,7 @@ interface GuarderiaFormModalProps {
 export function GuarderiaFormModal({ isOpen, onClose, onSave, guarderia, isSubmitting }: GuarderiaFormModalProps) {
     const [formData, setFormData] = useState<Partial<Guarderia>>({
         nombre: '',
-        slug: '',
+        contacto: '',
         direccion: '',
         telefono: '',
         email: '',
@@ -26,7 +26,7 @@ export function GuarderiaFormModal({ isOpen, onClose, onSave, guarderia, isSubmi
         } else {
             setFormData({
                 nombre: '',
-                slug: '',
+                contacto: '',
                 direccion: '',
                 telefono: '',
                 email: '',
@@ -68,14 +68,14 @@ export function GuarderiaFormModal({ isOpen, onClose, onSave, guarderia, isSubmi
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-black text-[var(--text-muted)] uppercase tracking-wider mb-1.5 ml-1">Slug (URL)</label>
+                            <label className="block text-xs font-black text-[var(--text-muted)] uppercase tracking-wider mb-1.5 ml-1">Persona de Contacto</label>
                             <input
                                 required
                                 type="text"
-                                value={formData.slug}
-                                onChange={e => setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/\s+/g, '-') })}
+                                value={formData.contacto}
+                                onChange={e => setFormData({ ...formData, contacto: e.target.value })}
                                 className="w-full px-4 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-primary)] text-[var(--text-primary)] focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
-                                placeholder="ej-sede-sol"
+                                placeholder="Nombre del responsable"
                             />
                         </div>
                         <div>

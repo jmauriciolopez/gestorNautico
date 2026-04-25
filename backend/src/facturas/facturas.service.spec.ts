@@ -23,7 +23,6 @@ describe('FacturasService', () => {
     userId: 1,
   } as any;
 
-
   const mockFactura = {
     id: 1,
     numero: 'FAC-0001',
@@ -108,12 +107,14 @@ describe('FacturasService', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    
+
     // Reset mock manager state
     mockManager.find.mockReset().mockResolvedValue([]);
     mockManager.findOne.mockReset().mockResolvedValue(null);
     mockManager.create.mockReset().mockImplementation((entity, data) => data);
-    mockManager.save.mockReset().mockImplementation((data) => Promise.resolve(data));
+    mockManager.save
+      .mockReset()
+      .mockImplementation((data) => Promise.resolve(data));
     mockManager.update.mockReset().mockResolvedValue({});
 
     const module: TestingModule = await Test.createTestingModule({
@@ -184,7 +185,10 @@ describe('FacturasService', () => {
     it('should filter by date range', async () => {
       mockFacturaRepository.findAndCount.mockResolvedValue([[mockFactura], 1]);
 
-      await service.findAll(mockTenant, { startDate: '2024-01-01', endDate: '2024-12-31' });
+      await service.findAll(mockTenant, {
+        startDate: '2024-01-01',
+        endDate: '2024-12-31',
+      });
       expect(mockFacturaRepository.findAndCount).toHaveBeenCalled();
     });
   });
@@ -200,7 +204,9 @@ describe('FacturasService', () => {
     it('should throw NotFoundException if factura not found', async () => {
       mockFacturaRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne(mockTenant, 999)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(mockTenant, 999)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -224,21 +230,29 @@ describe('FacturasService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('should throw BadRequestException if cargos don\'t belong to client', async () => {
+    it("should throw BadRequestException if cargos don't belong to client", async () => {
       mockManager.find.mockResolvedValue([{ id: 1 }]); // Only 1 found
-      await expect(service.create(mockTenant, dto)).rejects.toThrow(BadRequestException);
+      await expect(service.create(mockTenant, dto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should retry generation on unique violation', async () => {
-      mockManager.find.mockResolvedValue([{ id: 1, monto: 100 }, { id: 2, monto: 50 }]);
+      mockManager.find.mockResolvedValue([
+        { id: 1, monto: 100 },
+        { id: 2, monto: 50 },
+      ]);
       mockManager.create.mockReturnValue(mockFactura);
-      
+
       // First save fails with unique constraint
       mockManager.save.mockRejectedValueOnce({ code: '23505' });
       // Second save succeeds
       mockManager.save.mockResolvedValueOnce(mockFactura);
-      
-      const result = await service.create(mockTenant, { ...dto, numero: undefined });
+
+      const result = await service.create(mockTenant, {
+        ...dto,
+        numero: undefined,
+      });
       expect(result).toBeDefined();
       expect(mockManager.save).toHaveBeenCalledTimes(2);
     });
@@ -246,22 +260,34 @@ describe('FacturasService', () => {
 
   describe('updateEstado', () => {
     it('should update state to PAGADA and register payment', async () => {
-      const facturaWithCargos = { ...mockFactura, cargos: [{ id: 1 }], cliente: { id: 1, nombre: 'Test' } };
+      const facturaWithCargos = {
+        ...mockFactura,
+        cargos: [{ id: 1 }],
+        cliente: { id: 1, nombre: 'Test' },
+      };
       mockManager.findOne.mockResolvedValue(facturaWithCargos);
       mockCajasService.findAbierta.mockResolvedValue({ id: 1 });
       mockManager.create.mockReturnValue({});
 
       await service.updateEstado(mockTenant, 1, EstadoFactura.PAGADA);
 
-      expect(mockManager.update).toHaveBeenCalledWith(Factura, 1, { estado: EstadoFactura.PAGADA });
-      expect(mockManager.update).toHaveBeenCalledWith(Cargo, { id: In([1]) }, { pagado: true });
+      expect(mockManager.update).toHaveBeenCalledWith(Factura, 1, {
+        estado: EstadoFactura.PAGADA,
+      });
+      expect(mockManager.update).toHaveBeenCalledWith(
+        Cargo,
+        { id: In([1]) },
+        { pagado: true },
+      );
       expect(mockManager.save).toHaveBeenCalled(); // Payment saved
     });
 
     it('should throw error if no caja open for paid state', async () => {
       mockManager.findOne.mockResolvedValue(mockFactura);
       mockCajasService.findAbierta.mockResolvedValue(null);
-      await expect(service.updateEstado(mockTenant, 1, EstadoFactura.PAGADA)).rejects.toThrow(BadRequestException);
+      await expect(
+        service.updateEstado(mockTenant, 1, EstadoFactura.PAGADA),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -269,7 +295,7 @@ describe('FacturasService', () => {
     it('should update factura basic fields', async () => {
       mockManager.findOne.mockResolvedValue(mockFactura);
       mockManager.find.mockResolvedValue([]);
-      
+
       await service.update(mockTenant, 1, { observaciones: 'Updated' });
       expect(mockManager.save).toHaveBeenCalled();
     });
@@ -277,8 +303,12 @@ describe('FacturasService', () => {
     it('should add new cargos to factura', async () => {
       mockManager.findOne.mockResolvedValue(mockFactura);
       mockManager.find.mockResolvedValue([{ id: 1, monto: 100 }]);
-      
-      await service.update(mockTenant, 1, { nuevosCargos: [{ descripcion: 'New', monto: 50, tipo: TipoCargo.OTROS }] });
+
+      await service.update(mockTenant, 1, {
+        nuevosCargos: [
+          { descripcion: 'New', monto: 50, tipo: TipoCargo.OTROS },
+        ],
+      });
       expect(mockManager.create).toHaveBeenCalled();
       expect(mockManager.save).toHaveBeenCalled();
     });
@@ -301,7 +331,9 @@ describe('FacturasService', () => {
         cliente: { ...mockFactura.cliente, email: null },
       });
 
-      await expect(service.sendEmail(mockTenant, 1)).rejects.toThrow(BadRequestException);
+      await expect(service.sendEmail(mockTenant, 1)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should send email with factura', async () => {
@@ -325,9 +357,15 @@ describe('FacturasService', () => {
           { estado: EstadoFactura.PENDIENTE, total: '50', cantidad: '1' },
         ]),
       };
-      mockFacturaRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
+      mockFacturaRepository.createQueryBuilder.mockReturnValue(
+        mockQueryBuilder as any,
+      );
 
-      const result = await service.getStats(mockTenant, '2026-01-01', '2026-01-31');
+      const result = await service.getStats(
+        mockTenant,
+        '2026-01-01',
+        '2026-01-31',
+      );
       expect(result.TOTAL_PAGADO).toBe(100);
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledTimes(2);
     });

@@ -15,7 +15,6 @@ describe('EspaciosService', () => {
     userId: 1,
   } as any;
 
-
   const mockEspacio = {
     id: 1,
     numero: 'RACK-01-P1F1C1',
@@ -88,7 +87,9 @@ describe('EspaciosService', () => {
     it('should throw NotFoundException if espacio not found', async () => {
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne(mockTenant, 999)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(mockTenant, 999)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 

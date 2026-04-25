@@ -72,6 +72,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             isAuthenticated: !!user,
             isInitializing,
             login,
+            signup: login, // Por ahora el flujo es idéntico al login una vez obtenido el token
             logout
         }}>
             {children}

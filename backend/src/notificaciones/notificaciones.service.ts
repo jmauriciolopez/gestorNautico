@@ -67,7 +67,7 @@ export class NotificacionesService extends BaseTenantService {
   ): Promise<Notificacion> {
     const notificacion = this.notificacionesRepository.create({
       ...data,
-      guarderiaId: tenant.guarderiaId as number,
+      guarderiaId: tenant.guarderiaId,
     });
     return this.notificacionesRepository.save(notificacion);
   }
@@ -81,14 +81,14 @@ export class NotificacionesService extends BaseTenantService {
       where: {
         role,
         activo: true,
-        guarderiaId: tenant.guarderiaId as number,
+        guarderiaId: tenant.guarderiaId,
       },
     });
     const notifications = users.map((user) =>
       this.notificacionesRepository.create({
         ...data,
         usuarioId: user.id,
-        guarderiaId: tenant.guarderiaId as number,
+        guarderiaId: tenant.guarderiaId,
       }),
     );
     await this.notificacionesRepository.save(notifications);

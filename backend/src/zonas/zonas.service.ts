@@ -45,12 +45,17 @@ export class ZonasService extends BaseTenantService {
     }
 
     if (data.ubicacionId) {
-      await this.validateRelation(this.zonaRepo.manager.getRepository('Ubicacion'), tenant, data.ubicacionId, 'Ubicación');
+      await this.validateRelation(
+        this.zonaRepo.manager.getRepository('Ubicacion'),
+        tenant,
+        data.ubicacionId,
+        'Ubicación',
+      );
     }
 
     const zona = this.zonaRepo.create({
       ...data,
-      guarderiaId: tenant.guarderiaId as number,
+      guarderiaId: tenant.guarderiaId,
     });
     return this.zonaRepo.save(zona);
   }
@@ -62,7 +67,12 @@ export class ZonasService extends BaseTenantService {
     }
 
     if (data.ubicacionId) {
-      await this.validateRelation(this.zonaRepo.manager.getRepository('Ubicacion'), tenant, data.ubicacionId, 'Ubicación');
+      await this.validateRelation(
+        this.zonaRepo.manager.getRepository('Ubicacion'),
+        tenant,
+        data.ubicacionId,
+        'Ubicación',
+      );
     }
 
     await this.zonaRepo.update(id, data);

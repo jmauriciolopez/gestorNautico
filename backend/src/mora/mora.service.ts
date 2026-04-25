@@ -58,7 +58,10 @@ export class MoraService extends BaseTenantService {
     };
   }
 
-  async calcularMora(tenant: TenantContext, facturaId: number): Promise<MoraResultado> {
+  async calcularMora(
+    tenant: TenantContext,
+    facturaId: number,
+  ): Promise<MoraResultado> {
     const factura = await this.facturaRepo.findOne({
       where: this.buildTenantWhere(tenant, { id: facturaId }),
       relations: ['cliente'],
@@ -118,7 +121,10 @@ export class MoraService extends BaseTenantService {
     };
   }
 
-  async aplicarMora(tenant: TenantContext, facturaId: number): Promise<Factura> {
+  async aplicarMora(
+    tenant: TenantContext,
+    facturaId: number,
+  ): Promise<Factura> {
     const factura = await this.facturaRepo.findOne({
       where: this.buildTenantWhere(tenant, { id: facturaId }),
       relations: ['cliente'],
@@ -193,18 +199,20 @@ export class MoraService extends BaseTenantService {
 
   @Cron(CronExpression.EVERY_DAY_AT_1AM)
   async aplicarMoraAutomaticamente(): Promise<number> {
-    this.logger.log('Iniciando aplicación automática de mora para todos los tenants...');
+    this.logger.log(
+      'Iniciando aplicación automática de mora para todos los tenants...',
+    );
     const guarderias = await this.guarderiaRepo.find();
     let totalAplicadas = 0;
 
     for (const g of guarderias) {
-        const tenant: TenantContext = { 
-          guarderiaId: g.id, 
-          scope: 'guarderia',
-          role: Role.SUPERADMIN, // System context
-          userId: 0
-        };
-        totalAplicadas += await this.aplicarMoraPorTenant(tenant);
+      const tenant: TenantContext = {
+        guarderiaId: g.id,
+        scope: 'guarderia',
+        role: Role.SUPERADMIN, // System context
+        userId: 0,
+      };
+      totalAplicadas += await this.aplicarMoraPorTenant(tenant);
     }
 
     return totalAplicadas;
@@ -270,8 +278,14 @@ export class MoraService extends BaseTenantService {
   async getFacturasConMora(tenant: TenantContext) {
     return this.facturaRepo.find({
       where: [
-        this.buildTenantWhere(tenant, { estado: EstadoFactura.PENDIENTE, interesMoratorio: Not(0) }),
-        this.buildTenantWhere(tenant, { estado: EstadoFactura.PENDIENTE, recargo: Not(0) }),
+        this.buildTenantWhere(tenant, {
+          estado: EstadoFactura.PENDIENTE,
+          interesMoratorio: Not(0),
+        }),
+        this.buildTenantWhere(tenant, {
+          estado: EstadoFactura.PENDIENTE,
+          recargo: Not(0),
+        }),
       ],
       relations: ['cliente'],
       order: { fechaVencimiento: 'ASC' },

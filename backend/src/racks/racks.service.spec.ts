@@ -16,7 +16,6 @@ describe('RacksService', () => {
     userId: 1,
   } as any;
 
-
   const mockRack = {
     id: 1,
     codigo: 'RACK-01',
@@ -104,7 +103,9 @@ describe('RacksService', () => {
     it('should throw NotFoundException if rack not found', async () => {
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne(mockTenant, 999)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(mockTenant, 999)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -172,13 +173,17 @@ describe('RacksService', () => {
       };
       mockRepository.findOne.mockResolvedValue(rackConOcupados);
 
-      await expect(service.remove(mockTenant, 1)).rejects.toThrow(BadRequestException);
+      await expect(service.remove(mockTenant, 1)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw NotFoundException if rack not found', async () => {
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.remove(mockTenant, 999)).rejects.toThrow(NotFoundException);
+      await expect(service.remove(mockTenant, 999)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

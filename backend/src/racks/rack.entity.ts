@@ -55,7 +55,7 @@ export class Rack {
   @Column({ type: 'int' })
   guarderiaId: number;
 
-  @ManyToOne(() => Guarderia, { nullable: false })
+  @ManyToOne(() => Guarderia, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'guarderiaId' })
   guarderia: Guarderia;
 }

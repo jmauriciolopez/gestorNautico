@@ -73,7 +73,9 @@ export class CajasService extends BaseTenantService {
       return await this.cajaRepo.manager.transaction(
         async (transactionalEntityManager) => {
           const abierta = await transactionalEntityManager.findOne(Caja, {
-            where: this.buildTenantWhere(tenant, { estado: EstadoCaja.ABIERTA }),
+            where: this.buildTenantWhere(tenant, {
+              estado: EstadoCaja.ABIERTA,
+            }),
           });
 
           if (abierta) {
@@ -86,7 +88,7 @@ export class CajasService extends BaseTenantService {
             saldoInicial: Number(saldoInicial || 0),
             estado: EstadoCaja.ABIERTA,
             fechaApertura: new Date(),
-            guarderiaId: tenant.guarderiaId as number,
+            guarderiaId: tenant.guarderiaId,
           });
 
           const guardada = await transactionalEntityManager.save(Caja, nueva);

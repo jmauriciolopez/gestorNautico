@@ -13,16 +13,15 @@ export class SeedGuarderiaService {
   ) {}
 
   async ensureDefaultGuarderia(): Promise<Guarderia> {
-    const defaultSlug = 'sede-central';
     let guarderia = await this.guarderiaRepository.findOne({
-      where: { slug: defaultSlug },
+      where: { nombre: 'Sede Central' },
     });
 
     if (!guarderia) {
       this.logger.log('🌱 Creando Guardería inicial (Sede Central)...');
       guarderia = this.guarderiaRepository.create({
         nombre: 'Sede Central',
-        slug: defaultSlug,
+        contacto: 'Administrador Central',
         direccion: 'Av. Costanera 123',
         telefono: '555-0100',
         email: 'contacto@sedecentral.com',

@@ -56,7 +56,10 @@ export class EspaciosController {
 
   @Post()
   @TenantRoles(Role.ADMIN)
-  create(@ActiveTenant() tenant: TenantContext, @Body() data: Partial<Espacio>) {
+  create(
+    @ActiveTenant() tenant: TenantContext,
+    @Body() data: Partial<Espacio>,
+  ) {
     return this.espaciosService.create(tenant, data);
   }
 

@@ -32,7 +32,10 @@ export class UsersController {
 
   @Post()
   @TenantRoles(Role.SUPERADMIN, Role.ADMIN)
-  create(@ActiveTenant() tenant: TenantContext, @Body() createUserDto: CreateUserDto) {
+  create(
+    @ActiveTenant() tenant: TenantContext,
+    @Body() createUserDto: CreateUserDto,
+  ) {
     return this.usersService.create(tenant, createUserDto);
   }
 
@@ -54,7 +57,7 @@ export class UsersController {
   findAll(
     @ActiveTenant() tenant: TenantContext,
     @Query('page') page?: number,
-    @Query('limit') limit?: number
+    @Query('limit') limit?: number,
   ) {
     return this.usersService.findAll(tenant, { page, limit });
   }
@@ -63,7 +66,7 @@ export class UsersController {
   @TenantRoles(Role.SUPERADMIN, Role.ADMIN)
   findOne(
     @ActiveTenant() tenant: TenantContext,
-    @Param('id', ParseIntPipe) id: number
+    @Param('id', ParseIntPipe) id: number,
   ) {
     return this.usersService.findOne(tenant, id);
   }
@@ -82,7 +85,7 @@ export class UsersController {
   @TenantRoles(Role.SUPERADMIN, Role.ADMIN)
   remove(
     @ActiveTenant() tenant: TenantContext,
-    @Param('id', ParseIntPipe) id: number
+    @Param('id', ParseIntPipe) id: number,
   ) {
     return this.usersService.remove(tenant, id);
   }

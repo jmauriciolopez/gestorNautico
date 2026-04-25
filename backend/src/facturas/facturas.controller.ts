@@ -99,7 +99,10 @@ export class FacturasController {
 
   @Post()
   @TenantRoles(Role.ADMIN)
-  create(@ActiveTenant() tenant: TenantContext, @Body() data: CreateFacturaDto) {
+  create(
+    @ActiveTenant() tenant: TenantContext,
+    @Body() data: CreateFacturaDto,
+  ) {
     return this.facturasService.create(tenant, data);
   }
 

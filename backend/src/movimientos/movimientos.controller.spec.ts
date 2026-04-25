@@ -32,9 +32,11 @@ describe('MovimientosController', () => {
         },
       ],
     })
-    .overrideGuard(AuthTokenGuard).useValue({ canActivate: () => true })
-    .overrideGuard(RolesGuard).useValue({ canActivate: () => true })
-    .compile();
+      .overrideGuard(AuthTokenGuard)
+      .useValue({ canActivate: () => true })
+      .overrideGuard(RolesGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<MovimientosController>(MovimientosController);
     service = module.get<MovimientosService>(MovimientosService);
@@ -47,7 +49,12 @@ describe('MovimientosController', () => {
   describe('findAll', () => {
     it('should call service.findAll', async () => {
       await controller.findAll(mockTenant, 1, 10, 'search', 1);
-      expect(service.findAll).toHaveBeenCalledWith(mockTenant, { page: 1, limit: 10, search: 'search', embarcacionId: 1 });
+      expect(service.findAll).toHaveBeenCalledWith(mockTenant, {
+        page: 1,
+        limit: 10,
+        search: 'search',
+        embarcacionId: 1,
+      });
     });
   });
 

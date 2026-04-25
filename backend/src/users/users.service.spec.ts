@@ -18,7 +18,6 @@ describe('UsersService', () => {
     userId: 1,
   } as any;
 
-
   const mockUser = {
     id: 1,
     usuario: 'testuser',
@@ -82,7 +81,9 @@ describe('UsersService', () => {
 
     it('should throw NotFoundException', async () => {
       mockRepository.findOneBy.mockResolvedValueOnce(null);
-      await expect(service.findOne(mockTenant, 999)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(mockTenant, 999)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -102,9 +103,9 @@ describe('UsersService', () => {
 
     it('should throw ConflictException if username exists', async () => {
       const dto = { usuario: 'testuser' };
-      await expect(service.create(mockTenant, dto as CreateUserDto)).rejects.toThrow(
-        ConflictException,
-      );
+      await expect(
+        service.create(mockTenant, dto as CreateUserDto),
+      ).rejects.toThrow(ConflictException);
     });
   });
 

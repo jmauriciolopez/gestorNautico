@@ -15,9 +15,8 @@ export class Guarderia {
   @Column({ length: 150 })
   nombre: string;
 
-  @Index()
-  @Column({ length: 100, unique: true })
-  slug: string;
+  @Column({ length: 150, nullable: true })
+  contacto: string;
 
   @Column({ length: 255, nullable: true })
   direccion: string;
@@ -45,6 +44,12 @@ export class Guarderia {
 
   @Column({ nullable: true })
   pais: string;
+
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  trialStartedAt: Date;
+
+  @Column({ default: false })
+  finalizoOnboarding: boolean;
 
   @CreateDateColumn()
   createdAt: Date;

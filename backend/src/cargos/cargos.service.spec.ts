@@ -14,7 +14,6 @@ describe('CargosService', () => {
     userId: 1,
   } as any;
 
-
   const mockCargo = {
     id: 1,
     descripcion: 'Amarre Enero',
@@ -92,7 +91,9 @@ describe('CargosService', () => {
     it('should throw NotFoundException if cargo not found', async () => {
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne(mockTenant, 999)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(mockTenant, 999)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 

@@ -17,7 +17,6 @@ describe('ClientesService', () => {
     userId: 1,
   } as any;
 
-
   const mockCliente = {
     id: 1,
     nombre: 'Test Cliente',
@@ -110,7 +109,9 @@ describe('ClientesService', () => {
     it('should throw NotFoundException if client not found', async () => {
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne(mockTenant, 999)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(mockTenant, 999)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -165,7 +166,10 @@ describe('ClientesService', () => {
         impagos: '0',
       });
       // Second call (pagoAgg)
-      qb.getRawOne.mockResolvedValueOnce({ total: '50', ultimaFecha: new Date() });
+      qb.getRawOne.mockResolvedValueOnce({
+        total: '50',
+        ultimaFecha: new Date(),
+      });
       // Third call (vencidoAgg)
       qb.getRawOne.mockResolvedValueOnce({ total: '0' });
 

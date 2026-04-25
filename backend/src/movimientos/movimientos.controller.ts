@@ -50,7 +50,10 @@ export class MovimientosController {
 
   @Post()
   @TenantRoles(Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
-  create(@ActiveTenant() tenant: TenantContext, @Body() data: CreateMovimientoDto) {
+  create(
+    @ActiveTenant() tenant: TenantContext,
+    @Body() data: CreateMovimientoDto,
+  ) {
     return this.movimientosService.create(tenant, data);
   }
 

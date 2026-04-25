@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Raw, FindOptionsWhere } from 'typeorm';
 import { Cargo } from './cargo.entity';
@@ -70,7 +74,7 @@ export class CargosService extends BaseTenantService {
     const nuevo = this.cargoRepo.create({
       ...rest,
       cliente: { id: clienteId },
-      guarderiaId: tenant.guarderiaId as number,
+      guarderiaId: tenant.guarderiaId,
     });
     const guardado = await this.cargoRepo.save(nuevo);
     return this.findOne(tenant, guardado.id);

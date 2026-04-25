@@ -130,7 +130,7 @@ export class MovimientosService extends BaseTenantService {
       fueraHora,
       embarcacion: { id: Number(embarcacionId) },
       espacio: targetEspacioId ? { id: Number(targetEspacioId) } : null,
-      guarderiaId: tenant.guarderiaId as number,
+      guarderiaId: tenant.guarderiaId,
     };
 
     const nuevoMovimiento = movRepo.create(createData);
@@ -176,7 +176,7 @@ export class MovimientosService extends BaseTenantService {
             embarcacion: { id: embarcacion.id },
             estado: EstadoPedido.FINALIZADO,
             fechaProgramada: new Date(),
-            guarderiaId: tenant.guarderiaId as number,
+            guarderiaId: tenant.guarderiaId,
           });
           await pedRepo.save(nuevoPedido);
         }
@@ -226,7 +226,7 @@ export class MovimientosService extends BaseTenantService {
             embarcacion: { id: embarcacion.id },
             estado: EstadoPedido.EN_AGUA,
             fechaProgramada: new Date(),
-            guarderiaId: tenant.guarderiaId as number,
+            guarderiaId: tenant.guarderiaId,
           });
           await pedRepo.save(nuevoPedido);
         }

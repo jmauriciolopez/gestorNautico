@@ -32,6 +32,8 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/adapters/handlebars.adapter';
 import { join } from 'path';
+import { APP_GUARD } from '@nestjs/core';
+import { TrialGuard } from './auth/guards/trial.guard';
 
 @Module({
   imports: [
@@ -112,6 +114,12 @@ import { join } from 'path';
     MoraModule,
     ImportModule,
     GuarderiasModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: TrialGuard,
+    },
   ],
 })
 export class AppModule {}

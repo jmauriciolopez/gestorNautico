@@ -45,7 +45,10 @@ describe('AutomaticBillingService', () => {
         { provide: getRepositoryToken(Factura), useFactory: mockRepository },
         { provide: getRepositoryToken(Cargo), useFactory: mockRepository },
         { provide: getRepositoryToken(Cliente), useFactory: mockRepository },
-        { provide: getRepositoryToken(Embarcacion), useFactory: mockRepository },
+        {
+          provide: getRepositoryToken(Embarcacion),
+          useFactory: mockRepository,
+        },
         { provide: getRepositoryToken(Rack), useFactory: mockRepository },
         {
           provide: FacturasService,
@@ -88,10 +91,20 @@ describe('AutomaticBillingService', () => {
   describe('generateMonthlyMooringFees', () => {
     it('should generate fees for clients billing today', async () => {
       const today = new Date();
-      const mockCliente = { id: 1, nombre: 'Test', diaFacturacion: today.getDate(), activo: true };
+      const mockCliente = {
+        id: 1,
+        nombre: 'Test',
+        diaFacturacion: today.getDate(),
+        activo: true,
+      };
       clienteRepo.find.mockResolvedValue([mockCliente]);
       embarcacionRepo.find.mockResolvedValue([
-        { id: 1, nombre: 'Boat', matricula: 'MAT1', espacio: { rack: { tarifaBase: 100 } } }
+        {
+          id: 1,
+          nombre: 'Boat',
+          matricula: 'MAT1',
+          espacio: { rack: { tarifaBase: 100 } },
+        },
       ]);
       cargoRepo.findOne.mockResolvedValue(null); // No existing fee
       cargoRepo.create.mockReturnValue({ id: 10 });
@@ -107,8 +120,12 @@ describe('AutomaticBillingService', () => {
 
     it('should skip if fee already exists', async () => {
       const today = new Date();
-      clienteRepo.find.mockResolvedValue([{ id: 1, diaFacturacion: today.getDate(), activo: true }]);
-      embarcacionRepo.find.mockResolvedValue([{ id: 1, matricula: 'MAT1', espacio: { rack: { tarifaBase: 100 } } }]);
+      clienteRepo.find.mockResolvedValue([
+        { id: 1, diaFacturacion: today.getDate(), activo: true },
+      ]);
+      embarcacionRepo.find.mockResolvedValue([
+        { id: 1, matricula: 'MAT1', espacio: { rack: { tarifaBase: 100 } } },
+      ]);
       cargoRepo.findOne.mockResolvedValue({ id: 99 }); // Already exists
       cargoRepo.find.mockResolvedValue([]);
 
@@ -130,7 +147,7 @@ describe('AutomaticBillingService', () => {
         recargo: 0,
         interesMoratorio: 0,
         cargos: [{ monto: 100 }],
-        cliente: { nombre: 'Test', email: 'test@test.com' }
+        cliente: { nombre: 'Test', email: 'test@test.com' },
       };
       facturaRepo.find.mockResolvedValue([mockFactura]);
       configuracionService.getValorNumerico.mockImplementation((key, def) => {
@@ -142,9 +159,11 @@ describe('AutomaticBillingService', () => {
 
       await service.checkOverdueInvoices();
 
-      expect(facturaRepo.save).toHaveBeenCalledWith(expect.objectContaining({
-        recargo: 10, // 10% of 100
-      }));
+      expect(facturaRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          recargo: 10, // 10% of 100
+        }),
+      );
       expect(notificacionesService.sendEmailNotification).toHaveBeenCalled();
     });
   });

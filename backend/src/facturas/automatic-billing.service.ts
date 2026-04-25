@@ -40,9 +40,11 @@ export class AutomaticBillingService {
    */
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async generateMonthlyMooringFees() {
-    this.logger.log('Iniciando generación automática de cargos de amarre para todos los tenants...');
-    const guarderias = await this.facturaRepo.manager.find('Guarderia') as any[];
-    
+    this.logger.log(
+      'Iniciando generación automática de cargos de amarre para todos los tenants...',
+    );
+    const guarderias = await this.facturaRepo.manager.find('Guarderia');
+
     for (const g of guarderias) {
       const tenant: TenantContext = {
         guarderiaId: g.id,
@@ -68,7 +70,11 @@ export class AutomaticBillingService {
 
     // 1. Buscar clientes que facturan hoy para este tenant
     const clientesAFacturar = await this.clienteRepo.find({
-      where: { diaFacturacion: todayDay, activo: true, guarderiaId: tenant.guarderiaId as number },
+      where: {
+        diaFacturacion: todayDay,
+        activo: true,
+        guarderiaId: tenant.guarderiaId,
+      },
     });
 
     if (clientesAFacturar.length === 0) return;
@@ -92,7 +98,10 @@ export class AutomaticBillingService {
 
       // A. Procesar Embarcaciones en Racks
       const embarcaciones = await this.embarcacionRepo.find({
-        where: { cliente: { id: cliente.id }, guarderiaId: tenant.guarderiaId as number },
+        where: {
+          cliente: { id: cliente.id },
+          guarderiaId: tenant.guarderiaId,
+        },
         relations: ['espacio', 'espacio.rack'],
       });
 
@@ -104,7 +113,7 @@ export class AutomaticBillingService {
               tipo: TipoCargo.AMARRE,
               descripcion: Like(`%${barco.matricula}%`),
               fechaEmision: Between(startOfMonth, endOfMonth),
-              guarderiaId: tenant.guarderiaId as number,
+              guarderiaId: tenant.guarderiaId,
             },
           });
 
@@ -127,7 +136,7 @@ export class AutomaticBillingService {
               pagado: false,
               fechaEmision: new Date(),
               fechaVencimiento,
-              guarderiaId: tenant.guarderiaId as number,
+              guarderiaId: tenant.guarderiaId,
             });
             const guardado = await this.cargoRepo.save(nuevoCargo);
             cargoIds.push(guardado.id);
@@ -143,7 +152,7 @@ export class AutomaticBillingService {
             tipo: TipoCargo.SERVICIOS,
             descripcion: Like('%Individual%'),
             fechaEmision: Between(startOfMonth, endOfMonth),
-            guarderiaId: tenant.guarderiaId as number,
+            guarderiaId: tenant.guarderiaId,
           },
         });
 
@@ -162,7 +171,7 @@ export class AutomaticBillingService {
             pagado: false,
             fechaEmision: new Date(),
             fechaVencimiento,
-            guarderiaId: tenant.guarderiaId as number,
+            guarderiaId: tenant.guarderiaId,
           });
           const guardado = await this.cargoRepo.save(cargoCuota);
           cargoIds.push(guardado.id);
@@ -177,7 +186,7 @@ export class AutomaticBillingService {
             tipo: TipoCargo.SERVICIOS,
             descripcion: Like('%Familiar%'),
             fechaEmision: Between(startOfMonth, endOfMonth),
-            guarderiaId: tenant.guarderiaId as number,
+            guarderiaId: tenant.guarderiaId,
           },
         });
 
@@ -196,7 +205,7 @@ export class AutomaticBillingService {
             pagado: false,
             fechaEmision: new Date(),
             fechaVencimiento,
-            guarderiaId: tenant.guarderiaId as number,
+            guarderiaId: tenant.guarderiaId,
           });
           const guardado = await this.cargoRepo.save(cargoCuota);
           cargoIds.push(guardado.id);
@@ -210,7 +219,7 @@ export class AutomaticBillingService {
           factura: null,
           pagado: false,
           tipo: TipoCargo.OTROS,
-          guarderiaId: tenant.guarderiaId as number,
+          guarderiaId: tenant.guarderiaId,
         },
       });
       cargoIds.push(...consumosPendientes.map((c) => c.id));
@@ -238,8 +247,10 @@ export class AutomaticBillingService {
    */
   @Cron(CronExpression.EVERY_DAY_AT_9AM)
   async checkOverdueInvoices() {
-    this.logger.log('Iniciando auditoría diaria de deudas para todos los tenants...');
-    const guarderias = await this.facturaRepo.manager.find('Guarderia') as any[];
+    this.logger.log(
+      'Iniciando auditoría diaria de deudas para todos los tenants...',
+    );
+    const guarderias = await this.facturaRepo.manager.find('Guarderia');
 
     for (const g of guarderias) {
       const tenant: TenantContext = {
@@ -259,7 +270,7 @@ export class AutomaticBillingService {
       where: {
         estado: EstadoFactura.PENDIENTE,
         fechaVencimiento: LessThan(now),
-        guarderiaId: tenant.guarderiaId as number,
+        guarderiaId: tenant.guarderiaId,
       },
       relations: ['cliente', 'cargos'],
     });
@@ -339,7 +350,7 @@ export class AutomaticBillingService {
             numeroFactura: factura.numero,
             fechaEmision: new Date(factura.fechaEmision).toLocaleDateString(
               'es-AR',
-              ),
+            ),
             montoTotal: Number(factura.total).toLocaleString('es-AR'),
             paymentLink: `${baseUrl}/pago-publico?factura=${factura.numero}`,
           },

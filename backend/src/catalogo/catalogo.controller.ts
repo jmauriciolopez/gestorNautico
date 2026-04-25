@@ -42,7 +42,10 @@ export class CatalogoController {
 
   @Post()
   @TenantRoles(Role.SUPERADMIN, Role.ADMIN)
-  create(@ActiveTenant() tenant: TenantContext, @Body() data: Partial<Catalogo>) {
+  create(
+    @ActiveTenant() tenant: TenantContext,
+    @Body() data: Partial<Catalogo>,
+  ) {
     return this.catalogoService.create(tenant, data);
   }
 

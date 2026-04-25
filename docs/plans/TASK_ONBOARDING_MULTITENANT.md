@@ -1,39 +1,44 @@
-# Tareas: Implementación Multitenancy y Trial de 14 Días
+# Tareas: Implementación Onboarding, Multitenancy y Trial
 
-Este documento detalla los pasos atómicos necesarios para transformar el sistema a un modelo SaaS con aislamiento de datos y control de prueba.
+Este documento centraliza el progreso siguiendo el plan de fases aprobado.
 
-## Fase 1: Base de Datos y Multitenancy (Backend)
-- [ ] **Crear Entidad Organization**
-    - [ ] Definir `Organization` en TypeORM (`nombre`, `slug`, `trialStartedAt`, etc.).
-    - [ ] Crear migración e impactar en base de datos.
-- [ ] **Aislamiento de Datos**
-    - [ ] Agregar `organizationId` a las entidades principales (`User`, `Cliente`, `Embarcacion`, `Rack`, `Zonas`, `Facturas`).
-    - [ ] Crear Decorador `@TenantId()` para inyectar la organización en los servicios.
-    - [ ] Implementar `TenantInterceptor` para filtrar consultas automáticamente por `organizationId`.
+## Fase 1: Infraestructura Backend y Datos [COMPLETO]
+- [x] **Extender Entidad Guarderia**
+    - [x] Agregar `trialStartedAt` (Date).
+    - [x] Agregar `finalizoOnboarding` (Boolean).
+    - [x] Generar y ejecutar migración TypeORM (Auto-sync habilitado).
+- [x] **Endpoint de Templates**
+    - [x] Crear `GET /import/templates/:type` en `ImportController`.
+- [x] **Seguridad de Trial**
+    - [x] Implementar `TrialGuard` (Read-Only mode).
+- [x] **Validación Fase 1**
+    - [x] Build, Lint y Check de Tipos (Backend).
 
-## Fase 2: Autenticación y Seguridad
-- [ ] **Actualizar JWT y Login**
-    - [ ] Modificar `AuthService` para que el `organizationId` se incluya en el payload del token.
-    - [ ] Asegurar que el Login valide que el usuario pertenece a una organización activa.
-- [ ] **Lógica de Trial (Modo ReadOnly)**
-    - [ ] Crear `TrialGuard` para calcular los 14 días de gracia.
-    - [ ] Bloquear métodos `POST`, `PUT`, `PATCH`, `DELETE` si el trial ha expirado.
-    - [ ] Retornar código de estado `403 Forbidden` con mensaje personalizado ("Trial Expirado").
+## Fase 2: Autenticación y Estructura de Onboarding [PENDIENTE]
+- [ ] **Renombrado de Registro**
+    - [ ] `RegisterPage` -> `SignupPage` (Frontend).
+    - [ ] `POST /auth/signup` (Backend).
+- [ ] **Layout de Onboarding**
+    - [ ] Crear `OnboardingLayout` con persistencia de estado.
+- [ ] **Validación Fase 2**
+    - [ ] Build, Lint y Check de Tipos (Frontend).
 
-## Fase 3: Onboarding y Registro (Fullstack)
-- [ ] **Registro de Organizaciones**
-    - [ ] [Backend] Crear endpoint `POST /auth/register-organization`.
-    - [ ] [Frontend] Crear página `RegisterPage` con formulario de Marina y Admin.
-- [ ] **Setup Wizard**
-    - [ ] [Frontend] Crear flujo guiado para que el nuevo Admin cree su primera `Ubicacion` y `Rack`.
+## Fase 3: Pasos del Onboarding (Wizard) [PENDIENTE]
+- [ ] **Paso 1: Perfil de la Marina**
+- [ ] **Paso 2: Configuración Operativa**
+- [ ] **Paso 3: Infraestructura (Zonas/Racks)**
+- [ ] **Paso 4: Políticas y Mora**
+- [ ] **Paso 5: Migración (Descarga de CSV)**
+- [ ] **Cierre de Onboarding**
+    - [ ] Actualizar `finalizoOnboarding: true`.
+- [ ] **Validación Fase 3**
+    - [ ] Build, Lint y Check de Tipos (Fullstack).
 
-## Fase 4: Interfaz y Feedback (Frontend)
-- [ ] **Indicadores de Trial**
-    - [ ] Crear `TrialStatusBanner` en el Dashboard.
-    - [ ] Implementar overlay de "Modo Lectura" cuando el trial venza.
-- [ ] **Protección de Rutas**
-    - [ ] Deshabilitar botones de "Guardar" o "Eliminar" en la UI si el trial está expirado (opcional, para mejor UX).
+## Fase 4: UX de Trial y Cierre [PENDIENTE]
+- [ ] **Trial Status Banner**
+- [ ] **Bloqueo Read-Only en UI**
+- [ ] **Validación Final**
+    - [ ] Smoke test E2E.
+    - [ ] Build final monorepo.
 
-## Fase 5: Verificación
-- [ ] Pruebas de aislamiento (Cross-tenant data leak prevention).
-- [ ] Pruebas de expiración (Manual date injection en DB).
+

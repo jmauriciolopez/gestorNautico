@@ -28,7 +28,10 @@ export class SeederController {
   async migrate() {
     try {
       await this.migrationService.migrateToMultiTenant();
-      return { status: 'success', message: 'Migración multi-tenant completada.' };
+      return {
+        status: 'success',
+        message: 'Migración multi-tenant completada.',
+      };
     } catch (err: unknown) {
       const error = err as Error;
       return {

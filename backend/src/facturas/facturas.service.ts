@@ -146,7 +146,9 @@ export class FacturasService extends BaseTenantService {
       where: this.buildTenantWhere(tenant, { id: clienteId }),
     });
     if (!cliente) {
-      throw new BadRequestException(`El cliente ${clienteId} no pertenece a esta sede`);
+      throw new BadRequestException(
+        `El cliente ${clienteId} no pertenece a esta sede`,
+      );
     }
 
     return await this.dataSource.transaction(async (manager) => {
@@ -209,7 +211,7 @@ export class FacturasService extends BaseTenantService {
             cliente: { id: clienteId },
             estado: EstadoFactura.PENDIENTE,
             fechaVencimiento: finalFechaVencimiento,
-            guarderiaId: tenant.guarderiaId as number,
+            guarderiaId: tenant.guarderiaId,
           });
 
           guardada = await manager.save(nueva);
@@ -271,11 +273,9 @@ export class FacturasService extends BaseTenantService {
         throw new NotFoundException(`Factura con ID ${id} no encontrada`);
       }
 
-      await manager.update(
-        Factura,
-        this.buildTenantWhere(tenant, { id }),
-        { estado },
-      );
+      await manager.update(Factura, this.buildTenantWhere(tenant, { id }), {
+        estado,
+      });
 
       if (estado === EstadoFactura.PAGADA) {
         // 1. Marcar cargos como pagados
@@ -303,7 +303,7 @@ export class FacturasService extends BaseTenantService {
           fecha: new Date(),
           metodoPago: metodoPago ?? MetodoPago.EFECTIVO,
           comprobante: `Liquidación factura ${factura.numero}`,
-          guarderiaId: tenant.guarderiaId as number,
+          guarderiaId: tenant.guarderiaId,
         });
         await manager.save(pago);
 
@@ -365,7 +365,7 @@ export class FacturasService extends BaseTenantService {
             factura: { id: factura.id },
             pagado: false,
             fechaEmision: factura.fechaEmision || new Date(),
-            guarderiaId: tenant.guarderiaId as number,
+            guarderiaId: tenant.guarderiaId,
           });
           await manager.save(nuevo);
         }
@@ -408,11 +408,7 @@ export class FacturasService extends BaseTenantService {
     });
   }
 
-  async sendEmail(
-    tenant: TenantContext,
-    id: number,
-    optionalEmail?: string,
-  ) {
+  async sendEmail(tenant: TenantContext, id: number, optionalEmail?: string) {
     const factura = await this.findOne(tenant, id);
     let targetEmail = factura.cliente.email;
 
@@ -461,11 +457,7 @@ export class FacturasService extends BaseTenantService {
     return { success: true };
   }
 
-  async getStats(
-    tenant: TenantContext,
-    startDate?: string,
-    endDate?: string,
-  ) {
+  async getStats(tenant: TenantContext, startDate?: string, endDate?: string) {
     const qb = this.facturaRepo
       .createQueryBuilder('f')
       .select('f.estado', 'estado')

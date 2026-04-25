@@ -138,7 +138,7 @@ export class PedidosService extends BaseTenantService {
         where: {
           embarcacion: { id: embarcacionId },
           estado: In([EstadoPedido.PENDIENTE, EstadoPedido.EN_AGUA]),
-          guarderiaId: tenant.guarderiaId as number,
+          guarderiaId: tenant.guarderiaId,
         },
       });
 
@@ -165,7 +165,7 @@ export class PedidosService extends BaseTenantService {
       const nuevo = pedRepo.create({
         ...rest,
         embarcacion: { id: embarcacionId },
-        guarderiaId: tenant.guarderiaId as number,
+        guarderiaId: tenant.guarderiaId,
       });
       const guardado = await pedRepo.save(nuevo);
 
@@ -201,11 +201,9 @@ export class PedidosService extends BaseTenantService {
         throw new NotFoundException(`Pedido con ID ${id} no encontrado`);
       }
 
-      await manager.update(
-        Pedido,
-        this.buildTenantWhere(tenant, { id }),
-        { estado },
-      );
+      await manager.update(Pedido, this.buildTenantWhere(tenant, { id }), {
+        estado,
+      });
 
       if (!pedido.embarcacion?.id) {
         this.logger.warn(`Pedido ${id} no tiene embarcación asociada`);

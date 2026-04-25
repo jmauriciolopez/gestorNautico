@@ -14,7 +14,13 @@ import { Guarderia } from '../guarderias/guarderia.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([SolicitudBajada, Cliente, Embarcacion, Pedido, Guarderia]),
+    TypeOrmModule.forFeature([
+      SolicitudBajada,
+      Cliente,
+      Embarcacion,
+      Pedido,
+      Guarderia,
+    ]),
     NotificacionesModule,
     JwtModule, // Needed for AuthTokenGuard
     MovimientosModule,

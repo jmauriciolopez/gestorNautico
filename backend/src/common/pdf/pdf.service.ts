@@ -11,7 +11,10 @@ import { TenantContext } from '../../compartido/interfaces/tenant-context.interf
 export class PdfService {
   constructor(private readonly configService: ConfiguracionService) {}
 
-  async generateInvoice(tenant: TenantContext, factura: Factura): Promise<Buffer> {
+  async generateInvoice(
+    tenant: TenantContext,
+    factura: Factura,
+  ): Promise<Buffer> {
     const [nombre, direccion, telefono, email] = await Promise.all([
       this.configService.getValor(tenant, 'NOMBRE_GUARDERIA', 'Gestor Náutico'),
       this.configService.getValor(tenant, 'DIRECCION', ''),
@@ -33,8 +36,15 @@ export class PdfService {
       const secondaryColor = '#64748b';
 
       // --- ENCABEZADO ---
-      doc.fillColor(primaryColor).fontSize(24).font('Helvetica-Bold').text('FACTURA', 50, 50);
-      doc.fontSize(12).fillColor(secondaryColor).text(`# ${factura.numero}`, 50, 80);
+      doc
+        .fillColor(primaryColor)
+        .fontSize(24)
+        .font('Helvetica-Bold')
+        .text('FACTURA', 50, 50);
+      doc
+        .fontSize(12)
+        .fillColor(secondaryColor)
+        .text(`# ${factura.numero}`, 50, 80);
 
       // Info Guardería (Derecha)
       doc
@@ -42,7 +52,7 @@ export class PdfService {
         .fontSize(14)
         .font('Helvetica-Bold')
         .text(nombre.toUpperCase(), 300, 50, { align: 'right', width: 245 });
-      
+
       doc
         .fontSize(9)
         .font('Helvetica')
@@ -63,7 +73,7 @@ export class PdfService {
         .fontSize(8)
         .font('Helvetica-Bold')
         .text('FACTURADO A:', 50, currentY);
-      
+
       doc
         .fillColor(primaryColor)
         .fontSize(11)
@@ -89,23 +99,48 @@ export class PdfService {
         .fillColor(textColor)
         .text('Fecha Emisión:', rightColX, currentY + 15)
         .font('Helvetica-Bold')
-        .text(new Date(factura.fechaEmision).toLocaleDateString('es-AR'), rightColX + 80, currentY + 15)
-        
+        .text(
+          new Date(factura.fechaEmision).toLocaleDateString('es-AR'),
+          rightColX + 80,
+          currentY + 15,
+        )
+
         .font('Helvetica')
         .text('Vencimiento:', rightColX, currentY + 30)
         .font('Helvetica-Bold')
-        .text(factura.fechaVencimiento ? new Date(factura.fechaVencimiento).toLocaleDateString('es-AR') : '---', rightColX + 80, currentY + 30);
+        .text(
+          factura.fechaVencimiento
+            ? new Date(factura.fechaVencimiento).toLocaleDateString('es-AR')
+            : '---',
+          rightColX + 80,
+          currentY + 30,
+        );
 
       doc.moveDown(4);
 
       // --- TABLA DE CARGOS ---
       const table = {
-        title: { label: 'DETALLE DE CARGOS', fontSize: 10, color: primaryColor, fontFamily: 'Helvetica-Bold' },
+        title: {
+          label: 'DETALLE DE CARGOS',
+          fontSize: 10,
+          color: primaryColor,
+          fontFamily: 'Helvetica-Bold',
+        },
         headers: [
           { label: 'Descripción', property: 'desc', width: 220 },
           { label: 'Cantidad', property: 'qty', width: 60, align: 'center' },
-          { label: 'P. Unitario', property: 'unit', width: 100, align: 'right' },
-          { label: 'Importe Total', property: 'total', width: 115, align: 'right' },
+          {
+            label: 'P. Unitario',
+            property: 'unit',
+            width: 100,
+            align: 'right',
+          },
+          {
+            label: 'Importe Total',
+            property: 'total',
+            width: 115,
+            align: 'right',
+          },
         ],
         rows: (factura.cargos ?? []).map((c) => [
           c.descripcion,
@@ -117,26 +152,32 @@ export class PdfService {
 
       doc.x = 50; // Asegurar que la tabla comience a la izquierda
       void doc.table(table, {
-        prepareHeader: () => doc.font('Helvetica-Bold').fontSize(9).fillColor(primaryColor),
+        prepareHeader: () =>
+          doc.font('Helvetica-Bold').fontSize(9).fillColor(primaryColor),
         prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
           doc.font('Helvetica').fontSize(9).fillColor(textColor);
           // Línea divisoria sutil entre filas
           if (rectRow) {
-             doc.lineWidth(0.5).moveTo(rectRow.x, rectRow.y + rectRow.height).lineTo(rectRow.x + rectRow.width, rectRow.y + rectRow.height).strokeColor('#f1f5f9').stroke();
+            doc
+              .lineWidth(0.5)
+              .moveTo(rectRow.x, rectRow.y + rectRow.height)
+              .lineTo(rectRow.x + rectRow.width, rectRow.y + rectRow.height)
+              .strokeColor('#f1f5f9')
+              .stroke();
           }
         },
         padding: 5,
         columnSpacing: 10,
         hideHeader: false,
-        minRowHeight: 20
+        minRowHeight: 20,
       });
 
       // --- SECCIÓN DE TOTAL ---
       doc.moveDown(2);
       const totalY = doc.y;
-      
+
       doc.rect(345, totalY, 200, 40).fill('#f8fafc');
-      
+
       doc
         .fillColor(primaryColor)
         .fontSize(10)
@@ -151,7 +192,7 @@ export class PdfService {
           `$${Number(factura.total).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`,
           350,
           totalY + 12,
-          { align: 'right', width: 185 }
+          { align: 'right', width: 185 },
         );
 
       // --- PIE DE PÁGINA ---
@@ -162,7 +203,7 @@ export class PdfService {
           'Este documento es un comprobante de gestión interna y no tiene validez legal como factura fiscal ante AFIP.',
           50,
           780,
-          { align: 'center', width: 500 }
+          { align: 'center', width: 500 },
         );
 
       doc.end();
@@ -190,7 +231,11 @@ export class PdfService {
       const secondaryColor = '#64748b';
 
       // --- ENCABEZADO ---
-      doc.fillColor(primaryColor).fontSize(24).font('Helvetica-Bold').text('RECIBO', 50, 50);
+      doc
+        .fillColor(primaryColor)
+        .fontSize(24)
+        .font('Helvetica-Bold')
+        .text('RECIBO', 50, 50);
       doc.fontSize(12).fillColor(secondaryColor).text(`# ${pago.id}`, 50, 80);
 
       // Info Guardería (Derecha)
@@ -199,7 +244,7 @@ export class PdfService {
         .fontSize(14)
         .font('Helvetica-Bold')
         .text(nombre.toUpperCase(), 300, 50, { align: 'right', width: 245 });
-      
+
       doc
         .fontSize(10)
         .font('Helvetica')
@@ -218,7 +263,7 @@ export class PdfService {
         .fontSize(8)
         .font('Helvetica-Bold')
         .text('CLIENTE:', 50, currentY);
-      
+
       doc
         .fillColor(primaryColor)
         .fontSize(11)
@@ -239,8 +284,12 @@ export class PdfService {
         .fillColor(textColor)
         .text('Fecha:', rightColX, currentY + 15)
         .font('Helvetica-Bold')
-        .text(new Date(pago.fecha).toLocaleDateString('es-AR'), rightColX + 80, currentY + 15)
-        
+        .text(
+          new Date(pago.fecha).toLocaleDateString('es-AR'),
+          rightColX + 80,
+          currentY + 15,
+        )
+
         .font('Helvetica')
         .text('Método:', rightColX, currentY + 30)
         .font('Helvetica-Bold')
@@ -264,17 +313,19 @@ export class PdfService {
 
       doc.x = 50; // Asegurar que la tabla comience a la izquierda
       void doc.table(table, {
-        prepareHeader: () => doc.font('Helvetica-Bold').fontSize(9).fillColor(primaryColor),
-        prepareRow: () => doc.font('Helvetica').fontSize(9).fillColor(textColor),
+        prepareHeader: () =>
+          doc.font('Helvetica-Bold').fontSize(9).fillColor(primaryColor),
+        prepareRow: () =>
+          doc.font('Helvetica').fontSize(9).fillColor(textColor),
         padding: 5,
       });
 
       // --- SECCIÓN DE TOTAL ---
       doc.moveDown(2);
       const totalY = doc.y;
-      
+
       doc.rect(345, totalY, 200, 40).fill('#f8fafc');
-      
+
       doc
         .fillColor(primaryColor)
         .fontSize(10)
@@ -289,7 +340,7 @@ export class PdfService {
           `$${Number(pago.monto).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`,
           350,
           totalY + 12,
-          { align: 'right', width: 185 }
+          { align: 'right', width: 185 },
         );
 
       doc.end();

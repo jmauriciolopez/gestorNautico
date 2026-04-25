@@ -15,7 +15,6 @@ describe('MoraService', () => {
     userId: 1,
   } as any;
 
-
   const mockFactura = {
     id: 1,
     numero: 'FAC-0001',

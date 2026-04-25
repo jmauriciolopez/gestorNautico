@@ -10,8 +10,9 @@ export class CreateGuarderiaDto {
   @IsString()
   nombre: string;
 
+  @IsOptional()
   @IsString()
-  slug: string;
+  contacto?: string;
 
   @IsOptional()
   @IsString()

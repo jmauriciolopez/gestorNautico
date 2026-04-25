@@ -48,17 +48,18 @@ export class EmbarcacionesService extends BaseTenantService {
 
     this.applyTenantFilter(queryBuilder, tenant, 'embarcacion');
 
-    queryBuilder.addSelect((subQuery) => {
-      const sq = subQuery
-        .select('COUNT(cargo.id)', 'count')
-        .from('cargos', 'cargo')
-        .where('cargo.cliente_id = embarcacion.clienteId')
-        .andWhere('cargo.pagado = :pagado', { pagado: false });
-      
-      this.applyTenantFilter(sq, tenant, 'cargo');
-      return sq;
-    }, 'deudaCount')
-    .orderBy('embarcacion.createdAt', 'DESC');
+    queryBuilder
+      .addSelect((subQuery) => {
+        const sq = subQuery
+          .select('COUNT(cargo.id)', 'count')
+          .from('cargos', 'cargo')
+          .where('cargo.cliente_id = embarcacion.clienteId')
+          .andWhere('cargo.pagado = :pagado', { pagado: false });
+
+        this.applyTenantFilter(sq, tenant, 'cargo');
+        return sq;
+      }, 'deudaCount')
+      .orderBy('embarcacion.createdAt', 'DESC');
 
     if (search) {
       queryBuilder.andWhere(
@@ -119,9 +120,11 @@ export class EmbarcacionesService extends BaseTenantService {
     });
 
     if (!espacio) {
-      throw new BadRequestException(`El espacio ${espacioId} no pertenece a esta sede o no existe`);
+      throw new BadRequestException(
+        `El espacio ${espacioId} no pertenece a esta sede o no existe`,
+      );
     }
-    
+
     if (!espacio.rack) return;
 
     const largo = Number(espacio.rack.largo);
@@ -169,7 +172,9 @@ export class EmbarcacionesService extends BaseTenantService {
           where: this.buildTenantWhere(tenant, { id: dto.clienteId }),
         });
         if (!cliente) {
-          throw new BadRequestException(`El cliente ${dto.clienteId} no pertenece a esta sede`);
+          throw new BadRequestException(
+            `El cliente ${dto.clienteId} no pertenece a esta sede`,
+          );
         }
       }
 
@@ -196,7 +201,7 @@ export class EmbarcacionesService extends BaseTenantService {
 
       const nuevaEmbarcacion = boatRepo.create({
         ...dto,
-        guarderiaId: tenant.guarderiaId as number,
+        guarderiaId: tenant.guarderiaId,
       });
       const saved = await boatRepo.save(nuevaEmbarcacion);
 
@@ -252,7 +257,9 @@ export class EmbarcacionesService extends BaseTenantService {
           where: this.buildTenantWhere(tenant, { id: dto.clienteId }),
         });
         if (!cliente) {
-          throw new BadRequestException(`El cliente ${dto.clienteId} no pertenece a esta sede`);
+          throw new BadRequestException(
+            `El cliente ${dto.clienteId} no pertenece a esta sede`,
+          );
         }
       }
 
@@ -317,7 +324,11 @@ export class EmbarcacionesService extends BaseTenantService {
     return await this.dataSource.transaction(work);
   }
 
-  async remove(tenant: TenantContext, id: number, manager?: EntityManager): Promise<void> {
+  async remove(
+    tenant: TenantContext,
+    id: number,
+    manager?: EntityManager,
+  ): Promise<void> {
     const work = async (mgr: EntityManager) => {
       const boatRepo = mgr.getRepository(Embarcacion);
       const espRepo = mgr.getRepository(Espacio);

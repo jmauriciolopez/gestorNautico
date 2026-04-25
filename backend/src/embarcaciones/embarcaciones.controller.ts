@@ -46,7 +46,10 @@ export class EmbarcacionesController {
 
   @Post()
   @TenantRoles(Role.ADMIN, Role.SUPERVISOR)
-  create(@ActiveTenant() tenant: TenantContext, @Body() dto: CreateEmbarcacionDto) {
+  create(
+    @ActiveTenant() tenant: TenantContext,
+    @Body() dto: CreateEmbarcacionDto,
+  ) {
     return this.embarcacionesService.create(tenant, dto);
   }
 

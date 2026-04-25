@@ -8,7 +8,11 @@ import { CargosModule } from '../cargos/cargos.module';
 import { Cliente } from '../clientes/clientes.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Pago, Cliente]), CajasModule, CargosModule],
+  imports: [
+    TypeOrmModule.forFeature([Pago, Cliente]),
+    CajasModule,
+    CargosModule,
+  ],
   controllers: [PagosController],
   providers: [PagosService],
   exports: [PagosService],

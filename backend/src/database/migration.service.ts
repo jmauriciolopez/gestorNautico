@@ -13,9 +13,10 @@ export class MigrationService {
 
   async migrateToMultiTenant() {
     this.logger.log('🚀 Iniciando migración masiva a Multi-Tenant...');
-    
+
     // 1. Asegurar que existe la guardería por defecto
-    const defaultGuarderia = await this.seedGuarderiaService.ensureDefaultGuarderia();
+    const defaultGuarderia =
+      await this.seedGuarderiaService.ensureDefaultGuarderia();
     const guarderiaId = defaultGuarderia.id;
 
     // 2. Lista de tablas que requieren guarderiaId
@@ -36,7 +37,7 @@ export class MigrationService {
       'catalogo',
       'registros_servicios',
       'cajas',
-      'configuraciones'
+      'configuraciones',
     ];
 
     for (const table of tables) {
@@ -44,18 +45,24 @@ export class MigrationService {
         // Asignar guarderiaId = 1 a todos los registros que lo tengan NULL
         const query = `UPDATE "${table}" SET "guarderiaId" = $1 WHERE "guarderiaId" IS NULL`;
         const result = await this.dataSource.query(query, [guarderiaId]);
-        this.logger.log(`✅ Tabla "${table}": ${result[1] || 0} registros migrados.`);
+        this.logger.log(
+          `✅ Tabla "${table}": ${result[1] || 0} registros migrados.`,
+        );
       } catch (err) {
-        this.logger.warn(`⚠️ No se pudo migrar la tabla "${table}": ${err.message}`);
+        this.logger.warn(
+          `⚠️ No se pudo migrar la tabla "${table}": ${err.message}`,
+        );
       }
     }
 
     // 3. Casos especiales: Superadmin no debe tener guardería
     try {
       await this.dataSource.query(
-        `UPDATE "usuarios" SET "guarderiaId" = NULL WHERE "role" = 'SUPERADMIN'`
+        `UPDATE "usuarios" SET "guarderiaId" = NULL WHERE "role" = 'SUPERADMIN'`,
       );
-      this.logger.log('✅ Usuarios SUPERADMIN desvinculados de guarderías específicas.');
+      this.logger.log(
+        '✅ Usuarios SUPERADMIN desvinculados de guarderías específicas.',
+      );
     } catch (err) {
       this.logger.warn(`⚠️ No se pudo limpiar SUPERADMIN: ${err.message}`);
     }

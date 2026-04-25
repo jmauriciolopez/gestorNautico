@@ -21,9 +21,11 @@ import { TenantGuard } from '../auth/guards/tenant.guard';
 import { TenantRoles } from '../auth/decorators/tenant-roles.decorator';
 import { ActiveTenant } from '../auth/decorators/active-tenant.decorator';
 import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+import { GlobalRoute } from '../auth/decorators/global-route.decorator';
 
 @Controller('racks')
 @UseGuards(AuthTokenGuard, TenantGuard, RolesGuard)
+@GlobalRoute()
 export class RacksController {
   constructor(private readonly racksService: RacksService) {}
 

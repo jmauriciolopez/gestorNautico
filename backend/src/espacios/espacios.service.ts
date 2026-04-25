@@ -19,7 +19,10 @@ import {
 } from '../common/pagination/pagination.helper';
 
 @Injectable()
-export class EspaciosService extends BaseTenantService implements OnApplicationBootstrap {
+export class EspaciosService
+  extends BaseTenantService
+  implements OnApplicationBootstrap
+{
   private readonly logger = new Logger(EspaciosService.name);
 
   constructor(
@@ -50,7 +53,9 @@ export class EspaciosService extends BaseTenantService implements OnApplicationB
    * No debe ser expuesto como endpoint accesible por Admins.
    */
   async syncHealthGlobal() {
-    this.logger.log('Ejecutando diagnóstico GLOBAL de integridad de espacios...');
+    this.logger.log(
+      'Ejecutando diagnóstico GLOBAL de integridad de espacios...',
+    );
     let corregidos = 0;
 
     // 1. Limpiar embarcaciones INACTIVAS que aún tengan espacioId
@@ -102,7 +107,9 @@ export class EspaciosService extends BaseTenantService implements OnApplicationB
    * Este es el método seguro para exponer como endpoint.
    */
   async syncHealth(tenant: TenantContext) {
-    this.logger.log(`Ejecutando diagnóstico de integridad para guardería ${tenant.guarderiaId}...`);
+    this.logger.log(
+      `Ejecutando diagnóstico de integridad para guardería ${tenant.guarderiaId}...`,
+    );
     let corregidos = 0;
 
     const where = this.buildTenantWhere(tenant);
@@ -173,7 +180,7 @@ export class EspaciosService extends BaseTenantService implements OnApplicationB
   create(tenant: TenantContext, data: Partial<Espacio>) {
     const espacio = this.espacioRepo.create({
       ...data,
-      guarderiaId: tenant.guarderiaId as number,
+      guarderiaId: tenant.guarderiaId,
     });
     return this.espacioRepo.save(espacio);
   }

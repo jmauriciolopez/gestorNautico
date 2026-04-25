@@ -1,6 +1,6 @@
 // Refreshed after context refactor
 import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { queryClient } from './api/queryClient';
@@ -10,6 +10,8 @@ import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { Role } from './types';
 import AppLayout from './components/layout/AppLayout';
 import { Login } from './features/auth/Login';
+import { Signup } from './features/auth/Signup';
+import { OnboardingPage } from './features/onboarding/OnboardingPage';
 import { ThemeProvider } from './context/ThemeProvider';
 import { Toaster } from 'react-hot-toast';
 import { ConfirmProvider } from './shared/context/ConfirmProvider';
@@ -55,6 +57,25 @@ const LoginWrapper = () => {
   return <Login onLoginSuccess={login} />;
 };
 
+const SignupWrapper = () => {
+  const { isAuthenticated } = useAuth();
+  if (isAuthenticated) return <Navigate to="/" replace />;
+  return <Signup />;
+};
+
+// Wrapper para manejar el Onboarding como Modal Global
+const OnboardingWrapper = () => {
+  const { user } = useAuth();
+  const showOnboarding = user?.role === Role.ADMIN && !user.guarderia?.finalizoOnboarding;
+
+  return (
+    <>
+      {showOnboarding && <OnboardingPage />}
+      <Outlet />
+    </>
+  );
+};
+
 // Componente Unauthorized
 const Unauthorized = () => (
   <div className="flex h-screen items-center justify-center bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans">
@@ -88,43 +109,46 @@ function App() {
               <Suspense fallback={<LoadingScreen />}>
                 <Routes>
                   <Route path="/login" element={<LoginWrapper />} />
+                  <Route path="/signup" element={<SignupWrapper />} />
                   <Route path="/bajada-publica" element={<SolicitudBajadaPublica />} />
                   <Route path="/unauthorized" element={<Unauthorized />} />
                   <Route path="/select-tenant" element={<SelectTenantPage />} />
 
                   {/* Rutas Protegidas */}
                   <Route element={<ProtectedRoute />}>
-                    <Route path="/" element={<AppLayout />}>
-                      <Route index element={<DashboardRouter />} />
+                    <Route element={<OnboardingWrapper />}>
+                      <Route path="/" element={<AppLayout />}>
+                        <Route index element={<DashboardRouter />} />
 
-                      {/* Operativo — Lectura para todos, Escritura restringida */}
-                      <Route path="clientes" element={<ClientesList />} />
-                      <Route path="embarcaciones" element={<EmbarcacionesList />} />
-                      <Route path="operaciones" element={<OperacionesPage />} />
-                      <Route path="ayuda" element={<UserHelp />} />
+                        {/* Operativo — Lectura para todos, Escritura restringida */}
+                        <Route path="clientes" element={<ClientesList />} />
+                        <Route path="embarcaciones" element={<EmbarcacionesList />} />
+                        <Route path="operaciones" element={<OperacionesPage />} />
+                        <Route path="ayuda" element={<UserHelp />} />
 
-                      {/* Creación y Edición — Solo Supervisor en adelante */}
-                      <Route element={<ProtectedRoute allowedRoles={[Role.ADMIN, Role.SUPERADMIN, Role.SUPERVISOR]} />}>
-                        <Route path="clientes/nuevo" element={<ClienteForm />} />
-                        <Route path="clientes/editar/:id" element={<ClienteForm />} />
-                        <Route path="embarcaciones/nueva" element={<EmbarcacionForm />} />
-                        <Route path="embarcaciones/editar/:id" element={<EmbarcacionForm />} />
-                        <Route path="servicios" element={<ServiciosPage />} />
-                      </Route>
+                        {/* Creación y Edición — Solo Supervisor en adelante */}
+                        <Route element={<ProtectedRoute allowedRoles={[Role.ADMIN, Role.SUPERADMIN, Role.SUPERVISOR]} />}>
+                          <Route path="clientes/nuevo" element={<ClienteForm />} />
+                          <Route path="clientes/editar/:id" element={<ClienteForm />} />
+                          <Route path="embarcaciones/nueva" element={<EmbarcacionForm />} />
+                          <Route path="embarcaciones/editar/:id" element={<EmbarcacionForm />} />
+                          <Route path="servicios" element={<ServiciosPage />} />
+                        </Route>
 
-                      {/* Administración — Solo Admin y SuperAdmin */}
-                      <Route element={<ProtectedRoute allowedRoles={[Role.ADMIN, Role.SUPERADMIN]} />}>
-                        <Route path="finanzas" element={<FinanzasPage />} />
-                        <Route path="facturacion" element={<FacturacionPage />} />
-                        <Route path="reportes" element={<ReportesPage />} />
-                        <Route path="infraestructura" element={<InfraestructuraPage />} />
-                        <Route path="configuracion" element={<ConfiguracionPage />} />
-                        <Route path="usuarios/*" element={<UsersPage />} />
-                      </Route>
+                        {/* Administración — Solo Admin y SuperAdmin */}
+                        <Route element={<ProtectedRoute allowedRoles={[Role.ADMIN, Role.SUPERADMIN]} />}>
+                          <Route path="finanzas" element={<FinanzasPage />} />
+                          <Route path="facturacion" element={<FacturacionPage />} />
+                          <Route path="reportes" element={<ReportesPage />} />
+                          <Route path="infraestructura" element={<InfraestructuraPage />} />
+                          <Route path="configuracion" element={<ConfiguracionPage />} />
+                          <Route path="usuarios/*" element={<UsersPage />} />
+                        </Route>
 
-                      {/* Sedes — solo SuperAdmin */}
-                      <Route element={<ProtectedRoute allowedRoles={[Role.SUPERADMIN]} />}>
-                        <Route path="sedes" element={<GuarderiasPage />} />
+                        {/* Sedes — solo SuperAdmin */}
+                        <Route element={<ProtectedRoute allowedRoles={[Role.SUPERADMIN]} />}>
+                          <Route path="sedes" element={<GuarderiasPage />} />
+                        </Route>
                       </Route>
                     </Route>
                   </Route>

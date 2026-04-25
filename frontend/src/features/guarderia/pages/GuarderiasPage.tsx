@@ -125,8 +125,8 @@ export default function GuarderiasPage() {
                                                 {g.nombre}
                                             </h3>
                                             <div className="flex items-center gap-1.5 text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">
-                                                <Globe size={10} />
-                                                /{g.slug}
+                                                <Users size={10} />
+                                                {g.contacto}
                                             </div>
                                         </div>
                                     </div>

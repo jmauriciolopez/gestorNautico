@@ -8,10 +8,7 @@ import { Reflector } from '@nestjs/core';
 import { Role } from '../../users/user.entity';
 import { ALLOW_GLOBAL_KEY } from '../decorators/allow-global.decorator';
 import { IS_PUBLIC_KEY } from '../../auth/decorators/public.decorator';
-import {
-  JwtUser,
-  TenantContext,
-} from '../interfaces/tenant-context.interface';
+import { JwtUser, TenantContext } from '../interfaces/tenant-context.interface';
 
 @Injectable()
 export class TenantGuard implements CanActivate {
@@ -38,7 +35,9 @@ export class TenantGuard implements CanActivate {
       [context.getHandler(), context.getClass()],
     );
 
-    const headerTenant = this.normalizeTenantId(request.headers['x-guarderia-id']);
+    const headerTenant = this.normalizeTenantId(
+      request.headers['x-guarderia-id'],
+    );
     const queryTenant = this.normalizeTenantId(request.query?.guarderiaId);
     const requestedGuarderiaId = headerTenant || queryTenant || null;
 

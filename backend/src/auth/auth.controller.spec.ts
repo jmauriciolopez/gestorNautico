@@ -14,7 +14,6 @@ describe('AuthController', () => {
     userId: 1,
   } as any;
 
-
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AuthController],
