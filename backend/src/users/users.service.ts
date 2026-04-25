@@ -25,16 +25,20 @@ export class UsersService extends BaseTenantService {
     super();
   }
 
-  findAll(tenant: TenantContext, query: PaginationQuery = {}) {
-    return paginate(this.userRepository, query, {
+  async findAll(tenant: TenantContext, query: PaginationQuery = {}) {
+    const result = await paginate(this.userRepository, query, {
       where: this.buildTenantWhere(tenant),
+      relations: ['guarderia'],
       order: { id: 'ASC' },
     });
+    console.log(`[UsersService] Found ${result.data.length} users. First user guarderia:`, result.data[0]?.guarderia);
+    return result;
   }
 
   async findOne(tenant: TenantContext, id: number) {
     const user = await this.userRepository.findOne({
       where: this.buildTenantWhere(tenant, { id }),
+      relations: ['guarderia'],
     });
     if (!user)
       throw new NotFoundException(`Usuario con ID ${id} no encontrado`);

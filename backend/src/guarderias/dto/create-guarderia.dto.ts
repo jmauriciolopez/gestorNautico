@@ -49,4 +49,8 @@ export class CreateGuarderiaDto {
   @IsOptional()
   @IsString()
   pais?: string;
+
+  @IsOptional()
+  @IsString()
+  trialStartedAt?: string;
 }

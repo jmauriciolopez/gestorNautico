@@ -13,6 +13,7 @@ import { CatalogoService } from './catalogo.service';
 import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
 import { TenantGuard } from '../auth/guards/tenant.guard';
 import { TenantRoles } from '../auth/decorators/tenant-roles.decorator';
+import { RolesGuard } from '../auth/guards/roles.guard';
 import { Role } from '../users/user.entity';
 import { ActiveTenant } from '../auth/decorators/active-tenant.decorator';
 import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
@@ -20,7 +21,7 @@ import { TenantContext } from '../compartido/interfaces/tenant-context.interface
 import { Catalogo } from './catalogo.entity';
 
 @Controller('catalogo')
-@UseGuards(AuthTokenGuard, TenantGuard)
+@UseGuards(AuthTokenGuard, TenantGuard, RolesGuard)
 export class CatalogoController {
   constructor(private readonly catalogoService: CatalogoService) {}
 
@@ -41,7 +42,7 @@ export class CatalogoController {
   }
 
   @Post()
-  @TenantRoles(Role.SUPERADMIN, Role.ADMIN)
+  @TenantRoles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
   create(
     @ActiveTenant() tenant: TenantContext,
     @Body() data: Partial<Catalogo>,
@@ -50,7 +51,7 @@ export class CatalogoController {
   }
 
   @Put(':id')
-  @TenantRoles(Role.SUPERADMIN, Role.ADMIN)
+  @TenantRoles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
   update(
     @ActiveTenant() tenant: TenantContext,
     @Param('id') id: string,

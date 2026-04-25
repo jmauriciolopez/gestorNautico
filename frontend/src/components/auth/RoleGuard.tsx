@@ -21,6 +21,10 @@ export const RoleGuard = ({ allowedRoles, children, fallback = null }: RoleGuard
         return <>{fallback}</>;
     }
 
+    if (user.role === Role.SUPERADMIN) {
+        return <>{children}</>;
+    }
+
     if (!allowedRoles.includes(user.role)) {
         return <>{fallback}</>;
     }

@@ -47,9 +47,16 @@ export class AuthService {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
+    // Verificar si el usuario está activo
     if (!user.activo) {
       this.loginAttemptsService.recordFailure(identifier, ip);
-      throw new UnauthorizedException('Usuario inactivo');
+      throw new UnauthorizedException('Su cuenta está desactivada');
+    }
+
+    // Verificar si la marina está activa (Soft Delete 100%)
+    if (user.guarderiaId && user.guarderia && !user.guarderia.activo) {
+      this.loginAttemptsService.recordFailure(identifier, ip);
+      throw new UnauthorizedException('La marina asociada está desactivada');
     }
 
     this.loginAttemptsService.recordSuccess(identifier, ip);

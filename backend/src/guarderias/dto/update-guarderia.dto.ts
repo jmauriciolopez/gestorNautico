@@ -13,6 +13,10 @@ export class UpdateGuarderiaDto {
 
   @IsOptional()
   @IsString()
+  slug?: string;
+
+  @IsOptional()
+  @IsString()
   contacto?: string;
 
   @IsOptional()
@@ -54,4 +58,8 @@ export class UpdateGuarderiaDto {
   @IsOptional()
   @IsBoolean()
   finalizoOnboarding?: boolean;
+
+  @IsOptional()
+  @IsString()
+  trialStartedAt?: string;
 }

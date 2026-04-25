@@ -25,5 +25,10 @@ export interface Guarderia {
     email?: string;
     activo: boolean;
     logo?: string;
+    ciudad?: string;
+    pais?: string;
+    latitud?: number;
+    longitud?: number;
+    trialStartedAt?: string;
     finalizoOnboarding?: boolean;
 }

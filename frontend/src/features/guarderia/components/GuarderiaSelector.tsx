@@ -73,7 +73,7 @@ export const GuarderiaSelector = () => {
                             value={g.id.toString()}
                             className="bg-[var(--bg-secondary)] text-[var(--text-primary)]"
                         >
-                            {g.nombre}
+                            {g.nombre} {!g.activo ? '(Inactiva)' : ''}
                         </option>
                     ))}
                 </select>

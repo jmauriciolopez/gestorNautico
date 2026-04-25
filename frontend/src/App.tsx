@@ -133,13 +133,13 @@ function App() {
                           <Route path="embarcaciones/nueva" element={<EmbarcacionForm />} />
                           <Route path="embarcaciones/editar/:id" element={<EmbarcacionForm />} />
                           <Route path="servicios" element={<ServiciosPage />} />
+                          <Route path="reportes" element={<ReportesPage />} />
                         </Route>
 
                         {/* Administración — Solo Admin y SuperAdmin */}
                         <Route element={<ProtectedRoute allowedRoles={[Role.ADMIN, Role.SUPERADMIN]} />}>
                           <Route path="finanzas" element={<FinanzasPage />} />
                           <Route path="facturacion" element={<FacturacionPage />} />
-                          <Route path="reportes" element={<ReportesPage />} />
                           <Route path="infraestructura" element={<InfraestructuraPage />} />
                           <Route path="configuracion" element={<ConfiguracionPage />} />
                           <Route path="usuarios/*" element={<UsersPage />} />

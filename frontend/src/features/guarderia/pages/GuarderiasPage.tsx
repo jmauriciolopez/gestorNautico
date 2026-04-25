@@ -117,8 +117,12 @@ export default function GuarderiasPage() {
                             <div className="p-6 space-y-4">
                                 <div className="flex items-start justify-between">
                                     <div className="flex items-center gap-4">
-                                        <div className="w-14 h-14 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-primary)] flex items-center justify-center text-2xl font-black text-[var(--accent-primary)]">
-                                            {g.nombre.charAt(0)}
+                                        <div className="w-14 h-14 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-primary)] flex items-center justify-center text-2xl font-black text-[var(--accent-primary)] overflow-hidden">
+                                            {g.logo ? (
+                                                <img src={g.logo} alt={g.nombre} className="w-full h-full object-cover" />
+                                            ) : (
+                                                g.nombre.charAt(0)
+                                            )}
                                         </div>
                                         <div>
                                             <h3 className="font-black text-lg text-[var(--text-primary)] group-hover:text-[var(--accent-primary)] transition-colors">
@@ -139,17 +143,30 @@ export default function GuarderiasPage() {
 
                                 <div className="space-y-2.5 pt-2 border-t border-[var(--border-primary)]/50">
                                     <div className="flex items-center gap-2.5 text-sm text-[var(--text-secondary)] font-medium">
-                                        <MapPin size={14} className="text-[var(--text-muted)]" />
-                                        <span className="truncate">{g.direccion || 'Sin dirección'}</span>
+                                        <MapPin size={14} className="text-[var(--text-muted)] flex-shrink-0" />
+                                        <span className="truncate">
+                                            {g.direccion || 'Sin dirección'}
+                                            {(g.ciudad || g.pais) && (
+                                                <span className="text-[var(--text-muted)] ml-1">
+                                                    • {g.ciudad}{g.ciudad && g.pais ? ', ' : ''}{g.pais}
+                                                </span>
+                                            )}
+                                        </span>
                                     </div>
                                     <div className="flex items-center gap-2.5 text-sm text-[var(--text-secondary)] font-medium">
                                         <Phone size={14} className="text-[var(--text-muted)]" />
                                         <span>{g.telefono || 'Sin teléfono'}</span>
                                     </div>
                                     <div className="flex items-center gap-2.5 text-sm text-[var(--text-secondary)] font-medium">
-                                        <Mail size={14} className="text-[var(--text-muted)]" />
+                                        <Mail size={14} className="text-[var(--text-muted)] flex-shrink-0" />
                                         <span className="truncate">{g.email || 'Sin email'}</span>
                                     </div>
+                                    {g.trialStartedAt && (
+                                        <div className="flex items-center gap-2.5 text-sm text-[var(--text-secondary)] font-medium">
+                                            <Globe size={14} className="text-[var(--text-muted)] flex-shrink-0" />
+                                            <span>Trial: {new Date(g.trialStartedAt).toLocaleDateString('es-AR')}</span>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="flex items-center gap-2 pt-4">
@@ -166,12 +183,23 @@ export default function GuarderiasPage() {
                                     >
                                         <Edit2 size={16} />
                                     </button>
-                                    <button 
-                                        onClick={() => removeGuarderia.mutate(g.id)}
-                                        className="p-2.5 rounded-xl bg-red-500/5 border border-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
+                                    {g.activo ? (
+                                        <button 
+                                            onClick={() => removeGuarderia.mutate(g.id)}
+                                            className="p-2.5 rounded-xl bg-red-500/5 border border-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all"
+                                            title="Desactivar Sede"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    ) : (
+                                        <button 
+                                            onClick={() => updateGuarderia.mutate({ id: g.id, activo: true })}
+                                            className="p-2.5 rounded-xl bg-emerald-500/5 border border-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all"
+                                            title="Reactivar Sede"
+                                        >
+                                            <CheckCircle2 size={16} />
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </div>

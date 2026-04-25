@@ -13,6 +13,7 @@ export function UserList({ users, onEdit, onDelete, onCreateClick }: Props) {
         switch (rol) {
             case Role.SUPERADMIN: return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
             case Role.ADMIN: return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+            case Role.SUPERVISOR: return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
             case Role.OPERADOR: return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
             default: return 'bg-slate-500/10 text-[var(--text-secondary)] border-slate-500/20';
         }
@@ -40,6 +41,7 @@ export function UserList({ users, onEdit, onDelete, onCreateClick }: Props) {
                         <tr className="bg-[var(--bg-primary)]/30 border-b border-[var(--border-primary)]/50">
                             <th className="text-left px-8 py-5 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest">Usuario</th>
                             <th className="text-left px-8 py-5 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest">Rol</th>
+                            <th className="text-left px-8 py-5 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest">Marina / Sede</th>
                             <th className="text-center px-8 py-5 text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest">Acciones</th>
                         </tr>
                     </thead>
@@ -52,8 +54,19 @@ export function UserList({ users, onEdit, onDelete, onCreateClick }: Props) {
                                             <UserIcon size={18} />
                                         </div>
                                         <div className="flex flex-col">
-                                            <span className="font-bold text-[var(--text-primary)] group-hover:text-blue-400 transition-colors">{u.nombre}</span>
-                                            <span className="text-xs text-[var(--text-secondary)]">{u.usuario} | {u.email}</span>
+                                            <div className="flex items-center gap-2">
+                                                <span className={`font-bold transition-colors ${!u.activo ? 'text-[var(--text-muted)] italic' : 'text-[var(--text-primary)] group-hover:text-blue-400'}`}>
+                                                    {u.nombre}
+                                                </span>
+                                                {!u.activo && (
+                                                    <span className="px-1.5 py-0.5 bg-red-500/10 text-red-500 border border-red-500/20 rounded text-[9px] font-black uppercase tracking-tighter">
+                                                        Inactivo
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <span className={`text-xs ${!u.activo ? 'text-[var(--text-muted)]/50' : 'text-[var(--text-secondary)]'}`}>
+                                                {u.usuario} | {u.email}
+                                            </span>
                                         </div>
                                     </div>
                                 </td>
@@ -61,6 +74,20 @@ export function UserList({ users, onEdit, onDelete, onCreateClick }: Props) {
                                     <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${getRoleBadgeClass(u.role)}`}>
                                         {u.role}
                                     </span>
+                                </td>
+                                <td className="px-8 py-5">
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-medium text-[var(--text-primary)]">
+                                            {u.guarderia 
+                                                ? (u.guarderia.nombre || `Marina #${u.guarderiaId}`) 
+                                                : (u.role === Role.SUPERADMIN ? 'Acceso Global' : 'n/a')}
+                                        </span>
+                                        {u.guarderiaId && (
+                                            <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider">
+                                                ID: {u.guarderiaId}
+                                            </span>
+                                        )}
+                                    </div>
                                 </td>
                                 <td className="px-8 py-5">
                                     <div className="flex items-center justify-center gap-3">
@@ -84,7 +111,7 @@ export function UserList({ users, onEdit, onDelete, onCreateClick }: Props) {
                         ))}
                         {users.length === 0 && (
                             <tr>
-                                <td colSpan={3} className="px-8 py-16 text-center text-[var(--text-secondary)] italic">
+                                <td colSpan={4} className="px-8 py-16 text-center text-[var(--text-secondary)] italic">
                                     No hay usuarios registrados en el sistema.
                                 </td>
                             </tr>

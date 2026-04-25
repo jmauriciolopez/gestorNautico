@@ -17,6 +17,12 @@ export function GuarderiaFormModal({ isOpen, onClose, onSave, guarderia, isSubmi
         direccion: '',
         telefono: '',
         email: '',
+        ciudad: '',
+        pais: '',
+        logo: '',
+        latitud: 0,
+        longitud: 0,
+        trialStartedAt: '',
         activo: true,
     });
 
@@ -30,6 +36,12 @@ export function GuarderiaFormModal({ isOpen, onClose, onSave, guarderia, isSubmi
                 direccion: '',
                 telefono: '',
                 email: '',
+                ciudad: '',
+                pais: '',
+                logo: '',
+                latitud: 0,
+                longitud: 0,
+                trialStartedAt: '',
                 activo: true,
             });
         }
@@ -39,7 +51,19 @@ export function GuarderiaFormModal({ isOpen, onClose, onSave, guarderia, isSubmi
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSave(formData);
+        
+        // Solo enviar los campos que el DTO del backend espera
+        const { 
+            nombre, contacto, direccion, telefono, email, 
+            ciudad, pais, logo, latitud, longitud, 
+            trialStartedAt, activo 
+        } = formData;
+
+        onSave({ 
+            nombre, contacto, direccion, telefono, email, 
+            ciudad, pais, logo, latitud, longitud, 
+            trialStartedAt, activo 
+        });
     };
 
     return (
@@ -99,6 +123,15 @@ export function GuarderiaFormModal({ isOpen, onClose, onSave, guarderia, isSubmi
                             />
                         </div>
                         <div className="col-span-2">
+                            <label className="block text-xs font-black text-[var(--text-muted)] uppercase tracking-wider mb-1.5 ml-1">Inicio de Trial</label>
+                            <input
+                                type="date"
+                                value={formData.trialStartedAt ? new Date(formData.trialStartedAt).toISOString().split('T')[0] : ''}
+                                onChange={e => setFormData({ ...formData, trialStartedAt: e.target.value })}
+                                className="w-full px-4 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-primary)] text-[var(--text-primary)] focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
+                            />
+                        </div>
+                        <div className="col-span-2">
                             <label className="block text-xs font-black text-[var(--text-muted)] uppercase tracking-wider mb-1.5 ml-1">Dirección</label>
                             <input
                                 type="text"
@@ -107,6 +140,64 @@ export function GuarderiaFormModal({ isOpen, onClose, onSave, guarderia, isSubmi
                                 className="w-full px-4 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-primary)] text-[var(--text-primary)] focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
                                 placeholder="Av. Libertador 1234..."
                             />
+                        </div>
+
+                        {/* Nuevos campos importantes */}
+                        <div>
+                            <label className="block text-xs font-black text-[var(--text-muted)] uppercase tracking-wider mb-1.5 ml-1">Ciudad</label>
+                            <input
+                                type="text"
+                                value={formData.ciudad}
+                                onChange={e => setFormData({ ...formData, ciudad: e.target.value })}
+                                className="w-full px-4 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-primary)] text-[var(--text-primary)] focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
+                                placeholder="Ej: San Isidro"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-black text-[var(--text-muted)] uppercase tracking-wider mb-1.5 ml-1">País</label>
+                            <input
+                                type="text"
+                                value={formData.pais}
+                                onChange={e => setFormData({ ...formData, pais: e.target.value })}
+                                className="w-full px-4 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-primary)] text-[var(--text-primary)] focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
+                                placeholder="Ej: Argentina"
+                            />
+                        </div>
+
+                        <div className="col-span-2">
+                            <label className="block text-xs font-black text-[var(--text-muted)] uppercase tracking-wider mb-1.5 ml-1">URL del Logo</label>
+                            <input
+                                type="text"
+                                value={formData.logo}
+                                onChange={e => setFormData({ ...formData, logo: e.target.value })}
+                                className="w-full px-4 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-primary)] text-[var(--text-primary)] focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
+                                placeholder="https://..."
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 col-span-2">
+                            <div>
+                                <label className="block text-xs font-black text-[var(--text-muted)] uppercase tracking-wider mb-1.5 ml-1">Latitud</label>
+                                <input
+                                    type="number"
+                                    step="any"
+                                    value={formData.latitud}
+                                    onChange={e => setFormData({ ...formData, latitud: parseFloat(e.target.value) || 0 })}
+                                    className="w-full px-4 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-primary)] text-[var(--text-primary)] focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
+                                    placeholder="-34.4..."
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-black text-[var(--text-muted)] uppercase tracking-wider mb-1.5 ml-1">Longitud</label>
+                                <input
+                                    type="number"
+                                    step="any"
+                                    value={formData.longitud}
+                                    onChange={e => setFormData({ ...formData, longitud: parseFloat(e.target.value) || 0 })}
+                                    className="w-full px-4 py-3 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-primary)] text-[var(--text-primary)] focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all outline-none"
+                                    placeholder="-58.5..."
+                                />
+                            </div>
                         </div>
                     </div>
 

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { Guarderia } from './guarderia.entity';
 import { CreateGuarderiaDto } from './dto/create-guarderia.dto';
 import { UpdateGuarderiaDto } from './dto/update-guarderia.dto';
@@ -10,6 +10,7 @@ export class GuarderiaService {
   constructor(
     @InjectRepository(Guarderia)
     private readonly guarderiaRepository: Repository<Guarderia>,
+    private readonly dataSource: DataSource,
   ) {}
 
   async create(createGuarderiaDto: CreateGuarderiaDto): Promise<Guarderia> {
@@ -17,9 +18,10 @@ export class GuarderiaService {
     return this.guarderiaRepository.save(guarderia);
   }
 
-  async findAll(): Promise<Guarderia[]> {
+  async findAll(all: boolean = false): Promise<Guarderia[]> {
+    const where = all ? {} : { activo: true };
     return this.guarderiaRepository.find({
-      where: { activo: true },
+      where,
       order: { nombre: 'ASC' },
     });
   }
@@ -45,9 +47,19 @@ export class GuarderiaService {
 
   async remove(id: number): Promise<void> {
     const guarderia = await this.findOne(id);
-    // Soft delete - marcar como inactivo
-    guarderia.activo = false;
-    await this.guarderiaRepository.save(guarderia);
+    
+    await this.dataSource.transaction(async (manager) => {
+      // 1. Soft delete de la guardería
+      guarderia.activo = false;
+      await manager.save(guarderia);
+
+      // 2. Propagar soft delete a los usuarios (Cascada manual)
+      // Importamos las entidades dinámicamente o por nombre para evitar circulares si fuera necesario,
+      // pero aquí usaremos la clase User directamente si está disponible.
+      await manager.update('User', { guarderiaId: id }, { activo: false });
+      
+      // Podríamos agregar más entidades aquí (Embarcaciones, etc.) si se desea un "desmantelamiento" total
+    });
   }
 
 }

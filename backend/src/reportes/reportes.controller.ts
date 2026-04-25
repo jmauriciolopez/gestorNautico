@@ -2,13 +2,14 @@ import { Controller, Get, UseGuards, Query } from '@nestjs/common';
 import { ReportesService } from './reportes.service';
 import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
 import { TenantGuard } from '../auth/guards/tenant.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
 import { TenantRoles } from '../auth/decorators/tenant-roles.decorator';
 import { Role } from '../users/user.entity';
 import { ActiveTenant } from '../auth/decorators/active-tenant.decorator';
 import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
 
 @Controller('reportes')
-@UseGuards(AuthTokenGuard, TenantGuard)
+@UseGuards(AuthTokenGuard, TenantGuard, RolesGuard)
 @TenantRoles(Role.SUPERADMIN, Role.ADMIN, Role.SUPERVISOR)
 export class ReportesController {
   constructor(private readonly reportesService: ReportesService) {}

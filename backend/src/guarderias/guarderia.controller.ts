@@ -36,7 +36,7 @@ export class GuarderiaController {
   @Roles(Role.SUPERADMIN)
   @GlobalRoute()
   findAll() {
-    return this.guarderiaService.findAll();
+    return this.guarderiaService.findAll(true);
   }
 
   @Get(':id')
