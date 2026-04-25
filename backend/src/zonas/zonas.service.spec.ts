@@ -7,6 +7,14 @@ import { Zona } from './zona.entity';
 describe('ZonasService', () => {
   let service: ZonasService;
 
+  const mockTenant = {
+    guarderiaId: 1,
+    scope: 'guarderia' as any,
+    role: 'SUPERADMIN' as any,
+    userId: 1,
+  } as any;
+
+
   const mockZona = {
     id: 1,
     nombre: 'Zona Test',
@@ -49,7 +57,7 @@ describe('ZonasService', () => {
     it('should return paginated zonas', async () => {
       mockRepository.findAndCount.mockResolvedValue([[mockZona], 1]);
 
-      const result = await service.findAll({});
+      const result = await service.findAll(mockTenant, {});
       expect(result.data).toBeDefined();
       expect(result.total).toBe(1);
     });
@@ -59,14 +67,14 @@ describe('ZonasService', () => {
     it('should return a zona by id', async () => {
       mockRepository.findOne.mockResolvedValue(mockZona);
 
-      const result = await service.findOne(1);
+      const result = await service.findOne(mockTenant, 1);
       expect(result).toEqual(mockZona);
     });
 
     it('should throw NotFoundException if zona not found', async () => {
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne(999)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(mockTenant, 999)).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -77,7 +85,7 @@ describe('ZonasService', () => {
 
       const createDto = { nombre: 'Zona Test' };
 
-      const result = await service.create(createDto);
+      const result = await service.create(mockTenant, createDto);
       expect(result).toEqual(mockZona);
     });
 
@@ -85,7 +93,7 @@ describe('ZonasService', () => {
       mockRepository.create.mockImplementation((data: any): any => data);
       mockRepository.save.mockResolvedValue({ ...mockZona, ubicacionId: null });
 
-      await service.create({ nombre: 'Zona Test', ubicacionId: 0 });
+      await service.create(mockTenant, { nombre: 'Zona Test', ubicacionId: 0 });
       expect(mockRepository.create).toHaveBeenCalledWith({
         nombre: 'Zona Test',
         ubicacionId: null,
@@ -101,7 +109,7 @@ describe('ZonasService', () => {
         .mockResolvedValueOnce(mockZona)
         .mockResolvedValueOnce({ ...mockZona, nombre: 'Updated' });
 
-      const result = await service.update(1, { nombre: 'Updated' });
+      const result = await service.update(mockTenant, 1, { nombre: 'Updated' });
       expect(result).toBeDefined();
     });
   });
@@ -111,7 +119,7 @@ describe('ZonasService', () => {
       mockRepository.findOne.mockResolvedValue(mockZona);
       mockRepository.remove.mockResolvedValue(mockZona);
 
-      await service.remove(1);
+      await service.remove(mockTenant, 1);
       expect(mockRepository.remove).toHaveBeenCalled();
     });
   });

@@ -11,6 +11,14 @@ jest.mock('bcrypt');
 
 describe('AuthService', () => {
   let service: AuthService;
+
+  const mockTenant = {
+    guarderiaId: 1,
+    scope: 'guarderia' as any,
+    role: 'SUPERADMIN' as any,
+    userId: 1,
+  } as any;
+
   let usersService: UsersService;
 
   const mockUser = {

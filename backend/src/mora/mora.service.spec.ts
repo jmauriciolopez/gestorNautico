@@ -8,6 +8,14 @@ import { NotificacionesService } from '../notificaciones/notificaciones.service'
 describe('MoraService', () => {
   let service: MoraService;
 
+  const mockTenant = {
+    guarderiaId: 1,
+    scope: 'guarderia' as any,
+    role: 'SUPERADMIN' as any,
+    userId: 1,
+  } as any;
+
+
   const mockFactura = {
     id: 1,
     numero: 'FAC-0001',
@@ -73,7 +81,7 @@ describe('MoraService', () => {
         .mockResolvedValueOnce(10)
         .mockResolvedValueOnce(5);
 
-      const result = await service.getConfiguracion();
+      const result = await service.getConfiguracion(mockTenant);
       expect(result).toEqual({
         tasaInteres: 3,
         tasaRecargo: 10,
@@ -89,7 +97,7 @@ describe('MoraService', () => {
         estado: EstadoFactura.PAGADA,
       });
 
-      const result = await service.calcularMora(1);
+      const result = await service.calcularMora(mockTenant, 1);
       expect(result.totalMora).toBe(0);
     });
 
@@ -102,7 +110,7 @@ describe('MoraService', () => {
         fechaVencimiento: fechaVencida,
       });
 
-      const result = await service.calcularMora(1);
+      const result = await service.calcularMora(mockTenant, 1);
       expect(result).toBeDefined();
       expect(result.diasAtraso).toBeGreaterThan(0);
     });
@@ -115,7 +123,7 @@ describe('MoraService', () => {
         estado: EstadoFactura.PAGADA,
       });
 
-      await expect(service.aplicarMora(1)).rejects.toThrow();
+      await expect(service.aplicarMora(mockTenant, 1)).rejects.toThrow();
     });
 
     it('should apply mora to overdue factura', async () => {
@@ -132,7 +140,7 @@ describe('MoraService', () => {
         interesMoratorio: 10,
       });
 
-      const result = await service.aplicarMora(1);
+      const result = await service.aplicarMora(mockTenant, 1);
       expect(result).toBeDefined();
     });
   });
@@ -141,7 +149,7 @@ describe('MoraService', () => {
     it('should return facturas with mora', async () => {
       mockRepository.find.mockResolvedValue([mockFactura]);
 
-      const result = await service.getFacturasConMora();
+      const result = await service.getFacturasConMora(mockTenant);
       expect(result).toBeDefined();
     });
   });

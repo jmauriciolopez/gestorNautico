@@ -13,6 +13,14 @@ import { EstadoEmbarcacion } from '../embarcaciones/embarcaciones.entity';
 
 describe('MovimientosService', () => {
   let service: MovimientosService;
+
+  const mockTenant = {
+    guarderiaId: 1,
+    scope: 'guarderia' as any,
+    role: 'SUPERADMIN' as any,
+    userId: 1,
+  } as any;
+
   let movimientoRepo: any;
   let pedidoRepo: any;
   let solicitudRepo: any;
@@ -92,14 +100,14 @@ describe('MovimientosService', () => {
       const mockData = [[mockMovimiento], 1];
       movimientoRepo.findAndCount.mockResolvedValue(mockData);
 
-      const result = await service.findAll();
+      const result = await service.findAll(mockTenant);
       expect(result.data).toEqual([mockMovimiento]);
       expect(result.total).toBe(1);
     });
 
     it('should filter by search', async () => {
       movimientoRepo.findAndCount.mockResolvedValue([[], 0]);
-      await service.findAll({ search: 'test' });
+      await service.findAll(mockTenant, { search: 'test' });
       expect(movimientoRepo.findAndCount).toHaveBeenCalledWith(expect.objectContaining({
         where: expect.any(Array)
       }));
@@ -107,7 +115,7 @@ describe('MovimientosService', () => {
 
     it('should filter by embarcacionId', async () => {
       movimientoRepo.findAndCount.mockResolvedValue([[], 0]);
-      await service.findAll({ embarcacionId: 1 });
+      await service.findAll(mockTenant, { embarcacionId: 1 });
       expect(movimientoRepo.findAndCount).toHaveBeenCalledWith(expect.objectContaining({
         where: { embarcacion: { id: 1 } }
       }));
@@ -117,13 +125,13 @@ describe('MovimientosService', () => {
   describe('findOne', () => {
     it('should return a movement', async () => {
       movimientoRepo.findOne.mockResolvedValue(mockMovimiento);
-      const result = await service.findOne(1);
+      const result = await service.findOne(mockTenant, 1);
       expect(result).toEqual(mockMovimiento);
     });
 
     it('should throw NotFoundException if movement not found', async () => {
       movimientoRepo.findOne.mockResolvedValue(null);
-      await expect(service.findOne(1)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(mockTenant, 1)).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -149,7 +157,7 @@ describe('MovimientosService', () => {
       pedidoRepo.findOne.mockResolvedValue(null);
       solicitudRepo.findOne.mockResolvedValue(null);
 
-      const result = await service.create(dto);
+      const result = await service.create(mockTenant, dto);
       expect(result).toBeDefined();
       expect(embarcacionesService.update).toHaveBeenCalledWith(1, { estado_operativo: EstadoEmbarcacion.EN_CUNA }, undefined);
       expect(pedidoRepo.create).toHaveBeenCalled();
@@ -159,7 +167,7 @@ describe('MovimientosService', () => {
     it('should handle ENTRADA movement with existing pedido', async () => {
       pedidoRepo.findOne.mockResolvedValue({ id: 5 });
       
-      await service.create(dto);
+      await service.create(mockTenant, dto);
       expect(pedidoRepo.update).toHaveBeenCalledWith(5, { estado: EstadoPedido.FINALIZADO });
     });
 
@@ -167,7 +175,7 @@ describe('MovimientosService', () => {
       pedidoRepo.findOne.mockResolvedValue(null);
       solicitudRepo.findOne.mockResolvedValue({ id: 8 });
       
-      await service.create(dto);
+      await service.create(mockTenant, dto);
       expect(solicitudRepo.update).toHaveBeenCalledWith(8, { estado: EstadoSolicitud.FINALIZADA });
     });
 
@@ -183,7 +191,7 @@ describe('MovimientosService', () => {
 
       configuracionService.getValor.mockResolvedValue('18:00');
       
-      await service.create(dto);
+      await service.create(mockTenant, dto);
       expect(movimientoRepo.create).toHaveBeenCalledWith(expect.objectContaining({
         fueraHora: true
       }));
@@ -195,7 +203,7 @@ describe('MovimientosService', () => {
       const salidaDto = { ...dto, tipo: TipoMovimiento.SALIDA };
       pedidoRepo.findOne.mockResolvedValue({ id: 5 });
       
-      await service.create(salidaDto);
+      await service.create(mockTenant, salidaDto);
       expect(pedidoRepo.update).toHaveBeenCalledWith(5, { estado: EstadoPedido.EN_AGUA });
     });
 
@@ -204,7 +212,7 @@ describe('MovimientosService', () => {
       pedidoRepo.findOne.mockResolvedValue(null);
       solicitudRepo.findOne.mockResolvedValue({ id: 8 });
       
-      await service.create(salidaDto);
+      await service.create(mockTenant, salidaDto);
       expect(solicitudRepo.update).toHaveBeenCalledWith(8, { estado: EstadoSolicitud.EN_AGUA });
     });
 
@@ -213,7 +221,7 @@ describe('MovimientosService', () => {
       pedidoRepo.findOne.mockResolvedValue(null);
       solicitudRepo.findOne.mockResolvedValue(null);
 
-      await service.create(salidaDto);
+      await service.create(mockTenant, salidaDto);
       expect(embarcacionesService.update).toHaveBeenCalledWith(1, { estado_operativo: EstadoEmbarcacion.EN_AGUA }, undefined);
       expect(pedidoRepo.create).toHaveBeenCalled();
     });
@@ -222,7 +230,7 @@ describe('MovimientosService', () => {
       const mockManager = {
         getRepository: jest.fn().mockReturnValue(movimientoRepo),
       };
-      await service.create(dto, mockManager as any);
+      await service.create(mockTenant, dto, mockManager as any);
       expect(mockManager.getRepository).toHaveBeenCalledWith(Movimiento);
     });
 
@@ -230,7 +238,7 @@ describe('MovimientosService', () => {
       embarcacionesService.findOne.mockResolvedValue({ id: 1, nombre: 'Boat', espacio: null });
       const noSpaceDto = { ...dto, espacioId: null };
       
-      await service.create(noSpaceDto);
+      await service.create(mockTenant, noSpaceDto);
       expect(movimientoRepo.create).toHaveBeenCalledWith(expect.objectContaining({
         espacio: null
       }));
@@ -238,7 +246,7 @@ describe('MovimientosService', () => {
 
     it('should remove a movement', async () => {
       movimientoRepo.findOne.mockResolvedValue(mockMovimiento);
-      await service.remove(1);
+      await service.remove(mockTenant, 1);
       expect(movimientoRepo.remove).toHaveBeenCalledWith(mockMovimiento);
     });
   });

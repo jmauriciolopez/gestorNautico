@@ -150,11 +150,10 @@ export class PedidosService extends BaseTenantService {
 
       // Validar si ya existe una solicitud activa en el Portal Web
       const solicitudActiva = await solRepo.findOne({
-        where: {
+        where: this.buildTenantWhere(tenant, {
           embarcacionId: embarcacionId,
           estado: In([EstadoSolicitud.PENDIENTE, EstadoSolicitud.EN_AGUA]),
-          guarderiaId: tenant.guarderiaId as number,
-        },
+        }),
       });
 
       if (solicitudActiva) {
@@ -171,7 +170,7 @@ export class PedidosService extends BaseTenantService {
       const guardado = await pedRepo.save(nuevo);
 
       const pedidox = await manager.findOne(Pedido, {
-        where: { id: guardado.id, guarderiaId: tenant.guarderiaId as number },
+        where: this.buildTenantWhere(tenant, { id: guardado.id }),
         relations: ['embarcacion'],
       });
 
@@ -194,7 +193,7 @@ export class PedidosService extends BaseTenantService {
   async updateEstado(tenant: TenantContext, id: number, estado: EstadoPedido) {
     return await this.dataSource.transaction(async (manager) => {
       const pedido = await manager.findOne(Pedido, {
-        where: { id, guarderiaId: tenant.guarderiaId as number },
+        where: this.buildTenantWhere(tenant, { id }),
         relations: ['embarcacion'],
       });
 
@@ -204,7 +203,7 @@ export class PedidosService extends BaseTenantService {
 
       await manager.update(
         Pedido,
-        { id, guarderiaId: tenant.guarderiaId as number },
+        this.buildTenantWhere(tenant, { id }),
         { estado },
       );
 
@@ -245,7 +244,7 @@ export class PedidosService extends BaseTenantService {
       });
 
       return await manager.findOne(Pedido, {
-        where: { id, guarderiaId: tenant.guarderiaId as number },
+        where: this.buildTenantWhere(tenant, { id }),
         relations: ['embarcacion'],
       });
     });

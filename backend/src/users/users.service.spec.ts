@@ -11,6 +11,14 @@ jest.mock('bcrypt');
 describe('UsersService', () => {
   let service: UsersService;
 
+  const mockTenant = {
+    guarderiaId: 1,
+    scope: 'guarderia' as any,
+    role: 'SUPERADMIN' as any,
+    userId: 1,
+  } as any;
+
+
   const mockUser = {
     id: 1,
     usuario: 'testuser',
@@ -60,7 +68,7 @@ describe('UsersService', () => {
 
   describe('findAll', () => {
     it('should return paginated users', async () => {
-      const result = await service.findAll();
+      const result = await service.findAll(mockTenant);
       expect(result.data).toEqual([mockUser]);
       expect(mockRepository.findAndCount).toHaveBeenCalled();
     });
@@ -68,13 +76,13 @@ describe('UsersService', () => {
 
   describe('findOne', () => {
     it('should return a user', async () => {
-      const result = await service.findOne(1);
+      const result = await service.findOne(mockTenant, 1);
       expect(result).toEqual(mockUser);
     });
 
     it('should throw NotFoundException', async () => {
       mockRepository.findOneBy.mockResolvedValueOnce(null);
-      await expect(service.findOne(999)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(mockTenant, 999)).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -87,14 +95,14 @@ describe('UsersService', () => {
         clave: 'abc',
         nombre: 'New',
       };
-      const result = await service.create(dto);
+      const result = await service.create(mockTenant, dto);
       expect(mockRepository.save).toHaveBeenCalled();
       expect(result.id).toBe(1);
     });
 
     it('should throw ConflictException if username exists', async () => {
       const dto = { usuario: 'testuser' };
-      await expect(service.create(dto as CreateUserDto)).rejects.toThrow(
+      await expect(service.create(mockTenant, dto as CreateUserDto)).rejects.toThrow(
         ConflictException,
       );
     });
@@ -103,7 +111,7 @@ describe('UsersService', () => {
   describe('update', () => {
     it('should update a user', async () => {
       const dto = { nombre: 'Updated' };
-      const result = await service.update(1, dto);
+      const result = await service.update(mockTenant, 1, dto);
       expect(mockRepository.save).toHaveBeenCalled();
       expect(result.nombre).toBe('Updated');
     });
@@ -111,7 +119,7 @@ describe('UsersService', () => {
 
   describe('remove', () => {
     it('should remove a user', async () => {
-      const result = await service.remove(1);
+      const result = await service.remove(mockTenant, 1);
       expect(mockRepository.remove).toHaveBeenCalled();
       expect(result.message).toBe('Usuario eliminado correctamente');
     });

@@ -129,7 +129,7 @@ export class RegistrosService extends BaseTenantService {
 
   async update(tenant: TenantContext, id: number, data: Partial<RegistroServicio>) {
     await this.findOne(tenant, id);
-    await this.registroRepo.update({ id, guarderiaId: tenant.guarderiaId }, data);
+    await this.registroRepo.update(this.buildTenantWhere(tenant, { id }), data);
     return this.findOne(tenant, id);
   }
 

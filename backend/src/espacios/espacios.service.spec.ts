@@ -8,6 +8,14 @@ import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
 describe('EspaciosService', () => {
   let service: EspaciosService;
 
+  const mockTenant = {
+    guarderiaId: 1,
+    scope: 'guarderia' as any,
+    role: 'SUPERADMIN' as any,
+    userId: 1,
+  } as any;
+
+
   const mockEspacio = {
     id: 1,
     numero: 'RACK-01-P1F1C1',
@@ -63,7 +71,7 @@ describe('EspaciosService', () => {
     it('should return paginated espacios', async () => {
       mockRepository.findAndCount.mockResolvedValue([[mockEspacio], 1]);
 
-      const result = await service.findAll({});
+      const result = await service.findAll(mockTenant, {});
       expect(result.data).toBeDefined();
       expect(result.total).toBe(1);
     });
@@ -73,14 +81,14 @@ describe('EspaciosService', () => {
     it('should return a espacio by id', async () => {
       mockRepository.findOne.mockResolvedValue(mockEspacio);
 
-      const result = await service.findOne(1);
+      const result = await service.findOne(mockTenant, 1);
       expect(result).toEqual(mockEspacio);
     });
 
     it('should throw NotFoundException if espacio not found', async () => {
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne(999)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(mockTenant, 999)).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -91,7 +99,7 @@ describe('EspaciosService', () => {
 
       const createDto = { numero: 'RACK-01-P1F1C1', rackId: 1 };
 
-      const result = await service.create(createDto);
+      const result = await service.create(mockTenant, createDto);
       expect(result).toEqual(mockEspacio);
     });
   });
@@ -104,7 +112,7 @@ describe('EspaciosService', () => {
         .mockResolvedValueOnce(mockEspacio)
         .mockResolvedValueOnce({ ...mockEspacio, numero: 'UPDATED' });
 
-      const result = await service.update(1, { numero: 'UPDATED' });
+      const result = await service.update(mockTenant, 1, { numero: 'UPDATED' });
       expect(result).toBeDefined();
     });
   });
@@ -114,7 +122,7 @@ describe('EspaciosService', () => {
       mockRepository.findOne.mockResolvedValue(mockEspacio);
       mockRepository.remove.mockResolvedValue(mockEspacio);
 
-      await service.remove(1);
+      await service.remove(mockTenant, 1);
       expect(mockRepository.remove).toHaveBeenCalled();
     });
 
@@ -123,7 +131,7 @@ describe('EspaciosService', () => {
       mockRepository.findOne.mockResolvedValue(espacioConEmbarcacion);
       mockRepository.remove.mockResolvedValue(espacioConEmbarcacion);
 
-      await service.remove(1);
+      await service.remove(mockTenant, 1);
       expect(mockEmbarcacionRepo.update).toHaveBeenCalledWith(1, {
         espacioId: null,
       });
@@ -134,7 +142,7 @@ describe('EspaciosService', () => {
     it('should return estadisticas', async () => {
       mockRepository.count.mockResolvedValueOnce(100).mockResolvedValueOnce(60);
 
-      const result = await service.getEstadisticas();
+      const result = await service.getEstadisticas(mockTenant);
       expect(result).toEqual({
         total: 100,
         ocupados: 60,
@@ -146,7 +154,7 @@ describe('EspaciosService', () => {
     it('should handle zero total', async () => {
       mockRepository.count.mockResolvedValue(0);
 
-      const result = await service.getEstadisticas();
+      const result = await service.getEstadisticas(mockTenant);
       expect(result).toEqual({
         total: 0,
         ocupados: 0,

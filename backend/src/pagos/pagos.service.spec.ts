@@ -9,6 +9,14 @@ import { CargosService } from '../cargos/cargos.service';
 describe('PagosService', () => {
   let service: PagosService;
 
+  const mockTenant = {
+    guarderiaId: 1,
+    scope: 'guarderia' as any,
+    role: 'SUPERADMIN' as any,
+    userId: 1,
+  } as any;
+
+
   const mockPago = {
     id: 1,
     monto: 100,
@@ -71,7 +79,7 @@ describe('PagosService', () => {
     it('should return paginated pagos', async () => {
       mockRepository.findAndCount.mockResolvedValue([[mockPago], 1]);
 
-      const result = await service.findAll({});
+      const result = await service.findAll(mockTenant, {});
       expect(result.data).toBeDefined();
       expect(result.total).toBe(1);
     });
@@ -81,14 +89,14 @@ describe('PagosService', () => {
     it('should return a pago by id', async () => {
       mockRepository.findOne.mockResolvedValue(mockPago);
 
-      const result = await service.findOne(1);
+      const result = await service.findOne(mockTenant, 1);
       expect(result).toEqual(mockPago);
     });
 
     it('should throw NotFoundException if pago not found', async () => {
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne(999)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(mockTenant, 999)).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -105,7 +113,7 @@ describe('PagosService', () => {
         metodo: MetodoPago.EFECTIVO,
       };
 
-      const result = await service.create(createDto);
+      const result = await service.create(mockTenant, createDto);
       expect(result).toEqual(mockPago);
     });
 
@@ -118,7 +126,7 @@ describe('PagosService', () => {
         metodo: MetodoPago.EFECTIVO,
       };
 
-      await expect(service.create(createDto)).rejects.toThrow(
+      await expect(service.create(mockTenant, createDto)).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -139,7 +147,7 @@ describe('PagosService', () => {
         cargoId: 1,
       };
 
-      await service.create(createDto);
+      await service.create(mockTenant, createDto);
       expect(mockCargosService.setPagado).toHaveBeenCalledWith(1, true);
     });
   });
@@ -150,7 +158,7 @@ describe('PagosService', () => {
       mockRepository.findOne.mockResolvedValue(pagoWithCargo);
       mockRepository.remove.mockResolvedValue(pagoWithCargo);
 
-      await service.remove(1);
+      await service.remove(mockTenant, 1);
       expect(mockCargosService.setPagado).toHaveBeenCalledWith(1, false);
       expect(mockRepository.remove).toHaveBeenCalled();
     });
@@ -159,7 +167,7 @@ describe('PagosService', () => {
       mockRepository.findOne.mockResolvedValue(mockPago);
       mockRepository.remove.mockResolvedValue(mockPago);
 
-      await service.remove(1);
+      await service.remove(mockTenant, 1);
       expect(mockRepository.remove).toHaveBeenCalled();
       expect(mockCargosService.setPagado).not.toHaveBeenCalled();
     });

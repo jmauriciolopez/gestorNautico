@@ -9,6 +9,14 @@ import { MailerService } from '@nestjs-modules/mailer';
 describe('NotificacionesService', () => {
   let service: NotificacionesService;
 
+  const mockTenant = {
+    guarderiaId: 1,
+    scope: 'guarderia' as any,
+    role: 'SUPERADMIN' as any,
+    userId: 1,
+  } as any;
+
+
   const mockNotificacion = {
     id: 1,
     titulo: 'Test Notification',
@@ -69,7 +77,7 @@ describe('NotificacionesService', () => {
         'test@example.com',
         'Test Subject',
         'test-template',
-        { name: 'Test' },
+        { name: 'Test' } as any,
       );
       expect(mockMailerService.sendMail).toHaveBeenCalled();
     });
@@ -79,7 +87,7 @@ describe('NotificacionesService', () => {
     it('should return paginated notifications for user', async () => {
       mockRepository.findAndCount.mockResolvedValue([[mockNotificacion], 1]);
 
-      const result = await service.findAllByUser(1, {});
+      const result = await service.findAllByUser(mockTenant, 1, {});
       expect(result.data).toBeDefined();
       expect(result.total).toBe(1);
     });
@@ -90,7 +98,7 @@ describe('NotificacionesService', () => {
       mockRepository.create.mockReturnValue(mockNotificacion);
       mockRepository.save.mockResolvedValue(mockNotificacion);
 
-      const result = await service.create({
+      const result = await service.create(mockTenant, {
         usuarioId: 1,
         titulo: 'Test Notification',
         mensaje: 'Test message',
@@ -112,7 +120,7 @@ describe('NotificacionesService', () => {
         mockNotificacion,
       ]);
 
-      await service.createForRole(Role.ADMIN, {
+      await service.createForRole(mockTenant, Role.ADMIN, {
         titulo: 'Test',
         mensaje: 'Test message',
       });
@@ -128,14 +136,14 @@ describe('NotificacionesService', () => {
         leida: true,
       });
 
-      const result = await service.markAsRead(1, 1);
+      const result = await service.markAsRead(mockTenant, 1, 1);
       expect(result.leida).toBe(true);
     });
 
     it('should throw NotFoundException if notification not found', async () => {
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.markAsRead(999, 1)).rejects.toThrow(
+      await expect(service.markAsRead(mockTenant, 999, 1)).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -145,7 +153,7 @@ describe('NotificacionesService', () => {
     it('should mark all notifications as read for user', async () => {
       mockRepository.update.mockResolvedValue({});
 
-      await service.markAllAsRead(1);
+      await service.markAllAsRead(mockTenant, 1);
       expect(mockRepository.update).toHaveBeenCalled();
     });
   });
@@ -154,14 +162,14 @@ describe('NotificacionesService', () => {
     it('should delete a notification', async () => {
       mockRepository.delete.mockResolvedValue({ affected: 1 });
 
-      await service.delete(1, 1);
+      await service.delete(mockTenant, 1, 1);
       expect(mockRepository.delete).toHaveBeenCalled();
     });
 
     it('should throw NotFoundException if notification not found', async () => {
       mockRepository.delete.mockResolvedValue({ affected: 0 });
 
-      await expect(service.delete(999, 1)).rejects.toThrow(NotFoundException);
+      await expect(service.delete(mockTenant, 999, 1)).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -169,7 +177,7 @@ describe('NotificacionesService', () => {
     it('should return recent global notifications', async () => {
       mockRepository.find.mockResolvedValue([mockNotificacion]);
 
-      const result = await service.findAllRecentGlobal();
+      const result = await service.findAllRecentGlobal(mockTenant);
       expect(result).toBeDefined();
     });
   });

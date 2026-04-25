@@ -10,6 +10,14 @@ import { DataSource } from 'typeorm';
 describe('EmbarcacionesService', () => {
   let service: EmbarcacionesService;
 
+  const mockTenant = {
+    guarderiaId: 1,
+    scope: 'guarderia' as any,
+    role: 'SUPERADMIN' as any,
+    userId: 1,
+  } as any;
+
+
   const mockEmbarcacion = {
     id: 1,
     nombre: 'Test Boat',
@@ -107,13 +115,13 @@ describe('EmbarcacionesService', () => {
 
   describe('findAll', () => {
     it('should return paginated embarcaciones', async () => {
-      const result = await service.findAll({});
+      const result = await service.findAll(mockTenant, {});
       expect(result).toBeDefined();
       expect(mockRepository.createQueryBuilder).toHaveBeenCalled();
     });
 
     it('should filter by search term', async () => {
-      await service.findAll({ search: 'Test' });
+      await service.findAll(mockTenant, { search: 'Test' });
       expect(mockRepository.createQueryBuilder).toHaveBeenCalled();
     });
   });
@@ -122,14 +130,14 @@ describe('EmbarcacionesService', () => {
     it('should return a embarcacion by id', async () => {
       mockRepository.findOne.mockResolvedValue(mockEmbarcacion);
 
-      const result = await service.findOne(1);
+      const result = await service.findOne(mockTenant, 1);
       expect(result).toEqual(mockEmbarcacion);
     });
 
     it('should throw NotFoundException if embarcacion not found', async () => {
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne(999)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(mockTenant, 999)).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -144,7 +152,7 @@ describe('EmbarcacionesService', () => {
         matricula: 'ABC-123',
       };
 
-      const result = await service.create(createDto);
+      const result = await service.create(mockTenant, createDto);
       expect(result).toEqual(mockEmbarcacion);
       expect(mockRepository.create).toHaveBeenCalledWith(createDto);
     });
@@ -154,7 +162,7 @@ describe('EmbarcacionesService', () => {
       mockEspacioRepo.findOne.mockResolvedValue(espacio);
 
       await expect(
-        service.create({
+        service.create(mockTenant, {
           nombre: 'Test Boat',
           matricula: 'ABC-123',
           espacioId: 1,
@@ -171,7 +179,7 @@ describe('EmbarcacionesService', () => {
       mockEspacioRepo.findOne.mockResolvedValue(null);
       // No need to overwrite createQueryBuilder if the global mock is sufficient
 
-      const result = await service.update(1, { nombre: 'Updated' });
+      const result = await service.update(mockTenant, 1, { nombre: 'Updated' });
       expect(result).toBeDefined();
     });
   });
@@ -190,7 +198,7 @@ describe('EmbarcacionesService', () => {
         espacioId: null,
       });
 
-      await service.remove(1);
+      await service.remove(mockTenant, 1);
       expect(mockEspacioRepo.update).toHaveBeenCalledWith(1, {
         ocupado: false,
       });

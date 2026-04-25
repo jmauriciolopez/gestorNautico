@@ -9,6 +9,14 @@ import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
 describe('RacksService', () => {
   let service: RacksService;
 
+  const mockTenant = {
+    guarderiaId: 1,
+    scope: 'guarderia' as any,
+    role: 'SUPERADMIN' as any,
+    userId: 1,
+  } as any;
+
+
   const mockRack = {
     id: 1,
     codigo: 'RACK-01',
@@ -79,7 +87,7 @@ describe('RacksService', () => {
     it('should return paginated racks', async () => {
       mockRepository.findAndCount.mockResolvedValue([[mockRack], 1]);
 
-      const result = await service.findAll({});
+      const result = await service.findAll(mockTenant, {});
       expect(result.data).toBeDefined();
       expect(result.total).toBe(1);
     });
@@ -89,14 +97,14 @@ describe('RacksService', () => {
     it('should return a rack by id', async () => {
       mockRepository.findOne.mockResolvedValue(mockRack);
 
-      const result = await service.findOne(1);
+      const result = await service.findOne(mockTenant, 1);
       expect(result).toEqual(mockRack);
     });
 
     it('should throw NotFoundException if rack not found', async () => {
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne(999)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(mockTenant, 999)).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -115,7 +123,7 @@ describe('RacksService', () => {
         columnas: 3,
       };
 
-      const result = await service.create(createDto);
+      const result = await service.create(mockTenant, createDto);
       expect(result).toBeDefined();
     });
   });
@@ -129,7 +137,7 @@ describe('RacksService', () => {
         codigo: 'UPDATED',
       });
 
-      const result = await service.update(1, { codigo: 'UPDATED' });
+      const result = await service.update(mockTenant, 1, { codigo: 'UPDATED' });
       expect(result).toBeDefined();
     });
 
@@ -140,7 +148,7 @@ describe('RacksService', () => {
       };
       mockRepository.findOne.mockResolvedValue(rackWithOcupados);
 
-      await expect(service.update(1, { pisos: 2 })).rejects.toThrow(
+      await expect(service.update(mockTenant, 1, { pisos: 2 })).rejects.toThrow(
         BadRequestException,
       );
     });
@@ -153,7 +161,7 @@ describe('RacksService', () => {
       mockEspacioRepo.delete.mockResolvedValue({});
       mockRepository.delete.mockResolvedValue({});
 
-      const result = await service.remove(1);
+      const result = await service.remove(mockTenant, 1);
       expect(result).toEqual({ success: true });
     });
 
@@ -164,13 +172,13 @@ describe('RacksService', () => {
       };
       mockRepository.findOne.mockResolvedValue(rackConOcupados);
 
-      await expect(service.remove(1)).rejects.toThrow(BadRequestException);
+      await expect(service.remove(mockTenant, 1)).rejects.toThrow(BadRequestException);
     });
 
     it('should throw NotFoundException if rack not found', async () => {
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.remove(999)).rejects.toThrow(NotFoundException);
+      await expect(service.remove(mockTenant, 999)).rejects.toThrow(NotFoundException);
     });
   });
 });

@@ -152,11 +152,10 @@ export class FacturasService extends BaseTenantService {
     return await this.dataSource.transaction(async (manager) => {
       // 1. Obtener los cargos y validar (dentro de transacción)
       const cargos = await manager.find(Cargo, {
-        where: {
+        where: this.buildTenantWhere(tenant, {
           id: In(cargoIds),
           cliente: { id: clienteId },
-          guarderiaId: tenant.guarderiaId as number,
-        },
+        }),
       });
 
       if (cargos.length !== cargoIds.length) {
@@ -238,7 +237,7 @@ export class FacturasService extends BaseTenantService {
       // 5. Vincular cargos a la factura
       await manager.update(
         Cargo,
-        { id: In(cargoIds), guarderiaId: tenant.guarderiaId as number },
+        this.buildTenantWhere(tenant, { id: In(cargoIds) }),
         { factura: { id: guardada.id } },
       );
 
@@ -250,7 +249,7 @@ export class FacturasService extends BaseTenantService {
       });
 
       return await manager.findOne(Factura, {
-        where: { id: guardada.id, guarderiaId: tenant.guarderiaId as number },
+        where: this.buildTenantWhere(tenant, { id: guardada.id }),
         relations: ['cliente', 'cargos'],
       });
     });
@@ -264,7 +263,7 @@ export class FacturasService extends BaseTenantService {
   ) {
     return await this.dataSource.transaction(async (manager) => {
       const factura = await manager.findOne(Factura, {
-        where: { id, guarderiaId: tenant.guarderiaId as number },
+        where: this.buildTenantWhere(tenant, { id }),
         relations: ['cliente', 'cargos'],
       });
 
@@ -274,7 +273,7 @@ export class FacturasService extends BaseTenantService {
 
       await manager.update(
         Factura,
-        { id, guarderiaId: tenant.guarderiaId as number },
+        this.buildTenantWhere(tenant, { id }),
         { estado },
       );
 
@@ -284,7 +283,7 @@ export class FacturasService extends BaseTenantService {
         if (cargoIds.length > 0) {
           await manager.update(
             Cargo,
-            { id: In(cargoIds), guarderiaId: tenant.guarderiaId as number },
+            this.buildTenantWhere(tenant, { id: In(cargoIds) }),
             { pagado: true },
           );
         }
@@ -317,7 +316,7 @@ export class FacturasService extends BaseTenantService {
       }
 
       return await manager.findOne(Factura, {
-        where: { id, guarderiaId: tenant.guarderiaId as number },
+        where: this.buildTenantWhere(tenant, { id }),
         relations: ['cliente', 'cargos'],
       });
     });
@@ -341,7 +340,7 @@ export class FacturasService extends BaseTenantService {
   ) {
     return await this.dataSource.transaction(async (manager) => {
       const factura = await manager.findOne(Factura, {
-        where: { id, guarderiaId: tenant.guarderiaId as number },
+        where: this.buildTenantWhere(tenant, { id }),
         relations: ['cliente', 'cargos'],
       });
 
@@ -375,11 +374,10 @@ export class FacturasService extends BaseTenantService {
       // 2. Vincular cargos existentes si vienen
       if (data.cargoIds) {
         const cargosExistentes = await manager.find(Cargo, {
-          where: {
+          where: this.buildTenantWhere(tenant, {
             id: In(data.cargoIds),
             cliente: { id: factura.cliente.id },
-            guarderiaId: tenant.guarderiaId as number,
-          },
+          }),
         });
 
         if (cargosExistentes.length !== data.cargoIds.length) {
@@ -390,17 +388,16 @@ export class FacturasService extends BaseTenantService {
 
         await manager.update(
           Cargo,
-          { id: In(data.cargoIds), guarderiaId: tenant.guarderiaId as number },
+          this.buildTenantWhere(tenant, { id: In(data.cargoIds) }),
           { factura: { id: factura.id } },
         );
       }
 
       // 3. Recalcular el total basado en TODOS los cargos vinculados
       const todosLosCargos = await manager.find(Cargo, {
-        where: {
+        where: this.buildTenantWhere(tenant, {
           factura: { id: factura.id },
-          guarderiaId: tenant.guarderiaId as number,
-        },
+        }),
       });
 
       factura.total = todosLosCargos.reduce(
@@ -423,7 +420,7 @@ export class FacturasService extends BaseTenantService {
       targetEmail = optionalEmail;
       // Guardar en el cliente
       await this.clienteRepo.update(
-        { id: factura.cliente.id, guarderiaId: tenant.guarderiaId as number },
+        this.buildTenantWhere(tenant, { id: factura.cliente.id }),
         {
           email: optionalEmail,
         },

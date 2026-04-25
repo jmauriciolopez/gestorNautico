@@ -7,6 +7,14 @@ import { Cargo, TipoCargo } from './cargo.entity';
 describe('CargosService', () => {
   let service: CargosService;
 
+  const mockTenant = {
+    guarderiaId: 1,
+    scope: 'guarderia' as any,
+    role: 'SUPERADMIN' as any,
+    userId: 1,
+  } as any;
+
+
   const mockCargo = {
     id: 1,
     descripcion: 'Amarre Enero',
@@ -53,7 +61,7 @@ describe('CargosService', () => {
     it('should return paginated cargos', async () => {
       mockRepository.findAndCount.mockResolvedValue([[mockCargo], 1]);
 
-      const result = await service.findAll({});
+      const result = await service.findAll(mockTenant, {});
       expect(result.data).toBeDefined();
       expect(result.total).toBe(1);
     });
@@ -61,14 +69,14 @@ describe('CargosService', () => {
     it('should filter by clienteId', async () => {
       mockRepository.findAndCount.mockResolvedValue([[mockCargo], 1]);
 
-      await service.findAll({}, 1);
+      await service.findAll(mockTenant, {}, 1);
       expect(mockRepository.findAndCount).toHaveBeenCalled();
     });
 
     it('should filter sin facturar', async () => {
       mockRepository.findAndCount.mockResolvedValue([[mockCargo], 1]);
 
-      await service.findAll({}, undefined, true);
+      await service.findAll(mockTenant, {}, undefined, true);
       expect(mockRepository.findAndCount).toHaveBeenCalled();
     });
   });
@@ -77,14 +85,14 @@ describe('CargosService', () => {
     it('should return a cargo by id', async () => {
       mockRepository.findOne.mockResolvedValue(mockCargo);
 
-      const result = await service.findOne(1);
+      const result = await service.findOne(mockTenant, 1);
       expect(result).toEqual(mockCargo);
     });
 
     it('should throw NotFoundException if cargo not found', async () => {
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne(999)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(mockTenant, 999)).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -101,7 +109,7 @@ describe('CargosService', () => {
         tipo: TipoCargo.AMARRE,
       };
 
-      const result = await service.create(createDto);
+      const result = await service.create(mockTenant, createDto);
       expect(result).toEqual(mockCargo);
     });
   });
@@ -111,7 +119,7 @@ describe('CargosService', () => {
       mockRepository.update.mockResolvedValue({});
       mockRepository.findOne.mockResolvedValue({ ...mockCargo, pagado: true });
 
-      await service.setPagado(1, true);
+      await service.setPagado(mockTenant, 1, true);
       expect(mockRepository.update).toHaveBeenCalledWith(1, { pagado: true });
     });
   });
@@ -121,7 +129,7 @@ describe('CargosService', () => {
       mockRepository.findOne.mockResolvedValue(mockCargo);
       mockRepository.remove.mockResolvedValue(mockCargo);
 
-      await service.remove(1);
+      await service.remove(mockTenant, 1);
       expect(mockRepository.remove).toHaveBeenCalled();
     });
   });

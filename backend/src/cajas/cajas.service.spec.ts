@@ -9,6 +9,13 @@ import { NotificacionesService } from '../notificaciones/notificaciones.service'
 describe('CajasService', () => {
   let service: CajasService;
 
+  const mockTenant = {
+    guarderiaId: 1,
+    scope: 'guarderia' as any,
+    role: 'SUPERADMIN' as any,
+    userId: 1,
+  } as any;
+
   const mockCaja = {
     id: 1,
     saldoInicial: 1000,
@@ -77,7 +84,7 @@ describe('CajasService', () => {
     it('should return paginated cajas', async () => {
       mockRepository.findAndCount.mockResolvedValue([[mockCaja], 1]);
 
-      const result = await service.findAll({});
+      const result = await service.findAll(mockTenant, {});
       expect(result.data).toBeDefined();
       expect(result.total).toBe(1);
     });
@@ -87,14 +94,14 @@ describe('CajasService', () => {
     it('should return a caja by id', async () => {
       mockRepository.findOne.mockResolvedValue(mockCaja);
 
-      const result = await service.findOne(1);
+      const result = await service.findOne(mockTenant, 1);
       expect(result).toEqual(mockCaja);
     });
 
     it('should throw NotFoundException if caja not found', async () => {
       mockRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne(999)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(mockTenant, 999)).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -102,14 +109,14 @@ describe('CajasService', () => {
     it('should return open caja', async () => {
       mockRepository.findOne.mockResolvedValue(mockCaja);
 
-      const result = await service.findAbierta();
+      const result = await service.findAbierta(mockTenant);
       expect(result).toEqual(mockCaja);
     });
 
     it('should return null if no caja open', async () => {
       mockRepository.findOne.mockResolvedValue(null);
 
-      const result = await service.findAbierta();
+      const result = await service.findAbierta(mockTenant);
       expect(result).toBeNull();
     });
   });
@@ -126,7 +133,7 @@ describe('CajasService', () => {
         return callback(tx);
       });
 
-      const result = await service.abrir(1000);
+      const result = await service.abrir(mockTenant, 1000);
       expect(result).toBeDefined();
     });
 
@@ -139,7 +146,7 @@ describe('CajasService', () => {
         return callback(tx);
       });
 
-      await expect(service.abrir(1000)).rejects.toThrow(ConflictException);
+      await expect(service.abrir(mockTenant, 1000)).rejects.toThrow(ConflictException);
     });
   });
 
@@ -156,7 +163,7 @@ describe('CajasService', () => {
         return callback(tx);
       });
 
-      const result = await service.cerrar(1, 1500);
+      const result = await service.cerrar(mockTenant, 1, 1500);
       expect(result).toBeDefined();
     });
 
@@ -170,7 +177,7 @@ describe('CajasService', () => {
         return callback(tx);
       });
 
-      await expect(service.cerrar(1, 1500)).rejects.toThrow(ConflictException);
+      await expect(service.cerrar(mockTenant, 1, 1500)).rejects.toThrow(ConflictException);
     });
 
     it('should throw NotFoundException if caja not found', async () => {
@@ -182,7 +189,7 @@ describe('CajasService', () => {
         return callback(tx);
       });
 
-      await expect(service.cerrar(999, 1500)).rejects.toThrow(
+      await expect(service.cerrar(mockTenant, 999, 1500)).rejects.toThrow(
         NotFoundException,
       );
     });
@@ -192,7 +199,7 @@ describe('CajasService', () => {
     it('should return caja summary', async () => {
       mockRepository.findOne.mockResolvedValue(mockCaja);
 
-      const result = await service.getResumen();
+      const result = await service.getResumen(mockTenant);
       expect(result).toEqual({
         id: 1,
         saldoInicial: 1000,
@@ -205,7 +212,7 @@ describe('CajasService', () => {
     it('should return null if no caja open', async () => {
       mockRepository.findOne.mockResolvedValue(null);
 
-      const result = await service.getResumen();
+      const result = await service.getResumen(mockTenant);
       expect(result).toBeNull();
     });
   });

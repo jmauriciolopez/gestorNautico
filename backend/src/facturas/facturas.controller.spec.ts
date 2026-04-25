@@ -7,6 +7,14 @@ import { EstadoFactura } from './factura.entity';
 
 describe('FacturasController', () => {
   let controller: FacturasController;
+
+  const mockTenant = {
+    guarderiaId: 1,
+    scope: 'guarderia' as any,
+    role: 'SUPERADMIN' as any,
+    userId: 1,
+  } as any;
+
   let service: any;
 
   beforeEach(async () => {
@@ -42,38 +50,38 @@ describe('FacturasController', () => {
 
   describe('findAll', () => {
     it('should call service.findAll', async () => {
-      await controller.findAll(1, 10, 'search', '2024-01-01', '2024-01-31');
-      expect(service.findAll).toHaveBeenCalledWith({ page: 1, limit: 10, search: 'search', startDate: '2024-01-01', endDate: '2024-01-31' });
+      await controller.findAll(mockTenant, 1, 10, 'search', '2024-01-01', '2024-01-31');
+      expect(service.findAll).toHaveBeenCalledWith(mockTenant, { page: 1, limit: 10, search: 'search', startDate: '2024-01-01', endDate: '2024-01-31' });
     });
   });
 
   describe('getStats', () => {
     it('should call service.getStats', async () => {
-      await controller.getStats('2024-01-01', '2024-01-31');
-      expect(service.getStats).toHaveBeenCalledWith('2024-01-01', '2024-01-31');
+      await controller.getStats(mockTenant, '2024-01-01', '2024-01-31');
+      expect(service.getStats).toHaveBeenCalledWith(mockTenant, '2024-01-01', '2024-01-31');
     });
   });
 
   describe('create', () => {
     it('should call service.create', async () => {
       const dto = { clienteId: 1, cargoIds: [1], fechaEmision: '2024-01-01' };
-      await controller.create(dto);
-      expect(service.create).toHaveBeenCalledWith(dto);
+      await controller.create(mockTenant, dto);
+      expect(service.create).toHaveBeenCalledWith(mockTenant, dto);
     });
   });
 
   describe('updateEstado', () => {
     it('should call service.updateEstado', async () => {
       const dto = { estado: EstadoFactura.PAGADA };
-      await controller.updateEstado('1', dto);
-      expect(service.updateEstado).toHaveBeenCalledWith(1, dto.estado, undefined);
+      await controller.updateEstado(mockTenant, '1', dto);
+      expect(service.updateEstado).toHaveBeenCalledWith(mockTenant, 1, dto.estado, undefined);
     });
   });
 
   describe('sendEmail', () => {
     it('should call service.sendEmail', async () => {
-      await controller.sendEmail('1', { email: 'test@test.com' });
-      expect(service.sendEmail).toHaveBeenCalledWith(1, 'test@test.com');
+      await controller.sendEmail(mockTenant, '1', { email: 'test@test.com' });
+      expect(service.sendEmail).toHaveBeenCalledWith(mockTenant, 1, 'test@test.com');
     });
   });
 });

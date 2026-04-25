@@ -13,6 +13,14 @@ import { LessThan } from 'typeorm';
 
 describe('AutomaticBillingService', () => {
   let service: AutomaticBillingService;
+
+  const mockTenant = {
+    guarderiaId: 1,
+    scope: 'guarderia' as any,
+    role: 'SUPERADMIN' as any,
+    userId: 1,
+  } as any;
+
   let facturaRepo: any;
   let cargoRepo: any;
   let clienteRepo: any;

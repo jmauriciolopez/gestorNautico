@@ -147,11 +147,10 @@ export class MovimientosService extends BaseTenantService {
       );
       // Update or Create Order (subida)
       const pedidoExistente = await pedRepo.findOne({
-        where: {
+        where: this.buildTenantWhere(tenant, {
           embarcacion: { id: embarcacion.id },
           estado: In([EstadoPedido.PENDIENTE, EstadoPedido.EN_AGUA]),
-          guarderiaId: tenant.guarderiaId as number,
-        },
+        }),
         order: { createdAt: 'DESC' },
       });
 
@@ -161,11 +160,10 @@ export class MovimientosService extends BaseTenantService {
         });
       } else {
         const solicitudExistente = await solRepo.findOne({
-          where: {
+          where: this.buildTenantWhere(tenant, {
             embarcacion: { id: embarcacion.id },
             estado: In([EstadoSolicitud.PENDIENTE, EstadoSolicitud.EN_AGUA]),
-            guarderiaId: tenant.guarderiaId as number,
-          },
+          }),
           order: { createdAt: 'DESC' },
         });
 
@@ -199,11 +197,10 @@ export class MovimientosService extends BaseTenantService {
       );
 
       const pedidoExistente = await pedRepo.findOne({
-        where: {
+        where: this.buildTenantWhere(tenant, {
           embarcacion: { id: embarcacion.id },
           estado: In([EstadoPedido.PENDIENTE, EstadoPedido.EN_AGUA]),
-          guarderiaId: tenant.guarderiaId as number,
-        },
+        }),
         order: { createdAt: 'DESC' },
       });
 
@@ -213,11 +210,10 @@ export class MovimientosService extends BaseTenantService {
         });
       } else {
         const solicitudExistente = await solRepo.findOne({
-          where: {
+          where: this.buildTenantWhere(tenant, {
             embarcacion: { id: embarcacion.id },
             estado: In([EstadoSolicitud.PENDIENTE, EstadoSolicitud.EN_AGUA]),
-            guarderiaId: tenant.guarderiaId as number,
-          },
+          }),
           order: { createdAt: 'DESC' },
         });
 

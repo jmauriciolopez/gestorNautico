@@ -7,6 +7,14 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 
 describe('OperacionesController', () => {
   let controller: OperacionesController;
+
+  const mockTenant = {
+    guarderiaId: 1,
+    scope: 'guarderia' as any,
+    role: 'SUPERADMIN' as any,
+    userId: 1,
+  } as any;
+
   let service: any;
 
   beforeEach(async () => {
@@ -38,23 +46,23 @@ describe('OperacionesController', () => {
   describe('createSolicitudPublica', () => {
     it('should call service.createPublic', async () => {
       const dto = { dni: '123', matricula: 'MAT', fechaHoraDeseada: new Date().toISOString() };
-      await controller.createSolicitudPublica(dto);
-      expect(service.createPublic).toHaveBeenCalledWith(dto);
+      await controller.createSolicitudPublica(mockTenant, dto);
+      expect(service.createPublic).toHaveBeenCalledWith(mockTenant, dto);
     });
   });
 
   describe('findAllSolicitudes', () => {
     it('should call service.findAll', async () => {
-      await controller.findAllSolicitudes(1, 10, EstadoSolicitud.PENDIENTE);
-      expect(service.findAll).toHaveBeenCalledWith({ page: 1, limit: 10 }, EstadoSolicitud.PENDIENTE);
+      await controller.findAllSolicitudes(mockTenant, 1, 10, EstadoSolicitud.PENDIENTE);
+      expect(service.findAll).toHaveBeenCalledWith(mockTenant, { page: 1, limit: 10 }, EstadoSolicitud.PENDIENTE);
     });
   });
 
   describe('updateEstadoSolicitud', () => {
     it('should call service.updateEstado', async () => {
       const dto = { estado: EstadoSolicitud.EN_AGUA, motivo: 'test' };
-      await controller.updateEstadoSolicitud('1', dto);
-      expect(service.updateEstado).toHaveBeenCalledWith(1, dto.estado, dto.motivo);
+      await controller.updateEstadoSolicitud(mockTenant, '1', dto);
+      expect(service.updateEstado).toHaveBeenCalledWith(mockTenant, 1, dto.estado, dto.motivo);
     });
   });
 });

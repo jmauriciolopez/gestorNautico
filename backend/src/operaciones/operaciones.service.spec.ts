@@ -12,6 +12,14 @@ import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 describe('OperacionesService', () => {
   let service: OperacionesService;
+
+  const mockTenant = {
+    guarderiaId: 1,
+    scope: 'guarderia' as any,
+    role: 'SUPERADMIN' as any,
+    userId: 1,
+  } as any;
+
   let solicitudRepo: any;
   let clienteRepo: any;
   let embarcacionRepo: any;
@@ -103,27 +111,27 @@ describe('OperacionesService', () => {
       solicitudRepo.create.mockReturnValue(mockSolicitud);
       solicitudRepo.save.mockResolvedValue(mockSolicitud);
 
-      const result = await service.createPublic(dto);
+      const result = await service.createPublic(mockTenant, dto);
       expect(result).toEqual(mockSolicitud);
       expect(notificacionesService.createForRole).toHaveBeenCalled();
     });
 
     it('should throw NotFoundException if client not found', async () => {
       clienteRepo.findOne.mockResolvedValue(null);
-      await expect(service.createPublic(dto)).rejects.toThrow(NotFoundException);
+      await expect(service.createPublic(mockTenant, dto)).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException if boat not found', async () => {
       clienteRepo.findOne.mockResolvedValue({ id: 1 });
       embarcacionRepo.findOne.mockResolvedValue(null);
-      await expect(service.createPublic(dto)).rejects.toThrow(BadRequestException);
+      await expect(service.createPublic(mockTenant, dto)).rejects.toThrow(BadRequestException);
     });
 
     it('should throw BadRequestException if active solicitud exists', async () => {
       clienteRepo.findOne.mockResolvedValue({ id: 1 });
       embarcacionRepo.findOne.mockResolvedValue({ id: 1 });
       solicitudRepo.findOne.mockResolvedValue({ id: 2 });
-      await expect(service.createPublic(dto)).rejects.toThrow(BadRequestException);
+      await expect(service.createPublic(mockTenant, dto)).rejects.toThrow(BadRequestException);
     });
 
     it('should throw BadRequestException if active pedido exists', async () => {
@@ -131,7 +139,7 @@ describe('OperacionesService', () => {
       embarcacionRepo.findOne.mockResolvedValue({ id: 1 });
       solicitudRepo.findOne.mockResolvedValue(null);
       pedidoRepo.findOne.mockResolvedValue({ id: 3 });
-      await expect(service.createPublic(dto)).rejects.toThrow(BadRequestException);
+      await expect(service.createPublic(mockTenant, dto)).rejects.toThrow(BadRequestException);
     });
 
     it('should throw BadRequestException if outside operating hours', async () => {
@@ -144,7 +152,7 @@ describe('OperacionesService', () => {
         if (key === 'HORARIO_MAX_SUBIDA') return '23:00';
         return null;
       });
-      await expect(service.createPublic(dto)).rejects.toThrow(BadRequestException);
+      await expect(service.createPublic(mockTenant, dto)).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -153,7 +161,7 @@ describe('OperacionesService', () => {
       const mockData = [[mockSolicitud], 1];
       solicitudRepo.findAndCount.mockResolvedValue(mockData);
 
-      const result = await service.findAll();
+      const result = await service.findAll(mockTenant);
       expect(result.data).toBeDefined();
       expect(result.total).toBe(1);
     });
@@ -162,7 +170,7 @@ describe('OperacionesService', () => {
       const mockData = [[mockSolicitud], 1];
       solicitudRepo.findAndCount.mockResolvedValue(mockData);
 
-      await service.findAll({}, EstadoSolicitud.PENDIENTE);
+      await service.findAll(mockTenant, {}, EstadoSolicitud.PENDIENTE);
       expect(solicitudRepo.findAndCount).toHaveBeenCalledWith(expect.objectContaining({
         where: { estado: EstadoSolicitud.PENDIENTE }
       }));
@@ -172,7 +180,7 @@ describe('OperacionesService', () => {
   describe('updateEstado', () => {
     it('should update state and create movement for EN_AGUA', async () => {
       solicitudRepo.findOne.mockResolvedValue(mockSolicitud);
-      await service.updateEstado(1, EstadoSolicitud.EN_AGUA);
+      await service.updateEstado(mockTenant, 1, EstadoSolicitud.EN_AGUA);
 
       expect(solicitudRepo.update).toHaveBeenCalledWith(1, { estado: EstadoSolicitud.EN_AGUA });
       expect(movimientosService.create).toHaveBeenCalled();
@@ -180,7 +188,7 @@ describe('OperacionesService', () => {
 
     it('should update state and create movement for FINALIZADA', async () => {
       solicitudRepo.findOne.mockResolvedValue(mockSolicitud);
-      await service.updateEstado(1, EstadoSolicitud.FINALIZADA);
+      await service.updateEstado(mockTenant, 1, EstadoSolicitud.FINALIZADA);
 
       expect(solicitudRepo.update).toHaveBeenCalledWith(1, { estado: EstadoSolicitud.FINALIZADA });
       expect(movimientosService.create).toHaveBeenCalled();
@@ -190,7 +198,7 @@ describe('OperacionesService', () => {
       solicitudRepo.findOne.mockResolvedValue(mockSolicitud);
       notificacionesService.sendEmailNotification.mockRejectedValue(new Error('Email error'));
       
-      await service.updateEstado(1, EstadoSolicitud.EN_AGUA);
+      await service.updateEstado(mockTenant, 1, EstadoSolicitud.EN_AGUA);
       
       expect(solicitudRepo.update).toHaveBeenCalled();
       // Should not throw
@@ -198,7 +206,7 @@ describe('OperacionesService', () => {
 
     it('should throw NotFoundException if solicitud not found', async () => {
       solicitudRepo.findOne.mockResolvedValue(null);
-      await expect(service.updateEstado(1, EstadoSolicitud.EN_AGUA)).rejects.toThrow(NotFoundException);
+      await expect(service.updateEstado(mockTenant, 1, EstadoSolicitud.EN_AGUA)).rejects.toThrow(NotFoundException);
     });
   });
 
