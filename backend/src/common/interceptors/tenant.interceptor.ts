@@ -23,6 +23,12 @@ interface RequestWithTenant extends Request {
 export class TenantInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const request = context.switchToHttp().getRequest<RequestWithTenant>();
+
+    // Si el TenantGuard ya resolvió el contexto (basado en @AllowGlobal etc), no sobreescribir
+    if (request.tenant && Object.keys(request.tenant).length > 0) {
+      return next.handle();
+    }
+
     const user = request.user;
     const guarderiaId = request.guarderiaId;
 

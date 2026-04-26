@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../features/auth/hooks/useAuth';
 import { Role } from '../../types';
+import { GuarderiaSelector } from '../../features/guarderia/components/GuarderiaSelector';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -139,6 +140,11 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         >
           <X size={16} />
         </button>
+      </div>
+
+      {/* Mobile Selector - Solo visible en móvil y para SuperAdmin */}
+      <div className="px-4 py-3 md:hidden border-b border-[var(--border-primary)] bg-[var(--bg-primary)]/20">
+        <GuarderiaSelector />
       </div>
 
       <nav className="flex-1 overflow-y-auto custom-scrollbar px-3 py-3 space-y-6">

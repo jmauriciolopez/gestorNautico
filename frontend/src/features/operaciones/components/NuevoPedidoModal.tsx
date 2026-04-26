@@ -2,6 +2,9 @@ import { useState, useMemo, useEffect } from 'react';
 import { ClipboardCheck, X, Search, Ship, ArrowRight, Calendar, Clock, Loader2, Check, AlertTriangle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useEmbarcaciones } from '../../embarcaciones/hooks/useEmbarcaciones';
+import { useActiveGuarderiaId } from '../../../shared/hooks/useActiveGuarderiaId';
+import { useAuth } from '../../auth/hooks/useAuth';
+import { Role } from '../../../types';
 
 interface NuevoPedidoModalProps {
   isOpen: boolean;
@@ -11,6 +14,8 @@ interface NuevoPedidoModalProps {
 }
 
 export function NuevoPedidoModal({ isOpen, onClose, onSave, activeBoatIds = [] }: NuevoPedidoModalProps) {
+  const { user } = useAuth();
+  const activeGuarderiaId = useActiveGuarderiaId();
   const { getEmbarcaciones } = useEmbarcaciones();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -46,6 +51,8 @@ export function NuevoPedidoModal({ isOpen, onClose, onSave, activeBoatIds = [] }
   const selectedBoat = getEmbarcaciones.data?.data?.find(b => b.id === selectedBoatId);
 
   if (!isOpen) return null;
+
+  const isSuperAdminGlobal = user?.role === Role.SUPERADMIN && !activeGuarderiaId;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,7 +115,19 @@ export function NuevoPedidoModal({ isOpen, onClose, onSave, activeBoatIds = [] }
               )}
             </div>
 
-            {!selectedBoatId ? (
+            {isSuperAdminGlobal ? (
+              <div className="p-8 text-center bg-indigo-500/5 border-2 border-dashed border-indigo-500/20 rounded-[2rem] space-y-4">
+                <div className="w-12 h-12 bg-indigo-500/10 rounded-full flex items-center justify-center mx-auto text-indigo-500">
+                  <AlertTriangle className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-xs font-black text-[var(--text-primary)] uppercase tracking-tight">Sede no Seleccionada</p>
+                  <p className="text-[10px] text-[var(--text-muted)] font-bold uppercase mt-1 leading-relaxed">
+                    Debe seleccionar una sede específica para emitir pedidos.
+                  </p>
+                </div>
+              </div>
+            ) : !selectedBoatId ? (
               <div className="space-y-4">
                 <div className="relative group">
                   <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-muted)] group-focus-within:text-indigo-500 transition-colors" />
@@ -251,7 +270,7 @@ export function NuevoPedidoModal({ isOpen, onClose, onSave, activeBoatIds = [] }
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isSuperAdminGlobal || !selectedBoatId}
               className="flex-[2] px-8 py-4 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-black rounded-2xl text-[10px] uppercase tracking-[0.3em] shadow-[0_12px_40px_-12px_rgba(99,102,241,0.3)] transition-all active:scale-95 flex items-center justify-center gap-3 order-1 sm:order-2"
             >
               {isSubmitting ? (
