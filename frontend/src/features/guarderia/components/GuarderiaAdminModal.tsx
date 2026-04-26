@@ -42,7 +42,7 @@ export function GuarderiaAdminModal({ isOpen, onClose, guarderiaId, guarderiaNom
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-3xl w-full max-w-md shadow-2xl overflow-hidden scale-in duration-200">
+            <div className="bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-3xl w-full max-w-md shadow-2xl overflow-y-auto max-h-[calc(100vh-2rem)] scale-in duration-200 custom-scrollbar">
                 <div className="flex items-center justify-between px-6 py-4 border-bottom border-[var(--border-primary)]">
                     <div className="flex items-center gap-3">
                         <div className="p-2 rounded-xl bg-amber-500/10 text-amber-500">

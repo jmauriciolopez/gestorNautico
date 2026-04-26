@@ -119,7 +119,7 @@ export default function OperacionesPage() {
           {/* Left: Title & Counter */}
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-3">
-              <h1 className="text-5xl font-black text-[var(--text-primary)] leading-none tracking-tighter">OPERACIONES</h1>
+              <h1 className="text-3xl sm:text-5xl font-black text-[var(--text-primary)] leading-none tracking-tighter">OPERACIONES</h1>
               <div className={`px-4 py-1.5 rounded-full border text-[9px] font-black uppercase tracking-[0.25em] transition-all duration-500 ${activeTab === 'pedidos' ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' :
                 'bg-amber-500/10 text-amber-400 border-amber-500/20'
                 }`}>

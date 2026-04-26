@@ -46,7 +46,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
 
   return (
     <header
-      className="flex items-center justify-between px-4 shrink-0"
+      className="flex items-center justify-between px-2 sm:px-4 shrink-0"
       style={{
         height: 64,
         background: 'var(--bg-secondary)',

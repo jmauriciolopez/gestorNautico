@@ -623,6 +623,18 @@ select {
   cursor: pointer;
 }
 
+@media (max-width: 640px) {
+  .icon-button {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+  }
+  .icon-button svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
 .icon-button:hover {
   background: var(--bg-card-hover);
   color: var(--text-primary);

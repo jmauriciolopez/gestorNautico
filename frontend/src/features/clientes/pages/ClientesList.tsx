@@ -79,7 +79,7 @@ export default function ClientesList() {
             <Users className="w-10 h-10" />
           </div>
           <div>
-            <h2 className="text-[2.5rem] font-black text-[var(--text-primary)] leading-tight tracking-tight uppercase">Base de Clientes</h2>
+            <h2 className="text-[2.5rem] font-black text-[var(--text-primary)] leading-tight tracking-tight uppercase">Clientes</h2>
             <div className="flex items-center gap-4 mt-2">
               <p className="text-[var(--text-secondary)] text-xs font-black uppercase tracking-[0.2em]">Gestión de Cuentas y Contactos Administrativos Habilitados</p>
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-sm shadow-emerald-500/50" />

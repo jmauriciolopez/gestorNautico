@@ -83,7 +83,7 @@ export function NuevoRegistroModal({ isOpen, onClose, onSave, initialData }: Nue
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[var(--bg-primary)]/80 backdrop-blur-md animate-in fade-in duration-300">
-      <div className="bg-[var(--modal-glass-bg)] backdrop-blur-md border border-[var(--border-strong)] w-full max-w-2xl rounded-[3rem] shadow-2xl shadow-indigo-900/10 overflow-hidden transform animate-in slide-in-from-bottom-8 duration-500">
+      <div className="bg-[var(--modal-glass-bg)] backdrop-blur-md border border-[var(--border-strong)] w-full max-w-2xl rounded-[3rem] shadow-2xl shadow-indigo-900/10 overflow-y-auto max-h-[calc(100vh-2rem)] transform animate-in slide-in-from-bottom-8 duration-500 custom-scrollbar">
 
         {/* Header */}
         <div className="px-10 pt-10 pb-6 border-b border-[var(--border-primary)] flex justify-between items-start bg-gradient-to-br from-indigo-500/10 via-transparent to-transparent">

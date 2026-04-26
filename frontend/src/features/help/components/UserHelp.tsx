@@ -52,7 +52,7 @@ export default function UserHelp() {
         <div className="inline-flex items-center justify-center p-3 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 mb-4">
           <HelpCircle className="w-10 h-10 text-indigo-500" />
         </div>
-        <h1 className="text-5xl font-black tracking-tighter text-[var(--text-primary)] uppercase italic">
+        <h1 className="text-3xl sm:text-5xl font-black tracking-tighter text-[var(--text-primary)] uppercase italic">
           Centro de <span className="text-indigo-500">Ayuda</span>
         </h1>
         <p className="text-xl text-[var(--text-secondary)] max-w-2xl mx-auto leading-relaxed">

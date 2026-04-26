@@ -77,14 +77,14 @@ async function bootstrap() {
     optionsSuccessStatus: 204,
   });
 
-  app.use((req, res, next) => {
-    const origin = req.headers.origin ?? 'sin-origin';
-    console.log(`→ ${req.method} ${req.url} | Origin: ${origin} | IP: ${req.ip}`);
-    res.on('finish', () => {
-      console.log(`← ${res.statusCode} | Origin: ${origin}`);
-    });
-    next();
-  });
+  // app.use((req, res, next) => {
+  //   const origin = req.headers.origin ?? 'sin-origin';
+  //   console.log(`→ ${req.method} ${req.url} | Origin: ${origin} | IP: ${req.ip}`);
+  //   res.on('finish', () => {
+  //     console.log(`← ${res.statusCode} | Origin: ${origin}`);
+  //   });
+  //   next();
+  // });
   app.use(cookieParser());
   app.useGlobalPipes(
     new ValidationPipe({

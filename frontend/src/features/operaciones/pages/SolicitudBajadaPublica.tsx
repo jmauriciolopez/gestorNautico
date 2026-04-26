@@ -62,7 +62,7 @@ export default function SolicitudBajadaPublica() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-blue-600/10 border border-blue-500/20 mb-6 shadow-inner text-blue-500">
             <Anchor className="w-8 h-8" />
           </div>
-          <h1 className="text-4xl font-black text-[var(--text-primary)] tracking-tight">Portal Náutico</h1>
+          <h1 className="text-2xl sm:text-4xl font-black text-[var(--text-primary)] tracking-tight">Portal Náutico</h1>
           <p className="text-[var(--text-secondary)] mt-3 text-sm font-medium uppercase tracking-widest">
             Solicitud Rápida de Bajada
           </p>

@@ -79,7 +79,7 @@ export function NuevoMovimientoModal({ isOpen, onClose, onSuccess }: NuevoMovimi
         className="absolute inset-0 bg-[var(--modal-overlay)] backdrop-blur-md"
         onClick={onClose}
       />
-      <div className="bg-[var(--bg-surface)] border border-[var(--border-primary)] w-full max-w-md sm:max-w-lg lg:max-w-lg rounded-2xl sm:rounded-[3rem] shadow-2xl overflow-hidden relative z-10">
+      <div className="bg-[var(--bg-surface)] border border-[var(--border-primary)] w-full max-w-md sm:max-w-lg lg:max-w-lg rounded-2xl sm:rounded-[3rem] shadow-2xl overflow-y-auto max-h-[calc(100vh-2rem)] relative z-10 custom-scrollbar">
 
         {/* Header */}
         <div className="px-6 sm:px-10 lg:px-12 pt-6 sm:pt-10 lg:pt-12 pb-5 sm:pb-7 lg:pb-8 border-b border-[var(--border-primary)] flex justify-between items-start bg-gradient-to-br from-indigo-500/10 to-transparent">

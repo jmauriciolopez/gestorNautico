@@ -68,7 +68,7 @@ export function GuarderiaFormModal({ isOpen, onClose, onSave, guarderia, isSubmi
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden scale-in duration-200">
+            <div className="bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-3xl w-full max-w-lg shadow-2xl overflow-y-auto max-h-[calc(100vh-2rem)] scale-in duration-200 custom-scrollbar">
                 <div className="flex items-center justify-between px-6 py-4 border-bottom border-[var(--border-primary)]">
                     <h2 className="text-xl font-black text-[var(--text-primary)]">
                         {guarderia ? 'Editar Sede' : 'Nueva Sede'}

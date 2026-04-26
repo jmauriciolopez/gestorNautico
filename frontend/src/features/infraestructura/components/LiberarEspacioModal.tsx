@@ -33,7 +33,7 @@ export function LiberarEspacioModal({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[var(--bg-primary)]/80 backdrop-blur-md animate-in fade-in duration-300">
-      <div className="bg-[var(--modal-glass-bg)] border border-[var(--border-primary)] w-full max-w-md rounded-[3rem] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.5)] overflow-hidden transform animate-in slide-in-from-bottom-8 duration-500">
+      <div className="bg-[var(--modal-glass-bg)] border border-[var(--border-primary)] w-full max-w-md rounded-[3rem] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.5)] overflow-y-auto max-h-[calc(100vh-2rem)] transform animate-in slide-in-from-bottom-8 duration-500 custom-scrollbar">
         {/* Header */}
         <div className="px-10 pt-10 pb-8 border-b border-[var(--border-primary)] flex justify-between items-start bg-gradient-to-br from-indigo-500/10 to-transparent">
           <div className="flex items-center gap-5">

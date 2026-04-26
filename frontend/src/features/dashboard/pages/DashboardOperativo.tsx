@@ -152,7 +152,7 @@ const DashboardOperativo: React.FC = () => {
               </span>
             </div>
 
-            <h1 className="text-5xl font-black tracking-tighter text-[var(--text-primary)] leading-none">
+            <h1 className="text-3xl sm:text-5xl font-black tracking-tighter text-[var(--text-primary)] leading-none">
               Hola, {user?.nombre?.split(' ')[0]}
             </h1>
 

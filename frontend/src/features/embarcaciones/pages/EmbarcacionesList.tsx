@@ -74,7 +74,7 @@ export default function EmbarcacionesList() {
             <Ship className="w-10 h-10" />
           </div>
           <div>
-            <h2 className="text-[2.5rem] font-black text-[var(--text-primary)] leading-tight tracking-tight uppercase">Gestión de Flota</h2>
+            <h2 className="text-[2.5rem] font-black text-[var(--text-primary)] leading-tight tracking-tight uppercase">Flota</h2>
             <div className="flex items-center gap-4 mt-2">
               <p className="text-[var(--text-secondary)] text-xs font-black uppercase tracking-[0.2em]">Monitoreo Operativo de Embarcaciones</p>
               <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse shadow-sm shadow-indigo-500/50" />

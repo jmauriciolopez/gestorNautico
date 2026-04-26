@@ -41,7 +41,7 @@ export function CajaModal({ isOpen, onClose, onConfirm, type, currentBalance = 0
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[var(--bg-primary)]/80 backdrop-blur-md animate-in fade-in duration-300">
-      <div className="bg-[var(--modal-glass-bg)] border border-[var(--border-primary)] w-full max-w-md rounded-[3rem] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.5)] overflow-hidden transform animate-in slide-in-from-bottom-8 duration-500">
+      <div className="bg-[var(--modal-glass-bg)] border border-[var(--border-primary)] w-full max-w-md rounded-[3rem] shadow-[0_32px_128px_-16px_rgba(0,0,0,0.5)] overflow-y-auto max-h-[calc(100vh-2rem)] transform animate-in slide-in-from-bottom-8 duration-500 custom-scrollbar">
 
         {/* Header */}
         <div className={`px-10 pt-10 pb-8 border-b border-[var(--border-primary)] flex justify-between items-start bg-gradient-to-br from-transparent to-transparent ${isOpening ? 'from-emerald-500/10' : 'from-rose-500/10'}`}>
@@ -82,7 +82,7 @@ export function CajaModal({ isOpen, onClose, onConfirm, type, currentBalance = 0
                 type="number"
                 required
                 autoFocus
-                className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-2xl pl-14 pr-5 py-6 text-4xl text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 transition-all font-black tabular-nums"
+                className="w-full bg-[var(--bg-primary)] border border-[var(--border-primary)] rounded-2xl pl-12 sm:pl-14 pr-5 py-4 sm:py-6 text-2xl sm:text-4xl text-[var(--text-primary)] focus:outline-none focus:border-indigo-500 transition-all font-black tabular-nums"
                 value={monto}
                 onChange={e => setMonto(parseFloat(e.target.value))}
                 placeholder="0.00"
