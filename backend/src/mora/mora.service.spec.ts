@@ -5,15 +5,18 @@ import { Factura, EstadoFactura } from '../facturas/factura.entity';
 import { ConfiguracionService } from '../configuracion/configuracion.service';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
 
+import { Role } from '../users/user.entity';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+
 describe('MoraService', () => {
   let service: MoraService;
 
-  const mockTenant = {
+  const mockTenant: TenantContext = {
     guarderiaId: 1,
-    scope: 'guarderia' as any,
-    role: 'SUPERADMIN' as any,
+    scope: 'guarderia',
+    role: Role.SUPERADMIN,
     userId: 1,
-  } as any;
+  };
 
   const mockFactura = {
     id: 1,

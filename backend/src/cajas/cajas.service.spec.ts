@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, ConflictException } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
@@ -6,15 +5,18 @@ import { CajasService } from './cajas.service';
 import { Caja, EstadoCaja } from './caja.entity';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
 
+import { Role } from '../users/user.entity';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+
 describe('CajasService', () => {
   let service: CajasService;
 
-  const mockTenant = {
+  const mockTenant: TenantContext = {
     guarderiaId: 1,
-    scope: 'guarderia' as any,
-    role: 'SUPERADMIN' as any,
+    scope: 'guarderia',
+    role: Role.SUPERADMIN,
     userId: 1,
-  } as any;
+  };
 
   const mockCaja = {
     id: 1,
@@ -34,7 +36,7 @@ describe('CajasService', () => {
     create: jest.fn(),
     save: jest.fn(),
     manager: {
-      transaction: jest.fn().mockImplementation((callback) =>
+      transaction: jest.fn().mockImplementation((callback: (mgr: any) => any) =>
         // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         callback({
           findOne: jest.fn(),
@@ -54,7 +56,7 @@ describe('CajasService', () => {
     },
   };
 
-  const mockNotificacionesService = {
+  const mockNotificacionesService: Record<string, jest.Mock> = {
     createForRole: jest.fn().mockResolvedValue({}),
   };
 
@@ -125,28 +127,32 @@ describe('CajasService', () => {
 
   describe('abrir', () => {
     it('should open a new caja', async () => {
-      mockRepository.manager.transaction.mockImplementation((callback: any) => {
-        const tx = {
-          findOne: jest.fn().mockResolvedValue(null),
-          create: jest.fn().mockReturnValue(mockCaja),
-          save: jest.fn().mockResolvedValue(mockCaja),
-        };
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return callback(tx);
-      });
+      mockRepository.manager.transaction.mockImplementation(
+        (callback: (mgr: any) => any) => {
+          const tx = {
+            findOne: jest.fn().mockResolvedValue(null),
+            create: jest.fn().mockReturnValue(mockCaja),
+            save: jest.fn().mockResolvedValue(mockCaja),
+          };
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+          return callback(tx);
+        },
+      );
 
       const result = await service.abrir(mockTenant, 1000);
       expect(result).toBeDefined();
     });
 
     it('should throw ConflictException if caja already open', async () => {
-      mockRepository.manager.transaction.mockImplementation((callback: any) => {
-        const tx = {
-          findOne: jest.fn().mockResolvedValue(mockCaja),
-        };
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return callback(tx);
-      });
+      mockRepository.manager.transaction.mockImplementation(
+        (callback: (mgr: any) => any) => {
+          const tx = {
+            findOne: jest.fn().mockResolvedValue(mockCaja),
+          };
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+          return callback(tx);
+        },
+      );
 
       await expect(service.abrir(mockTenant, 1000)).rejects.toThrow(
         ConflictException,
@@ -156,16 +162,18 @@ describe('CajasService', () => {
 
   describe('cerrar', () => {
     it('should close a caja', async () => {
-      mockRepository.manager.transaction.mockImplementation((callback: any) => {
-        const tx = {
-          findOne: jest.fn().mockResolvedValue(mockCaja),
-          save: jest
-            .fn()
-            .mockResolvedValue({ ...mockCaja, estado: EstadoCaja.CERRADA }),
-        };
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return callback(tx);
-      });
+      mockRepository.manager.transaction.mockImplementation(
+        (callback: (mgr: any) => any) => {
+          const tx = {
+            findOne: jest.fn().mockResolvedValue(mockCaja),
+            save: jest
+              .fn()
+              .mockResolvedValue({ ...mockCaja, estado: EstadoCaja.CERRADA }),
+          };
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+          return callback(tx);
+        },
+      );
 
       const result = await service.cerrar(mockTenant, 1, 1500);
       expect(result).toBeDefined();
@@ -173,13 +181,15 @@ describe('CajasService', () => {
 
     it('should throw ConflictException if caja already closed', async () => {
       const closedCaja = { ...mockCaja, estado: EstadoCaja.CERRADA };
-      mockRepository.manager.transaction.mockImplementation((callback: any) => {
-        const tx = {
-          findOne: jest.fn().mockResolvedValue(closedCaja),
-        };
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return callback(tx);
-      });
+      mockRepository.manager.transaction.mockImplementation(
+        (callback: (mgr: any) => any) => {
+          const tx = {
+            findOne: jest.fn().mockResolvedValue(closedCaja),
+          };
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+          return callback(tx);
+        },
+      );
 
       await expect(service.cerrar(mockTenant, 1, 1500)).rejects.toThrow(
         ConflictException,
@@ -187,13 +197,15 @@ describe('CajasService', () => {
     });
 
     it('should throw NotFoundException if caja not found', async () => {
-      mockRepository.manager.transaction.mockImplementation((callback: any) => {
-        const tx = {
-          findOne: jest.fn().mockResolvedValue(null),
-        };
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-        return callback(tx);
-      });
+      mockRepository.manager.transaction.mockImplementation(
+        (callback: (mgr: any) => any) => {
+          const tx = {
+            findOne: jest.fn().mockResolvedValue(null),
+          };
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+          return callback(tx);
+        },
+      );
 
       await expect(service.cerrar(mockTenant, 999, 1500)).rejects.toThrow(
         NotFoundException,

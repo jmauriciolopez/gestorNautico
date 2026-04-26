@@ -20,14 +20,14 @@ export class CatalogoService extends BaseTenantService {
 
   findAll(tenant: TenantContext, query: PaginationQuery = {}) {
     return paginate(this.catalogoRepo, query, {
-      where: this.buildTenantWhere(tenant),
+      where: this.buildTenantWhere<Catalogo>(tenant),
       order: { categoria: 'ASC', nombre: 'ASC' },
     });
   }
 
   async findOne(tenant: TenantContext, id: number) {
     const item = await this.catalogoRepo.findOne({
-      where: this.buildTenantWhere(tenant, { id }),
+      where: this.buildTenantWhere<Catalogo>(tenant, { id }),
     });
     if (!item)
       throw new NotFoundException(

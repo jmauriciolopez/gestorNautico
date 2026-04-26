@@ -4,15 +4,18 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { ZonasService } from './zonas.service';
 import { Zona } from './zona.entity';
 
+import { Role } from '../users/user.entity';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+
 describe('ZonasService', () => {
   let service: ZonasService;
 
-  const mockTenant = {
+  const mockTenant: TenantContext = {
     guarderiaId: 1,
-    scope: 'guarderia' as any,
-    role: 'SUPERADMIN' as any,
+    scope: 'guarderia',
+    role: Role.SUPERADMIN,
     userId: 1,
-  } as any;
+  };
 
   const mockZona = {
     id: 1,
@@ -24,7 +27,7 @@ describe('ZonasService', () => {
     updatedAt: new Date(),
   };
 
-  const mockRepository = {
+  const mockRepository: Record<string, jest.Mock> = {
     find: jest.fn(),
     findAndCount: jest.fn().mockResolvedValue([[], 0]),
     findOne: jest.fn(),

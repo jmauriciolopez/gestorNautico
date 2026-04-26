@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, FindOptionsWhere } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User, Role } from './user.entity';
@@ -31,13 +31,16 @@ export class UsersService extends BaseTenantService {
       relations: ['guarderia'],
       order: { id: 'ASC' },
     });
-    console.log(`[UsersService] Found ${result.data.length} users. First user guarderia:`, result.data[0]?.guarderia);
+    console.log(
+      `[UsersService] Found ${result.data.length} users. First user guarderia:`,
+      result.data[0]?.guarderia,
+    );
     return result;
   }
 
   async findOne(tenant: TenantContext, id: number) {
     const user = await this.userRepository.findOne({
-      where: this.buildTenantWhere(tenant, { id }),
+      where: this.buildTenantWhere<User>(tenant, { id }),
       relations: ['guarderia'],
     });
     if (!user)
@@ -47,9 +50,13 @@ export class UsersService extends BaseTenantService {
 
   async create(tenant: TenantContext, createUserDto: CreateUserDto) {
     if (createUserDto.email) {
-      const existingEmail = await this.userRepository.findOneBy({ email: createUserDto.email });
+      const existingEmail = await this.userRepository.findOneBy({
+        email: createUserDto.email,
+      });
       if (existingEmail) {
-        throw new ConflictException(`El email "${createUserDto.email}" ya está registrado`);
+        throw new ConflictException(
+          `El email "${createUserDto.email}" ya está registrado`,
+        );
       }
     }
 
@@ -57,9 +64,10 @@ export class UsersService extends BaseTenantService {
     const existingUser = await this.userRepository.findOne({
       where: {
         usuario: createUserDto.usuario,
-        guarderiaId: tenant.role === Role.SUPERADMIN && createUserDto.guarderiaId
-          ? createUserDto.guarderiaId
-          : tenant.guarderiaId,
+        guarderiaId:
+          tenant.role === Role.SUPERADMIN && createUserDto.guarderiaId
+            ? createUserDto.guarderiaId
+            : tenant.guarderiaId,
       },
     });
     if (existingUser) {
@@ -115,9 +123,13 @@ export class UsersService extends BaseTenantService {
 
   async signupAdmin(guarderiaId: number, createUserDto: CreateUserDto) {
     if (createUserDto.email) {
-      const existingEmail = await this.userRepository.findOneBy({ email: createUserDto.email });
+      const existingEmail = await this.userRepository.findOneBy({
+        email: createUserDto.email,
+      });
       if (existingEmail) {
-        throw new ConflictException(`El email "${createUserDto.email}" ya está registrado`);
+        throw new ConflictException(
+          `El email "${createUserDto.email}" ya está registrado`,
+        );
       }
     }
 
@@ -155,9 +167,13 @@ export class UsersService extends BaseTenantService {
     const user = await this.findOne(tenant, id);
 
     if (updateUserDto.email && updateUserDto.email !== user.email) {
-      const existingEmail = await this.userRepository.findOneBy({ email: updateUserDto.email });
+      const existingEmail = await this.userRepository.findOneBy({
+        email: updateUserDto.email,
+      });
       if (existingEmail) {
-        throw new ConflictException(`El email "${updateUserDto.email}" ya está registrado`);
+        throw new ConflictException(
+          `El email "${updateUserDto.email}" ya está registrado`,
+        );
       }
     }
 
@@ -194,8 +210,14 @@ export class UsersService extends BaseTenantService {
     return this.userRepository.findOneBy({ email });
   }
 
-  findOneByUsername(usuario: string, guarderiaId?: number): Promise<User | null> {
-    return this.userRepository.findOneBy({ usuario, guarderiaId: guarderiaId ?? null });
+  findOneByUsername(
+    usuario: string,
+    guarderiaId?: number,
+  ): Promise<User | null> {
+    return this.userRepository.findOneBy({
+      usuario,
+      guarderiaId: guarderiaId ?? null,
+    });
   }
 
   async findById(id: number): Promise<User> {
@@ -209,7 +231,10 @@ export class UsersService extends BaseTenantService {
     return user;
   }
 
-  async findByIdentifier(identifier: string, guarderiaId?: number): Promise<User | null> {
+  async findByIdentifier(
+    identifier: string,
+    guarderiaId?: number,
+  ): Promise<User | null> {
     // 1. Siempre buscar por email primero (es global y único)
     if (identifier.includes('@')) {
       const userByEmail = await this.userRepository.findOne({
@@ -220,8 +245,8 @@ export class UsersService extends BaseTenantService {
     }
 
     // 2. Si no es email o no se encontró, buscar por usuario (+ guarderiaId si se provee)
-    const where: any = { usuario: identifier };
-    
+    const where: FindOptionsWhere<User> = { usuario: identifier };
+
     if (guarderiaId !== undefined) {
       where.guarderiaId = guarderiaId;
     } else {

@@ -154,7 +154,7 @@ export class PdfService {
       void doc.table(table, {
         prepareHeader: () =>
           doc.font('Helvetica-Bold').fontSize(9).fillColor(primaryColor),
-        prepareRow: (row, indexColumn, indexRow, rectRow, rectCell) => {
+        prepareRow: (row, indexColumn, indexRow, rectRow) => {
           doc.font('Helvetica').fontSize(9).fillColor(textColor);
           // Línea divisoria sutil entre filas
           if (rectRow) {

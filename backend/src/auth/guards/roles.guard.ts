@@ -5,9 +5,15 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { Request } from 'express';
 import { Role } from '../../users/user.entity';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 import { TENANT_ROLES_KEY } from '../decorators/tenant-roles.decorator';
+import { JwtUser } from '../../compartido/interfaces/tenant-context.interface';
+
+interface RequestWithUser extends Request {
+  user: JwtUser;
+}
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -28,7 +34,7 @@ export class RolesGuard implements CanActivate {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<RequestWithUser>();
     const user = request.user;
 
     if (!user || !user.role) {

@@ -47,7 +47,8 @@ export class AutomaticBillingService {
 
     for (const g of guarderias) {
       const tenant: TenantContext = {
-        guarderiaId: g.id,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        guarderiaId: Number((g as any).id),
         scope: 'guarderia',
         role: Role.SUPERADMIN,
         userId: 0,
@@ -254,7 +255,8 @@ export class AutomaticBillingService {
 
     for (const g of guarderias) {
       const tenant: TenantContext = {
-        guarderiaId: g.id,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        guarderiaId: Number((g as any).id),
         scope: 'guarderia',
         role: Role.SUPERADMIN,
         userId: 0,

@@ -1,4 +1,4 @@
-import { Injectable, OnApplicationBootstrap, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Configuracion } from './configuracion.entity';
@@ -26,14 +26,6 @@ export class ConfiguracionService extends BaseTenantService {
     this.logger.log(
       `Inicializando configuraciones base para Guardería ID: ${guarderiaId}...`,
     );
-    const items = [
-      {
-        clave: 'NOMBRE_GUARDERIA',
-        valor: 'Gestor Náutico',
-        descripcion: 'Nombre de la guardería náutica',
-      },
-      // ... (rest of items)
-    ];
 
     // Re-definir items aquí para asegurar que todos tengan el guarderiaId
     const configsToSync = [
@@ -122,14 +114,14 @@ export class ConfiguracionService extends BaseTenantService {
     query: PaginationQuery = {},
   ): Promise<PaginatedResult<Configuracion>> {
     return paginate(this.configRepo, query, {
-      where: this.buildTenantWhere(tenant),
+      where: this.buildTenantWhere<Configuracion>(tenant),
       order: { clave: 'ASC' },
     });
   }
 
   async findByClave(tenant: TenantContext, clave: string) {
     return this.configRepo.findOne({
-      where: this.buildTenantWhere(tenant, { clave }),
+      where: this.buildTenantWhere<Configuracion>(tenant, { clave }),
     });
   }
 
@@ -153,7 +145,7 @@ export class ConfiguracionService extends BaseTenantService {
 
   async update(tenant: TenantContext, clave: string, valor: string) {
     const config = await this.configRepo.findOne({
-      where: this.buildTenantWhere(tenant, { clave }),
+      where: this.buildTenantWhere<Configuracion>(tenant, { clave }),
     });
     if (config) {
       config.valor = valor;

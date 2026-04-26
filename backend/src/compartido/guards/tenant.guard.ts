@@ -5,16 +5,22 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { Request } from 'express';
 import { Role } from '../../users/user.entity';
 import { ALLOW_GLOBAL_KEY } from '../decorators/allow-global.decorator';
 import { IS_PUBLIC_KEY } from '../../auth/decorators/public.decorator';
 import { JwtUser, TenantContext } from '../interfaces/tenant-context.interface';
 
+interface RequestWithTenant extends Request {
+  user?: JwtUser;
+  tenant?: TenantContext;
+}
+
 @Injectable()
 export class TenantGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
-  async canActivate(context: ExecutionContext): Promise<boolean> {
+  canActivate(context: ExecutionContext): boolean {
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),
@@ -23,8 +29,8 @@ export class TenantGuard implements CanActivate {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest();
-    const user = request.user as JwtUser | undefined;
+    const request = context.switchToHttp().getRequest<RequestWithTenant>();
+    const user = request.user;
 
     if (!user) {
       throw new ForbiddenException('Usuario no autenticado');
@@ -103,13 +109,24 @@ export class TenantGuard implements CanActivate {
 
   private normalizeTenantId(value: unknown): string | null {
     if (Array.isArray(value)) {
-      return value[0] ? String(value[0]) : null;
-    }
-
-    if (value === undefined || value === null || value === '') {
+      const first = (value as unknown[])[0];
+      if (first !== undefined && first !== null && first !== '') {
+        // eslint-disable-next-line @typescript-eslint/no-base-to-string
+        return String(first);
+      }
       return null;
     }
 
+    if (
+      value === undefined ||
+      value === null ||
+      value === '' ||
+      typeof value === 'object'
+    ) {
+      return null;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
     return String(value);
   }
 }

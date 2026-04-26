@@ -6,15 +6,18 @@ import { Pago, MetodoPago } from './pago.entity';
 import { CajasService } from '../cajas/cajas.service';
 import { CargosService } from '../cargos/cargos.service';
 
+import { Role } from '../users/user.entity';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+
 describe('PagosService', () => {
   let service: PagosService;
 
-  const mockTenant = {
+  const mockTenant: TenantContext = {
     guarderiaId: 1,
-    scope: 'guarderia' as any,
-    role: 'SUPERADMIN' as any,
+    scope: 'guarderia',
+    role: Role.SUPERADMIN,
     userId: 1,
-  } as any;
+  };
 
   const mockPago = {
     id: 1,

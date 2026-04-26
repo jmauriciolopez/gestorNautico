@@ -7,7 +7,6 @@ import {
   Param,
   Delete,
   UseGuards,
-  Req,
   ForbiddenException,
 } from '@nestjs/common';
 import { GuarderiaService } from './guarderia.service';
@@ -19,6 +18,8 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../users/user.entity';
 import { TenantGuard } from '../auth/guards/tenant.guard';
 import { GlobalRoute } from '../auth/decorators/global-route.decorator';
+import { JwtUser } from '../compartido/interfaces/tenant-context.interface';
+import { ActiveUser } from '../auth/decorators/active-user.decorator';
 
 @Controller('guarderias')
 @UseGuards(AuthTokenGuard, TenantGuard, RolesGuard)
@@ -42,8 +43,7 @@ export class GuarderiaController {
   @Get(':id')
   @Roles(Role.SUPERADMIN, Role.ADMIN)
   @GlobalRoute()
-  async findOne(@Req() req: any, @Param('id') id: string) {
-    const user = req.user;
+  async findOne(@ActiveUser() user: JwtUser, @Param('id') id: string) {
     if (user.role === Role.ADMIN && user.guarderiaId !== +id) {
       throw new ForbiddenException('No tienes acceso a esta guardería');
     }
@@ -54,11 +54,10 @@ export class GuarderiaController {
   @Roles(Role.SUPERADMIN, Role.ADMIN)
   @GlobalRoute()
   async update(
-    @Req() req: any,
+    @ActiveUser() user: JwtUser,
     @Param('id') id: string,
     @Body() updateGuarderiaDto: UpdateGuarderiaDto,
   ) {
-    const user = req.user;
     if (user.role === Role.ADMIN && user.guarderiaId !== +id) {
       throw new ForbiddenException('No tienes acceso a esta guardería');
     }
@@ -75,11 +74,10 @@ export class GuarderiaController {
   @Roles(Role.SUPERADMIN, Role.ADMIN)
   @GlobalRoute()
   async finishOnboarding(
-    @Req() req: any,
+    @ActiveUser() user: JwtUser,
     @Param('id') id: string,
     @Body() updateGuarderiaDto: UpdateGuarderiaDto,
   ) {
-    const user = req.user;
     if (user.role === Role.ADMIN && user.guarderiaId !== +id) {
       throw new ForbiddenException('No tienes acceso a esta guardería');
     }

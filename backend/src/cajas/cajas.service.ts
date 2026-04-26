@@ -50,7 +50,7 @@ export class CajasService extends BaseTenantService {
 
   async findOne(tenant: TenantContext, id: number) {
     const caja = await this.cajaRepo.findOne({
-      where: this.buildTenantWhere(tenant, { id }),
+      where: this.buildTenantWhere<Caja>(tenant, { id }),
       relations: ['pagos', 'pagos.cliente', 'pagos.cargo'],
     });
     if (!caja) throw new NotFoundException(`Caja con ID ${id} no encontrada`);
@@ -59,7 +59,9 @@ export class CajasService extends BaseTenantService {
 
   async findAbierta(tenant: TenantContext) {
     return this.cajaRepo.findOne({
-      where: this.buildTenantWhere(tenant, { estado: EstadoCaja.ABIERTA }),
+      where: this.buildTenantWhere<Caja>(tenant, {
+        estado: EstadoCaja.ABIERTA,
+      }),
       relations: ['pagos', 'pagos.cliente', 'pagos.cargo'],
     });
   }
@@ -73,7 +75,7 @@ export class CajasService extends BaseTenantService {
       return await this.cajaRepo.manager.transaction(
         async (transactionalEntityManager) => {
           const abierta = await transactionalEntityManager.findOne(Caja, {
-            where: this.buildTenantWhere(tenant, {
+            where: this.buildTenantWhere<Caja>(tenant, {
               estado: EstadoCaja.ABIERTA,
             }),
           });
@@ -125,7 +127,7 @@ export class CajasService extends BaseTenantService {
       return await this.cajaRepo.manager.transaction(
         async (transactionalEntityManager) => {
           const caja = await transactionalEntityManager.findOne(Caja, {
-            where: this.buildTenantWhere(tenant, { id }),
+            where: this.buildTenantWhere<Caja>(tenant, { id }),
           });
 
           if (!caja)

@@ -6,23 +6,32 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
+import { Request } from 'express';
 import { Role } from '../../users/user.entity';
+import {
+  JwtUser,
+  TenantContext,
+} from '../../compartido/interfaces/tenant-context.interface';
+
+interface RequestWithTenant extends Request {
+  user?: JwtUser;
+  guarderiaId?: number;
+  tenant?: Partial<TenantContext>;
+}
 
 @Injectable()
 export class TenantInterceptor implements NestInterceptor {
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    const request = context.switchToHttp().getRequest();
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+    const request = context.switchToHttp().getRequest<RequestWithTenant>();
     const user = request.user;
     const guarderiaId = request.guarderiaId;
 
     // Si no hay usuario (ruta pública), intentamos construir un contexto básico si hay guarderiaId
     if (!user) {
       if (guarderiaId) {
-        request['tenant'] = {
+        request.tenant = {
           guarderiaId: guarderiaId,
           scope: 'guarderia',
-          role: null,
-          userId: null,
         };
       }
       return next.handle();
@@ -41,7 +50,7 @@ export class TenantInterceptor implements NestInterceptor {
     }
 
     // Construir contexto del tenant
-    request['tenant'] = {
+    request.tenant = {
       guarderiaId: guarderiaId || user.guarderiaId || null,
       scope,
       role: user.role,

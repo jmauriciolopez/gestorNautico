@@ -46,14 +46,14 @@ export class RacksService extends BaseTenantService {
     query: PaginationQuery = {},
   ): Promise<PaginatedResult<Rack>> {
     return paginate(this.rackRepo, query, {
-      where: this.buildTenantWhere(tenant),
+      where: this.buildTenantWhere<Rack>(tenant),
       relations: ['zona', 'espacios'],
     });
   }
 
   async findOne(tenant: TenantContext, id: number) {
     const rack = await this.rackRepo.findOne({
-      where: this.buildTenantWhere(tenant, { id }),
+      where: this.buildTenantWhere<Rack>(tenant, { id }),
       relations: ['zona', 'espacios'],
     });
     if (!rack) throw new NotFoundException(`Rack con ID ${id} no encontrado`);
@@ -185,7 +185,7 @@ export class RacksService extends BaseTenantService {
 
   async remove(tenant: TenantContext, id: number) {
     const rack = await this.rackRepo.findOne({
-      where: this.buildTenantWhere(tenant, { id }),
+      where: this.buildTenantWhere<Rack>(tenant, { id }),
       relations: ['espacios'],
     });
     if (!rack) throw new NotFoundException(`Rack con ID ${id} no encontrado`);

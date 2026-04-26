@@ -49,7 +49,7 @@ export class RegistrosService extends BaseTenantService {
     };
 
     const where: FindOptionsWhere<RegistroServicio> =
-      this.buildTenantWhere(tenant);
+      this.buildTenantWhere<RegistroServicio>(tenant);
 
     if (embarcacionId) {
       where.embarcacionId = embarcacionId;
@@ -73,7 +73,7 @@ export class RegistrosService extends BaseTenantService {
 
   async findOne(tenant: TenantContext, id: number) {
     const registro = await this.registroRepo.findOne({
-      where: this.buildTenantWhere(tenant, { id }),
+      where: this.buildTenantWhere<RegistroServicio>(tenant, { id }),
       relations: ['embarcacion', 'servicio', 'embarcacion.cliente'],
     });
     if (!registro)
@@ -87,7 +87,9 @@ export class RegistrosService extends BaseTenantService {
     // Validar que la embarcación pertenezca al tenant
     if (data.embarcacionId) {
       const embarcacion = await this.embarcacionRepo.findOne({
-        where: this.buildTenantWhere(tenant, { id: data.embarcacionId }),
+        where: this.buildTenantWhere<Embarcacion>(tenant, {
+          id: data.embarcacionId,
+        }),
       });
       if (!embarcacion) {
         throw new BadRequestException(
@@ -99,7 +101,7 @@ export class RegistrosService extends BaseTenantService {
     // Validar que el servicio del catálogo pertenezca al tenant
     if (data.servicioId) {
       const servicio = await this.catalogoRepo.findOne({
-        where: this.buildTenantWhere(tenant, { id: data.servicioId }),
+        where: this.buildTenantWhere<Catalogo>(tenant, { id: data.servicioId }),
       });
       if (!servicio) {
         throw new BadRequestException(
@@ -138,7 +140,10 @@ export class RegistrosService extends BaseTenantService {
     data: Partial<RegistroServicio>,
   ) {
     await this.findOne(tenant, id);
-    await this.registroRepo.update(this.buildTenantWhere(tenant, { id }), data);
+    await this.registroRepo.update(
+      this.buildTenantWhere<RegistroServicio>(tenant, { id }),
+      data,
+    );
     return this.findOne(tenant, id);
   }
 
@@ -148,7 +153,7 @@ export class RegistrosService extends BaseTenantService {
     costoFinal?: number,
   ): Promise<RegistroServicio> {
     const registro = await this.registroRepo.findOne({
-      where: this.buildTenantWhere(tenant, { id }),
+      where: this.buildTenantWhere<RegistroServicio>(tenant, { id }),
       relations: ['embarcacion', 'embarcacion.cliente', 'servicio'],
     });
 

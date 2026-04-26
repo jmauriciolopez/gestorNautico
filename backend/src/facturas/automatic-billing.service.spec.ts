@@ -2,33 +2,24 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AutomaticBillingService } from './automatic-billing.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Factura, EstadoFactura } from './factura.entity';
-import { Cargo, TipoCargo } from '../cargos/cargo.entity';
+import { Cargo } from '../cargos/cargo.entity';
 import { Cliente } from '../clientes/clientes.entity';
 import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
 import { Rack } from '../racks/rack.entity';
 import { FacturasService } from './facturas.service';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import { ConfiguracionService } from '../configuracion/configuracion.service';
-import { LessThan } from 'typeorm';
 
 describe('AutomaticBillingService', () => {
   let service: AutomaticBillingService;
 
-  const mockTenant = {
-    guarderiaId: 1,
-    scope: 'guarderia' as any,
-    role: 'SUPERADMIN' as any,
-    userId: 1,
-  } as any;
-
-  let facturaRepo: any;
-  let cargoRepo: any;
-  let clienteRepo: any;
-  let embarcacionRepo: any;
-  let rackRepo: any;
-  let facturasService: any;
-  let notificacionesService: any;
-  let configuracionService: any;
+  let facturaRepo: Record<string, jest.Mock>;
+  let cargoRepo: Record<string, jest.Mock>;
+  let clienteRepo: Record<string, jest.Mock>;
+  let embarcacionRepo: Record<string, jest.Mock>;
+  let facturasService: jest.Mocked<FacturasService>;
+  let notificacionesService: jest.Mocked<NotificacionesService>;
+  let configuracionService: jest.Mocked<ConfiguracionService>;
 
   const mockRepository = () => ({
     find: jest.fn(),
@@ -78,7 +69,6 @@ describe('AutomaticBillingService', () => {
     cargoRepo = module.get(getRepositoryToken(Cargo));
     clienteRepo = module.get(getRepositoryToken(Cliente));
     embarcacionRepo = module.get(getRepositoryToken(Embarcacion));
-    rackRepo = module.get(getRepositoryToken(Rack));
     facturasService = module.get(FacturasService);
     notificacionesService = module.get(NotificacionesService);
     configuracionService = module.get(ConfiguracionService);
@@ -115,6 +105,7 @@ describe('AutomaticBillingService', () => {
       await service.generateMonthlyMooringFees();
 
       expect(cargoRepo.create).toHaveBeenCalled();
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(facturasService.create).toHaveBeenCalled();
     });
 
@@ -150,12 +141,14 @@ describe('AutomaticBillingService', () => {
         cliente: { nombre: 'Test', email: 'test@test.com' },
       };
       facturaRepo.find.mockResolvedValue([mockFactura]);
-      configuracionService.getValorNumerico.mockImplementation((key, def) => {
-        if (key === 'MORA_DIAS_GRACIA') return 2;
-        if (key === 'MORA_TASA_INTERES') return 3;
-        if (key === 'MORA_TASA_RECARGO') return 10;
-        return def;
-      });
+      configuracionService.getValorNumerico.mockImplementation(
+        (tenant, key, def) => {
+          if (key === 'MORA_DIAS_GRACIA') return Promise.resolve(2);
+          if (key === 'MORA_TASA_INTERES') return Promise.resolve(3);
+          if (key === 'MORA_TASA_RECARGO') return Promise.resolve(10);
+          return Promise.resolve(def || 0);
+        },
+      );
 
       await service.checkOverdueInvoices();
 
@@ -164,6 +157,7 @@ describe('AutomaticBillingService', () => {
           recargo: 10, // 10% of 100
         }),
       );
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(notificacionesService.sendEmailNotification).toHaveBeenCalled();
     });
   });

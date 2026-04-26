@@ -33,7 +33,7 @@ export class PagosService extends BaseTenantService {
 
   findAll(tenant: TenantContext, query: PaginationQuery = {}) {
     return paginate(this.pagoRepo, query, {
-      where: this.buildTenantWhere(tenant),
+      where: this.buildTenantWhere<Pago>(tenant),
       relations: ['cliente', 'cargo', 'caja'],
       order: { fecha: 'DESC' },
     });
@@ -41,7 +41,7 @@ export class PagosService extends BaseTenantService {
 
   async findOne(tenant: TenantContext, id: number) {
     const pago = await this.pagoRepo.findOne({
-      where: this.buildTenantWhere(tenant, { id }),
+      where: this.buildTenantWhere<Pago>(tenant, { id }),
       relations: ['cliente', 'cargo', 'caja'],
     });
     if (!pago) throw new NotFoundException(`Pago con ID ${id} no encontrado`);
@@ -53,7 +53,7 @@ export class PagosService extends BaseTenantService {
 
     // Validar que el cliente pertenezca al tenant
     const cliente = await this.clienteRepo.findOne({
-      where: this.buildTenantWhere(tenant, { id: Number(clienteId) }),
+      where: this.buildTenantWhere<Cliente>(tenant, { id: Number(clienteId) }),
     });
     if (!cliente) {
       throw new BadRequestException(

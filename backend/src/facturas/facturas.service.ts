@@ -74,7 +74,7 @@ export class FacturasService extends BaseTenantService {
     };
 
     // Multi-tenant filter
-    const tenantFilter = this.buildTenantWhere(tenant);
+    const tenantFilter = this.buildTenantWhere<Factura>(tenant);
 
     // Filtros de Búsqueda (Número o Cliente)
     if (search) {
@@ -115,7 +115,7 @@ export class FacturasService extends BaseTenantService {
 
   async findOne(tenant: TenantContext, id: number) {
     const factura = await this.facturaRepo.findOne({
-      where: this.buildTenantWhere(tenant, { id }),
+      where: this.buildTenantWhere<Factura>(tenant, { id }),
       relations: ['cliente', 'cargos'],
     });
     if (!factura)
@@ -125,7 +125,7 @@ export class FacturasService extends BaseTenantService {
 
   async generateNextNumero(tenant: TenantContext): Promise<string> {
     const last = await this.facturaRepo.find({
-      where: this.buildTenantWhere(tenant),
+      where: this.buildTenantWhere<Factura>(tenant),
       order: { id: 'DESC' },
       take: 1,
     });
@@ -143,7 +143,7 @@ export class FacturasService extends BaseTenantService {
 
     // Validar que el cliente pertenezca al tenant
     const cliente = await this.clienteRepo.findOne({
-      where: this.buildTenantWhere(tenant, { id: clienteId }),
+      where: this.buildTenantWhere<Cliente>(tenant, { id: clienteId }),
     });
     if (!cliente) {
       throw new BadRequestException(
@@ -154,7 +154,7 @@ export class FacturasService extends BaseTenantService {
     return await this.dataSource.transaction(async (manager) => {
       // 1. Obtener los cargos y validar (dentro de transacción)
       const cargos = await manager.find(Cargo, {
-        where: this.buildTenantWhere(tenant, {
+        where: this.buildTenantWhere<Cargo>(tenant, {
           id: In(cargoIds),
           cliente: { id: clienteId },
         }),
@@ -239,7 +239,7 @@ export class FacturasService extends BaseTenantService {
       // 5. Vincular cargos a la factura
       await manager.update(
         Cargo,
-        this.buildTenantWhere(tenant, { id: In(cargoIds) }),
+        this.buildTenantWhere<Cargo>(tenant, { id: In(cargoIds) }),
         { factura: { id: guardada.id } },
       );
 
@@ -251,7 +251,7 @@ export class FacturasService extends BaseTenantService {
       });
 
       return await manager.findOne(Factura, {
-        where: this.buildTenantWhere(tenant, { id: guardada.id }),
+        where: this.buildTenantWhere<Factura>(tenant, { id: guardada.id }),
         relations: ['cliente', 'cargos'],
       });
     });
@@ -265,7 +265,7 @@ export class FacturasService extends BaseTenantService {
   ) {
     return await this.dataSource.transaction(async (manager) => {
       const factura = await manager.findOne(Factura, {
-        where: this.buildTenantWhere(tenant, { id }),
+        where: this.buildTenantWhere<Factura>(tenant, { id }),
         relations: ['cliente', 'cargos'],
       });
 
@@ -273,9 +273,13 @@ export class FacturasService extends BaseTenantService {
         throw new NotFoundException(`Factura con ID ${id} no encontrada`);
       }
 
-      await manager.update(Factura, this.buildTenantWhere(tenant, { id }), {
-        estado,
-      });
+      await manager.update(
+        Factura,
+        this.buildTenantWhere<Factura>(tenant, { id }),
+        {
+          estado,
+        },
+      );
 
       if (estado === EstadoFactura.PAGADA) {
         // 1. Marcar cargos como pagados
@@ -283,7 +287,7 @@ export class FacturasService extends BaseTenantService {
         if (cargoIds.length > 0) {
           await manager.update(
             Cargo,
-            this.buildTenantWhere(tenant, { id: In(cargoIds) }),
+            this.buildTenantWhere<Cargo>(tenant, { id: In(cargoIds) }),
             { pagado: true },
           );
         }
@@ -316,7 +320,7 @@ export class FacturasService extends BaseTenantService {
       }
 
       return await manager.findOne(Factura, {
-        where: this.buildTenantWhere(tenant, { id }),
+        where: this.buildTenantWhere<Factura>(tenant, { id }),
         relations: ['cliente', 'cargos'],
       });
     });
@@ -340,7 +344,7 @@ export class FacturasService extends BaseTenantService {
   ) {
     return await this.dataSource.transaction(async (manager) => {
       const factura = await manager.findOne(Factura, {
-        where: this.buildTenantWhere(tenant, { id }),
+        where: this.buildTenantWhere<Factura>(tenant, { id }),
         relations: ['cliente', 'cargos'],
       });
 
@@ -374,7 +378,7 @@ export class FacturasService extends BaseTenantService {
       // 2. Vincular cargos existentes si vienen
       if (data.cargoIds) {
         const cargosExistentes = await manager.find(Cargo, {
-          where: this.buildTenantWhere(tenant, {
+          where: this.buildTenantWhere<Cargo>(tenant, {
             id: In(data.cargoIds),
             cliente: { id: factura.cliente.id },
           }),
@@ -388,14 +392,14 @@ export class FacturasService extends BaseTenantService {
 
         await manager.update(
           Cargo,
-          this.buildTenantWhere(tenant, { id: In(data.cargoIds) }),
+          this.buildTenantWhere<Cargo>(tenant, { id: In(data.cargoIds) }),
           { factura: { id: factura.id } },
         );
       }
 
       // 3. Recalcular el total basado en TODOS los cargos vinculados
       const todosLosCargos = await manager.find(Cargo, {
-        where: this.buildTenantWhere(tenant, {
+        where: this.buildTenantWhere<Cargo>(tenant, {
           factura: { id: factura.id },
         }),
       });
@@ -416,7 +420,7 @@ export class FacturasService extends BaseTenantService {
       targetEmail = optionalEmail;
       // Guardar en el cliente
       await this.clienteRepo.update(
-        this.buildTenantWhere(tenant, { id: factura.cliente.id }),
+        this.buildTenantWhere<Cliente>(tenant, { id: factura.cliente.id }),
         {
           email: optionalEmail,
         },

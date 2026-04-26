@@ -32,7 +32,7 @@ export class UbicacionesService extends BaseTenantService {
 
   async findOne(tenant: TenantContext, id: number) {
     const ubicacion = await this.ubicacionRepo.findOne({
-      where: this.buildTenantWhere(tenant, { id }),
+      where: this.buildTenantWhere<Ubicacion>(tenant, { id }),
       relations: ['zonas', 'zonas.racks', 'zonas.racks.espacios'],
     });
     if (!ubicacion)

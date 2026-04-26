@@ -56,16 +56,20 @@ export class ClientesService extends BaseTenantService {
           email: ILike(`%${search}%`),
           ...(onlyActive ? { activo: true } : {}),
         },
-      ];
+      ].map((cond) => this.buildTenantWhere<Cliente>(tenant, cond));
+
       return paginate(this.clientesRepository, pagination, {
         ...baseOptions,
-        where: this.buildTenantWhere(tenant, { activo: true }),
+        where: searchConditions,
       });
     }
 
     return paginate(this.clientesRepository, pagination, {
       ...baseOptions,
-      where: this.buildTenantWhere(tenant, onlyActive ? { activo: true } : {}),
+      where: this.buildTenantWhere<Cliente>(
+        tenant,
+        onlyActive ? { activo: true } : {},
+      ),
     });
   }
 
@@ -80,7 +84,9 @@ export class ClientesService extends BaseTenantService {
 
     // 1. Obtener todas las embarcaciones de estos clientes en una sola query
     const embarcaciones = await this.embarcacionRepository.find({
-      where: this.buildTenantWhere(tenant, { cliente: { id: In(clientIds) } }),
+      where: this.buildTenantWhere<Embarcacion>(tenant, {
+        cliente: { id: In(clientIds) },
+      }),
       relations: ['espacio', 'espacio.rack'],
     });
 
@@ -113,14 +119,16 @@ export class ClientesService extends BaseTenantService {
     id: number,
   ): Promise<Cliente & { tarifaBase?: number }> {
     const cliente = await this.clientesRepository.findOne({
-      where: this.buildTenantWhere(tenant, { id }),
+      where: this.buildTenantWhere<Cliente>(tenant, { id }),
     });
     if (!cliente) {
       throw new NotFoundException(`Cliente con ID ${id} no encontrado`);
     }
 
     const embarcacion = await this.embarcacionRepository.findOne({
-      where: this.buildTenantWhere(tenant, { cliente: { id } }),
+      where: this.buildTenantWhere<Embarcacion>(tenant, {
+        cliente: { id },
+      }),
       relations: ['espacio', 'espacio.rack'],
     });
 
@@ -140,7 +148,9 @@ export class ClientesService extends BaseTenantService {
   ): Promise<Cliente> {
     if (createClienteDto.dni) {
       const existing = await this.clientesRepository.findOne({
-        where: this.buildTenantWhere(tenant, { dni: createClienteDto.dni }),
+        where: this.buildTenantWhere<Cliente>(tenant, {
+          dni: createClienteDto.dni,
+        }),
       });
       if (existing) {
         throw new BadRequestException(
@@ -210,12 +220,16 @@ export class ClientesService extends BaseTenantService {
     // Historiales paginados en paralelo
     const [cargos, pagos] = await Promise.all([
       this.cargoRepository.find({
-        where: this.buildTenantWhere(tenant, { cliente: { id } }),
+        where: this.buildTenantWhere<Cargo>(tenant, {
+          cliente: { id },
+        }),
         order: { fechaEmision: 'DESC' },
         take: limite,
       }),
       this.pagoRepository.find({
-        where: this.buildTenantWhere(tenant, { cliente: { id } }),
+        where: this.buildTenantWhere<Pago>(tenant, {
+          cliente: { id },
+        }),
         order: { fecha: 'DESC' },
         take: limite,
       }),

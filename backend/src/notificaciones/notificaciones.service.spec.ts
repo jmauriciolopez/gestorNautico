@@ -6,15 +6,17 @@ import { Notificacion, NotificacionTipo } from './notificacion.entity';
 import { User, Role } from '../users/user.entity';
 import { MailerService } from '@nestjs-modules/mailer';
 
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+
 describe('NotificacionesService', () => {
   let service: NotificacionesService;
 
-  const mockTenant = {
+  const mockTenant: TenantContext = {
     guarderiaId: 1,
-    scope: 'guarderia' as any,
-    role: 'SUPERADMIN' as any,
+    scope: 'guarderia',
+    role: Role.SUPERADMIN,
     userId: 1,
-  } as any;
+  };
 
   const mockNotificacion = {
     id: 1,
@@ -26,7 +28,7 @@ describe('NotificacionesService', () => {
     createdAt: new Date(),
   };
 
-  const mockRepository = {
+  const mockRepository: Record<string, jest.Mock> = {
     find: jest.fn(),
     findAndCount: jest.fn().mockResolvedValue([[], 0]),
     findOne: jest.fn(),
@@ -36,11 +38,11 @@ describe('NotificacionesService', () => {
     delete: jest.fn(),
   };
 
-  const mockUserRepository = {
+  const mockUserRepository: Record<string, jest.Mock> = {
     find: jest.fn(),
   };
 
-  const mockMailerService = {
+  const mockMailerService: Record<string, jest.Mock> = {
     sendMail: jest.fn().mockResolvedValue({}),
   };
 

@@ -12,25 +12,31 @@ import { EspaciosService } from '../espacios/espacios.service';
 import { ConfiguracionService } from '../configuracion/configuracion.service';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import { NotFoundException } from '@nestjs/common';
-import { EstadoEmbarcacion } from '../embarcaciones/embarcaciones.entity';
+import { EntityManager } from 'typeorm';
+import {
+  Embarcacion,
+  EstadoEmbarcacion,
+} from '../embarcaciones/embarcaciones.entity';
+import { Espacio } from '../espacios/espacio.entity';
+
+import { Role } from '../users/user.entity';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
 
 describe('MovimientosService', () => {
   let service: MovimientosService;
 
-  const mockTenant = {
+  const mockTenant: TenantContext = {
     guarderiaId: 1,
-    scope: 'guarderia' as any,
-    role: 'SUPERADMIN' as any,
+    scope: 'guarderia',
+    role: Role.SUPERADMIN,
     userId: 1,
-  } as any;
+  };
 
-  let movimientoRepo: any;
-  let pedidoRepo: any;
-  let solicitudRepo: any;
-  let embarcacionesService: any;
-  let espaciosService: any;
-  let configuracionService: any;
-  let notificacionesService: any;
+  let movimientoRepo: Record<string, jest.Mock>;
+  let pedidoRepo: Record<string, jest.Mock>;
+  let solicitudRepo: Record<string, jest.Mock>;
+  let embarcacionesService: jest.Mocked<EmbarcacionesService>;
+  let configuracionService: jest.Mocked<ConfiguracionService>;
 
   const mockMovimiento = {
     id: 1,
@@ -92,9 +98,7 @@ describe('MovimientosService', () => {
     pedidoRepo = module.get(getRepositoryToken(Pedido));
     solicitudRepo = module.get(getRepositoryToken(SolicitudBajada));
     embarcacionesService = module.get(EmbarcacionesService);
-    espaciosService = module.get(EspaciosService);
     configuracionService = module.get(ConfiguracionService);
-    notificacionesService = module.get(NotificacionesService);
   });
 
   it('should be defined', () => {
@@ -116,6 +120,7 @@ describe('MovimientosService', () => {
       await service.findAll(mockTenant, { search: 'test' });
       expect(movimientoRepo.findAndCount).toHaveBeenCalledWith(
         expect.objectContaining({
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           where: expect.any(Array),
         }),
       );
@@ -158,8 +163,8 @@ describe('MovimientosService', () => {
       embarcacionesService.findOne.mockResolvedValue({
         id: 1,
         nombre: 'Boat',
-        espacio: { id: 10 },
-      });
+        espacio: { id: 10 } as unknown as Espacio,
+      } as unknown as Embarcacion);
       movimientoRepo.create.mockReturnValue(mockMovimiento);
       movimientoRepo.save.mockResolvedValue(mockMovimiento);
       configuracionService.getValor.mockResolvedValue('18:00');
@@ -171,6 +176,7 @@ describe('MovimientosService', () => {
 
       const result = await service.create(mockTenant, dto);
       expect(result).toBeDefined();
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(embarcacionesService.update).toHaveBeenCalledWith(
         1,
         { estado_operativo: EstadoEmbarcacion.EN_CUNA },
@@ -207,6 +213,7 @@ describe('MovimientosService', () => {
         return d;
       });
       mockDate.prototype = realDate.prototype;
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       global.Date = mockDate as any;
 
       configuracionService.getValor.mockResolvedValue('18:00');
@@ -248,6 +255,7 @@ describe('MovimientosService', () => {
       solicitudRepo.findOne.mockResolvedValue(null);
 
       await service.create(mockTenant, salidaDto);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(embarcacionesService.update).toHaveBeenCalledWith(
         1,
         { estado_operativo: EstadoEmbarcacion.EN_AGUA },
@@ -260,7 +268,11 @@ describe('MovimientosService', () => {
       const mockManager = {
         getRepository: jest.fn().mockReturnValue(movimientoRepo),
       };
-      await service.create(mockTenant, dto, mockManager as any);
+      await service.create(
+        mockTenant,
+        dto,
+        mockManager as unknown as EntityManager,
+      );
       expect(mockManager.getRepository).toHaveBeenCalledWith(Movimiento);
     });
 
@@ -269,7 +281,7 @@ describe('MovimientosService', () => {
         id: 1,
         nombre: 'Boat',
         espacio: null,
-      });
+      } as unknown as Embarcacion);
       const noSpaceDto = { ...dto, espacioId: null };
 
       await service.create(mockTenant, noSpaceDto);
