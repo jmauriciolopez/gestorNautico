@@ -12,6 +12,7 @@ import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 import { Role } from '../users/user.entity';
 import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+import { Guarderia } from '../guarderias/guarderia.entity';
 
 describe('OperacionesService', () => {
   let service: OperacionesService;
@@ -30,6 +31,7 @@ describe('OperacionesService', () => {
   let notificacionesService: jest.Mocked<NotificacionesService>;
   let movimientosService: jest.Mocked<MovimientosService>;
   let configuracionService: jest.Mocked<ConfiguracionService>;
+  let guarderiaRepo: Record<string, jest.Mock>;
 
   const mockSolicitud = {
     id: 1,
@@ -62,7 +64,14 @@ describe('OperacionesService', () => {
           provide: getRepositoryToken(Embarcacion),
           useFactory: mockRepository,
         },
-        { provide: getRepositoryToken(Pedido), useFactory: mockRepository },
+        {
+          provide: getRepositoryToken(Pedido),
+          useFactory: mockRepository,
+        },
+        {
+          provide: getRepositoryToken(Guarderia),
+          useFactory: mockRepository,
+        },
         {
           provide: NotificacionesService,
           useValue: {
@@ -90,6 +99,7 @@ describe('OperacionesService', () => {
     clienteRepo = module.get(getRepositoryToken(Cliente));
     embarcacionRepo = module.get(getRepositoryToken(Embarcacion));
     pedidoRepo = module.get(getRepositoryToken(Pedido));
+    guarderiaRepo = module.get(getRepositoryToken(Guarderia));
     notificacionesService = module.get(NotificacionesService);
     movimientosService = module.get(MovimientosService);
     configuracionService = module.get(ConfiguracionService);
@@ -193,7 +203,9 @@ describe('OperacionesService', () => {
       await service.findAll(mockTenant, {}, EstadoSolicitud.PENDIENTE);
       expect(solicitudRepo.findAndCount).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { estado: EstadoSolicitud.PENDIENTE },
+          where: expect.objectContaining({
+            estado: EstadoSolicitud.PENDIENTE,
+          }),
         }),
       );
     });

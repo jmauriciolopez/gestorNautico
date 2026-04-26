@@ -3,6 +3,7 @@ import { NotFoundException } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { PagosService } from './pagos.service';
 import { Pago, MetodoPago } from './pago.entity';
+import { Cliente } from '../clientes/clientes.entity';
 import { CajasService } from '../cajas/cajas.service';
 import { CargosService } from '../cargos/cargos.service';
 
@@ -56,6 +57,10 @@ describe('PagosService', () => {
         PagosService,
         {
           provide: getRepositoryToken(Pago),
+          useValue: mockRepository,
+        },
+        {
+          provide: getRepositoryToken(Cliente),
           useValue: mockRepository,
         },
         {
@@ -152,7 +157,7 @@ describe('PagosService', () => {
       };
 
       await service.create(mockTenant, createDto);
-      expect(mockCargosService.setPagado).toHaveBeenCalledWith(1, true);
+      expect(mockCargosService.setPagado).toHaveBeenCalledWith(mockTenant, 1, true);
     });
   });
 
@@ -163,7 +168,7 @@ describe('PagosService', () => {
       mockRepository.remove.mockResolvedValue(pagoWithCargo);
 
       await service.remove(mockTenant, 1);
-      expect(mockCargosService.setPagado).toHaveBeenCalledWith(1, false);
+      expect(mockCargosService.setPagado).toHaveBeenCalledWith(mockTenant, 1, false);
       expect(mockRepository.remove).toHaveBeenCalled();
     });
 

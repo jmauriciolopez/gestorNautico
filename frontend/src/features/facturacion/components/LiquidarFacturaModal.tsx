@@ -1,6 +1,6 @@
 import { createPortal } from 'react-dom';
 import { useState } from 'react';
-import { CreditCard, X } from 'lucide-react';
+import { CreditCard, X, Wallet } from 'lucide-react';
 
 const METODOS = [
   { value: 'EFECTIVO', label: 'Efectivo' },
@@ -10,19 +10,24 @@ const METODOS = [
 ];
 
 interface LiquidarFacturaModalProps {
-  facturaId: number;
+  factura: any;
   isPending: boolean;
   onConfirm: (facturaId: number, metodoPago: string) => void;
   onClose: () => void;
 }
 
 export function LiquidarFacturaModal({
-  facturaId,
+  factura,
   isPending,
   onConfirm,
   onClose,
 }: LiquidarFacturaModalProps) {
-  const [metodoPago, setMetodoPago] = useState('EFECTIVO');
+  // If payment was reported, default to that method if it matches our list, otherwise default to EFECTIVO
+  const initialMetodo = factura.pagoMedio && METODOS.some(m => m.value === factura.pagoMedio) 
+    ? factura.pagoMedio 
+    : 'EFECTIVO';
+    
+  const [metodoPago, setMetodoPago] = useState(initialMetodo);
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
@@ -68,6 +73,26 @@ export function LiquidarFacturaModal({
           ))}
         </div>
 
+        {factura.pagoIdComprobante && (
+          <div className="mb-6 p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20">
+            <div className="flex items-center gap-2 mb-2">
+              <Wallet className="w-3.5 h-3.5 text-indigo-400" />
+              <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Información del Cliente</span>
+            </div>
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase">
+                ID: <span className="text-[var(--text-primary)] font-black">{factura.pagoIdComprobante}</span>
+              </p>
+              <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase">
+                Fecha: <span className="text-[var(--text-primary)] font-black">{new Date(factura.pagoFecha).toLocaleDateString()}</span>
+              </p>
+              <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase">
+                Medio: <span className="text-[var(--text-primary)] font-black">{factura.pagoMedio}</span>
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="flex gap-3">
           <button
             onClick={onClose}
@@ -76,7 +101,7 @@ export function LiquidarFacturaModal({
             Cancelar
           </button>
           <button
-            onClick={() => onConfirm(facturaId, metodoPago)}
+            onClick={() => onConfirm(factura.id, metodoPago)}
             disabled={isPending}
             className="flex-1 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50"
           >

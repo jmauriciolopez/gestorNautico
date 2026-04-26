@@ -12,6 +12,8 @@ import { NotificacionesService } from '../notificaciones/notificaciones.service'
 import { PdfService } from '../common/pdf/pdf.service';
 import { DataSource, In } from 'typeorm';
 import { TipoCargo } from '../cargos/cargo.entity';
+import { ConfigService } from '@nestjs/config';
+import { ConfiguracionService } from '../configuracion/configuracion.service';
 
 import { Role } from '../users/user.entity';
 import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
@@ -42,7 +44,7 @@ describe('FacturasService', () => {
 
   const dto = {
     clienteId: 1,
-    cargoIds: [1],
+    cargoIds: [1, 2],
     fechaEmision: new Date().toISOString(),
   };
 
@@ -112,12 +114,25 @@ describe('FacturasService', () => {
       .mockImplementation((cb: (mgr: any) => any): any => cb(mockManager)),
   };
 
+  const mockConfiguracionService: Record<string, jest.Mock> = {
+    getValor: jest.fn().mockResolvedValue('http://localhost:5173'),
+  };
+
+  const mockConfigService: Record<string, jest.Mock> = {
+    get: jest.fn().mockReturnValue('http://localhost:5173'),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
 
     // Reset mock manager state
     mockManager.find.mockReset().mockResolvedValue([]);
-    mockManager.findOne.mockReset().mockResolvedValue(null);
+    mockManager.findOne.mockReset().mockImplementation((entity: any) => {
+      if (entity === Factura) return Promise.resolve(mockFactura);
+      if (entity === Cliente) return Promise.resolve({ id: 1, guarderiaId: 1 });
+      return Promise.resolve(null);
+    });
+    mockClienteRepository.findOne.mockResolvedValue({ id: 1, guarderiaId: 1 });
     mockManager.create
       .mockReset()
       .mockImplementation((entity: any, data: any): any => data);
@@ -164,6 +179,14 @@ describe('FacturasService', () => {
         {
           provide: DataSource,
           useValue: mockDataSource,
+        },
+        {
+          provide: ConfiguracionService,
+          useValue: mockConfiguracionService,
+        },
+        {
+          provide: ConfigService,
+          useValue: mockConfigService,
         },
       ],
     }).compile();
@@ -280,13 +303,23 @@ describe('FacturasService', () => {
 
       await service.updateEstado(mockTenant, 1, EstadoFactura.PAGADA);
 
-      expect(mockManager.update).toHaveBeenCalledWith(Factura, 1, {
-        estado: EstadoFactura.PAGADA,
-      });
+      expect(mockManager.update).toHaveBeenCalledWith(
+        Factura,
+        { id: 1, guarderiaId: mockTenant.guarderiaId },
+        {
+          estado: EstadoFactura.PAGADA,
+        },
+      );
+
       expect(mockManager.update).toHaveBeenCalledWith(
         Cargo,
-        { id: In([1]) },
-        { pagado: true },
+        {
+          id: In([1]),
+          guarderiaId: mockTenant.guarderiaId,
+        },
+        {
+          pagado: true,
+        },
       );
       expect(mockManager.save).toHaveBeenCalled(); // Payment saved
     });
@@ -302,15 +335,11 @@ describe('FacturasService', () => {
 
   describe('update', () => {
     it('should update factura basic fields', async () => {
-      mockManager.findOne.mockResolvedValue(mockFactura);
-      mockManager.find.mockResolvedValue([]);
-
       await service.update(mockTenant, 1, { observaciones: 'Updated' });
       expect(mockManager.save).toHaveBeenCalled();
     });
 
     it('should add new cargos to factura', async () => {
-      mockManager.findOne.mockResolvedValue(mockFactura);
       mockManager.find.mockResolvedValue([{ id: 1, monto: 100 }]);
 
       await service.update(mockTenant, 1, {
@@ -376,7 +405,7 @@ describe('FacturasService', () => {
         '2026-01-31',
       );
       expect(result.TOTAL_PAGADO).toBe(100);
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledTimes(2);
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledTimes(3);
     });
   });
 });

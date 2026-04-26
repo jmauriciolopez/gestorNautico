@@ -373,7 +373,7 @@ export function FacturasList({ filters }: { filters: { search?: string; startDat
       )}
       {activeModal === 'liquidar' && selectedFactura && (
         <LiquidarFacturaModal
-          facturaId={selectedFactura.id}
+          factura={selectedFactura}
           isPending={updateEstadoFactura.isPending}
           onConfirm={handleConfirmarLiquidar}
           onClose={() => { setActiveModal(null); setSelectedFactura(null); }}

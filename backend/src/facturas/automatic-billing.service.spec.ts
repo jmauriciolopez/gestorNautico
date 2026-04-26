@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Test, TestingModule } from '@nestjs/testing';
 import { AutomaticBillingService } from './automatic-billing.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
@@ -13,13 +16,13 @@ import { ConfiguracionService } from '../configuracion/configuracion.service';
 describe('AutomaticBillingService', () => {
   let service: AutomaticBillingService;
 
-  let facturaRepo: Record<string, jest.Mock>;
-  let cargoRepo: Record<string, jest.Mock>;
-  let clienteRepo: Record<string, jest.Mock>;
-  let embarcacionRepo: Record<string, jest.Mock>;
-  let facturasService: jest.Mocked<FacturasService>;
-  let notificacionesService: jest.Mocked<NotificacionesService>;
-  let configuracionService: jest.Mocked<ConfiguracionService>;
+  let facturaRepo: any;
+  let cargoRepo: any;
+  let clienteRepo: any;
+  let embarcacionRepo: any;
+  let facturasService: any;
+  let notificacionesService: any;
+  let configuracionService: any;
 
   const mockRepository = () => ({
     find: jest.fn(),
@@ -27,6 +30,9 @@ describe('AutomaticBillingService', () => {
     create: jest.fn(),
     save: jest.fn(),
     update: jest.fn(),
+    manager: {
+      find: jest.fn(),
+    },
   });
 
   beforeEach(async () => {
@@ -87,6 +93,7 @@ describe('AutomaticBillingService', () => {
         diaFacturacion: today.getDate(),
         activo: true,
       };
+      facturaRepo.manager.find.mockResolvedValue([{ id: 1 }]);
       clienteRepo.find.mockResolvedValue([mockCliente]);
       embarcacionRepo.find.mockResolvedValue([
         {
@@ -105,12 +112,13 @@ describe('AutomaticBillingService', () => {
       await service.generateMonthlyMooringFees();
 
       expect(cargoRepo.create).toHaveBeenCalled();
-      // eslint-disable-next-line @typescript-eslint/unbound-method
+
       expect(facturasService.create).toHaveBeenCalled();
     });
 
     it('should skip if fee already exists', async () => {
       const today = new Date();
+      facturaRepo.manager.find.mockResolvedValue([{ id: 1 }]);
       clienteRepo.find.mockResolvedValue([
         { id: 1, diaFacturacion: today.getDate(), activo: true },
       ]);
@@ -140,6 +148,7 @@ describe('AutomaticBillingService', () => {
         cargos: [{ monto: 100 }],
         cliente: { nombre: 'Test', email: 'test@test.com' },
       };
+      facturaRepo.manager.find.mockResolvedValue([{ id: 1 }]);
       facturaRepo.find.mockResolvedValue([mockFactura]);
       configuracionService.getValorNumerico.mockImplementation(
         (tenant, key, def) => {
@@ -157,7 +166,7 @@ describe('AutomaticBillingService', () => {
           recargo: 10, // 10% of 100
         }),
       );
-      // eslint-disable-next-line @typescript-eslint/unbound-method
+
       expect(notificacionesService.sendEmailNotification).toHaveBeenCalled();
     });
   });

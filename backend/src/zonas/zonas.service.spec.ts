@@ -27,7 +27,7 @@ describe('ZonasService', () => {
     updatedAt: new Date(),
   };
 
-  const mockRepository: Record<string, jest.Mock> = {
+  const mockRepository: any = {
     find: jest.fn(),
     findAndCount: jest.fn().mockResolvedValue([[], 0]),
     findOne: jest.fn(),
@@ -35,6 +35,11 @@ describe('ZonasService', () => {
     save: jest.fn(),
     update: jest.fn(),
     remove: jest.fn(),
+    manager: {
+      getRepository: jest.fn().mockReturnValue({
+        findOne: jest.fn().mockResolvedValue({ id: 1 }),
+      }),
+    },
   };
 
   beforeEach(async () => {
@@ -91,6 +96,10 @@ describe('ZonasService', () => {
 
       const result = await service.create(mockTenant, createDto);
       expect(result).toEqual(mockZona);
+      expect(mockRepository.create).toHaveBeenCalledWith({
+        ...createDto,
+        guarderiaId: mockTenant.guarderiaId,
+      });
     });
 
     it('should convert ubicacionId 0 to null', async () => {
@@ -101,6 +110,7 @@ describe('ZonasService', () => {
       expect(mockRepository.create).toHaveBeenCalledWith({
         nombre: 'Zona Test',
         ubicacionId: null,
+        guarderiaId: mockTenant.guarderiaId,
       });
     });
   });

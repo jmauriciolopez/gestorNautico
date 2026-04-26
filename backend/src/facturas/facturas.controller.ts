@@ -52,11 +52,9 @@ export class FacturasController {
 
   @Public()
   @Get('public/:token/pdf')
-  async downloadPdfPublic(
-    @Param('token') token: string,
-    @Res() res: any,
-  ) {
-    const { buffer, numero } = await this.facturasService.generatePdfByToken(token);
+  async downloadPdfPublic(@Param('token') token: string, @Res() res: Response) {
+    const { buffer, numero } =
+      await this.facturasService.generatePdfByToken(token);
 
     res.set({
       'Content-Type': 'application/pdf',
@@ -83,15 +81,12 @@ export class FacturasController {
       throw new BadRequestException('Faltan datos requeridos para el reporte');
     }
 
-    return this.facturasService.reportarPagoByToken(
-      body.token,
-      {
-        idComprobante: body.idComprobante,
-        fechaPago: body.fechaPago,
-        medioPago: body.medioPago,
-        observaciones: body.observaciones,
-      },
-    );
+    return this.facturasService.reportarPagoByToken(body.token, {
+      idComprobante: body.idComprobante,
+      fechaPago: body.fechaPago,
+      medioPago: body.medioPago,
+      observaciones: body.observaciones,
+    });
   }
 
   @Get(':id/pdf')

@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  FileText, 
-  CreditCard, 
-  Calendar, 
-  Hash, 
-  User, 
-  ChevronRight, 
-  Send, 
+import {
+  FileText,
+  CreditCard,
+  Calendar,
+  Hash,
+  User,
+  Send,
   CheckCircle2,
   AlertCircle,
   Download,
@@ -60,7 +59,7 @@ export const PagoPublicoPage: React.FC = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0b1020]">
-        <motion.div 
+        <motion.div
           animate={{ rotate: 360 }}
           transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
           className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full"
@@ -86,9 +85,9 @@ export const PagoPublicoPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#0b1020] py-12 px-4 sm:px-6 lg:px-8 font-['Outfit'] text-slate-200">
       <div className="max-w-4xl mx-auto">
-        
+
         {/* Header con Logo o Nombre */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="flex justify-between items-center mb-12"
@@ -110,9 +109,9 @@ export const PagoPublicoPage: React.FC = () => {
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-          
+
           {/* Lado Izquierdo: Detalles de la Factura */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             className="lg:col-span-2 space-y-6"
@@ -121,13 +120,13 @@ export const PagoPublicoPage: React.FC = () => {
               <div className="absolute top-0 right-0 p-4 opacity-5">
                 <FileText className="w-24 h-24" />
               </div>
-              
+
               <div className="space-y-4">
                 <div className="flex items-center gap-3 text-slate-400">
                   <Hash className="w-4 h-4" />
                   <span className="text-sm font-medium">Factura #{factura.numero}</span>
                 </div>
-                
+
                 <div className="py-2">
                   <span className="text-slate-400 text-xs uppercase tracking-widest font-bold">Total a Pagar</span>
                   <div className="kpi-value text-indigo-400 mt-1">
@@ -146,7 +145,7 @@ export const PagoPublicoPage: React.FC = () => {
                   </div>
                 </div>
 
-                <button 
+                <button
                   onClick={handleDownloadPdf}
                   className="w-full btn btn-secondary mt-4 group"
                 >
@@ -173,32 +172,32 @@ export const PagoPublicoPage: React.FC = () => {
           </motion.div>
 
           {/* Lado Derecho: Formulario de Pago */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             className="lg:col-span-3"
           >
             <AnimatePresence mode="wait">
               {!enviado ? (
-                <motion.div 
+                <motion.div
                   key="form"
                   exit={{ opacity: 0, scale: 0.95 }}
                   className="glass p-8 rounded-[40px] shadow-premium"
                 >
                   <h2 className="text-xl font-bold mb-6">Informar Transferencia</h2>
-                  
+
                   <form onSubmit={handleSubmit} className="space-y-5">
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 ml-1">
                         ID de Comprobante / Transacción
                       </label>
-                      <input 
+                      <input
                         required
                         type="text"
                         placeholder="Ej: 245896321"
                         className="input-ui h-12"
                         value={form.idComprobante}
-                        onChange={e => setForm({...form, idComprobante: e.target.value})}
+                        onChange={e => setForm({ ...form, idComprobante: e.target.value })}
                       />
                     </div>
 
@@ -207,23 +206,23 @@ export const PagoPublicoPage: React.FC = () => {
                         <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 ml-1">
                           Fecha de Pago
                         </label>
-                        <input 
+                        <input
                           required
                           type="date"
                           className="input-ui h-12"
                           value={form.fechaPago}
-                          onChange={e => setForm({...form, fechaPago: e.target.value})}
+                          onChange={e => setForm({ ...form, fechaPago: e.target.value })}
                         />
                       </div>
                       <div>
                         <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 ml-1">
                           Medio de Pago
                         </label>
-                        <select 
+                        <select
                           required
                           className="select-ui h-12"
                           value={form.medioPago}
-                          onChange={e => setForm({...form, medioPago: e.target.value})}
+                          onChange={e => setForm({ ...form, medioPago: e.target.value })}
                         >
                           <option value="">Seleccione...</option>
                           <option value="Transferencia Bancaria">Transferencia Bancaria</option>
@@ -238,15 +237,15 @@ export const PagoPublicoPage: React.FC = () => {
                       <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 ml-1">
                         Observaciones adicionales (opcional)
                       </label>
-                      <textarea 
+                      <textarea
                         className="textarea-ui"
                         placeholder="Algún detalle que debamos saber..."
                         value={form.observaciones}
-                        onChange={e => setForm({...form, observaciones: e.target.value})}
+                        onChange={e => setForm({ ...form, observaciones: e.target.value })}
                       />
                     </div>
 
-                    <button 
+                    <button
                       disabled={reportarMutation.isPending}
                       type="submit"
                       className="w-full btn btn-primary h-14 text-lg shadow-lg shadow-indigo-500/20"
@@ -263,7 +262,7 @@ export const PagoPublicoPage: React.FC = () => {
                   </form>
                 </motion.div>
               ) : (
-                <motion.div 
+                <motion.div
                   key="success"
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -287,7 +286,7 @@ export const PagoPublicoPage: React.FC = () => {
                       <span className="text-white font-medium">{new Date(form.fechaPago).toLocaleDateString()}</span>
                     </div>
                   </div>
-                  <button 
+                  <button
                     onClick={() => setEnviado(false)}
                     className="btn btn-ghost"
                   >
@@ -307,3 +306,5 @@ export const PagoPublicoPage: React.FC = () => {
     </div>
   );
 };
+
+export default PagoPublicoPage;

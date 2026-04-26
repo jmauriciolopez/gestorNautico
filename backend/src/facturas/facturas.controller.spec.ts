@@ -2,8 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { FacturasController } from './facturas.controller';
 import { FacturasService } from './facturas.service';
 import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
+import { TenantGuard } from '../auth/guards/tenant.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { EstadoFactura } from './factura.entity';
+import { PdfService } from '../common/pdf/pdf.service';
 
 import { Role } from '../users/user.entity';
 import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
@@ -35,12 +37,24 @@ describe('FacturasController', () => {
             remove: jest.fn(),
             sendEmail: jest.fn(),
             getStats: jest.fn(),
+            downloadPdfPublic: jest.fn(),
           },
         },
-        { provide: AuthTokenGuard, useValue: { canActivate: () => true } },
-        { provide: RolesGuard, useValue: { canActivate: () => true } },
+        {
+          provide: PdfService,
+          useValue: {
+            generateFactura: jest.fn(),
+          },
+        },
       ],
-    }).compile();
+    })
+      .overrideGuard(AuthTokenGuard)
+      .useValue({ canActivate: () => true })
+      .overrideGuard(TenantGuard)
+      .useValue({ canActivate: () => true })
+      .overrideGuard(RolesGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<FacturasController>(FacturasController);
     service = module.get<FacturasService>(FacturasService);
@@ -59,6 +73,7 @@ describe('FacturasController', () => {
         'search',
         '2024-01-01',
         '2024-01-31',
+        'false',
       );
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(service.findAll).toHaveBeenCalledWith(mockTenant, {
@@ -67,6 +82,7 @@ describe('FacturasController', () => {
         search: 'search',
         startDate: '2024-01-01',
         endDate: '2024-01-31',
+        soloReportados: false,
       });
     });
   });

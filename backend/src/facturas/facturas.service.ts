@@ -4,7 +4,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { randomUUID } from 'crypto';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   Between,
@@ -24,10 +24,12 @@ import { Cargo, TipoCargo } from '../cargos/cargo.entity';
 import { Pago, MetodoPago } from '../pagos/pago.entity';
 import { Cliente } from '../clientes/clientes.entity';
 import { Role } from '../users/user.entity';
+import * as crypto from 'crypto';
 import { NotificacionTipo } from '../notificaciones/notificacion.entity';
 import { CargosService } from '../cargos/cargos.service';
 import { CajasService } from '../cajas/cajas.service';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
+import { ConfiguracionService } from '../configuracion/configuracion.service';
 import { PdfService } from '../common/pdf/pdf.service';
 import { CreateFacturaDto } from './dto/create-factura.dto';
 import {
@@ -56,6 +58,8 @@ export class FacturasService extends BaseTenantService {
     private readonly cajasService: CajasService,
     private readonly notificacionesService: NotificacionesService,
     private readonly pdfService: PdfService,
+    private readonly configuracionService: ConfiguracionService,
+    private readonly configService: ConfigService,
     private readonly dataSource: DataSource,
   ) {
     super();
@@ -322,7 +326,7 @@ export class FacturasService extends BaseTenantService {
 
         // Si hay información de pago reportada, la usamos para el registro oficial
         const finalMetodo = this.mapMetodoPago(factura.pagoMedio || metodoPago);
-        const finalComprobante = factura.pagoIdComprobante 
+        const finalComprobante = factura.pagoIdComprobante
           ? `Factura ${factura.numero} - Comp: ${factura.pagoIdComprobante}`
           : `Liquidación factura ${factura.numero}`;
 
@@ -363,8 +367,7 @@ export class FacturasService extends BaseTenantService {
       where: { tokenPublico: token },
       relations: ['cliente', 'cargos'],
     });
-    if (!factura)
-      throw new NotFoundException(`Factura no encontrada`);
+    if (!factura) throw new NotFoundException(`Factura no encontrada`);
 
     return {
       id: factura.id,
@@ -543,7 +546,25 @@ export class FacturasService extends BaseTenantService {
       throw new BadRequestException('El cliente no tiene email registrado');
     }
 
+    // Asegurar que tenga token público
+    if (!factura.tokenPublico) {
+      factura.tokenPublico = crypto.randomUUID();
+      await this.facturaRepo.update(factura.id, {
+        tokenPublico: factura.tokenPublico,
+      });
+    }
+
     const buffer = await this.pdfService.generateInvoice(tenant, factura);
+
+    let baseUrl = await this.configuracionService.getValor(
+      tenant,
+      'PUBLIC_URL',
+      this.configService.get<string>('PUBLIC_URL') ||
+        'https://app.gestornautico.com',
+    );
+
+    // Limpiar slash final si existe
+    baseUrl = baseUrl.replace(/\/$/, '');
 
     await this.notificacionesService.sendEmailNotification(
       targetEmail,
@@ -554,6 +575,7 @@ export class FacturasService extends BaseTenantService {
         numero: factura.numero,
         total: factura.total,
         fecha: new Date(factura.fechaEmision).toLocaleDateString('es-AR'),
+        paymentLink: `${baseUrl}/pago-publico?token=${factura.tokenPublico}`,
       },
       [
         {

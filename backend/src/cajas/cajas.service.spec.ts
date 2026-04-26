@@ -49,6 +49,7 @@ describe('CajasService', () => {
         addSelect: jest.fn().mockReturnThis(),
         from: jest.fn().mockReturnThis(),
         where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
         getRawOne: jest
           .fn()
           .mockResolvedValue({ totalRecaudado: '500', totalEfectivo: '300' }),

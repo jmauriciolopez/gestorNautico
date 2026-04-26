@@ -131,7 +131,9 @@ describe('MovimientosService', () => {
       await service.findAll(mockTenant, { embarcacionId: 1 });
       expect(movimientoRepo.findAndCount).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { embarcacion: { id: 1 } },
+          where: expect.objectContaining({
+            embarcacion: { id: 1 },
+          }),
         }),
       );
     });
@@ -178,6 +180,7 @@ describe('MovimientosService', () => {
       expect(result).toBeDefined();
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(embarcacionesService.update).toHaveBeenCalledWith(
+        mockTenant,
         1,
         { estado_operativo: EstadoEmbarcacion.EN_CUNA },
         undefined,
@@ -257,6 +260,7 @@ describe('MovimientosService', () => {
       await service.create(mockTenant, salidaDto);
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(embarcacionesService.update).toHaveBeenCalledWith(
+        mockTenant,
         1,
         { estado_operativo: EstadoEmbarcacion.EN_AGUA },
         undefined,

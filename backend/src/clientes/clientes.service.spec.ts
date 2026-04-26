@@ -130,7 +130,10 @@ describe('ClientesService', () => {
 
       const result = await service.create(mockTenant, createDto);
       expect(result).toEqual(mockCliente);
-      expect(mockRepository.create).toHaveBeenCalledWith(createDto);
+      expect(mockRepository.create).toHaveBeenCalledWith({
+        ...createDto,
+        guarderiaId: mockTenant.guarderiaId,
+      });
       expect(mockRepository.save).toHaveBeenCalled();
     });
   });

@@ -159,7 +159,10 @@ describe('EmbarcacionesService', () => {
 
       const result = await service.create(mockTenant, createDto);
       expect(result).toEqual(mockEmbarcacion);
-      expect(mockRepository.create).toHaveBeenCalledWith(createDto);
+      expect(mockRepository.create).toHaveBeenCalledWith({
+        ...createDto,
+        guarderiaId: mockTenant.guarderiaId,
+      });
     });
 
     it('should validate dimensions against espacio', async () => {

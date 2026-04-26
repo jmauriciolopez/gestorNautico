@@ -36,7 +36,7 @@ describe('RacksService', () => {
     updatedAt: new Date(),
   };
 
-  const mockRepository: Record<string, jest.Mock> = {
+  const mockRepository: any = {
     find: jest.fn(),
     findAndCount: jest.fn().mockResolvedValue([[], 0]),
     findOne: jest.fn(),
@@ -44,6 +44,11 @@ describe('RacksService', () => {
     save: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
+    manager: {
+      getRepository: jest.fn().mockReturnValue({
+        findOne: jest.fn().mockResolvedValue({ id: 1 }),
+      }),
+    },
   };
 
   const mockEspacioRepo: Record<string, jest.Mock> = {
