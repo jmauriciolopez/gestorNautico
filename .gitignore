@@ -12,3 +12,8 @@ backend/.env
 backend/.env
 
 **/.terraform/
+frontend/terraform/.terraform.lock.hcl
+frontend/terraform/.terraform.tfstate.lock.info
+.gitignore
+frontend/terraform/terraform.tfstate
+frontend/terraform/terraform.tfstate.backup
