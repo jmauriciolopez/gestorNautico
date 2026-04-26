@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Test, TestingModule } from '@nestjs/testing';
 import { MovimientosService } from './movimientos.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
@@ -120,7 +121,6 @@ describe('MovimientosService', () => {
       await service.findAll(mockTenant, { search: 'test' });
       expect(movimientoRepo.findAndCount).toHaveBeenCalledWith(
         expect.objectContaining({
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           where: expect.any(Array),
         }),
       );
@@ -216,7 +216,7 @@ describe('MovimientosService', () => {
         return d;
       });
       mockDate.prototype = realDate.prototype;
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
       global.Date = mockDate as any;
 
       configuracionService.getValor.mockResolvedValue('18:00');

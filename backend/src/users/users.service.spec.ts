@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { UsersService } from './users.service';
@@ -31,23 +32,18 @@ describe('UsersService', () => {
   };
 
   const mockRepository: Record<string, jest.Mock> = {
-    find: jest.fn().mockResolvedValue([mockUser]),
-    findAndCount: jest.fn().mockResolvedValue([[mockUser], 1]),
-    findOneBy: jest.fn().mockResolvedValue(mockUser),
-    findOne: jest.fn().mockResolvedValue(mockUser),
-    create: jest.fn().mockReturnValue(mockUser),
-    save: jest
-      .fn()
-      .mockImplementation((user) => Promise.resolve({ ...user, id: 1 })),
-    merge: jest
-      .fn()
-      .mockImplementation((user: object, dto: object) =>
-        Object.assign(user, dto),
-      ),
-    remove: jest.fn().mockResolvedValue(mockUser),
+    find: jest.fn(),
+    findAndCount: jest.fn(),
+    findOneBy: jest.fn(),
+    findOne: jest.fn(),
+    create: jest.fn(),
+    save: jest.fn(),
+    merge: jest.fn(),
+    remove: jest.fn(),
   };
 
   beforeEach(async () => {
+    jest.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UsersService,
@@ -69,6 +65,7 @@ describe('UsersService', () => {
 
   describe('findAll', () => {
     it('should return paginated users', async () => {
+      mockRepository.findAndCount.mockResolvedValue([[mockUser], 1]);
       const result = await service.findAll(mockTenant);
       expect(result.data).toEqual([mockUser]);
       expect(mockRepository.findAndCount).toHaveBeenCalled();
@@ -77,12 +74,13 @@ describe('UsersService', () => {
 
   describe('findOne', () => {
     it('should return a user', async () => {
+      mockRepository.findOne.mockResolvedValueOnce(mockUser);
       const result = await service.findOne(mockTenant, 1);
       expect(result).toEqual(mockUser);
     });
 
     it('should throw NotFoundException', async () => {
-      mockRepository.findOneBy.mockResolvedValueOnce(null);
+      mockRepository.findOne.mockResolvedValueOnce(null);
       await expect(service.findOne(mockTenant, 999)).rejects.toThrow(
         NotFoundException,
       );
@@ -91,7 +89,11 @@ describe('UsersService', () => {
 
   describe('create', () => {
     it('should create a new user', async () => {
-      mockRepository.findOneBy.mockResolvedValueOnce(null);
+      mockRepository.findOneBy.mockResolvedValue(null); // No email conflict
+      mockRepository.findOne.mockResolvedValue(null); // No username conflict
+      mockRepository.create.mockReturnValue(mockUser);
+      mockRepository.save.mockResolvedValue({ ...mockUser, id: 1 });
+
       const dto = {
         usuario: 'newuser',
         email: 'new@example.com',
@@ -104,6 +106,8 @@ describe('UsersService', () => {
     });
 
     it('should throw ConflictException if username exists', async () => {
+      mockRepository.findOneBy.mockResolvedValue(null); // No email conflict
+      mockRepository.findOne.mockResolvedValue(mockUser); // Username conflict
       const dto = { usuario: 'testuser' };
       await expect(
         service.create(mockTenant, dto as CreateUserDto),
@@ -113,6 +117,12 @@ describe('UsersService', () => {
 
   describe('update', () => {
     it('should update a user', async () => {
+      mockRepository.findOne.mockResolvedValue(mockUser);
+      mockRepository.merge.mockImplementation((user, dto) =>
+        Object.assign(user, dto),
+      );
+      mockRepository.save.mockImplementation((user) => Promise.resolve(user));
+
       const dto = { nombre: 'Updated' };
       const result = await service.update(mockTenant, 1, dto);
       expect(mockRepository.save).toHaveBeenCalled();
@@ -122,6 +132,8 @@ describe('UsersService', () => {
 
   describe('remove', () => {
     it('should remove a user', async () => {
+      mockRepository.findOne.mockResolvedValue(mockUser);
+      mockRepository.remove.mockResolvedValue(mockUser);
       const result = await service.remove(mockTenant, 1);
       expect(mockRepository.remove).toHaveBeenCalled();
       expect(result.message).toBe('Usuario eliminado correctamente');

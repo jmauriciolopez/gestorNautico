@@ -7,6 +7,7 @@ import { ConfigService } from '@nestjs/config';
 import { LoginAttemptsService } from './login-attempts.service';
 import * as bcrypt from 'bcrypt';
 import { Role } from '../users/user.entity';
+import { DataSource } from 'typeorm';
 
 jest.mock('bcrypt');
 
@@ -18,9 +19,10 @@ describe('AuthService', () => {
   const user = {
     id: 1,
     identifier: 'testuser',
-    password: 'hashedPassword',
+    clave: 'hashedPassword',
     role: Role.ADMIN,
     guarderiaId: 1,
+    activo: true,
   };
 
   beforeEach(async () => {
@@ -55,6 +57,12 @@ describe('AuthService', () => {
             check: jest.fn(),
             recordFailure: jest.fn(),
             recordSuccess: jest.fn(),
+          },
+        },
+        {
+          provide: DataSource,
+          useValue: {
+            transaction: jest.fn(),
           },
         },
       ],

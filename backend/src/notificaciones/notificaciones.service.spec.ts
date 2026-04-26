@@ -79,6 +79,8 @@ describe('NotificacionesService', () => {
         'Test Subject',
         'test-template',
         { name: 'Test' },
+        [],
+        true,
       );
       expect(mockMailerService.sendMail).toHaveBeenCalled();
     });

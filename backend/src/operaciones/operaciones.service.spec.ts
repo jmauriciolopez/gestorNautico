@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Test, TestingModule } from '@nestjs/testing';
 import { OperacionesService } from './operaciones.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
@@ -31,7 +32,6 @@ describe('OperacionesService', () => {
   let notificacionesService: jest.Mocked<NotificacionesService>;
   let movimientosService: jest.Mocked<MovimientosService>;
   let configuracionService: jest.Mocked<ConfiguracionService>;
-  let guarderiaRepo: Record<string, jest.Mock>;
 
   const mockSolicitud = {
     id: 1,
@@ -99,7 +99,7 @@ describe('OperacionesService', () => {
     clienteRepo = module.get(getRepositoryToken(Cliente));
     embarcacionRepo = module.get(getRepositoryToken(Embarcacion));
     pedidoRepo = module.get(getRepositoryToken(Pedido));
-    guarderiaRepo = module.get(getRepositoryToken(Guarderia));
+
     notificacionesService = module.get(NotificacionesService);
     movimientosService = module.get(MovimientosService);
     configuracionService = module.get(ConfiguracionService);

@@ -4,6 +4,7 @@ import { MoraService } from './mora.service';
 import { Factura, EstadoFactura } from '../facturas/factura.entity';
 import { ConfiguracionService } from '../configuracion/configuracion.service';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
+import { Guarderia } from '../guarderias/guarderia.entity';
 
 import { Role } from '../users/user.entity';
 import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
@@ -38,8 +39,13 @@ describe('MoraService', () => {
       where: jest.fn().mockReturnThis(),
       andWhere: jest.fn().mockReturnThis(),
       select: jest.fn().mockReturnThis(),
+      setParameter: jest.fn().mockReturnThis(),
       getMany: jest.fn().mockResolvedValue([]),
     })),
+  };
+
+  const mockGuarderiaRepository = {
+    find: jest.fn().mockResolvedValue([]),
   };
 
   const mockConfigService = {
@@ -57,6 +63,10 @@ describe('MoraService', () => {
         {
           provide: getRepositoryToken(Factura),
           useValue: mockRepository,
+        },
+        {
+          provide: getRepositoryToken(Guarderia),
+          useValue: mockGuarderiaRepository,
         },
         {
           provide: ConfiguracionService,

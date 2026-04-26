@@ -3,6 +3,7 @@ import { NotFoundException } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { CargosService } from './cargos.service';
 import { Cargo, TipoCargo } from './cargo.entity';
+import { Cliente } from '../clientes/clientes.entity';
 
 import { Role } from '../users/user.entity';
 import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
@@ -41,6 +42,10 @@ describe('CargosService', () => {
     remove: jest.fn(),
   };
 
+  const mockClienteRepository = {
+    findOne: jest.fn().mockResolvedValue({ id: 1 }),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -48,6 +53,10 @@ describe('CargosService', () => {
         {
           provide: getRepositoryToken(Cargo),
           useValue: mockRepository,
+        },
+        {
+          provide: getRepositoryToken(Cliente),
+          useValue: mockClienteRepository,
         },
       ],
     }).compile();
