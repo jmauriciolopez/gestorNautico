@@ -12,7 +12,7 @@ import { TenantInterceptor } from './common/interceptors/tenant.interceptor';
 function systemBeep() {
   try {
     if (os.platform() === 'win32') {
-      exec('powershell.exe -c "[console]::beep(800,300)"', () => {});
+      exec('powershell.exe -c "[console]::beep(800,300)"', () => { });
     } else {
       process.stdout.write('\x07');
     }
@@ -39,10 +39,10 @@ async function bootstrap() {
   const allowedOrigins = process.env.CORS_ORIGIN?.split(',').map((o) =>
     o.trim(),
   ) ?? [
-    'http://localhost:5173',
-    'http://127.0.0.1:5173',
-    'http://localhost:3000',
-  ];
+      'http://localhost:5173',
+      'http://127.0.0.1:5173',
+      'http://localhost:3000',
+    ];
 
   logger.log(`Allowed origins: [${allowedOrigins.join(', ')}]`);
 
@@ -77,6 +77,14 @@ async function bootstrap() {
     optionsSuccessStatus: 204,
   });
 
+  // app.use((req, res, next) => {
+  //   const origin = req.headers.origin ?? 'sin-origin';
+  //   console.log(`→ ${req.method} ${req.url} | Origin: ${origin} | IP: ${req.ip}`);
+  //   res.on('finish', () => {
+  //     console.log(`← ${res.statusCode} | Origin: ${origin}`);
+  //   });
+  //   next();
+  // });
   app.use(cookieParser());
   app.useGlobalPipes(
     new ValidationPipe({

@@ -4,6 +4,9 @@ import { ArrowLeftRight as ArrowLeftRightIcon, X, Search, Ship, ArrowRight, Load
 import { useEmbarcaciones } from '../../embarcaciones/hooks/useEmbarcaciones';
 import { toast } from 'react-hot-toast';
 import { EstadoEmbarcacion, TipoMovimiento } from '../../../shared/types/enums';
+import { useActiveGuarderiaId } from '../../../shared/hooks/useActiveGuarderiaId';
+import { useAuth } from '../../auth/hooks/useAuth';
+import { Role } from '../../../types';
 
 interface NuevoMovimientoModalProps {
   isOpen: boolean;
@@ -12,6 +15,8 @@ interface NuevoMovimientoModalProps {
 }
 
 export function NuevoMovimientoModal({ isOpen, onClose, onSuccess }: NuevoMovimientoModalProps) {
+  const { user } = useAuth();
+  const activeGuarderiaId = useActiveGuarderiaId();
   const { getEmbarcaciones } = useEmbarcaciones();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -41,6 +46,8 @@ export function NuevoMovimientoModal({ isOpen, onClose, onSuccess }: NuevoMovimi
   }, [selectedBoat]);
 
   if (!isOpen) return null;
+
+  const isSuperAdminGlobal = user?.role === Role.SUPERADMIN && !activeGuarderiaId;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,7 +79,7 @@ export function NuevoMovimientoModal({ isOpen, onClose, onSuccess }: NuevoMovimi
         className="absolute inset-0 bg-[var(--modal-overlay)] backdrop-blur-md"
         onClick={onClose}
       />
-      <div className="bg-[var(--bg-surface)] border border-[var(--border-primary)] w-full max-w-md sm:max-w-lg lg:max-w-lg rounded-2xl sm:rounded-[3rem] shadow-2xl overflow-hidden relative z-10">
+      <div className="bg-[var(--bg-surface)] border border-[var(--border-primary)] w-full max-w-md sm:max-w-lg lg:max-w-lg rounded-2xl sm:rounded-[3rem] shadow-2xl overflow-y-auto max-h-[calc(100vh-2rem)] relative z-10 custom-scrollbar">
 
         {/* Header */}
         <div className="px-6 sm:px-10 lg:px-12 pt-6 sm:pt-10 lg:pt-12 pb-5 sm:pb-7 lg:pb-8 border-b border-[var(--border-primary)] flex justify-between items-start bg-gradient-to-br from-indigo-500/10 to-transparent">
@@ -107,7 +114,19 @@ export function NuevoMovimientoModal({ isOpen, onClose, onSuccess }: NuevoMovimi
               )}
             </div>
 
-            {!selectedId ? (
+            {isSuperAdminGlobal ? (
+              <div className="p-8 text-center bg-amber-500/5 border-2 border-dashed border-amber-500/20 rounded-[2rem] space-y-4">
+                <div className="w-12 h-12 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto text-amber-500">
+                  <AlertCircle className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-xs font-black text-[var(--text-primary)] uppercase tracking-tight">Sede no Seleccionada</p>
+                  <p className="text-[10px] text-[var(--text-muted)] font-bold uppercase mt-1 leading-relaxed">
+                    Como Superadmin, debes seleccionar una sede en el selector superior para registrar maniobras.
+                  </p>
+                </div>
+              </div>
+            ) : !selectedId ? (
               <div className="space-y-3 sm:space-y-4">
                 <div className="relative group">
                   <Search className="absolute left-4 sm:left-5 lg:left-6 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-[var(--text-muted)] group-focus-within:text-indigo-500 transition-colors" />
@@ -245,7 +264,7 @@ export function NuevoMovimientoModal({ isOpen, onClose, onSuccess }: NuevoMovimi
             </button>
             <button
               type="submit"
-              disabled={isSubmitting || !selectedId}
+              disabled={isSubmitting || !selectedId || isSuperAdminGlobal}
               className="flex-[2] px-6 sm:px-8 py-3 sm:py-4 lg:py-5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed text-white font-black rounded-xl sm:rounded-2xl text-[9px] sm:text-[10px] uppercase tracking-[0.25em] sm:tracking-[0.3em] shadow-xl shadow-indigo-900/40 transition-all active:scale-95 flex items-center justify-center gap-2 sm:gap-3 order-1 sm:order-2"
             >
               {isSubmitting

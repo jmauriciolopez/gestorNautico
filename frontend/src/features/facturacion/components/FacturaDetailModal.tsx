@@ -90,7 +90,7 @@ export const FacturaDetailModal: React.FC<FacturaDetailModalProps> = ({ factura,
         initial={{ opacity: 0, y: 30, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 30, scale: 0.95 }}
-        className="w-full max-w-4xl bg-[var(--bg-surface)] border border-[var(--border-primary)] rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] relative z-10"
+        className="w-full max-w-4xl bg-[var(--bg-surface)] border border-[var(--border-primary)] rounded-[2.5rem] shadow-2xl overflow-y-auto max-h-[calc(100vh-2rem)] flex flex-col relative z-10 custom-scrollbar"
       >
         {/* ───── HEADER ───── */}
         <div className="px-10 pt-10 pb-6 border-b border-[var(--border-secondary)]">

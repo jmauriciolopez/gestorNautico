@@ -6,8 +6,11 @@ import { PedidosList } from '../components/PedidosList';
 import { MovimientosList } from '../components/MovimientosList';
 import { NuevoPedidoModal } from '../components/NuevoPedidoModal';
 import { NuevoMovimientoModal } from '../components/NuevoMovimientoModal';
-import { Activity, Plus, Clock, History } from 'lucide-react';
+import { Activity, Plus, Clock, History, Building2 } from 'lucide-react';
 import { useConfirm } from '../../../shared/hooks/useConfirm';
+import { useAuth } from '../../auth/hooks/useAuth';
+import { useActiveGuarderiaId } from '../../../shared/hooks/useActiveGuarderiaId';
+import { Role } from '../../../types';
 
 type Tab = 'pedidos' | 'movimientos' | 'bajadas';
 
@@ -28,6 +31,10 @@ export default function OperacionesPage() {
   const { getPedidos, deletePedido, updatePedidoEstado, createPedido, createMovimiento } = useOperaciones();
   const { getSolicitudes, updateEstado: updateSolicitudEstado } = useSolicitudesBajada();
   const confirm = useConfirm();
+  const { user } = useAuth();
+  const activeGuarderiaId = useActiveGuarderiaId();
+  
+  const isSuperAdminGlobal = user?.role === Role.SUPERADMIN && !activeGuarderiaId;
 
   const unifiedPedidos = useMemo(() => {
     return [
@@ -112,7 +119,7 @@ export default function OperacionesPage() {
           {/* Left: Title & Counter */}
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-3">
-              <h1 className="text-5xl font-black text-[var(--text-primary)] leading-none tracking-tighter">OPERACIONES</h1>
+              <h1 className="text-3xl sm:text-5xl font-black text-[var(--text-primary)] leading-none tracking-tighter">OPERACIONES</h1>
               <div className={`px-4 py-1.5 rounded-full border text-[9px] font-black uppercase tracking-[0.25em] transition-all duration-500 ${activeTab === 'pedidos' ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' :
                 'bg-amber-500/10 text-amber-400 border-amber-500/20'
                 }`}>
@@ -153,11 +160,35 @@ export default function OperacionesPage() {
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => setIsPedidoModalOpen(true)}
-                className="bg-indigo-600 hover:bg-indigo-500 text-white px-10 py-5 rounded-full font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl shadow-indigo-900/40 transition-all flex items-center gap-4 group/btn"
+                onClick={() => {
+                  if (isSuperAdminGlobal) {
+                    toast.error('Debe seleccionar una sede para operar');
+                    return;
+                  }
+                  setIsPedidoModalOpen(true);
+                }}
+                className={`bg-indigo-600 hover:bg-indigo-500 text-white px-10 py-5 rounded-full font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl shadow-indigo-900/40 transition-all flex items-center gap-4 group/btn ${isSuperAdminGlobal ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
               >
                 <Plus className="w-5 h-5 group-hover/btn:rotate-90 transition-transform duration-500" />
                 Nueva Solicitud
+              </motion.button>
+            )}
+
+            {activeTab === 'movimientos' && (
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  if (isSuperAdminGlobal) {
+                    toast.error('Debe seleccionar una sede para operar');
+                    return;
+                  }
+                  setIsMovimientoModalOpen(true);
+                }}
+                className={`bg-indigo-600 hover:bg-indigo-500 text-white px-10 py-5 rounded-full font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl shadow-indigo-900/40 transition-all flex items-center gap-4 group/btn ${isSuperAdminGlobal ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
+              >
+                <Plus className="w-5 h-5 group-hover/btn:rotate-90 transition-transform duration-500" />
+                Nueva Maniobra
               </motion.button>
             )}
           </div>
@@ -172,30 +203,45 @@ export default function OperacionesPage() {
         className="bg-[var(--bg-surface)]/40 backdrop-blur-3xl border border-[var(--border-primary)]/60 rounded-[var(--bento-radius)] shadow-premium overflow-hidden relative min-h-[600px]"
       >
         <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500/5 via-transparent to-purple-500/5 pointer-events-none" />
-
-        <AnimatePresence mode="wait">
-          <motion.div 
-            key={activeTab}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="relative z-10"
-          >
-            {activeTab === 'pedidos' && (
-              <PedidosList
-                pedidos={unifiedPedidos as any}
-                isLoading={getPedidos.isLoading || getSolicitudes.isLoading}
-                onUpdateStatus={handleUpdateStatusUnified}
-                onDeletePedido={handleDeletePedidoUnified}
-                onOpenCreate={() => setIsPedidoModalOpen(true)}
-              />
-            )}
-            {activeTab === 'movimientos' && (
-              <MovimientosList />
-            )}
-          </motion.div>
-        </AnimatePresence>
+        
+        {isSuperAdminGlobal ? (
+          <div className="flex flex-col items-center justify-center py-32 px-10 text-center animate-in fade-in zoom-in-95 duration-700">
+             <div className="w-24 h-24 rounded-[2.5rem] bg-indigo-500/10 border-2 border-dashed border-indigo-500/30 flex items-center justify-center mb-8 text-indigo-500 shadow-2xl shadow-indigo-900/20">
+                <Building2 className="w-10 h-10" />
+             </div>
+             <h2 className="text-3xl font-black text-[var(--text-primary)] uppercase tracking-tight mb-4">Sede no seleccionada</h2>
+             <p className="max-w-md text-[var(--text-secondary)] font-medium leading-relaxed mb-10">
+                Como Super Administrador, para gestionar el monitor de operaciones o la bitácora, primero debes seleccionar una sede específica en el selector de la barra superior.
+             </p>
+             <div className="flex items-center gap-2 px-6 py-3 bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-2xl text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">
+                Utiliza el selector <Building2 className="w-3 h-3 mx-1 inline text-indigo-500" /> para continuar
+             </div>
+          </div>
+        ) : (
+          <AnimatePresence mode="wait">
+            <motion.div 
+              key={activeTab}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+              className="relative z-10"
+            >
+              {activeTab === 'pedidos' && (
+                <PedidosList
+                  pedidos={unifiedPedidos as any}
+                  isLoading={getPedidos.isLoading || getSolicitudes.isLoading}
+                  onUpdateStatus={handleUpdateStatusUnified}
+                  onDeletePedido={handleDeletePedidoUnified}
+                  onOpenCreate={() => setIsPedidoModalOpen(true)}
+                />
+              )}
+              {activeTab === 'movimientos' && (
+                <MovimientosList />
+              )}
+            </motion.div>
+          </AnimatePresence>
+        )}
       </motion.main>
 
       <NuevoPedidoModal

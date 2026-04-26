@@ -54,15 +54,16 @@ export const GuarderiaSelector = () => {
     };
 
     return (
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-primary)] transition-all hover:border-[var(--border-strong)] shadow-sm">
-            <Building2 size={15} className="text-[var(--accent-primary)] shrink-0" />
-            <div className="relative flex items-center">
+        <div className="flex items-center gap-1 sm:gap-2 px-1.5 sm:px-3 py-1 sm:py-1.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-primary)] transition-all hover:border-[var(--border-strong)] shadow-sm overflow-hidden">
+            <Building2 size={14} className="text-[var(--accent-primary)] shrink-0 hidden xs:block" />
+            <div className="relative flex items-center min-w-0 flex-1">
                 <select
                     value={selectedId}
                     onChange={handleChange}
                     disabled={isLoading}
-                    className="appearance-none bg-transparent border-none outline-none text-[12px] font-bold text-[var(--text-primary)] cursor-pointer pr-5 h-6"
-                    style={{ minWidth: '140px' }}
+                    aria-label="Seleccionar sede o guardería"
+                    className="appearance-none bg-transparent border-none outline-none text-[10px] sm:text-[12px] font-bold text-[var(--text-primary)] cursor-pointer pr-3 h-6 w-full truncate"
+                    style={{ minWidth: '70px' }}
                 >
                     <option value="" className="bg-[var(--bg-secondary)] text-[var(--text-primary)]">
                         Todas las Sedes (Global)

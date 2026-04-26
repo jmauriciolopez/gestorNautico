@@ -46,7 +46,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
 
   return (
     <header
-      className="flex items-center justify-between px-4 shrink-0"
+      className="flex items-center justify-between px-2 sm:px-4 shrink-0"
       style={{
         height: 64,
         background: 'var(--bg-secondary)',
@@ -54,9 +54,9 @@ export default function Header({ onMenuClick }: HeaderProps) {
       }}
     >
       {/* LEFT */}
-      <div className="flex items-center gap-2 flex-1">
+      <div className="flex items-center gap-1 sm:gap-2 flex-1 min-w-0">
         {/* Mobile menu */}
-        <button onClick={onMenuClick} className="icon-button md:hidden">
+        <button onClick={onMenuClick} className="icon-button md:hidden shrink-0">
           <Menu size={18} />
         </button>
 
@@ -108,13 +108,13 @@ export default function Header({ onMenuClick }: HeaderProps) {
         </div>
 
         {/* Tenant Selector — Visible para SuperAdmin */}
-        <div className="hidden md:block ml-4">
+        <div className="ml-1 sm:ml-4 min-w-0">
           <GuarderiaSelector />
         </div>
       </div>
 
       {/* RIGHT */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1 sm:gap-2 shrink-0">
         {/* Theme toggle */}
         <button
           onClick={toggleTheme}
@@ -147,11 +147,11 @@ export default function Header({ onMenuClick }: HeaderProps) {
         </div>
 
         {/* Divider */}
-        <div className="divider-vertical mx-1" />
+        <div className="divider-vertical mx-0.5 sm:mx-1 hidden xs:block" />
 
         {/* User */}
         {user && (
-          <div className="flex items-center gap-3 pl-1">
+          <div className="flex items-center gap-1.5 sm:gap-3 pl-1">
             {/* Avatar */}
             <div
               className="flex items-center justify-center"
