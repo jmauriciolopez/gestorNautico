@@ -4,6 +4,7 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   Between,
@@ -15,6 +16,8 @@ import {
   FindManyOptions,
   FindOptionsWhere,
   DataSource,
+  Not,
+  IsNull,
 } from 'typeorm';
 import { Factura, EstadoFactura } from './factura.entity';
 import { Cargo, TipoCargo } from '../cargos/cargo.entity';
@@ -64,9 +67,10 @@ export class FacturasService extends BaseTenantService {
       search?: string;
       startDate?: string;
       endDate?: string;
+      soloReportados?: boolean;
     } = {},
   ): Promise<PaginatedResult<Factura>> {
-    const { search, startDate, endDate, ...pagination } = query;
+    const { search, startDate, endDate, soloReportados, ...pagination } = query;
     const options: FindManyOptions<Factura> = {
       relations: ['cliente', 'cargos'],
       order: { fechaEmision: 'DESC' },
@@ -86,7 +90,7 @@ export class FacturasService extends BaseTenantService {
       options.where = { ...tenantFilter };
     }
 
-    // Filtros de Fecha (se aplican a ambos casos del OR si hay búsqueda, o al objeto general)
+    // Filtros de Fecha
     if (startDate || endDate) {
       const dateFilter: FindOptionsWhere<Factura> = {};
       if (startDate && endDate) {
@@ -107,6 +111,22 @@ export class FacturasService extends BaseTenantService {
         }));
       } else {
         options.where = { ...options.where, ...dateFilter };
+      }
+    }
+
+    // Filtro de Pagos Reportados
+    if (soloReportados) {
+      const reportedFilter: FindOptionsWhere<Factura> = {
+        pagoIdComprobante: Not(IsNull()),
+      };
+
+      if (Array.isArray(options.where)) {
+        options.where = options.where.map((cond) => ({
+          ...cond,
+          ...reportedFilter,
+        }));
+      } else {
+        options.where = { ...options.where, ...reportedFilter };
       }
     }
 
@@ -300,13 +320,19 @@ export class FacturasService extends BaseTenantService {
           );
         }
 
+        // Si hay información de pago reportada, la usamos para el registro oficial
+        const finalMetodo = this.mapMetodoPago(factura.pagoMedio || metodoPago);
+        const finalComprobante = factura.pagoIdComprobante 
+          ? `Factura ${factura.numero} - Comp: ${factura.pagoIdComprobante}`
+          : `Liquidación factura ${factura.numero}`;
+
         const pago = manager.create(Pago, {
           cliente: { id: factura.cliente.id },
           caja: { id: caja.id },
           monto: Number(factura.total),
-          fecha: new Date(),
-          metodoPago: metodoPago ?? MetodoPago.EFECTIVO,
-          comprobante: `Liquidación factura ${factura.numero}`,
+          fecha: factura.pagoFecha ? new Date(factura.pagoFecha) : new Date(),
+          metodoPago: finalMetodo,
+          comprobante: finalComprobante,
           guarderiaId: tenant.guarderiaId,
         });
         await manager.save(pago);
@@ -314,7 +340,7 @@ export class FacturasService extends BaseTenantService {
         // 3. Notificar
         await this.notificacionesService.createForRole(tenant, Role.OPERADOR, {
           titulo: 'Factura Liquidada',
-          mensaje: `La factura ${factura.numero} del cliente ${factura.cliente.nombre} fue marcada como PAGADA.`,
+          mensaje: `La factura ${factura.numero} del cliente ${factura.cliente.nombre} fue marcada como PAGADA.${factura.pagoIdComprobante ? ' (Pago Reportado)' : ''}`,
           tipo: NotificacionTipo.EXITO,
         });
       }
@@ -330,6 +356,92 @@ export class FacturasService extends BaseTenantService {
     const factura = await this.findOne(tenant, id);
     // Nota: El onDelete: 'SET NULL' se encargará de los cargos en BD
     return this.facturaRepo.remove(factura);
+  }
+
+  async findByTokenPublic(token: string) {
+    const factura = await this.facturaRepo.findOne({
+      where: { tokenPublico: token },
+      relations: ['cliente', 'cargos'],
+    });
+    if (!factura)
+      throw new NotFoundException(`Factura no encontrada`);
+
+    return {
+      id: factura.id,
+      numero: factura.numero,
+      total: factura.total,
+      estado: factura.estado,
+      fechaEmision: factura.fechaEmision,
+      fechaVencimiento: factura.fechaVencimiento,
+      clienteNombre: factura.cliente.nombre,
+      cargos: (factura.cargos || []).map((c) => ({
+        descripcion: c.descripcion,
+        monto: c.monto,
+      })),
+    };
+  }
+
+  async reportarPagoByToken(
+    token: string,
+    pago: {
+      idComprobante: string;
+      fechaPago: string;
+      medioPago: string;
+      observaciones?: string;
+    },
+  ) {
+    const factura = await this.facturaRepo.findOne({
+      where: { tokenPublico: token },
+      relations: ['cliente'],
+    });
+
+    if (!factura) {
+      throw new NotFoundException(`Factura no encontrada`);
+    }
+
+    factura.pagoIdComprobante = pago.idComprobante;
+    factura.pagoFecha = new Date(pago.fechaPago);
+    factura.pagoMedio = pago.medioPago;
+    factura.pagoObservaciones = pago.observaciones;
+    factura.pagoReportadoAt = new Date();
+
+    await this.facturaRepo.save(factura);
+
+    // Notificar al admin de la guardería
+    const tenant: TenantContext = {
+      guarderiaId: factura.guarderiaId,
+      scope: 'guarderia',
+      userId: 0,
+      role: Role.ADMIN,
+    };
+
+    await this.notificacionesService.createForRole(tenant, Role.ADMIN, {
+      titulo: 'Pago Reportado (Público)',
+      mensaje: `El cliente ${factura.cliente.nombre} reportó pago de la factura ${factura.numero}. Comprobante: ${pago.idComprobante} (${pago.medioPago}).`,
+      tipo: NotificacionTipo.INFO,
+    });
+
+    return { success: true };
+  }
+
+  async generatePdfByToken(token: string) {
+    const factura = await this.facturaRepo.findOne({
+      where: { tokenPublico: token },
+      relations: ['cliente', 'cargos'],
+    });
+
+    if (!factura) {
+      throw new NotFoundException(`Factura no encontrada`);
+    }
+
+    const tenant: TenantContext = {
+      guarderiaId: factura.guarderiaId,
+      scope: 'guarderia',
+      userId: 0,
+      role: Role.ADMIN,
+    };
+    const buffer = await this.pdfService.generateInvoice(tenant, factura);
+    return { buffer, numero: factura.numero };
   }
 
   async update(
@@ -449,6 +561,7 @@ export class FacturasService extends BaseTenantService {
           content: buffer,
         },
       ],
+      true,
     );
 
     // Auditoría vía Notificación
@@ -510,5 +623,17 @@ export class FacturasService extends BaseTenantService {
     });
 
     return stats;
+  }
+
+  private mapMetodoPago(value: string | MetodoPago): MetodoPago {
+    if (!value) return MetodoPago.EFECTIVO;
+    if (Object.values(MetodoPago).includes(value as MetodoPago)) {
+      return value as MetodoPago;
+    }
+    const upper = value.toString().toUpperCase();
+    if (upper.includes('TRANSF')) return MetodoPago.TRANSFERENCIA;
+    if (upper.includes('TARJ')) return MetodoPago.TARJETA;
+    if (upper.includes('CHEQ')) return MetodoPago.CHEQUE;
+    return MetodoPago.EFECTIVO;
   }
 }

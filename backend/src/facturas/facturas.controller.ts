@@ -9,6 +9,7 @@ import {
   Patch,
   Res,
   Query,
+  BadRequestException,
 } from '@nestjs/common';
 import { FacturasService } from './facturas.service';
 import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
@@ -26,6 +27,7 @@ import { TenantGuard } from '../auth/guards/tenant.guard';
 import { TenantRoles } from '../auth/decorators/tenant-roles.decorator';
 import { ActiveTenant } from '../auth/decorators/active-tenant.decorator';
 import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+import { Public } from '../auth/decorators/public.decorator';
 
 @Controller('facturas')
 @UseGuards(AuthTokenGuard, TenantGuard, RolesGuard)
@@ -40,6 +42,56 @@ export class FacturasController {
   async getNextNumero(@ActiveTenant() tenant: TenantContext) {
     const nextNumero = await this.facturasService.generateNextNumero(tenant);
     return { nextNumero };
+  }
+
+  @Public()
+  @Get('public/:token')
+  async findByToken(@Param('token') token: string) {
+    return this.facturasService.findByTokenPublic(token);
+  }
+
+  @Public()
+  @Get('public/:token/pdf')
+  async downloadPdfPublic(
+    @Param('token') token: string,
+    @Res() res: any,
+  ) {
+    const { buffer, numero } = await this.facturasService.generatePdfByToken(token);
+
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename=factura-${numero}.pdf`,
+      'Content-Length': buffer.length,
+    });
+
+    res.end(buffer);
+  }
+
+  @Public()
+  @Post('public/reportar-pago')
+  async reportarPago(
+    @Body()
+    body: {
+      token: string;
+      idComprobante: string;
+      fechaPago: string;
+      medioPago: string;
+      observaciones?: string;
+    },
+  ) {
+    if (!body.token || !body.idComprobante) {
+      throw new BadRequestException('Faltan datos requeridos para el reporte');
+    }
+
+    return this.facturasService.reportarPagoByToken(
+      body.token,
+      {
+        idComprobante: body.idComprobante,
+        fechaPago: body.fechaPago,
+        medioPago: body.medioPago,
+        observaciones: body.observaciones,
+      },
+    );
   }
 
   @Get(':id/pdf')
@@ -80,6 +132,7 @@ export class FacturasController {
     @Query('search') search?: string,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
+    @Query('soloReportados') soloReportados?: string,
   ) {
     return this.facturasService.findAll(tenant, {
       page,
@@ -87,6 +140,7 @@ export class FacturasController {
       search,
       startDate,
       endDate,
+      soloReportados: soloReportados === 'true',
     });
   }
 

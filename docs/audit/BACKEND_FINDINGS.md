@@ -79,13 +79,11 @@ El método `getSummary()` hace 12 queries secuenciales/parallel. Algunas queries
 
 ---
 
-## 🟡 6. `AuthTokenGuard` — `console.log` en producción
+## 🟡 6. `AuthTokenGuard` — ✅ Resuelto
 
-El guard usa `console.log` para errores de autenticación y token faltante. Esto genera ruido en logs de producción.
+Se ha migrado el uso de `console.log` al `Logger` de NestJS para una mejor trazabilidad y cumplimiento de estándares.
 
-**Archivo:** `src/auth/guards/AuthTokenGuard.ts:35,48`
-
-**Acción:** Usar el `Logger` de NestJS inyectable en su lugar.
+**Archivo:** `src/auth/guards/AuthTokenGuard.ts`
 
 ---
 
@@ -166,13 +164,11 @@ MailerModule.forRootAsync({
 
 ---
 
-## ⚪ 12. Imports no usados — `IsPositive` en DTO
+## ⚪ 12. Imports no usados — ✅ Resuelto
 
-`caja-operacion.dto.ts` importa `IsPositive` pero no lo usa.
+Se han eliminado los imports no usados mediante `npm run lint --fix`.
 
-**Archivo:** `src/cajas/dto/caja-operacion.dto.ts:1`
-
-**Acción:** `npm run lint --fix`.
+**Archivo:** Varios
 
 ---
 
@@ -199,13 +195,11 @@ En `getRackMap()`, el order anidado de TypeORM usa `as any` para mantener la que
 
 ---
 
-## ⚪ 15. `ValidationPipe` — `require()` dentro de factory
+## ⚪ 15. `ValidationPipe` — ✅ Resuelto
 
-En `main.ts:53`, usa `require('@nestjs/common')` dentro de la exceptionFactory en lugar del import top-level.
+Se ha movido `BadRequestException` al import de nivel superior, eliminando el uso de `require()` dinámico.
 
-**Archivo:** `src/main.ts:53`
-
-**Acción:** Mover `BadRequestException` al import del file.
+**Archivo:** `src/main.ts`
 
 ---
 
@@ -218,13 +212,13 @@ En `main.ts:53`, usa `require('@nestjs/common')` dentro de la exceptionFactory e
 | 3 | Password plaintext fallback | 🟡 Media | Bajo | auth.service.ts |
 | 4 | Sin rate limiting login | 🟡 Media | Medio | auth.controller.ts |
 | 5 | N+1 queries dashboard | 🟡 Media | Medio | dashboard.service.ts |
-| 6 | console.log en guard | 🟡 Media | Bajo | AuthTokenGuard.ts |
+| 6 | console.log en guard | ✅ | Bajo | AuthTokenGuard.ts |
 | 7 | Seeder destructive en prod | 🟡 Media | Bajo | seeder.service.ts |
 | 8 | getCuentaCorriente sin límite | 🟡 Media | Bajo | clientes.service.ts |
 | 9 | Query raw sin tipo | 🟡 Media | Bajo | cajas.service.ts |
 | 10 | Jwt payload unknown | 🟡 Media | Bajo | AuthTokenGuard.ts |
 | 11 | MailerModule requerido | 🟡 Media | Medio | app.module.ts |
-| 12 | Import IsPositive no usado | ⚪ Baja | Bajo | caja-operacion.dto.ts |
+| 12 | Import IsPositive no usado | ✅ | Bajo | Varios |
 | 13 | require() ESM en pdf | ⚪ Baja | Medio | pdf.service.ts |
 | 14 | as any order nested | ⚪ Baja | Medio | dashboard.service.ts |
-| 15 | require() en ValidationPipe | ⚪ Baja | Bajo | main.ts |
+| 15 | require() en ValidationPipe | ✅ | Bajo | main.ts |

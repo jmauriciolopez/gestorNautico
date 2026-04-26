@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { httpClient } from '../../../shared/api/HttpClient';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FileText, X, History, Download, Mail, User, Clock, Info, CheckCircle2, AlertCircle, Anchor, Hash, DollarSign, BadgeCheck, Receipt, ChevronRight } from 'lucide-react';
+import { FileText, X, History, Download, Mail, User, Clock, Info, CheckCircle2, AlertCircle, Anchor, Hash, DollarSign, BadgeCheck, Receipt, ChevronRight, Wallet } from 'lucide-react';
 
 interface FacturaDetailModalProps {
   factura: any;
@@ -11,7 +11,7 @@ interface FacturaDetailModalProps {
 }
 
 export const FacturaDetailModal: React.FC<FacturaDetailModalProps> = ({ factura, onClose, onSendEmail }) => {
-  const [activeTab, setActiveTab] = useState<'general' | 'audit'>('general');
+  const [activeTab, setActiveTab] = useState<'general' | 'audit' | 'pago'>('general');
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [isLoadingAudit, setIsLoadingAudit] = useState(false);
 
@@ -127,7 +127,12 @@ export const FacturaDetailModal: React.FC<FacturaDetailModalProps> = ({ factura,
               { label: 'Total', value: `$ ${Number(factura.total).toLocaleString('es-AR')}`, icon: DollarSign, color: 'var(--accent-primary)' },
               { label: 'Cliente', value: factura.cliente?.nombre || '—', icon: User, color: 'var(--accent-purple)' },
               { label: 'Embarcación', value: getEmbarcacionName(), icon: Anchor, color: 'var(--accent-teal)' },
-              { label: 'Conceptos', value: `${factura.cargos?.length || 0} ítem${(factura.cargos?.length || 0) !== 1 ? 's' : ''}`, icon: Hash, color: 'var(--accent-amber)' },
+              { 
+                label: 'Estado Pago', 
+                value: factura.pagoIdComprobante ? 'Informado' : factura.estado === 'PAGADA' ? 'Liquidada' : 'Pendiente', 
+                icon: Wallet, 
+                color: factura.pagoIdComprobante ? 'var(--accent-indigo)' : factura.estado === 'PAGADA' ? 'var(--accent-teal)' : 'var(--accent-amber)' 
+              },
             ].map(({ label, value, icon: Icon, color }) => (
               <div key={label} className="bg-[var(--bg-primary)] border border-[var(--border-secondary)] rounded-2xl px-5 py-4 flex items-center gap-3">
                 <div className="p-2 rounded-xl shrink-0" style={{ background: `color-mix(in srgb, ${color} 12%, transparent)` }}>
@@ -145,6 +150,7 @@ export const FacturaDetailModal: React.FC<FacturaDetailModalProps> = ({ factura,
           <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-secondary)] w-fit">
             {([
               { key: 'general', label: 'General', Icon: FileText },
+              ...(factura.pagoIdComprobante ? [{ key: 'pago', label: 'Info Pago', Icon: Wallet }] : []),
               { key: 'audit', label: 'Audit Trail', Icon: History },
             ] as const).map(({ key, label, Icon }) => (
               <button
@@ -250,6 +256,66 @@ export const FacturaDetailModal: React.FC<FacturaDetailModalProps> = ({ factura,
                     </div>
                   </div>
                 )}
+              </motion.div>
+            ) : activeTab === 'pago' ? (
+              <motion.div
+                key="pago"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="space-y-6"
+              >
+                <div className="bg-indigo-600/5 border border-indigo-500/20 rounded-[2.5rem] p-10">
+                  <div className="flex items-center gap-4 mb-8">
+                    <div className="p-4 rounded-3xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                      <Wallet className="w-8 h-8" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-black text-indigo-400 uppercase tracking-tight">Pago Informado por Cliente</h3>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">
+                        Información recibida el {new Date(factura.pagoReportadoAt).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-8">
+                    <div className="space-y-6">
+                      <div>
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">ID Comprobante</p>
+                        <p className="text-lg font-black text-white bg-white/5 px-4 py-2 rounded-xl border border-white/10 w-fit">
+                          {factura.pagoIdComprobante}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Medio de Pago</p>
+                        <p className="text-sm font-bold text-slate-300">{factura.pagoMedio || 'No especificado'}</p>
+                      </div>
+                    </div>
+                    <div className="space-y-6">
+                      <div>
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Fecha Informada de Pago</p>
+                        <p className="text-sm font-bold text-slate-300">
+                          {factura.pagoFecha ? new Date(factura.pagoFecha).toLocaleDateString() : '—'}
+                        </p>
+                      </div>
+                      {factura.pagoObservaciones && (
+                        <div>
+                          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Notas del Cliente</p>
+                          <p className="text-sm text-slate-400 bg-white/5 p-4 rounded-2xl italic leading-relaxed">
+                            "{factura.pagoObservaciones}"
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 p-6 rounded-[2rem] bg-amber-500/5 border border-amber-500/20 text-amber-500/80">
+                  <AlertCircle className="w-6 h-6 shrink-0" />
+                  <p className="text-xs font-bold uppercase tracking-tight leading-relaxed">
+                    Recuerde verificar la acreditación en su cuenta antes de liquidar la factura como PAGADA.
+                  </p>
+                </div>
               </motion.div>
             ) : (
               <motion.div

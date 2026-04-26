@@ -9,3 +9,6 @@ frontend/test_error.txt
 node_modules
 
 backend/.env
+backend/.env
+
+**/.terraform/

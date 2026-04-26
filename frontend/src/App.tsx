@@ -34,6 +34,7 @@ const UserHelp = lazy(() => import('./features/help/components/UserHelp'));
 const ReportesPage = lazy(() => import('./features/reportes/pages/ReportesPage'));
 const SelectTenantPage = lazy(() => import('./features/guarderia/pages/SelectTenantPage'));
 const GuarderiasPage = lazy(() => import('./features/guarderia/pages/GuarderiasPage'));
+const PagoPublicoPage = lazy(() => import('./features/facturacion/pages/PagoPublicoPage'));
 
 // Componente de Carga Premium
 const LoadingScreen = () => (
@@ -111,6 +112,7 @@ function App() {
                   <Route path="/login" element={<LoginWrapper />} />
                   <Route path="/signup" element={<SignupWrapper />} />
                   <Route path="/bajada-publica" element={<SolicitudBajadaPublica />} />
+                  <Route path="/pago-publico" element={<PagoPublicoPage />} />
                   <Route path="/unauthorized" element={<Unauthorized />} />
                   <Route path="/select-tenant" element={<SelectTenantPage />} />
 

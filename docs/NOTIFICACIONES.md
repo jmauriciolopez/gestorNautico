@@ -48,6 +48,9 @@
 
 ## Templates de email disponibles
 
+> [!NOTE]
+> Para un detalle técnico completo de cada template, variables de contexto y triggers en el código, consulte la [**Auditoría de Templates HBS**](./audit/HBS_TEMPLATES_AUDIT.md).
+
 | Template | Usado en |
 |----------|---------|
 | `confirmacion-bajada` | Confirmación de solicitud de bajada al cliente |
@@ -88,9 +91,6 @@ Evento de negocio
                         │
                         ├──► Guarda en tabla `notificaciones` para cada usuario del rol
                         │
-                        └──► (opcional) sendEmailNotification(email, subject, template, context)
-                                    │
-                                    └──► MailerService (SMTP Resend)
 ```
 
 **Frontend polling:** `useNotificaciones` → `refetchInterval: 30000` ms

@@ -42,9 +42,10 @@ Toda la documentación técnica y operativa se encuentra en la carpeta [`docs/`]
 
 - **[Arquitectura](./docs/ARCHITECTURE.md)**: Stack tecnológico y estructura de módulos.
 - **[API Reference](./docs/API.md)**: Guía de endpoints y autenticación.
-- **[Operaciones](./docs/OPERATIONS.md)**: Guía de flujos operativos (subidas, bajadas, facturación).
-- **[Notificaciones](./docs/NOTIFICACIONES.md)**: Lógica de envío de correos y plantillas.
-- **[Hoja de Ruta SaaS](./docs/plans/PLAN_MULTITENANT.md)**: Plan para la transición a Multi-Tenant.
+- [**Operaciones](./docs/OPERATIONS.md)**: Guía de flujos operativos (subidas, bajadas, facturación).
+- [**Notificaciones](./docs/NOTIFICACIONES.md)**: Lógica de envío de correos y plantillas.
+- [**Auditoría HBS](./docs/audit/HBS_TEMPLATES_AUDIT.md)**: Relevamiento técnico de plantillas de email.
+- [**Hoja de Ruta SaaS](./docs/plans/PLAN_MULTITENANT.md)**: Plan para la transición a Multi-Tenant.
 
 ## 📋 Estado del Proyecto
 Consulta el [**BACKLOG.md**](./BACKLOG.md) para ver las tareas pendientes y hitos recientemente completados.
@@ -52,7 +53,7 @@ Consulta el [**BACKLOG.md**](./BACKLOG.md) para ver las tareas pendientes y hito
 ## 🛠️ Tecnologías
 - **Frontend**: React, Vite, Recharts, Lucide Icons, Framer Motion.
 - **Backend**: NestJS, TypeORM, Class-validator.
-- **Infraestructura**: PostgreSQL, Resend (SMTP).
+- **Infraestructura**: PostgreSQL, Resend (SMTP), AWS (S3 + CloudFront via Terraform), Render (Backend CI/CD).
 
 ## 🔐 Control de Acceso (RBAC)
 

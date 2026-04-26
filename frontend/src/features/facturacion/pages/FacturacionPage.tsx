@@ -13,6 +13,7 @@ export default function FacturacionPage() {
   const [search, setSearch] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [soloReportados, setSoloReportados] = useState(false);
   const debouncedSearch = useDebounce(search, 400);
 
   const queryClient = useQueryClient();
@@ -23,7 +24,7 @@ export default function FacturacionPage() {
     queryClient.invalidateQueries({ queryKey: ['facturas'] });
   };
 
-  const filters = { search: debouncedSearch, startDate, endDate };
+  const filters = { search: debouncedSearch, startDate, endDate, soloReportados };
 
   return (
     <div className="space-y-8 p-3 md:p-6 animate-in fade-in slide-in-from-bottom-4 duration-700 overflow-x-hidden">
@@ -78,6 +79,19 @@ export default function FacturacionPage() {
               </button>
             )}
           </div>
+
+          <button
+            onClick={() => setSoloReportados(!soloReportados)}
+            className={`p-3.5 transition-all bg-[var(--bg-primary)]/40 border rounded-2xl active:scale-90 flex items-center gap-2 ${
+              soloReportados 
+                ? 'text-amber-400 border-amber-500/50 bg-amber-500/10' 
+                : 'text-[var(--text-secondary)] border-[var(--border-primary)] hover:text-indigo-400 hover:border-indigo-500/40'
+            }`}
+            title={soloReportados ? "Mostrando sólo pagos informados" : "Filtrar pagos informados"}
+          >
+            <FileCheck className={`w-5 h-5 ${soloReportados ? 'animate-pulse' : ''}`} />
+            <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Reportados</span>
+          </button>
 
           <button
             onClick={handleRefresh}

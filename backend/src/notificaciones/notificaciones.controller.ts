@@ -92,16 +92,13 @@ export class NotificacionesController {
       'aviso-deuda',
       {
         clienteNombre: 'Usuario de Prueba',
-        facturas: [
-          {
-            numero: 'TEST-0001',
-            fechaVencimiento: new Date().toLocaleDateString('es-AR'),
-            total: '0.00',
-          },
-        ],
-        totalAdeudado: '0.00',
-        anio: new Date().getFullYear(),
+        numeroFactura: 'TEST-0001',
+        fechaEmision: new Date().toLocaleDateString('es-AR'),
+        montoTotal: '1,250.00',
+        paymentLink: 'https://app.gestornautico.com/pago-test',
       },
+      undefined,
+      true,
     );
     return { status: 'Email enviado (revisar logs si falló)', to: targetEmail };
   }

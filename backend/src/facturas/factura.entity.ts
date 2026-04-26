@@ -75,6 +75,25 @@ export class Factura {
   @OneToMany(() => Cargo, (cargo) => cargo.factura)
   cargos: Cargo[];
 
+  @Column({ type: 'text', nullable: true })
+  pagoIdComprobante: string;
+
+  @Column({ type: 'date', nullable: true })
+  pagoFecha: Date;
+
+  @Column({ type: 'text', nullable: true })
+  pagoMedio: string;
+
+  @Column({ type: 'text', nullable: true })
+  pagoObservaciones: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  pagoReportadoAt: Date;
+
+  @Index()
+  @Column({ type: 'varchar', length: 36, unique: true, nullable: true })
+  tokenPublico: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

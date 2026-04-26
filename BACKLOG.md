@@ -29,6 +29,9 @@
 ---
 
 ## ✅ Completado Recientemente (Hitos Logrados)
+- [x] **Limpieza de Deuda Técnica (Linting)**: Resolución de +200 advertencias de imports no usados y tipado en backend y frontend.
+- [x] **Auditoría de Dead Code**: Generación de reporte exhaustivo con jCodeMunch para identificación de código muerto.
+- [x] **Corrección de Estándares en Guards**: Migración de `console.log` a `Logger` inyectable en `AuthTokenGuard`.
 - [x] **Arquitectura Multi-Tenant (FASE 1-6)**: Aislamiento de datos, gestión de sedes (UI SuperAdmin) y RBAC funcional.
 - [x] **Reportes Analíticos (V1)**: Dashboard de ocupación e ingresos mensuales con Recharts.
 - [x] **Unificación de Documentación**: Consolidación de archivos .md en `docs/`.
@@ -36,3 +39,5 @@
 - [x] **Estilo Visual 3D/Glassmorphism**: Modales de confirmación y sistema de diseño semántico.
 - [x] **Facturación PDF**: Generación y descarga de comprobantes.
 - [x] **Buscador Global**: Búsqueda en tiempo real ILike.
+- [x] **Infraestructura Cloud (Terraform)**: Configuración de AWS S3 + CloudFront (OAC) para el frontend.
+- [x] **CI/CD Pipeline**: Workflows de GitHub Actions para despliegue automatizado de Frontend y Backend.

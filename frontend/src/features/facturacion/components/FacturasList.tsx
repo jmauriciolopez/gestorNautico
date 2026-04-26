@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileText, Loader2, ChevronDown, ChevronRight, Anchor, Mail, Edit3, Trash2, CheckCircle, XCircle, ChevronLeft } from 'lucide-react';
+import { FileText, Loader2, ChevronDown, ChevronRight, Anchor, Mail, Edit3, Trash2, CheckCircle, XCircle, ChevronLeft, Wallet } from 'lucide-react';
 import { Factura, useFacturasPaginadas } from '../hooks/useFacturas';
 import { ActionMenu } from '../../../shared/components/ActionMenu';
 import { FacturaDetailModal } from './FacturaDetailModal';
@@ -182,6 +182,12 @@ export function FacturasList({ filters }: { filters: { search?: string; startDat
                           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-rose-500/10 border border-rose-500/20">
                             <div className="w-1 h-1 rounded-full bg-rose-500" />
                             <span className="text-[9px] font-black text-rose-500 uppercase tracking-widest">Anulada</span>
+                          </div>
+                        )}
+                        {factura.estado === 'PENDIENTE' && factura.pagoIdComprobante && (
+                          <div className="mt-2 flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-indigo-500/10 border border-indigo-500/20 w-fit">
+                            <Wallet className="w-2.5 h-2.5 text-indigo-400" />
+                            <span className="text-[8px] font-black text-indigo-400 uppercase tracking-widest">Pago Informado</span>
                           </div>
                         )}
                       </td>

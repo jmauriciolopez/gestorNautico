@@ -65,19 +65,11 @@ El `QueryClient` tiene `staleTime: 0` y `gcTime: 0` por defecto. Todas las queri
 
 ---
 
-## ⚪ 6. Imports no usados — 18 advertencias ESLint
+## ⚪ 6. Imports no usados — ✅ Resuelto
 
-Limpieza de deuda. Ningún impacto en runtime pero acumulan ruido y confusión.
+Se han eliminado los imports no usados y se ha limpiado el código mediante `npm run lint --fix`.
 
-**Archivos con mayores offending:**
-- `src/features/clientes/components/CuentaCorrientePanel.tsx` — `Wallet`, `TrendingDown`
-- `src/features/embarcaciones/hooks/useEmbarcaciones.ts` — `selectData`, `embarcaciones`, `meta`
-- `src/features/facturacion/components/FacturaEditModal.tsx` — `ChevronRight`, `Package`, `Clock`, `AlertCircle`, `e`
-- `src/features/finanzas/pages/FinanzasPage.tsx` — `AxiosError`
-- `src/features/clientes/hooks/useClientes.ts` — `selectData`
-- `src/features/servicios/hooks/useServicios.ts` — `selectData`
-
-**Acción:** Correr `npm run lint -- --fix` o limpieza manual archivo por archivo.
+**Archivos:** Varios
 
 ---
 
@@ -128,7 +120,7 @@ El hook `useDebounce` crea un timer por cada render del componente padre sin mem
 | 3 | Sin refresh token | 🟡 Media | Alto | AuthContext |
 | 4 | Devtools en prod | 🟡 Media | Bajo | App.tsx |
 | 5 | staleTime 0 global | 🟡 Media | Bajo | queryClient.ts |
-| 6 | Imports no usados | ⚪ Baja | Bajo | 6 archivos |
+| 6 | Imports no usados | ✅ | Bajo | Varios |
 | 7 | ARIA en ConfirmDialog | ⚪ Baja | Bajo | ConfirmDialog.tsx |
 | 8 | Login shortcut | ⚪ Baja | Bajo | Login.tsx |
 | 9 | useDebounce sin memo | ⚪ Baja | Medio | useDebounce.ts |

@@ -92,6 +92,7 @@ export class AutomaticBillingService {
       23,
       59,
       59,
+      59,
     );
 
     for (const cliente of clientesAFacturar) {
@@ -354,8 +355,10 @@ export class AutomaticBillingService {
               'es-AR',
             ),
             montoTotal: Number(factura.total).toLocaleString('es-AR'),
-            paymentLink: `${baseUrl}/pago-publico?factura=${factura.numero}`,
+            paymentLink: `${baseUrl}/pago-publico?token=${factura.tokenPublico}`,
           },
+          undefined,
+          true,
         );
       }
     }

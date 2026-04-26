@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Notificacion, NotificacionTipo } from './notificacion.entity';
@@ -13,6 +13,8 @@ import { TenantContext } from '../compartido/interfaces/tenant-context.interface
 
 @Injectable()
 export class NotificacionesService extends BaseTenantService {
+  private readonly logger = new Logger(NotificacionesService.name);
+
   constructor(
     @InjectRepository(Notificacion)
     private readonly notificacionesRepository: Repository<Notificacion>,
@@ -29,7 +31,13 @@ export class NotificacionesService extends BaseTenantService {
     template: string,
     context: Record<string, unknown>,
     attachments?: any[],
+    enviar: boolean = false,
   ): Promise<void> {
+    if (!enviar) {
+      this.logger.log(`Notificación por email a ${to} omitida (enviar=false)`);
+      return;
+    }
+
     try {
       await this.mailerService.sendMail({
         to,
@@ -38,10 +46,10 @@ export class NotificacionesService extends BaseTenantService {
         context,
         attachments,
       });
-      console.log(`Email enviado con éxito a ${to}`);
+      this.logger.log(`Email enviado con éxito a ${to}`);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      console.error(`Error enviando email a ${to}:`, message);
+      this.logger.error(`Error enviando email a ${to}: ${message}`);
     }
   }
 

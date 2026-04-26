@@ -6,6 +6,8 @@
 - **Frontend**: React con Vite y TailwindCSS.
 - **Gráficos**: Recharts para visualización de datos.
 - **Notificaciones**: Sistema basado en plantillas Handlebars y SMTP (Resend).
+- **Infraestructura**: AWS (S3/CloudFront) para Frontend y Render para Backend.
+- **IaC / CI-CD**: Terraform para aprovisionamiento y GitHub Actions para despliegue.
 
 ## Estructura de Módulos
 El sistema está dividido en módulos cohesivos siguiendo el patrón de NestJS:

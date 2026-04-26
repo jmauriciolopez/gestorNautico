@@ -21,6 +21,12 @@ export interface Factura {
   }[];
   createdAt: string;
   updatedAt: string;
+  // Metadata de pago informado
+  pagoIdComprobante?: string;
+  pagoFecha?: string;
+  pagoMedio?: string;
+  pagoObservaciones?: string;
+  pagoReportadoAt?: string;
 }
 
 const PAGE_SIZE = 20;
@@ -29,19 +35,20 @@ const PAGE_SIZE = 20;
 export function useFacturasPaginadas(
   page: number,
   limit = PAGE_SIZE,
-  filters: { search?: string; startDate?: string; endDate?: string } = {}
+  filters: { search?: string; startDate?: string; endDate?: string; soloReportados?: boolean } = {}
 ) {
   const queryClient = useQueryClient();
   const guarderiaId = useActiveGuarderiaId();
-  const { search, startDate, endDate } = filters;
+  const { search, startDate, endDate, soloReportados } = filters;
 
   const query = useQuery({
-    queryKey: ['facturas', guarderiaId, page, limit, search, startDate, endDate],
+    queryKey: ['facturas', guarderiaId, page, limit, search, startDate, endDate, soloReportados],
     queryFn: (): Promise<Paginated<Factura>> => {
       let url = `/facturas?page=${page}&limit=${limit}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
       if (startDate) url += `&startDate=${startDate}`;
       if (endDate) url += `&endDate=${endDate}`;
+      if (soloReportados) url += `&soloReportados=true`;
       return httpClient.get<Paginated<Factura>>(url);
     },
     placeholderData: (prev) => prev,

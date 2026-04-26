@@ -7,12 +7,21 @@ import { HttpAdapterHost, BaseExceptionFilter } from '@nestjs/core';
 import { Catch, ArgumentsHost } from '@nestjs/common';
 import { exec } from 'child_process';
 import * as os from 'os';
+import * as fs from 'fs';
 import { TenantInterceptor } from './common/interceptors/tenant.interceptor';
+
+// Asegurar directorios de carga
+const uploadDirs = ['./uploads', './uploads/comprobantes'];
+uploadDirs.forEach((dir) => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+});
 
 function systemBeep() {
   try {
     if (os.platform() === 'win32') {
-      exec('powershell.exe -c "[console]::beep(800,300)"', () => { });
+      exec('powershell.exe -c "[console]::beep(800,300)"', () => {});
     } else {
       process.stdout.write('\x07');
     }
@@ -39,10 +48,10 @@ async function bootstrap() {
   const allowedOrigins = process.env.CORS_ORIGIN?.split(',').map((o) =>
     o.trim(),
   ) ?? [
-      'http://localhost:5173',
-      'http://127.0.0.1:5173',
-      'http://localhost:3000',
-    ];
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'http://localhost:3000',
+  ];
 
   logger.log(`Allowed origins: [${allowedOrigins.join(', ')}]`);
 

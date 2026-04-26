@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Anchor, Clock, CheckCircle2, XCircle, Ship } from 'lucide-react';
 import type { SolicitudBajada } from '../hooks/useOperaciones';
+import { EstadoSolicitud } from '../../../shared/types/enums';
 
 interface Props {
   solicitudes: SolicitudBajada[];
@@ -21,7 +22,7 @@ export function SolicitudesBajadaList({ solicitudes, isLoading, onUpdateEstado }
 
   const handleCancelar = () => {
     if (!cancelModal) return;
-    onUpdateEstado(cancelModal.id, 'CANCELADA', motivo);
+    onUpdateEstado(cancelModal.id, EstadoSolicitud.CANCELADA, motivo);
     setCancelModal(null);
     setMotivo('');
   };
@@ -44,10 +45,10 @@ export function SolicitudesBajadaList({ solicitudes, isLoading, onUpdateEstado }
           </div>
         ) : (
           solicitudes
-            .filter(s => s.estado === 'PENDIENTE' || s.estado === 'EN_AGUA')
+            .filter(s => s.estado === EstadoSolicitud.PENDIENTE || s.estado === EstadoSolicitud.EN_AGUA)
             .map(s => {
               const cfg = ESTADO_CONFIG[s.estado as keyof typeof ESTADO_CONFIG];
-            const activa = s.estado === 'PENDIENTE' || s.estado === 'EN_AGUA';
+            const activa = s.estado === EstadoSolicitud.PENDIENTE || s.estado === EstadoSolicitud.EN_AGUA;
             return (
               <div key={s.id} className="group relative bg-[var(--bg-secondary)]/30 hover:bg-[var(--bg-secondary)]/50 p-8 rounded-[2.5rem] border border-[var(--border-primary)]/60 hover:border-indigo-500/40 transition-all duration-500 flex flex-col xl:flex-row xl:items-center justify-between gap-8 shadow-sm hover:shadow-2xl hover:shadow-indigo-900/10">
                 
@@ -80,7 +81,7 @@ export function SolicitudesBajadaList({ solicitudes, isLoading, onUpdateEstado }
                         <Clock className="w-3.5 h-3.5 text-indigo-500" />
                         {new Date(s.fechaHoraDeseada).toLocaleString('es-AR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                       </div>
-                      {s.motivoCancelacion && s.estado === 'CANCELADA' && (
+                      {s.motivoCancelacion && s.estado === EstadoSolicitud.CANCELADA && (
                         <div className="flex items-center gap-2.5 text-[10px] text-rose-400 font-bold italic truncate max-w-[250px] bg-rose-500/5 px-3 py-1.5 rounded-xl border border-rose-500/10">
                           Motivo: "{s.motivoCancelacion}"
                         </div>
@@ -97,18 +98,18 @@ export function SolicitudesBajadaList({ solicitudes, isLoading, onUpdateEstado }
                 <div className="flex items-center gap-4 bg-[var(--bg-primary)]/50 p-3 rounded-[2rem] border border-[var(--border-primary)]/60 relative z-10 backdrop-blur-sm self-end xl:self-center">
                   {activa && (
                     <>
-                      {s.estado === 'PENDIENTE' && (
+                      {s.estado === EstadoSolicitud.PENDIENTE && (
                         <button
-                          onClick={() => onUpdateEstado(s.id, 'EN_AGUA')}
+                          onClick={() => onUpdateEstado(s.id, EstadoSolicitud.EN_AGUA)}
                           className="flex items-center gap-3 px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all hover:scale-[1.03] active:scale-95 shadow-lg shadow-indigo-900/30"
                         >
                           <CheckCircle2 className="w-4 h-4" />
                           Bajar a Agua
                         </button>
                       )}
-                      {s.estado === 'EN_AGUA' && (
+                      {s.estado === EstadoSolicitud.EN_AGUA && (
                         <button
-                          onClick={() => onUpdateEstado(s.id, 'FINALIZADA')}
+                          onClick={() => onUpdateEstado(s.id, EstadoSolicitud.FINALIZADA)}
                           className="flex items-center gap-3 px-8 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all hover:scale-[1.03] active:scale-95 shadow-lg shadow-emerald-900/30"
                         >
                           <CheckCircle2 className="w-4 h-4" />
