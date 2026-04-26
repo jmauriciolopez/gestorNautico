@@ -4,15 +4,18 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { CargosService } from './cargos.service';
 import { Cargo, TipoCargo } from './cargo.entity';
 
+import { Role } from '../users/user.entity';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+
 describe('CargosService', () => {
   let service: CargosService;
 
-  const mockTenant = {
+  const mockTenant: TenantContext = {
     guarderiaId: 1,
-    scope: 'guarderia' as any,
-    role: 'SUPERADMIN' as any,
+    scope: 'guarderia',
+    role: Role.SUPERADMIN,
     userId: 1,
-  } as any;
+  };
 
   const mockCargo = {
     id: 1,
@@ -28,7 +31,7 @@ describe('CargosService', () => {
     updatedAt: new Date(),
   };
 
-  const mockRepository = {
+  const mockRepository: Record<string, jest.Mock> = {
     find: jest.fn(),
     findAndCount: jest.fn().mockResolvedValue([[], 0]),
     findOne: jest.fn(),

@@ -32,7 +32,7 @@ export class AuthController {
   ): Promise<AuthResponse> {
     const ip =
       request.ip || (request.headers['x-forwarded-for'] as string) || 'unknown';
-    
+
     const authData = await this.authService.login(loginDto, ip);
 
     const isProd = this.configService.get<string>('NODE_ENV') === 'production';

@@ -39,23 +39,25 @@ export class SearchService extends BaseTenantService {
     const [clientes, embarcaciones, racks] = await Promise.all([
       this.clienteRepo.find({
         where: [
-          this.buildTenantWhere(tenant, { nombre: ILike(term) }),
-          this.buildTenantWhere(tenant, { dni: ILike(term) }),
-          this.buildTenantWhere(tenant, { email: ILike(term) }),
+          this.buildTenantWhere<Cliente>(tenant, { nombre: ILike(term) }),
+          this.buildTenantWhere<Cliente>(tenant, { dni: ILike(term) }),
+          this.buildTenantWhere<Cliente>(tenant, { email: ILike(term) }),
         ],
         select: ['id', 'nombre', 'dni', 'email'],
         take: 5,
       }),
       this.embarcacionRepo.find({
         where: [
-          this.buildTenantWhere(tenant, { nombre: ILike(term) }),
-          this.buildTenantWhere(tenant, { matricula: ILike(term) }),
+          this.buildTenantWhere<Embarcacion>(tenant, { nombre: ILike(term) }),
+          this.buildTenantWhere<Embarcacion>(tenant, {
+            matricula: ILike(term),
+          }),
         ],
         select: ['id', 'nombre', 'matricula', 'tipo', 'estado_operativo'],
         take: 5,
       }),
       this.rackRepo.find({
-        where: [this.buildTenantWhere(tenant, { codigo: ILike(term) })],
+        where: [this.buildTenantWhere<Rack>(tenant, { codigo: ILike(term) })],
         select: ['id', 'codigo'],
         take: 5,
       }),

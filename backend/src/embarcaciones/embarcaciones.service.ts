@@ -7,6 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityManager, DataSource } from 'typeorm';
 import { Embarcacion, EstadoEmbarcacion } from './embarcaciones.entity';
+import { Cliente } from '../clientes/clientes.entity';
 import { Espacio } from '../espacios/espacio.entity';
 import {
   paginate,
@@ -94,7 +95,7 @@ export class EmbarcacionesService extends BaseTenantService {
 
   async findOne(tenant: TenantContext, id: number): Promise<Embarcacion> {
     const embarcacion = await this.embarcacionesRepository.findOne({
-      where: this.buildTenantWhere(tenant, { id }),
+      where: this.buildTenantWhere<Embarcacion>(tenant, { id }),
       relations: ['cliente', 'espacio', 'espacio.rack', 'espacio.rack.zona'],
     });
     if (!embarcacion) {
@@ -115,7 +116,7 @@ export class EmbarcacionesService extends BaseTenantService {
     const espRepo = manager ? manager.getRepository(Espacio) : this.espacioRepo;
 
     const espacio = await espRepo.findOne({
-      where: this.buildTenantWhere(tenant, { id: espacioId }),
+      where: this.buildTenantWhere<Espacio>(tenant, { id: espacioId }),
       relations: ['rack'],
     });
 
@@ -169,7 +170,7 @@ export class EmbarcacionesService extends BaseTenantService {
       if (dto.clienteId) {
         const clienteRepo = mgr.getRepository('Cliente');
         const cliente = await clienteRepo.findOne({
-          where: this.buildTenantWhere(tenant, { id: dto.clienteId }),
+          where: this.buildTenantWhere<Cliente>(tenant, { id: dto.clienteId }),
         });
         if (!cliente) {
           throw new BadRequestException(
@@ -181,7 +182,9 @@ export class EmbarcacionesService extends BaseTenantService {
       // Validar que el espacio no esté ocupado por otra embarcación (en el mismo tenant)
       if (dto.espacioId) {
         const boatWithSpace = await boatRepo.findOne({
-          where: this.buildTenantWhere(tenant, { espacioId: dto.espacioId }),
+          where: this.buildTenantWhere<Embarcacion>(tenant, {
+            espacioId: dto.espacioId,
+          }),
         });
         if (boatWithSpace) {
           throw new BadRequestException(
@@ -191,7 +194,9 @@ export class EmbarcacionesService extends BaseTenantService {
       }
 
       const existing = await boatRepo.findOne({
-        where: this.buildTenantWhere(tenant, { matricula: dto.matricula }),
+        where: this.buildTenantWhere<Embarcacion>(tenant, {
+          matricula: dto.matricula,
+        }),
       });
       if (existing) {
         throw new BadRequestException(
@@ -254,7 +259,7 @@ export class EmbarcacionesService extends BaseTenantService {
       if (dto.clienteId && dto.clienteId !== embarcacion.clienteId) {
         const clienteRepo = mgr.getRepository('Cliente');
         const cliente = await clienteRepo.findOne({
-          where: this.buildTenantWhere(tenant, { id: dto.clienteId }),
+          where: this.buildTenantWhere<Cliente>(tenant, { id: dto.clienteId }),
         });
         if (!cliente) {
           throw new BadRequestException(
@@ -266,7 +271,9 @@ export class EmbarcacionesService extends BaseTenantService {
       // Validar que el nuevo espacio no esté ocupado por otra embarcación (en el mismo tenant)
       if (nuevoEspacioId && nuevoEspacioId !== embarcacion.espacioId) {
         const boatWithSpace = await boatRepo.findOne({
-          where: this.buildTenantWhere(tenant, { espacioId: nuevoEspacioId }),
+          where: this.buildTenantWhere<Embarcacion>(tenant, {
+            espacioId: nuevoEspacioId,
+          }),
         });
         if (boatWithSpace) {
           throw new BadRequestException(
@@ -278,7 +285,9 @@ export class EmbarcacionesService extends BaseTenantService {
       // Si cambia la matrícula, validar que no exista otra igual
       if (dto.matricula && dto.matricula !== embarcacion.matricula) {
         const existing = await boatRepo.findOne({
-          where: this.buildTenantWhere(tenant, { matricula: dto.matricula }),
+          where: this.buildTenantWhere<Embarcacion>(tenant, {
+            matricula: dto.matricula,
+          }),
         });
         if (existing) {
           throw new BadRequestException(

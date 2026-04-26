@@ -30,7 +30,7 @@ export class ReportesService extends BaseTenantService {
     const hoy = new Date();
 
     const cargosVencidos = await this.cargoRepo.find({
-      where: this.buildTenantWhere(tenant, {
+      where: this.buildTenantWhere<Cargo>(tenant, {
         pagado: false,
         fechaVencimiento: LessThan(hoy),
       }),
@@ -90,7 +90,7 @@ export class ReportesService extends BaseTenantService {
 
   async getMensualidadesConDescuentos(tenant: TenantContext): Promise<any[]> {
     const embarcaciones = await this.embarcacionRepo.find({
-      where: this.buildTenantWhere(tenant, {
+      where: this.buildTenantWhere<Embarcacion>(tenant, {
         estado_operativo: EstadoEmbarcacion.EN_CUNA,
       }),
       relations: ['cliente', 'espacio', 'espacio.rack'],
@@ -128,7 +128,7 @@ export class ReportesService extends BaseTenantService {
 
   async getOcupacion(tenant: TenantContext): Promise<any> {
     const espacios = await this.espacioRepo.find({
-      where: this.buildTenantWhere(tenant),
+      where: this.buildTenantWhere<Espacio>(tenant),
       relations: ['rack', 'rack.zona'],
     });
 

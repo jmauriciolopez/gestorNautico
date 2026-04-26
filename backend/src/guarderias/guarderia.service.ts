@@ -47,7 +47,7 @@ export class GuarderiaService {
 
   async remove(id: number): Promise<void> {
     const guarderia = await this.findOne(id);
-    
+
     await this.dataSource.transaction(async (manager) => {
       // 1. Soft delete de la guardería
       guarderia.activo = false;
@@ -57,9 +57,8 @@ export class GuarderiaService {
       // Importamos las entidades dinámicamente o por nombre para evitar circulares si fuera necesario,
       // pero aquí usaremos la clase User directamente si está disponible.
       await manager.update('User', { guarderiaId: id }, { activo: false });
-      
+
       // Podríamos agregar más entidades aquí (Embarcaciones, etc.) si se desea un "desmantelamiento" total
     });
   }
-
 }

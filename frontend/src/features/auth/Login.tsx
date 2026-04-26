@@ -8,7 +8,7 @@ interface Props {
   onLoginSuccess: (token?: string) => void | Promise<void>;
 }
 
-const FEATURES = ['Flota en tiempo real', 'Multi-sede', 'Reportes', 'Espacios inteligentes', 'Panel de control', 'Facturación'];
+const FEATURES = ['Flota en tiempo real', 'Servicios', 'Reportes', 'Espacios inteligentes', 'Panel de control', 'Facturación'];
 
 export function Login({ onLoginSuccess }: Props) {
   const [usuario, setUsuario] = useState('');
@@ -27,7 +27,7 @@ export function Login({ onLoginSuccess }: Props) {
         identifier: usuario,
         password,
       });
-      
+
       onLoginSuccess(response.accessToken);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Credenciales inválidas');

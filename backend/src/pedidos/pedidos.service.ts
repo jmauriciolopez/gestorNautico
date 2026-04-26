@@ -150,7 +150,7 @@ export class PedidosService extends BaseTenantService {
 
       // Validar si ya existe una solicitud activa en el Portal Web
       const solicitudActiva = await solRepo.findOne({
-        where: this.buildTenantWhere(tenant, {
+        where: this.buildTenantWhere<SolicitudBajada>(tenant, {
           embarcacionId: embarcacionId,
           estado: In([EstadoSolicitud.PENDIENTE, EstadoSolicitud.EN_AGUA]),
         }),
@@ -170,7 +170,7 @@ export class PedidosService extends BaseTenantService {
       const guardado = await pedRepo.save(nuevo);
 
       const pedidox = await manager.findOne(Pedido, {
-        where: this.buildTenantWhere(tenant, { id: guardado.id }),
+        where: this.buildTenantWhere<Pedido>(tenant, { id: guardado.id }),
         relations: ['embarcacion'],
       });
 
@@ -193,7 +193,7 @@ export class PedidosService extends BaseTenantService {
   async updateEstado(tenant: TenantContext, id: number, estado: EstadoPedido) {
     return await this.dataSource.transaction(async (manager) => {
       const pedido = await manager.findOne(Pedido, {
-        where: this.buildTenantWhere(tenant, { id }),
+        where: this.buildTenantWhere<Pedido>(tenant, { id }),
         relations: ['embarcacion'],
       });
 
@@ -201,9 +201,13 @@ export class PedidosService extends BaseTenantService {
         throw new NotFoundException(`Pedido con ID ${id} no encontrado`);
       }
 
-      await manager.update(Pedido, this.buildTenantWhere(tenant, { id }), {
-        estado,
-      });
+      await manager.update(
+        Pedido,
+        this.buildTenantWhere<Pedido>(tenant, { id }),
+        {
+          estado,
+        },
+      );
 
       if (!pedido.embarcacion?.id) {
         this.logger.warn(`Pedido ${id} no tiene embarcación asociada`);
@@ -242,7 +246,7 @@ export class PedidosService extends BaseTenantService {
       });
 
       return await manager.findOne(Pedido, {
-        where: this.buildTenantWhere(tenant, { id }),
+        where: this.buildTenantWhere<Pedido>(tenant, { id }),
         relations: ['embarcacion'],
       });
     });

@@ -13,15 +13,18 @@ import { PdfService } from '../common/pdf/pdf.service';
 import { DataSource, In } from 'typeorm';
 import { TipoCargo } from '../cargos/cargo.entity';
 
+import { Role } from '../users/user.entity';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+
 describe('FacturasService', () => {
   let service: FacturasService;
 
-  const mockTenant = {
+  const mockTenant: TenantContext = {
     guarderiaId: 1,
-    scope: 'guarderia' as any,
-    role: 'SUPERADMIN' as any,
+    scope: 'guarderia',
+    role: Role.SUPERADMIN,
     userId: 1,
-  } as any;
+  };
 
   const mockFactura = {
     id: 1,
@@ -43,15 +46,17 @@ describe('FacturasService', () => {
     fechaEmision: new Date().toISOString(),
   };
 
-  const mockManager = {
+  const mockManager: Record<string, jest.Mock> = {
     find: jest.fn().mockResolvedValue([]),
     findOne: jest.fn().mockResolvedValue(null),
-    create: jest.fn().mockImplementation((entity, data) => data),
-    save: jest.fn().mockImplementation((data) => Promise.resolve(data)),
+    create: jest.fn().mockImplementation((entity: any, data: any): any => data),
+    save: jest
+      .fn()
+      .mockImplementation((data: any): any => Promise.resolve(data)),
     update: jest.fn().mockResolvedValue({}),
   };
 
-  const mockFacturaRepository = {
+  const mockFacturaRepository: Record<string, jest.Mock> = {
     find: jest.fn(),
     findOne: jest.fn(),
     findAndCount: jest.fn().mockResolvedValue([[], 0]),
@@ -69,40 +74,42 @@ describe('FacturasService', () => {
     })),
   };
 
-  const mockCargoRepository = {
+  const mockCargoRepository: Record<string, jest.Mock> = {
     find: jest.fn(),
     update: jest.fn(),
   };
 
-  const mockPagoRepository = {
+  const mockPagoRepository: Record<string, jest.Mock> = {
     create: jest.fn(),
     save: jest.fn(),
   };
 
-  const mockClienteRepository = {
+  const mockClienteRepository: Record<string, jest.Mock> = {
     findOne: jest.fn(),
     update: jest.fn(),
   };
 
-  const mockCargosService = {
+  const mockCargosService: Record<string, jest.Mock> = {
     findOne: jest.fn(),
   };
 
-  const mockCajasService = {
+  const mockCajasService: Record<string, jest.Mock> = {
     findAbierta: jest.fn(),
   };
 
-  const mockNotificacionesService = {
+  const mockNotificacionesService: Record<string, jest.Mock> = {
     createForRole: jest.fn().mockResolvedValue({}),
     sendEmailNotification: jest.fn().mockResolvedValue({}),
   };
 
-  const mockPdfService = {
+  const mockPdfService: Record<string, jest.Mock> = {
     generateInvoice: jest.fn().mockResolvedValue(Buffer.from('PDF')),
   };
 
-  const mockDataSource = {
-    transaction: jest.fn().mockImplementation((cb) => cb(mockManager)),
+  const mockDataSource: Record<string, jest.Mock> = {
+    transaction: jest
+      .fn()
+      .mockImplementation((cb: (mgr: any) => any): any => cb(mockManager)),
   };
 
   beforeEach(async () => {
@@ -111,10 +118,12 @@ describe('FacturasService', () => {
     // Reset mock manager state
     mockManager.find.mockReset().mockResolvedValue([]);
     mockManager.findOne.mockReset().mockResolvedValue(null);
-    mockManager.create.mockReset().mockImplementation((entity, data) => data);
+    mockManager.create
+      .mockReset()
+      .mockImplementation((entity: any, data: any): any => data);
     mockManager.save
       .mockReset()
-      .mockImplementation((data) => Promise.resolve(data));
+      .mockImplementation((data: any): any => Promise.resolve(data));
     mockManager.update.mockReset().mockResolvedValue({});
 
     const module: TestingModule = await Test.createTestingModule({

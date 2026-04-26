@@ -14,7 +14,6 @@ import { CreateRackDto } from './dto/create-rack.dto';
 import { UpdateRackDto } from './dto/update-rack.dto';
 import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../users/user.entity';
 
 import { TenantGuard } from '../auth/guards/tenant.guard';

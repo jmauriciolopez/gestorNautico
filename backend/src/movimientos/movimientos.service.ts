@@ -1,6 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, EntityManager, ILike } from 'typeorm';
+import {
+  Repository,
+  In,
+  EntityManager,
+  ILike,
+  FindManyOptions,
+  FindOptionsWhere,
+} from 'typeorm';
 import { Movimiento, TipoMovimiento } from './movimientos.entity';
 import { Pedido, EstadoPedido } from '../pedidos/pedidos.entity';
 import {
@@ -48,32 +55,35 @@ export class MovimientosService extends BaseTenantService {
     query: PaginationQuery & { search?: string; embarcacionId?: number } = {},
   ) {
     const { search, embarcacionId, ...pagination } = query;
-    const tenantFilter = this.buildTenantWhere(tenant);
+    const tenantFilter = this.buildTenantWhere<Movimiento>(tenant);
 
-    const findOptions: any = {
-      relations: ['embarcacion', 'espacio', 'espacio.rack'],
-      order: { fecha: 'DESC' },
-      where: tenantFilter,
-    };
+    let where: FindOptionsWhere<Movimiento> | FindOptionsWhere<Movimiento>[] =
+      tenantFilter;
 
     if (embarcacionId) {
-      findOptions.where = {
+      where = {
         ...tenantFilter,
         embarcacion: { id: Number(embarcacionId) },
       };
     } else if (search) {
-      findOptions.where = [
+      where = [
         { ...tenantFilter, embarcacion: { nombre: ILike(`%${search}%`) } },
         { ...tenantFilter, embarcacion: { matricula: ILike(`%${search}%`) } },
       ];
     }
+
+    const findOptions: FindManyOptions<Movimiento> = {
+      relations: ['embarcacion', 'espacio', 'espacio.rack'],
+      order: { fecha: 'DESC' },
+      where,
+    };
 
     return paginate(this.movimientoRepo, pagination, findOptions);
   }
 
   async findOne(tenant: TenantContext, id: number) {
     const movimiento = await this.movimientoRepo.findOne({
-      where: this.buildTenantWhere(tenant, { id }),
+      where: this.buildTenantWhere<Movimiento>(tenant, { id }),
       relations: ['embarcacion', 'espacio'],
     });
     if (!movimiento)

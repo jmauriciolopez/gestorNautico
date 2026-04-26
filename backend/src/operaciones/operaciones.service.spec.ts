@@ -4,29 +4,32 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { SolicitudBajada, EstadoSolicitud } from './solicitud-bajada.entity';
 import { Cliente } from '../clientes/clientes.entity';
 import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
-import { Pedido, EstadoPedido } from '../pedidos/pedidos.entity';
+import { Pedido } from '../pedidos/pedidos.entity';
 import { NotificacionesService } from '../notificaciones/notificaciones.service';
 import { MovimientosService } from '../movimientos/movimientos.service';
 import { ConfiguracionService } from '../configuracion/configuracion.service';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 
+import { Role } from '../users/user.entity';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+
 describe('OperacionesService', () => {
   let service: OperacionesService;
 
-  const mockTenant = {
+  const mockTenant: TenantContext = {
     guarderiaId: 1,
-    scope: 'guarderia' as any,
-    role: 'SUPERADMIN' as any,
+    scope: 'guarderia',
+    role: Role.SUPERADMIN,
     userId: 1,
-  } as any;
+  };
 
-  let solicitudRepo: any;
-  let clienteRepo: any;
-  let embarcacionRepo: any;
-  let pedidoRepo: any;
-  let notificacionesService: any;
-  let movimientosService: any;
-  let configuracionService: any;
+  let solicitudRepo: Record<string, jest.Mock>;
+  let clienteRepo: Record<string, jest.Mock>;
+  let embarcacionRepo: Record<string, jest.Mock>;
+  let pedidoRepo: Record<string, jest.Mock>;
+  let notificacionesService: jest.Mocked<NotificacionesService>;
+  let movimientosService: jest.Mocked<MovimientosService>;
+  let configuracionService: jest.Mocked<ConfiguracionService>;
 
   const mockSolicitud = {
     id: 1,
@@ -109,16 +112,17 @@ describe('OperacionesService', () => {
       embarcacionRepo.findOne.mockResolvedValue({ id: 1, nombre: 'Boat' });
       solicitudRepo.findOne.mockResolvedValue(null);
       pedidoRepo.findOne.mockResolvedValue(null);
-      configuracionService.getValor.mockImplementation((key) => {
-        if (key === 'HORARIO_APERTURA') return '08:00';
-        if (key === 'HORARIO_MAX_SUBIDA') return '20:00';
-        return null;
+      configuracionService.getValor.mockImplementation((tenant, key) => {
+        if (key === 'HORARIO_APERTURA') return Promise.resolve('08:00');
+        if (key === 'HORARIO_MAX_SUBIDA') return Promise.resolve('20:00');
+        return Promise.resolve('');
       });
       solicitudRepo.create.mockReturnValue(mockSolicitud);
       solicitudRepo.save.mockResolvedValue(mockSolicitud);
 
       const result = await service.createPublic(mockTenant, dto);
       expect(result).toEqual(mockSolicitud);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(notificacionesService.createForRole).toHaveBeenCalled();
     });
 
@@ -161,10 +165,10 @@ describe('OperacionesService', () => {
       embarcacionRepo.findOne.mockResolvedValue({ id: 1 });
       solicitudRepo.findOne.mockResolvedValue(null);
       pedidoRepo.findOne.mockResolvedValue(null);
-      configuracionService.getValor.mockImplementation((key) => {
-        if (key === 'HORARIO_APERTURA') return '22:00';
-        if (key === 'HORARIO_MAX_SUBIDA') return '23:00';
-        return null;
+      configuracionService.getValor.mockImplementation((tenant, key) => {
+        if (key === 'HORARIO_APERTURA') return Promise.resolve('22:00');
+        if (key === 'HORARIO_MAX_SUBIDA') return Promise.resolve('23:00');
+        return Promise.resolve('');
       });
       await expect(service.createPublic(mockTenant, dto)).rejects.toThrow(
         BadRequestException,
@@ -203,6 +207,7 @@ describe('OperacionesService', () => {
       expect(solicitudRepo.update).toHaveBeenCalledWith(1, {
         estado: EstadoSolicitud.EN_AGUA,
       });
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(movimientosService.create).toHaveBeenCalled();
     });
 
@@ -213,6 +218,7 @@ describe('OperacionesService', () => {
       expect(solicitudRepo.update).toHaveBeenCalledWith(1, {
         estado: EstadoSolicitud.FINALIZADA,
       });
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(movimientosService.create).toHaveBeenCalled();
     });
 
@@ -246,6 +252,7 @@ describe('OperacionesService', () => {
 
       await service.processDelayedConfirmations();
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(notificacionesService.sendEmailNotification).toHaveBeenCalled();
       expect(solicitudRepo.update).toHaveBeenCalled();
     });

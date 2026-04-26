@@ -6,17 +6,19 @@ import { ConflictException, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
 
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+
 jest.mock('bcrypt');
 
 describe('UsersService', () => {
   let service: UsersService;
 
-  const mockTenant = {
+  const mockTenant: TenantContext = {
     guarderiaId: 1,
-    scope: 'guarderia' as any,
-    role: 'SUPERADMIN' as any,
+    scope: 'guarderia',
+    role: Role.SUPERADMIN,
     userId: 1,
-  } as any;
+  };
 
   const mockUser = {
     id: 1,
@@ -24,11 +26,11 @@ describe('UsersService', () => {
     email: 'test@example.com',
     nombre: 'Test User',
     clave: 'password123',
-    rol: Role.ADMIN,
+    role: Role.ADMIN,
     activo: true,
   };
 
-  const mockRepository = {
+  const mockRepository: Record<string, jest.Mock> = {
     find: jest.fn().mockResolvedValue([mockUser]),
     findAndCount: jest.fn().mockResolvedValue([[mockUser], 1]),
     findOneBy: jest.fn().mockResolvedValue(mockUser),

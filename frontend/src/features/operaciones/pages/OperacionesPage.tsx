@@ -14,7 +14,6 @@ type Tab = 'pedidos' | 'movimientos' | 'bajadas';
 export default function OperacionesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = (searchParams.get('tab') as Tab) || 'pedidos';
-  const initialSearch = searchParams.get('search') || '';
 
   const [activeTab, setActiveTab] = useState<Tab>(initialTab);
   

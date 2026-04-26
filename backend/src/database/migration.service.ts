@@ -44,13 +44,16 @@ export class MigrationService {
       try {
         // Asignar guarderiaId = 1 a todos los registros que lo tengan NULL
         const query = `UPDATE "${table}" SET "guarderiaId" = $1 WHERE "guarderiaId" IS NULL`;
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const result = await this.dataSource.query(query, [guarderiaId]);
         this.logger.log(
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
           `✅ Tabla "${table}": ${result[1] || 0} registros migrados.`,
         );
-      } catch (err) {
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
         this.logger.warn(
-          `⚠️ No se pudo migrar la tabla "${table}": ${err.message}`,
+          `⚠️ No se pudo migrar la tabla "${table}": ${message}`,
         );
       }
     }
@@ -63,8 +66,9 @@ export class MigrationService {
       this.logger.log(
         '✅ Usuarios SUPERADMIN desvinculados de guarderías específicas.',
       );
-    } catch (err) {
-      this.logger.warn(`⚠️ No se pudo limpiar SUPERADMIN: ${err.message}`);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      this.logger.warn(`⚠️ No se pudo limpiar SUPERADMIN: ${message}`);
     }
 
     this.logger.log('🏁 Migración finalizada.');

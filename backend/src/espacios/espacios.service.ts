@@ -112,7 +112,7 @@ export class EspaciosService
     );
     let corregidos = 0;
 
-    const where = this.buildTenantWhere(tenant);
+    const where = this.buildTenantWhere<Espacio>(tenant);
 
     // 1. Limpiar embarcaciones INACTIVAS con espacioId en este tenant
     const inactivasConEspacio = await this.embarcacionRepo.find({
@@ -162,14 +162,14 @@ export class EspaciosService
 
   findAll(tenant: TenantContext, query: PaginationQuery = {}) {
     return paginate(this.espacioRepo, query, {
-      where: this.buildTenantWhere(tenant),
+      where: this.buildTenantWhere<Espacio>(tenant),
       relations: ['rack', 'rack.zona', 'rack.zona.ubicacion'],
     });
   }
 
   async findOne(tenant: TenantContext, id: number) {
     const espacio = await this.espacioRepo.findOne({
-      where: this.buildTenantWhere(tenant, { id }),
+      where: this.buildTenantWhere<Espacio>(tenant, { id }),
       relations: ['rack', 'rack.zona', 'rack.zona.ubicacion'],
     });
     if (!espacio)
@@ -193,7 +193,7 @@ export class EspaciosService
 
   async remove(tenant: TenantContext, id: number) {
     const espacio = await this.espacioRepo.findOne({
-      where: this.buildTenantWhere(tenant, { id }),
+      where: this.buildTenantWhere<Espacio>(tenant, { id }),
       relations: ['embarcacion'],
     });
     if (!espacio)
@@ -210,7 +210,7 @@ export class EspaciosService
   }
 
   async getEstadisticas(tenant: TenantContext) {
-    const where = this.buildTenantWhere(tenant);
+    const where = this.buildTenantWhere<Espacio>(tenant);
     const total = await this.espacioRepo.count({ where });
     const ocupados = await this.espacioRepo.count({
       where: { ...where, ocupado: true },

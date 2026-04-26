@@ -32,7 +32,7 @@ export class ZonasService extends BaseTenantService {
 
   async findOne(tenant: TenantContext, id: number) {
     const zona = await this.zonaRepo.findOne({
-      where: this.buildTenantWhere(tenant, { id }),
+      where: this.buildTenantWhere<Zona>(tenant, { id }),
       relations: ['ubicacion', 'racks', 'racks.espacios'],
     });
     if (!zona) throw new NotFoundException(`Zona con ID ${id} no encontrada`);

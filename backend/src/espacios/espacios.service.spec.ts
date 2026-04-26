@@ -5,15 +5,18 @@ import { EspaciosService } from './espacios.service';
 import { Espacio } from './espacio.entity';
 import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
 
+import { Role } from '../users/user.entity';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+
 describe('EspaciosService', () => {
   let service: EspaciosService;
 
-  const mockTenant = {
+  const mockTenant: TenantContext = {
     guarderiaId: 1,
-    scope: 'guarderia' as any,
-    role: 'SUPERADMIN' as any,
+    scope: 'guarderia',
+    role: Role.SUPERADMIN,
     userId: 1,
-  } as any;
+  };
 
   const mockEspacio = {
     id: 1,
@@ -29,7 +32,7 @@ describe('EspaciosService', () => {
     updatedAt: new Date(),
   };
 
-  const mockRepository = {
+  const mockRepository: Record<string, jest.Mock> = {
     find: jest.fn(),
     findAndCount: jest.fn().mockResolvedValue([[], 0]),
     findOne: jest.fn(),
@@ -40,7 +43,7 @@ describe('EspaciosService', () => {
     count: jest.fn(),
   };
 
-  const mockEmbarcacionRepo = {
+  const mockEmbarcacionRepo: Record<string, jest.Mock> = {
     update: jest.fn(),
   };
 

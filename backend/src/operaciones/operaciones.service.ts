@@ -65,7 +65,7 @@ export class OperacionesService extends BaseTenantService {
 
     // 1. Validar Cliente por DNI dentro del tenant
     const cliente = await this.clienteRepo.findOne({
-      where: this.buildTenantWhere(tenant, { dni: dto.dni }),
+      where: this.buildTenantWhere<Cliente>(tenant, { dni: dto.dni }),
     });
     if (!cliente) {
       throw new NotFoundException('DNI no registrado en esta guardería');
@@ -73,7 +73,7 @@ export class OperacionesService extends BaseTenantService {
 
     // 2. Validar Embarcación por Matrícula y pertenencia dentro del tenant
     const barco = await this.embarcacionRepo.findOne({
-      where: this.buildTenantWhere(tenant, {
+      where: this.buildTenantWhere<Embarcacion>(tenant, {
         matricula: dto.matricula,
         cliente: { id: cliente.id },
       }),
@@ -86,7 +86,7 @@ export class OperacionesService extends BaseTenantService {
 
     // 2c. Validar si ya existe una solicitud activa dentro del tenant
     const solicitudActiva = await this.solicitudRepo.findOne({
-      where: this.buildTenantWhere(tenant, {
+      where: this.buildTenantWhere<SolicitudBajada>(tenant, {
         embarcacion: { id: barco.id },
         estado: In([EstadoSolicitud.PENDIENTE, EstadoSolicitud.EN_AGUA]),
       }),
@@ -100,7 +100,7 @@ export class OperacionesService extends BaseTenantService {
 
     // 2d. Validar si ya existe un pedido activo en el Monitor de Cola dentro del tenant
     const pedidoActivo = await this.pedidoRepo.findOne({
-      where: this.buildTenantWhere(tenant, {
+      where: this.buildTenantWhere<Pedido>(tenant, {
         embarcacion: { id: barco.id },
         estado: In([EstadoPedido.PENDIENTE, EstadoPedido.EN_AGUA]),
       }),
@@ -218,7 +218,7 @@ export class OperacionesService extends BaseTenantService {
     query: PaginationQuery = {},
     estado?: EstadoSolicitud,
   ) {
-    const tenantFilter = this.buildTenantWhere(tenant);
+    const tenantFilter = this.buildTenantWhere<SolicitudBajada>(tenant);
 
     const where:
       | FindOptionsWhere<SolicitudBajada>
@@ -245,7 +245,7 @@ export class OperacionesService extends BaseTenantService {
     motivo?: string,
   ) {
     const solicitud = await this.solicitudRepo.findOne({
-      where: this.buildTenantWhere(tenant, { id }),
+      where: this.buildTenantWhere<SolicitudBajada>(tenant, { id }),
       relations: ['cliente', 'embarcacion'],
     });
     if (!solicitud)
@@ -336,7 +336,7 @@ export class OperacionesService extends BaseTenantService {
     }
 
     return this.solicitudRepo.findOne({
-      where: this.buildTenantWhere(tenant, { id }),
+      where: this.buildTenantWhere<SolicitudBajada>(tenant, { id }),
       relations: ['cliente', 'embarcacion'],
     });
   }

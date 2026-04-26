@@ -12,7 +12,6 @@ import {
 import { EmbarcacionesService } from './embarcaciones.service';
 import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../users/user.entity';
 import { CreateEmbarcacionDto } from './dto/create-embarcacion.dto';
 import { UpdateEmbarcacionDto } from './dto/update-embarcacion.dto';

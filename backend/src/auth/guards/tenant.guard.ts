@@ -6,9 +6,19 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { Request } from 'express';
 import { Role } from '../../users/user.entity';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { IS_GLOBAL_ROUTE_KEY } from '../decorators/global-route.decorator';
+import {
+  JwtUser,
+  TenantContext,
+} from '../../compartido/interfaces/tenant-context.interface';
+
+interface RequestWithTenant extends Request {
+  user: JwtUser;
+  tenant: TenantContext;
+}
 
 @Injectable()
 export class TenantGuard implements CanActivate {
@@ -29,10 +39,11 @@ export class TenantGuard implements CanActivate {
       [context.getHandler(), context.getClass()],
     );
 
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<RequestWithTenant>();
     const user = request.user;
-    const guarderiaIdHeader = request.headers['x-guarderia-id'] 
-      ? parseInt(request.headers['x-guarderia-id'], 10) 
+    const headerVal = request.headers['x-guarderia-id'];
+    const guarderiaIdHeader = headerVal
+      ? parseInt(headerVal as string, 10)
       : null;
     const method = request.method;
 
@@ -46,7 +57,7 @@ export class TenantGuard implements CanActivate {
     );
 
     // Preparar el contexto del tenant
-    let tenantContext: any = {
+    const tenantContext: TenantContext = {
       userId: user.id,
       role: user.role,
       guarderiaId: null,
@@ -61,7 +72,7 @@ export class TenantGuard implements CanActivate {
           'Para realizar esta operación debe seleccionar una guardería específica (Modo Global de escritura no permitido).',
         );
       }
-      
+
       tenantContext.guarderiaId = guarderiaIdHeader;
       tenantContext.scope = guarderiaIdHeader ? 'guarderia' : 'global';
       request.tenant = tenantContext;
@@ -78,14 +89,18 @@ export class TenantGuard implements CanActivate {
 
     // Para otros roles en rutas NO globales, el guarderiaId es obligatorio (del usuario o header)
     const assignedGuarderiaId = user.guarderiaId || null;
-    
+
     if (!assignedGuarderiaId && !guarderiaIdHeader) {
       throw new ForbiddenException('Se requiere identificación de guardería');
     }
 
     const finalGuarderiaId = assignedGuarderiaId || guarderiaIdHeader;
 
-    if (assignedGuarderiaId && guarderiaIdHeader && assignedGuarderiaId !== guarderiaIdHeader) {
+    if (
+      assignedGuarderiaId &&
+      guarderiaIdHeader &&
+      assignedGuarderiaId !== guarderiaIdHeader
+    ) {
       throw new ForbiddenException('No tienes acceso a esta guardería');
     }
 

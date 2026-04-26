@@ -7,15 +7,18 @@ import { Cargo } from '../cargos/cargo.entity';
 import { Pago } from '../pagos/pago.entity';
 import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
 
+import { Role } from '../users/user.entity';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+
 describe('ClientesService', () => {
   let service: ClientesService;
 
-  const mockTenant = {
+  const mockTenant: TenantContext = {
     guarderiaId: 1,
-    scope: 'guarderia' as any,
-    role: 'SUPERADMIN' as any,
+    scope: 'guarderia',
+    role: Role.SUPERADMIN,
     userId: 1,
-  } as any;
+  };
 
   const mockCliente = {
     id: 1,
@@ -42,7 +45,7 @@ describe('ClientesService', () => {
     getRawMany: jest.fn().mockResolvedValue([]),
   });
 
-  const mockRepository = {
+  const mockRepository: Record<string, jest.Mock> = {
     find: jest.fn(),
     findOne: jest.fn(),
     findAndCount: jest.fn().mockResolvedValue([[], 0]),

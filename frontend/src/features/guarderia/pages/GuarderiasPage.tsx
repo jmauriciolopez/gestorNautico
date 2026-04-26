@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useGuarderiasManagement } from '../hooks/useGuarderiasManagement';
 import { 
     Building2, Plus, Users, Edit2, Trash2, MapPin, Phone, Mail, Globe, 
-    ArrowRight, LayoutGrid, CheckCircle2, AlertCircle 
+    LayoutGrid, CheckCircle2 
 } from 'lucide-react';
 import { GuarderiaFormModal } from '../components/GuarderiaFormModal';
 import { GuarderiaAdminModal } from '../components/GuarderiaAdminModal';

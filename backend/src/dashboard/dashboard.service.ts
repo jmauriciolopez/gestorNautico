@@ -43,19 +43,21 @@ export class DashboardService extends BaseTenantService {
 
   async getSummary(tenant: TenantContext) {
     const [totalClientes, totalBarcos] = await Promise.all([
-      this.clienteRepo.count({ where: this.buildTenantWhere(tenant) }),
-      this.barcoRepo.count({ where: this.buildTenantWhere(tenant) }),
+      this.clienteRepo.count({ where: this.buildTenantWhere<Cliente>(tenant) }),
+      this.barcoRepo.count({
+        where: this.buildTenantWhere<Embarcacion>(tenant),
+      }),
     ]);
 
     // Ocupación
     const [enCuna, enAgua] = await Promise.all([
       this.barcoRepo.count({
-        where: this.buildTenantWhere(tenant, {
+        where: this.buildTenantWhere<Embarcacion>(tenant, {
           estado_operativo: EstadoEmbarcacion.EN_CUNA,
         }),
       }),
       this.barcoRepo.count({
-        where: this.buildTenantWhere(tenant, {
+        where: this.buildTenantWhere<Embarcacion>(tenant, {
           estado_operativo: EstadoEmbarcacion.EN_AGUA,
         }),
       }),
@@ -84,7 +86,7 @@ export class DashboardService extends BaseTenantService {
     // Actividad Reciente
     const [ultimosMovimientos, ultimasNotificaciones] = await Promise.all([
       this.movRepo.find({
-        where: this.buildTenantWhere(tenant),
+        where: this.buildTenantWhere<Movimiento>(tenant),
         relations: ['embarcacion'],
         order: { fecha: 'DESC' },
         take: 6,
@@ -102,8 +104,8 @@ export class DashboardService extends BaseTenantService {
       this.getRecaudacionDetalleAll(tenant),
       this.getDeudaDetalleAll(tenant),
       this.barcoRepo.find({
-        where: this.buildTenantWhere(tenant, {
-          espacioId: null,
+        where: this.buildTenantWhere<Embarcacion>(tenant, {
+          espacio: null,
           estado_operativo: Not(EstadoEmbarcacion.INACTIVA),
         }),
         relations: ['cliente'],
@@ -327,7 +329,7 @@ export class DashboardService extends BaseTenantService {
 
   async getRackMap(tenant: TenantContext) {
     const zonas = await this.zonaRepo.find({
-      where: this.buildTenantWhere(tenant),
+      where: this.buildTenantWhere<Zona>(tenant),
       relations: [
         'ubicacion',
         'racks',
@@ -367,9 +369,9 @@ export class DashboardService extends BaseTenantService {
 
   async getOccupancyMetrics(tenant: TenantContext) {
     const [totalEspacios, ocupados] = await Promise.all([
-      this.espacioRepo.count({ where: this.buildTenantWhere(tenant) }),
+      this.espacioRepo.count({ where: this.buildTenantWhere<Espacio>(tenant) }),
       this.espacioRepo.count({
-        where: this.buildTenantWhere(tenant, { ocupado: true }),
+        where: this.buildTenantWhere<Espacio>(tenant, { ocupado: true }),
       }),
     ]);
 
@@ -383,7 +385,7 @@ export class DashboardService extends BaseTenantService {
     const metrosOcupadosRes = await qb.getRawOne<{ total: string }>();
 
     const porZona = await this.zonaRepo.find({
-      where: this.buildTenantWhere(tenant),
+      where: this.buildTenantWhere<Zona>(tenant),
       relations: ['racks', 'racks.espacios'],
     });
 

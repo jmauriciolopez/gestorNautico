@@ -2,7 +2,6 @@ import { Controller, Get, Body, UseGuards, Put, Query } from '@nestjs/common';
 import { ConfiguracionService } from './configuracion.service';
 import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../users/user.entity';
 
 import { TenantGuard } from '../auth/guards/tenant.guard';

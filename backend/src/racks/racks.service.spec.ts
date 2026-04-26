@@ -6,15 +6,18 @@ import { Rack } from './rack.entity';
 import { Espacio } from '../espacios/espacio.entity';
 import { Embarcacion } from '../embarcaciones/embarcaciones.entity';
 
+import { Role } from '../users/user.entity';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+
 describe('RacksService', () => {
   let service: RacksService;
 
-  const mockTenant = {
+  const mockTenant: TenantContext = {
     guarderiaId: 1,
-    scope: 'guarderia' as any,
-    role: 'SUPERADMIN' as any,
+    scope: 'guarderia',
+    role: Role.SUPERADMIN,
     userId: 1,
-  } as any;
+  };
 
   const mockRack = {
     id: 1,
@@ -33,7 +36,7 @@ describe('RacksService', () => {
     updatedAt: new Date(),
   };
 
-  const mockRepository = {
+  const mockRepository: Record<string, jest.Mock> = {
     find: jest.fn(),
     findAndCount: jest.fn().mockResolvedValue([[], 0]),
     findOne: jest.fn(),
@@ -43,7 +46,7 @@ describe('RacksService', () => {
     delete: jest.fn(),
   };
 
-  const mockEspacioRepo = {
+  const mockEspacioRepo: Record<string, jest.Mock> = {
     find: jest.fn(),
     findOne: jest.fn(),
     create: jest.fn(),
@@ -52,7 +55,7 @@ describe('RacksService', () => {
     delete: jest.fn(),
   };
 
-  const mockEmbarcacionRepo = {
+  const mockEmbarcacionRepo: Record<string, jest.Mock> = {
     update: jest.fn(),
   };
 

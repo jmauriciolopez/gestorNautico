@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Not, In } from 'typeorm';
+import { Repository, Not } from 'typeorm';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Factura, EstadoFactura } from '../facturas/factura.entity';
 import { ConfiguracionService } from '../configuracion/configuracion.service';
@@ -63,7 +63,7 @@ export class MoraService extends BaseTenantService {
     facturaId: number,
   ): Promise<MoraResultado> {
     const factura = await this.facturaRepo.findOne({
-      where: this.buildTenantWhere(tenant, { id: facturaId }),
+      where: this.buildTenantWhere<Factura>(tenant, { id: facturaId }),
       relations: ['cliente'],
     });
 
@@ -126,7 +126,7 @@ export class MoraService extends BaseTenantService {
     facturaId: number,
   ): Promise<Factura> {
     const factura = await this.facturaRepo.findOne({
-      where: this.buildTenantWhere(tenant, { id: facturaId }),
+      where: this.buildTenantWhere<Factura>(tenant, { id: facturaId }),
       relations: ['cliente'],
     });
 
@@ -192,7 +192,7 @@ export class MoraService extends BaseTenantService {
     });
 
     return this.facturaRepo.findOne({
-      where: this.buildTenantWhere(tenant, { id: facturaId }),
+      where: this.buildTenantWhere<Factura>(tenant, { id: facturaId }),
       relations: ['cliente', 'cargos'],
     });
   }
@@ -220,7 +220,7 @@ export class MoraService extends BaseTenantService {
 
   private async aplicarMoraPorTenant(tenant: TenantContext): Promise<number> {
     const facturasVencidas = await this.facturaRepo.find({
-      where: this.buildTenantWhere(tenant, {
+      where: this.buildTenantWhere<Factura>(tenant, {
         estado: EstadoFactura.PENDIENTE,
       }),
       relations: ['cliente'],
@@ -278,11 +278,11 @@ export class MoraService extends BaseTenantService {
   async getFacturasConMora(tenant: TenantContext) {
     return this.facturaRepo.find({
       where: [
-        this.buildTenantWhere(tenant, {
+        this.buildTenantWhere<Factura>(tenant, {
           estado: EstadoFactura.PENDIENTE,
           interesMoratorio: Not(0),
         }),
-        this.buildTenantWhere(tenant, {
+        this.buildTenantWhere<Factura>(tenant, {
           estado: EstadoFactura.PENDIENTE,
           recargo: Not(0),
         }),

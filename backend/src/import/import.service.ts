@@ -130,7 +130,7 @@ export class ImportService extends BaseTenantService {
           }
 
           const existingCliente = await this.clienteRepo.findOne({
-            where: this.buildTenantWhere(tenant, { dni: row.dni }),
+            where: this.buildTenantWhere<Cliente>(tenant, { dni: row.dni }),
           });
 
           const activo = row.activo === 'true' || row.activo === '1';
@@ -228,7 +228,9 @@ export class ImportService extends BaseTenantService {
           }
 
           const cliente = await this.clienteRepo.findOne({
-            where: this.buildTenantWhere(tenant, { dni: row.dnidueno }),
+            where: this.buildTenantWhere<Cliente>(tenant, {
+              dni: row.dnidueno,
+            }),
           });
 
           if (!cliente) {
@@ -239,7 +241,9 @@ export class ImportService extends BaseTenantService {
           }
 
           const existingEmbarcacion = await this.embarcacionRepo.findOne({
-            where: this.buildTenantWhere(tenant, { matricula: row.matricula }),
+            where: this.buildTenantWhere<Embarcacion>(tenant, {
+              matricula: row.matricula,
+            }),
           });
 
           const eslora = row.eslora ? parseFloat(row.eslora) : undefined;

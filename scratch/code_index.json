@@ -13839,7 +13839,7 @@
       "file": "frontend/src/features/auth/Login.tsx",
       "name": "FEATURES",
       "kind": "constant",
-      "signature": "const FEATURES = ['Flota en tiempo real', 'Multi-sede', 'Reportes', 'Espacios inteligentes', 'Panel de control', 'Facturaci\u00f3n'];",
+      "signature": "const FEATURES = ['Flota en tiempo real', 'Servicios', 'Reportes', 'Espacios inteligentes', 'Panel de control', 'Facturaci\u00f3n'];",
       "summary": "Constant FEATURES",
       "docstring": "",
       "qualified_name": "FEATURES",

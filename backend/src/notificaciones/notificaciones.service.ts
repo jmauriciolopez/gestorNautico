@@ -51,7 +51,7 @@ export class NotificacionesService extends BaseTenantService {
     query: PaginationQuery = {},
   ) {
     return paginate(this.notificacionesRepository, query, {
-      where: this.buildTenantWhere(tenant, { usuarioId }),
+      where: this.buildTenantWhere<Notificacion>(tenant, { usuarioId }),
       order: { createdAt: 'DESC' },
     });
   }
@@ -100,7 +100,7 @@ export class NotificacionesService extends BaseTenantService {
     usuarioId: number,
   ): Promise<Notificacion> {
     const notificacion = await this.notificacionesRepository.findOne({
-      where: this.buildTenantWhere(tenant, { id, usuarioId }),
+      where: this.buildTenantWhere<Notificacion>(tenant, { id, usuarioId }),
     });
     if (!notificacion) {
       throw new NotFoundException('Notificación no encontrada');
@@ -111,7 +111,7 @@ export class NotificacionesService extends BaseTenantService {
 
   async markAllAsRead(tenant: TenantContext, usuarioId: number): Promise<void> {
     await this.notificacionesRepository.update(
-      this.buildTenantWhere(tenant, { usuarioId, leida: false }),
+      this.buildTenantWhere<Notificacion>(tenant, { usuarioId, leida: false }),
       { leida: true },
     );
   }
@@ -122,7 +122,7 @@ export class NotificacionesService extends BaseTenantService {
     usuarioId: number,
   ): Promise<void> {
     const result = await this.notificacionesRepository.delete(
-      this.buildTenantWhere(tenant, { id, usuarioId }),
+      this.buildTenantWhere<Notificacion>(tenant, { id, usuarioId }),
     );
     if (result.affected === 0) {
       throw new NotFoundException('Notificación no encontrada');
@@ -134,7 +134,7 @@ export class NotificacionesService extends BaseTenantService {
     limit = 10,
   ): Promise<Notificacion[]> {
     return this.notificacionesRepository.find({
-      where: this.buildTenantWhere(tenant),
+      where: this.buildTenantWhere<Notificacion>(tenant),
       order: { createdAt: 'DESC' },
       take: limit,
       relations: ['usuario'],

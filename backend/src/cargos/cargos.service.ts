@@ -34,7 +34,7 @@ export class CargosService extends BaseTenantService {
     clienteId?: number,
     soloSinFacturar: boolean = false,
   ): Promise<PaginatedResult<Cargo>> {
-    const where: FindOptionsWhere<Cargo> = this.buildTenantWhere(tenant);
+    const where: FindOptionsWhere<Cargo> = this.buildTenantWhere<Cargo>(tenant);
     if (clienteId) {
       where.cliente = { id: clienteId };
     }
@@ -51,7 +51,7 @@ export class CargosService extends BaseTenantService {
 
   async findOne(tenant: TenantContext, id: number) {
     const cargo = await this.cargoRepo.findOne({
-      where: this.buildTenantWhere(tenant, { id }),
+      where: this.buildTenantWhere<Cargo>(tenant, { id }),
       relations: ['cliente'],
     });
     if (!cargo) throw new NotFoundException(`Cargo con ID ${id} no encontrado`);
@@ -63,7 +63,7 @@ export class CargosService extends BaseTenantService {
 
     // Validar que el cliente pertenezca al tenant
     const cliente = await this.clienteRepo.findOne({
-      where: this.buildTenantWhere(tenant, { id: clienteId }),
+      where: this.buildTenantWhere<Cliente>(tenant, { id: clienteId }),
     });
     if (!cliente) {
       throw new BadRequestException(

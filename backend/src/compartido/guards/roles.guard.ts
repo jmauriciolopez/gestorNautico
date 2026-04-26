@@ -5,10 +5,15 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { Request } from 'express';
 import { Role } from '../../users/user.entity';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 import { IS_PUBLIC_KEY } from '../../auth/decorators/public.decorator';
 import { JwtUser } from '../interfaces/tenant-context.interface';
+
+interface RequestWithUser extends Request {
+  user?: JwtUser;
+}
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -32,8 +37,8 @@ export class RolesGuard implements CanActivate {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest();
-    const user = request.user as JwtUser | undefined;
+    const request = context.switchToHttp().getRequest<RequestWithUser>();
+    const user = request.user;
 
     if (!user) {
       throw new ForbiddenException('Usuario no autenticado');

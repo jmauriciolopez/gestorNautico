@@ -5,17 +5,20 @@ import { AuthTokenGuard } from '../auth/guards/AuthTokenGuard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { EstadoFactura } from './factura.entity';
 
+import { Role } from '../users/user.entity';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+
 describe('FacturasController', () => {
   let controller: FacturasController;
 
-  const mockTenant = {
+  const mockTenant: TenantContext = {
     guarderiaId: 1,
-    scope: 'guarderia' as any,
-    role: 'SUPERADMIN' as any,
+    scope: 'guarderia',
+    role: Role.SUPERADMIN,
     userId: 1,
-  } as any;
+  };
 
-  let service: any;
+  let service: FacturasService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -57,6 +60,7 @@ describe('FacturasController', () => {
         '2024-01-01',
         '2024-01-31',
       );
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(service.findAll).toHaveBeenCalledWith(mockTenant, {
         page: 1,
         limit: 10,
@@ -70,6 +74,7 @@ describe('FacturasController', () => {
   describe('getStats', () => {
     it('should call service.getStats', async () => {
       await controller.getStats(mockTenant, '2024-01-01', '2024-01-31');
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(service.getStats).toHaveBeenCalledWith(
         mockTenant,
         '2024-01-01',
@@ -82,6 +87,7 @@ describe('FacturasController', () => {
     it('should call service.create', async () => {
       const dto = { clienteId: 1, cargoIds: [1], fechaEmision: '2024-01-01' };
       await controller.create(mockTenant, dto);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(service.create).toHaveBeenCalledWith(mockTenant, dto);
     });
   });
@@ -90,6 +96,7 @@ describe('FacturasController', () => {
     it('should call service.updateEstado', async () => {
       const dto = { estado: EstadoFactura.PAGADA };
       await controller.updateEstado(mockTenant, '1', dto);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(service.updateEstado).toHaveBeenCalledWith(
         mockTenant,
         1,
@@ -102,6 +109,7 @@ describe('FacturasController', () => {
   describe('sendEmail', () => {
     it('should call service.sendEmail', async () => {
       await controller.sendEmail(mockTenant, '1', { email: 'test@test.com' });
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(service.sendEmail).toHaveBeenCalledWith(
         mockTenant,
         1,

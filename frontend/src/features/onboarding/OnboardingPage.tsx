@@ -50,7 +50,7 @@ const Step1Profile = ({ onRegisterAction, onDataChange }: StepProps) => {
           ciudad: data.ciudad || '',
           pais: data.pais || 'Argentina'
         });
-      } catch (error) {
+      } catch {
         toast.error('Error al cargar datos de la marina');
       } finally {
         setLoading(false);
@@ -71,7 +71,7 @@ const Step1Profile = ({ onRegisterAction, onDataChange }: StepProps) => {
       await httpClient.patch(`/guarderias/${user?.guarderiaId}`, formData);
       toast.success('Perfil actualizado');
       return true;
-    } catch (error) {
+    } catch {
       toast.error('Error al guardar cambios');
       return false;
     }
@@ -183,7 +183,7 @@ const Step2Config = ({ onRegisterAction, onDataChange }: StepProps) => {
           HORARIO_APERTURA: map.HORARIO_APERTURA || '08:00',
           HORARIO_MAX_SUBIDA: map.HORARIO_MAX_SUBIDA || '18:00'
         });
-      } catch (error) {
+      } catch {
         toast.error('Error al cargar configuración');
       } finally {
         setLoading(false);
@@ -204,7 +204,7 @@ const Step2Config = ({ onRegisterAction, onDataChange }: StepProps) => {
       await httpClient.put('/configuracion/bulk', configs);
       toast.success('Configuración guardada');
       return true;
-    } catch (error) {
+    } catch {
       toast.error('Error al guardar configuración');
       return false;
     }
@@ -292,7 +292,7 @@ const Step3Infra = ({ onRegisterAction }: StepProps) => {
       setCreated(true);
       toast.success('Infraestructura creada con éxito');
       return true;
-    } catch (error) {
+    } catch {
       toast.error('Error al crear infraestructura');
       return false;
     }
@@ -416,7 +416,6 @@ const Step3Infra = ({ onRegisterAction }: StepProps) => {
 
 const Step4Policies = ({ onRegisterAction, onDataChange }: StepProps) => {
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [configs, setConfigs] = useState({
     MORA_TASA_INTERES: '3',
     MORA_TASA_RECARGO: '10',
@@ -436,7 +435,7 @@ const Step4Policies = ({ onRegisterAction, onDataChange }: StepProps) => {
           MORA_DIAS_GRACIA: map.MORA_DIAS_GRACIA || '5',
           DIAS_VENCIMIENTO: map.DIAS_VENCIMIENTO || '15'
         });
-      } catch (error) {
+      } catch {
         toast.error('Error al cargar políticas');
       } finally {
         setLoading(false);
@@ -453,7 +452,6 @@ const Step4Policies = ({ onRegisterAction, onDataChange }: StepProps) => {
   };
 
   const handleSave = useCallback(async (): Promise<boolean> => {
-    setSaving(true);
     try {
       await httpClient.put('/configuracion/bulk', configs);
       toast.success('Políticas actualizadas');
@@ -462,8 +460,6 @@ const Step4Policies = ({ onRegisterAction, onDataChange }: StepProps) => {
       console.error(error);
       toast.error('Error al guardar políticas');
       return false;
-    } finally {
-      setSaving(false);
     }
   }, [configs]);
 
@@ -552,7 +548,7 @@ const Step5Migration = ({ onRegisterAction }: StepProps) => {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       toast.success(`Importación exitosa: ${response.registrosProcesados} registros.`);
-    } catch (error) {
+    } catch {
       toast.error('Error al importar archivo. Verifica el formato CSV.');
     } finally {
       setUploading(null);
@@ -662,7 +658,7 @@ export function OnboardingPage() {
       await httpClient.patch(`/guarderias/${user?.guarderiaId}/finish-onboarding`, { finalizoOnboarding: true });
       toast.success('¡Onboarding completado! Bienvenido a bordo.');
       window.location.href = '/'; 
-    } catch (error) {
+    } catch {
       toast.error('Error al finalizar el onboarding. Por favor intenta de nuevo.');
       setFinishing(false);
     }

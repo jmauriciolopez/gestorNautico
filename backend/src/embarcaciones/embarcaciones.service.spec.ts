@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
@@ -7,15 +6,18 @@ import { Embarcacion } from './embarcaciones.entity';
 import { Espacio } from '../espacios/espacio.entity';
 import { DataSource } from 'typeorm';
 
+import { Role } from '../users/user.entity';
+import { TenantContext } from '../compartido/interfaces/tenant-context.interface';
+
 describe('EmbarcacionesService', () => {
   let service: EmbarcacionesService;
 
-  const mockTenant = {
+  const mockTenant: TenantContext = {
     guarderiaId: 1,
-    scope: 'guarderia' as any,
-    role: 'SUPERADMIN' as any,
+    scope: 'guarderia',
+    role: Role.SUPERADMIN,
     userId: 1,
-  } as any;
+  };
 
   const mockEmbarcacion = {
     id: 1,
@@ -34,10 +36,10 @@ describe('EmbarcacionesService', () => {
     updatedAt: new Date(),
   };
 
-  let mockRepository: any;
-  let mockEspacioRepo: any;
-  let mockManager: any;
-  let mockDataSource: any;
+  let mockRepository: Record<string, jest.Mock>;
+  let mockEspacioRepo: Record<string, jest.Mock>;
+  let mockManager: Record<string, jest.Mock>;
+  let mockDataSource: Record<string, jest.Mock>;
 
   beforeEach(async () => {
     mockManager = {
@@ -54,7 +56,9 @@ describe('EmbarcacionesService', () => {
     };
 
     mockDataSource = {
-      transaction: jest.fn().mockImplementation((cb) => cb(mockManager)),
+      transaction: jest
+        .fn()
+        .mockImplementation((cb: (mgr: any) => any): any => cb(mockManager)),
     };
 
     mockRepository = {
