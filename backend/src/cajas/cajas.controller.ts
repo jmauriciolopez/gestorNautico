@@ -37,7 +37,7 @@ export class CajasController {
   @Get('abierta')
   @TenantRoles(Role.ADMIN, Role.SUPERVISOR, Role.OPERADOR)
   findAbierta(@ActiveTenant() tenant: TenantContext) {
-    return this.cajasService.findAbierta(tenant);
+    return this.cajasService.findAbierta(tenant, true);
   }
 
   @Get('resumen')

@@ -78,12 +78,12 @@ export class CajasService extends BaseTenantService {
     return caja;
   }
 
-  async findAbierta(tenant: TenantContext) {
+  async findAbierta(tenant: TenantContext, loadRelations: boolean = false) {
     return this.cajaRepo.findOne({
       where: this.buildTenantWhere<Caja>(tenant, {
         estado: EstadoCaja.ABIERTA,
       }),
-      relations: ['pagos', 'pagos.cliente', 'pagos.cargo'],
+      relations: loadRelations ? ['pagos', 'pagos.cliente', 'pagos.cargo'] : [],
     });
   }
 

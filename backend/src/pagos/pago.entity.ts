@@ -25,10 +25,12 @@ export class Pago {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Index()
   @ManyToOne(() => Cliente, { nullable: false })
   @JoinColumn({ name: 'cliente_id' })
   cliente: Cliente;
 
+  @Index()
   @ManyToOne(() => Caja, (caja) => caja.pagos, { nullable: false })
   @JoinColumn({ name: 'caja_id' })
   caja: Caja;
