@@ -131,7 +131,7 @@ export class PedidosService extends BaseTenantService {
   async create(tenant: TenantContext, data: CreatePedidoDto) {
     const { embarcacionId, ...rest } = data;
 
-    return await this.dataSource.transaction(async (manager) => {
+    const result = await this.dataSource.transaction(async (manager) => {
       const pedRepo = manager.getRepository(Pedido);
       const solRepo = manager.getRepository(SolicitudBajada);
 
@@ -176,24 +176,31 @@ export class PedidosService extends BaseTenantService {
         relations: ['embarcacion'],
       });
 
-      // Notificar a los operadores y administradores
-      await this.notificacionesService.createForRole(tenant, Role.OPERADOR, {
-        titulo: 'Nueva Solicitud de Movimiento',
-        mensaje: `Se ha registrado una solicitud para la embarcación ${pedidox.embarcacion.nombre}.`,
-        tipo: NotificacionTipo.INFO,
-      });
-      await this.notificacionesService.createForRole(tenant, Role.ADMIN, {
-        titulo: 'Nueva Solicitud de Movimiento (Admin)',
-        mensaje: `Se ha registrado una solicitud para la embarcación ${pedidox.embarcacion.nombre}.`,
-        tipo: NotificacionTipo.INFO,
-      });
-
       return pedidox;
     });
+
+    // Notificaciones en segundo plano (post-commit)
+    this.notificacionesService
+      .createForRole(tenant, Role.OPERADOR, {
+        titulo: 'Nueva Solicitud de Movimiento',
+        mensaje: `Se ha registrado una solicitud para la embarcación ${result.embarcacion.nombre}.`,
+        tipo: NotificacionTipo.INFO,
+      })
+      .catch((e) => this.logger.error('Error en notificación background', e));
+
+    this.notificacionesService
+      .createForRole(tenant, Role.ADMIN, {
+        titulo: 'Nueva Solicitud de Movimiento (Admin)',
+        mensaje: `Se ha registrado una solicitud para la embarcación ${result.embarcacion.nombre}.`,
+        tipo: NotificacionTipo.INFO,
+      })
+      .catch((e) => this.logger.error('Error en notificación background', e));
+
+    return result;
   }
 
   async updateEstado(tenant: TenantContext, id: number, estado: EstadoPedido) {
-    return await this.dataSource.transaction(async (manager) => {
+    const result = await this.dataSource.transaction(async (manager) => {
       const pedido = await manager.findOne(Pedido, {
         where: this.buildTenantWhere<Pedido>(tenant, { id }),
         relations: ['embarcacion'],
@@ -237,27 +244,25 @@ export class PedidosService extends BaseTenantService {
         }
       }
 
-      // Notificar cambio de estado a roles relevantes
-      // Notificar cambio de estado a roles relevantes - Pasamos el manager
-      await this.notificacionesService.createForRole(
-        tenant,
-        Role.ADMIN,
-        {
-          titulo: 'Actualización de Operación',
-          mensaje: `La embarcación ${pedido.embarcacion?.nombre || 'N/A'} cambió a estado ${estado}.`,
-          tipo:
-            estado === EstadoPedido.CANCELADO
-              ? NotificacionTipo.ALERTA
-              : NotificacionTipo.INFO,
-        },
-        manager,
-      );
-
       return await manager.findOne(Pedido, {
         where: this.buildTenantWhere<Pedido>(tenant, { id }),
         relations: ['embarcacion'],
       });
     });
+
+    // Notificaciones en segundo plano (post-commit)
+    this.notificacionesService
+      .createForRole(tenant, Role.ADMIN, {
+        titulo: 'Actualización de Operación',
+        mensaje: `La embarcación ${result.embarcacion?.nombre || 'N/A'} cambió a estado ${estado}.`,
+        tipo:
+          estado === EstadoPedido.CANCELADO
+            ? NotificacionTipo.ALERTA
+            : NotificacionTipo.INFO,
+      })
+      .catch((e) => this.logger.error('Error en notificación background', e));
+
+    return result;
   }
 
   async remove(tenant: TenantContext, id: number) {

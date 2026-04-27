@@ -146,11 +146,13 @@ export class OperacionesService extends BaseTenantService {
 
     const guardada = await this.solicitudRepo.save(nueva);
 
-    // 4. Notificar a Operadores inmediatamente
-    await this.notificacionesService.createForRole(tenant, Role.OPERADOR, {
-      titulo: 'Nueva Solicitud de Bajada (Portal Público)',
-      mensaje: `El cliente ${cliente.nombre} ha solicitado bajar ${barco.nombre} para el ${new Date(dto.fechaHoraDeseada).toLocaleString()}.`,
-    });
+    // 4. Notificar a Operadores inmediatamente (Background)
+    this.notificacionesService
+      .createForRole(tenant, Role.OPERADOR, {
+        titulo: 'Nueva Solicitud de Bajada (Portal Público)',
+        mensaje: `El cliente ${cliente.nombre} ha solicitado bajar ${barco.nombre} para el ${new Date(dto.fechaHoraDeseada).toLocaleString()}.`,
+      })
+      .catch((e) => this.logger.error('Error en notificación background', e));
 
     return guardada;
   }
@@ -268,7 +270,7 @@ export class OperacionesService extends BaseTenantService {
     estado: EstadoSolicitud,
     motivo?: string,
   ) {
-    return await this.dataSource.transaction(async (manager) => {
+    const result = await this.dataSource.transaction(async (manager) => {
       const solRepo = manager.getRepository(SolicitudBajada);
 
       const solicitud = await solRepo.findOne({
@@ -307,78 +309,64 @@ export class OperacionesService extends BaseTenantService {
         );
       }
 
-      const fecha = solicitud.fechaHoraDeseada.toLocaleString('es-AR');
-      const barco = solicitud.embarcacion.nombre;
-      const email = solicitud.cliente.email;
-
-      // Notificaciones internas
-      await this.notificacionesService.createForRole(
-        tenant,
-        Role.ADMIN,
-        {
-          titulo: `Operación ${estado}`,
-          mensaje: `La embarcación "${barco}" cambió a estado ${estado}.`,
-          tipo:
-            estado === EstadoSolicitud.CANCELADA
-              ? NotificacionTipo.ALERTA
-              : NotificacionTipo.EXITO,
-        },
-        manager,
-      );
-
-      // Email al cliente según el nuevo estado
-      if (email) {
-        const templates: Partial<
-          Record<EstadoSolicitud, { subject: string; template: string }>
-        > = {
-          [EstadoSolicitud.EN_AGUA]: {
-            subject: 'Tu embarcación ya está en el agua — Gestor Náutico',
-            template: 'bajada-completada',
-          },
-          [EstadoSolicitud.FINALIZADA]: {
-            subject: 'Tu embarcación ya está en su cuna — Gestor Náutico',
-            template: 'subida-completada',
-          },
-          [EstadoSolicitud.CANCELADA]: {
-            subject: 'Tu solicitud de bajada fue cancelada — Gestor Náutico',
-            template: 'bajada-cancelada',
-          },
-        };
-
-        const tpl = templates[estado];
-        if (tpl) {
-          try {
-            await this.notificacionesService.sendEmailNotification(
-              email,
-              tpl.subject,
-              tpl.template,
-              {
-                clienteNombre: solicitud.cliente.nombre,
-                barcoNombre: barco,
-                fechaHora: fecha,
-                motivo: motivo ?? '',
-                anio: new Date().getFullYear(),
-              },
-            );
-          } catch (error: unknown) {
-            const msg =
-              error instanceof Error
-                ? error.message
-                : typeof error === 'string'
-                  ? error
-                  : 'Error desconocido';
-            this.logger.error(
-              `Error enviando email para solicitud ${id}: ${msg}`,
-            );
-            // No relanzamos el error para no bloquear la operación física
-          }
-        }
-      }
-
       return await solRepo.findOne({
         where: this.buildTenantWhere<SolicitudBajada>(tenant, { id }),
         relations: ['cliente', 'embarcacion'],
       });
     });
+
+    // Tareas secundarias en segundo plano (post-commit)
+    const fecha = result.fechaHoraDeseada.toLocaleString('es-AR');
+    const barco = result.embarcacion.nombre;
+    const email = result.cliente.email;
+
+    // Notificaciones internas
+    this.notificacionesService
+      .createForRole(tenant, Role.ADMIN, {
+        titulo: `Operación ${estado}`,
+        mensaje: `La embarcación "${barco}" cambió a estado ${estado}.`,
+        tipo:
+          estado === EstadoSolicitud.CANCELADA
+            ? NotificacionTipo.ALERTA
+            : NotificacionTipo.EXITO,
+      })
+      .catch((e) => this.logger.error('Error en notificación background', e));
+
+    // Email al cliente
+    if (email) {
+      const templates: Partial<
+        Record<EstadoSolicitud, { subject: string; template: string }>
+      > = {
+        [EstadoSolicitud.EN_AGUA]: {
+          subject: 'Tu embarcación ya está en el agua — Gestor Náutico',
+          template: 'bajada-completada',
+        },
+        [EstadoSolicitud.FINALIZADA]: {
+          subject: 'Tu embarcación ya está en su cuna — Gestor Náutico',
+          template: 'subida-completada',
+        },
+        [EstadoSolicitud.CANCELADA]: {
+          subject: 'Tu solicitud de bajada fue cancelada — Gestor Náutico',
+          template: 'bajada-cancelada',
+        },
+      };
+
+      const tpl = templates[estado];
+      if (tpl) {
+        this.notificacionesService
+          .sendEmailNotification(email, tpl.subject, tpl.template, {
+            clienteNombre: result.cliente.nombre,
+            barcoNombre: barco,
+            fechaHora: fecha,
+            motivo: motivo ?? '',
+            anio: new Date().getFullYear(),
+          })
+          .catch((e) =>
+            this.logger.error('Error enviando email background', e),
+          );
+      }
+    }
+
+    return result;
   }
 }
