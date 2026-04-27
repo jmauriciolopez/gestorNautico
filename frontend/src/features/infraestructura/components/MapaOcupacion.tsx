@@ -121,10 +121,15 @@ const RackCell = React.memo(({
     prev.highlightedQuery === next.highlightedQuery
   );
 });
+const OccupancyRack3DContainer: React.FC<OccupancyRack3DContainerProps> = ({ 
+  rack, 
+  is3D, 
+  getBoatSizeClass,
+  highlightedQuery
+}) => {
   const localRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
 
-  // Inicializar/resetear variables CSS cuando cambia el modo
   useEffect(() => {
     if (!localRef.current) return;
     if (is3D) {
@@ -141,15 +146,11 @@ const RackCell = React.memo(({
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!is3D || !localRef.current) return;
-    
     const { left, top, width, height } = localRef.current.getBoundingClientRect();
     const x = (e.clientX - left) / width;
     const y = (e.clientY - top) / height;
-    
-    // Sensibilidad ajustada
     const rotateY = -25 + (x * 20); 
     const rotateX = 30 - (y * 15);
-    
     localRef.current.style.setProperty('--rotate-y', `${rotateY}deg`);
     localRef.current.style.setProperty('--rotate-x', `${rotateX}deg`);
   };
@@ -180,7 +181,6 @@ const RackCell = React.memo(({
     >
       <div className="min-w-max">
         {is3D ? (
-          /* VISTA 3D: Eje Z = Pisos, Y = Filas, X = Columnas */
           <div
             className="grid gap-2 items-center"
             style={{
@@ -196,7 +196,6 @@ const RackCell = React.memo(({
                     <span className="text-xs font-black text-indigo-300 uppercase tracking-tighter leading-none mb-1">Fila</span>
                     <span className="text-4xl font-black text-white leading-none tabular-nums italic drop-shadow-md">{f}</span>
                   </div>
-
                   {Array.from({ length: rack.columnas }).map((_, cIdx) => {
                     const c = cIdx + 1;
                     return (
@@ -223,13 +222,10 @@ const RackCell = React.memo(({
             })}
           </div>
         ) : (
-          /* VISTA 2D: Eje Y = Pisos (1 abajo), Eje X = (Columnas x Filas) */
           <>
             <div 
               className="grid gap-2 mb-4 px-1"
-              style={{
-                gridTemplateColumns: `50px repeat(${rack.columnas * rack.filas}, 85px)`
-              }}
+              style={{ gridTemplateColumns: `50px repeat(${rack.columnas * rack.filas}, 85px)` }}
             >
               <div />
               {Array.from({ length: rack.filas }).map((_, fIdx) => {
@@ -244,7 +240,6 @@ const RackCell = React.memo(({
                 });
               })}
             </div>
-
             <div
               className="grid gap-2 items-center"
               style={{
@@ -253,20 +248,18 @@ const RackCell = React.memo(({
               }}
             >
               {Array.from({ length: rack.pisos }).map((_, pRevIdx) => {
-                const p = rack.pisos - pRevIdx; // Piso 1 abajo
+                const p = rack.pisos - pRevIdx;
                 return (
                   <React.Fragment key={`piso-row-${p}`}>
                     <div className="flex flex-col items-center justify-center h-full border-r-2 border-indigo-500/50 pr-4 mr-2 sticky left-0 bg-slate-900/90 backdrop-blur-md z-20 rounded-l-lg shadow-2xl border-y border-white/5">
                       <span className="text-xs font-black text-indigo-300 uppercase leading-none mb-1">Piso</span>
                       <span className="text-3xl font-black text-white leading-none tabular-nums drop-shadow-md">{p}</span>
                     </div>
-
                     {Array.from({ length: rack.filas }).map((_, fIdx) => {
                       const f = fIdx + 1;
                       return Array.from({ length: rack.columnas }).map((_, cIdx) => {
                         const c = cIdx + 1;
                         const espacio = rack.espacios.find((e: any) => e.piso === p && e.columna === c && e.fila === f);
-
                         return (
                           <RackCell 
                             key={`cell-2d-${p}-${c}-${f}`}
