@@ -18,3 +18,4 @@ frontend/terraform/.terraform.tfstate.lock.info
 frontend/terraform/terraform.tfstate
 frontend/terraform/terraform.tfstate.backup
 backend/.env
+backend/.env
