@@ -9,9 +9,17 @@ import { Role } from '../../users/user.entity';
 import { Request } from 'express';
 import { TenantContext } from '../../compartido/interfaces/tenant-context.interface';
 
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
+import { Inject } from '@nestjs/common';
+import { Guarderia } from '../../guarderias/guarderia.entity';
+
 @Injectable()
 export class TrialGuard implements CanActivate {
-  constructor(private readonly guarderiaService: GuarderiaService) {}
+  constructor(
+    private readonly guarderiaService: GuarderiaService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
@@ -34,9 +42,15 @@ export class TrialGuard implements CanActivate {
       return true;
     }
 
-    // 3. Obtener datos de la guardería para verificar el trial
+    // 3. Obtener datos de la guardería para verificar el trial (usando caché)
     try {
-      const guarderia = await this.guarderiaService.findOne(tenant.guarderiaId);
+      const cacheKey = `guarderia_trial_${tenant.guarderiaId}`;
+      let guarderia = await this.cacheManager.get<Guarderia>(cacheKey);
+
+      if (!guarderia) {
+        guarderia = await this.guarderiaService.findOne(tenant.guarderiaId);
+        await this.cacheManager.set(cacheKey, guarderia, 600000); // 10 minutos
+      }
 
       // Si la guardería no está activa, bloqueamos todo lo que no sea lectura
       if (!guarderia.activo) {

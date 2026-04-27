@@ -34,12 +34,17 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/adapters/handlebars.ad
 import { join } from 'path';
 import { APP_GUARD } from '@nestjs/core';
 import { TrialGuard } from './auth/guards/trial.guard';
+import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
+    }),
+    CacheModule.register({
+      isGlobal: true,
+      ttl: 300000, // 5 minutos por defecto
     }),
     ScheduleModule.forRoot(),
     MailerModule.forRootAsync({
@@ -80,7 +85,7 @@ import { TrialGuard } from './auth/guards/trial.guard';
         password: configService.get<string>('DATABASE_PASSWORD'),
         database: configService.get<string>('DATABASE_NAME'),
         autoLoadEntities: true,
-        synchronize: true, // Only for development
+        synchronize: configService.get<string>('NODE_ENV') !== 'production', // Only for development
         ssl:
           configService.get<string>('DATABASE_SSL') === 'true'
             ? { rejectUnauthorized: false }
