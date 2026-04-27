@@ -89,7 +89,11 @@ export function CargosList({ onCobrar }: CargosListProps) {
                   </td>
                   <td className="px-8 py-5 text-xs text-[var(--text-secondary)] font-medium leading-relaxed max-w-xs">{cargo.descripcion}</td>
                   <td className="px-8 py-5 text-[11px] text-[var(--text-secondary)] font-black uppercase">
-                    {new Date(cargo.fechaEmision).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}
+                    {cargo.fechaEmision && !isNaN(new Date(cargo.fechaEmision).getTime()) ? (
+                      new Date(cargo.fechaEmision).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })
+                    ) : (
+                      <span className="opacity-50 italic">S/F</span>
+                    )}
                   </td>
                   <td className="px-8 py-5">
                     {cargo.pagado ? (

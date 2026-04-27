@@ -5,11 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import {
-  In,
-  LessThan,
-  Repository,
-} from 'typeorm';
+import { In, LessThan, Repository } from 'typeorm';
 import { SolicitudBajada, EstadoSolicitud } from './solicitud-bajada.entity';
 import { CreateSolicitudBajadaDto } from './dto/create-solicitud-bajada.dto';
 import { Cliente } from '../clientes/clientes.entity';

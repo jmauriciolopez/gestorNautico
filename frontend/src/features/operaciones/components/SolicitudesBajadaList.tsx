@@ -85,7 +85,11 @@ export function SolicitudesBajadaList({ solicitudes, isLoading, onUpdateEstado }
                       </div>
                       <div className="flex items-center gap-2.5 text-[10px] text-[var(--text-secondary)] font-black uppercase tracking-widest bg-[var(--bg-primary)]/40 px-3 py-1.5 rounded-xl border border-[var(--border-primary)]/40">
                         <Clock className="w-3.5 h-3.5 text-indigo-500" />
-                        {new Date(s.fechaHoraDeseada).toLocaleString('es-AR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                        {s.fechaHoraDeseada && !isNaN(new Date(s.fechaHoraDeseada).getTime()) ? (
+                          new Date(s.fechaHoraDeseada).toLocaleString('es-AR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+                        ) : (
+                          <span className="opacity-50 italic">Sin fecha</span>
+                        )}
                       </div>
                       {s.motivoCancelacion && s.estado === EstadoSolicitud.CANCELADA && (
                         <div className="flex items-center gap-2.5 text-[10px] text-rose-400 font-bold italic truncate max-w-[250px] bg-rose-500/5 px-3 py-1.5 rounded-xl border border-rose-500/10">

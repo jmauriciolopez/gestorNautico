@@ -75,7 +75,11 @@ export function RegistrosList({ registros, isLoading, onComplete, onUpdateStatus
                     </div>
                   </td>
                   <td className="px-8 py-5 text-[11px] text-[var(--text-secondary)] font-black uppercase">
-                    {new Date(reg.fechaProgramada).toLocaleDateString(undefined, { day: '2-digit', month: 'short' })}
+                    {reg.fechaProgramada && !isNaN(new Date(reg.fechaProgramada).getTime()) ? (
+                      new Date(reg.fechaProgramada).toLocaleDateString(undefined, { day: '2-digit', month: 'short' })
+                    ) : (
+                      <span className="opacity-50 italic">Pte.</span>
+                    )}
                   </td>
                   <td className="px-8 py-5">
                     <div className="flex flex-col gap-1.5">

@@ -164,7 +164,11 @@ export function FacturasList({ filters }: { filters: { search?: string; startDat
                       </td>
 
                       <td className="px-6 py-5 text-[11px] text-[var(--text-secondary)] font-black uppercase">
-                        {new Date(factura.fechaEmision).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}
+                        {factura.fechaEmision && !isNaN(new Date(factura.fechaEmision).getTime()) ? (
+                          new Date(factura.fechaEmision).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })
+                        ) : (
+                          <span className="opacity-50 italic">N/A</span>
+                        )}
                       </td>
 
                       <td className="px-6 py-5">

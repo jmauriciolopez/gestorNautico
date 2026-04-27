@@ -109,7 +109,11 @@ export function PagosList() {
                   <td className="px-8 py-5">
                     <div className="flex items-center gap-2 text-[var(--text-secondary)] font-medium text-xs">
                       <Calendar className="w-3.5 h-3.5 text-[var(--text-muted)]" />
-                      {new Date(pago.fecha).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}
+                      {pago.fecha && !isNaN(new Date(pago.fecha).getTime()) ? (
+                        new Date(pago.fecha).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })
+                      ) : (
+                        <span className="opacity-50 italic">S/F</span>
+                      )}
                     </div>
                   </td>
                   <td className="px-8 py-5 text-right font-black text-[var(--accent-primary)] text-sm whitespace-nowrap">

@@ -110,7 +110,7 @@ export function PagosPorValidarList() {
                 <div className="bg-[var(--bg-primary)]/40 p-4 rounded-2xl border border-[var(--border-secondary)]">
                   <p className="text-[8px] font-black text-[var(--text-disabled)] uppercase tracking-widest mb-1">Medio / Fecha</p>
                   <p className="text-xs font-black text-[var(--text-primary)]">
-                    {factura.pagoMedio} · {new Date(factura.pagoFecha).toLocaleDateString()}
+                    {factura.pagoMedio} · {factura.pagoFecha && !isNaN(new Date(factura.pagoFecha).getTime()) ? new Date(factura.pagoFecha).toLocaleDateString() : 'S/F'}
                   </p>
                 </div>
               </div>
