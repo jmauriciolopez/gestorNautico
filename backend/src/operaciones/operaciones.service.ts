@@ -6,8 +6,6 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
-  FindManyOptions,
-  FindOptionsWhere,
   In,
   LessThan,
   Repository,
@@ -218,24 +216,53 @@ export class OperacionesService extends BaseTenantService {
     query: PaginationQuery = {},
     estado?: EstadoSolicitud,
   ) {
-    const tenantFilter = this.buildTenantWhere<SolicitudBajada>(tenant);
+    const queryBuilder = this.solicitudRepo
+      .createQueryBuilder('solicitud')
+      .leftJoinAndSelect('solicitud.cliente', 'cliente')
+      .leftJoinAndSelect('solicitud.embarcacion', 'embarcacion')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('1')
+          .from('cargos', 'cargo')
+          .where('cargo.cliente_id = embarcacion.clienteId')
+          .andWhere('cargo.pagado = false')
+          .andWhere('cargo.guarderiaId = :guarderiaId', {
+            guarderiaId: tenant.guarderiaId,
+          })
+          .limit(1);
+      }, 'hasDebt')
+      .where('solicitud.guarderiaId = :guarderiaId', {
+        guarderiaId: tenant.guarderiaId,
+      });
 
-    const where:
-      | FindOptionsWhere<SolicitudBajada>
-      | FindOptionsWhere<SolicitudBajada>[] = estado
-      ? { ...tenantFilter, estado }
-      : {
-          ...tenantFilter,
-          estado: In([EstadoSolicitud.PENDIENTE, EstadoSolicitud.EN_AGUA]),
-        };
+    if (estado) {
+      queryBuilder.andWhere('solicitud.estado = :estado', { estado });
+    } else {
+      queryBuilder.andWhere('solicitud.estado IN (:...estados)', {
+        estados: [EstadoSolicitud.PENDIENTE, EstadoSolicitud.EN_AGUA],
+      });
+    }
 
-    const options: FindManyOptions<SolicitudBajada> = {
-      where,
-      relations: ['cliente', 'embarcacion'],
-      order: { createdAt: 'DESC' },
-    };
+    queryBuilder.orderBy('solicitud.createdAt', 'DESC');
 
-    return paginate(this.solicitudRepo, query, options);
+    const { data, total, page, limit, totalPages } = await paginate(
+      queryBuilder,
+      query,
+    );
+
+    const itemsWithDebt = data.map((item) => {
+      const row = item as SolicitudBajada & { hasDebt?: string | number };
+      const { hasDebt, ...solicitud } = row;
+      return {
+        ...solicitud,
+        embarcacion: {
+          ...solicitud.embarcacion,
+          tieneDeuda: hasDebt ? Number(hasDebt) > 0 : false,
+        },
+      };
+    });
+
+    return { data: itemsWithDebt, total, page, limit, totalPages };
   }
 
   async updateEstado(

@@ -7,13 +7,16 @@ const envPath = path.join(__dirname, '..', '.env');
 const envContent = fs.readFileSync(envPath, 'utf8');
 const env = {};
 envContent.split('\n').forEach(line => {
-  const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
+  const trimmedLine = line.trim();
+  if (!trimmedLine || trimmedLine.startsWith('#')) return;
+  const match = trimmedLine.match(/^([\w.-]+)\s*=\s*(.*)?$/);
   if (match) {
     const key = match[1];
     let value = match[2] || '';
+    value = value.split('#')[0].trim(); // Quitar comentarios al final de la línea
     if (value.startsWith('"') && value.endsWith('"')) value = value.substring(1, value.length - 1);
     if (value.startsWith("'") && value.endsWith("'")) value = value.substring(1, value.length - 1);
-    env[key] = value;
+    env[key] = value.trim();
   }
 });
 
@@ -23,6 +26,7 @@ const DB = {
   user: env.DATABASE_USERNAME || 'postgres',
   password: env.DATABASE_PASSWORD || '12781278',
   database: env.DATABASE_NAME || 'guarderia',
+  ssl: env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false,
 };
 
 async function main() {

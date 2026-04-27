@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Anchor, Clock, CheckCircle2, XCircle, Ship } from 'lucide-react';
+import { Anchor, Clock, CheckCircle2, XCircle, Ship, AlertTriangle } from 'lucide-react';
 import type { SolicitudBajada } from '../hooks/useOperaciones';
 import { EstadoSolicitud } from '../../../shared/types/enums';
 
@@ -66,6 +66,12 @@ export function SolicitudesBajadaList({ solicitudes, isLoading, onUpdateEstado }
                         <span className="text-[9px] font-black px-3 py-1 bg-[var(--bg-primary)] text-[var(--text-secondary)] rounded-full border border-[var(--border-primary)] tracking-[0.2em] uppercase">
                           {s.embarcacion.matricula}
                         </span>
+                        {s.embarcacion.tieneDeuda && (
+                          <div className="flex items-center gap-1 px-2 py-1 bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-500 animate-pulse">
+                            <AlertTriangle className="w-2.5 h-2.5" />
+                            <span className="text-[9px] font-black uppercase tracking-widest">Deuda</span>
+                          </div>
+                        )}
                         <span className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest ${cfg.color}`}>
                           <span className="w-1 h-1 rounded-full bg-current animate-pulse" />
                           {cfg.label}

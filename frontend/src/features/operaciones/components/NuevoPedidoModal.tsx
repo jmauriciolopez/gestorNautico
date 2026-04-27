@@ -1,10 +1,12 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { ClipboardCheck, X, Search, Ship, ArrowRight, Calendar, Clock, Loader2, Check, AlertTriangle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useEmbarcaciones } from '../../embarcaciones/hooks/useEmbarcaciones';
 import { useActiveGuarderiaId } from '../../../shared/hooks/useActiveGuarderiaId';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { Role } from '../../../types';
+import { useDebounce } from '../../../hooks/useDebounce';
+
 
 interface NuevoPedidoModalProps {
   isOpen: boolean;
@@ -16,9 +18,14 @@ interface NuevoPedidoModalProps {
 export function NuevoPedidoModal({ isOpen, onClose, onSave, activeBoatIds = [] }: NuevoPedidoModalProps) {
   const { user } = useAuth();
   const activeGuarderiaId = useActiveGuarderiaId();
-  const { getEmbarcaciones } = useEmbarcaciones();
-
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearch = useDebounce(searchTerm, 400);
+  
+  const { getEmbarcaciones } = useEmbarcaciones({ 
+    search: debouncedSearch,
+    limit: 10 // Reducimos el límite para carga más rápida en el modal
+  });
+
   const [selectedBoatId, setSelectedBoatId] = useState<number | null>(null);
   const [fecha, setFecha] = useState('');
   const [hora, setHora] = useState('');
@@ -39,14 +46,7 @@ export function NuevoPedidoModal({ isOpen, onClose, onSave, activeBoatIds = [] }
       setHora(`${d.getHours().toString().padStart(2, '0')}:00`);
     }
   }, [isOpen]);
-  const filteredEmbarcaciones = useMemo(() => {
-    const boats = getEmbarcaciones.data?.data || [];
-    if (!searchTerm) return boats.slice(0, 20);
-    return boats.filter(b =>
-      b.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      b.matricula.toLowerCase().includes(searchTerm.toLowerCase())
-    ).slice(0, 20);
-  }, [getEmbarcaciones.data, searchTerm]);
+  const filteredEmbarcaciones = getEmbarcaciones.data?.data || [];
 
   const selectedBoat = getEmbarcaciones.data?.data?.find(b => b.id === selectedBoatId);
 

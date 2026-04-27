@@ -19,6 +19,7 @@ export enum TipoCargo {
   OTROS = 'OTROS',
 }
 
+@Index(['cliente', 'pagado', 'guarderiaId'])
 @Entity('cargos')
 export class Cargo {
   @PrimaryGeneratedColumn()

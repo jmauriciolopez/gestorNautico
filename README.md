@@ -50,6 +50,47 @@ Toda la documentación técnica y operativa se encuentra en la carpeta [`docs/`]
 ## 📋 Estado del Proyecto
 Consulta el [**BACKLOG.md**](./BACKLOG.md) para ver las tareas pendientes y hitos recientemente completados.
 
+## 🚀 Despliegue (Deployment)
+
+El proyecto utiliza un modelo de despliegue híbrido: **Frontend en AWS** (para máxima velocidad mediante CDN) y **Backend en Render**.
+
+### ⚙️ Backend (Render)
+- **URL**: `https://gestornautico-backend.onrender.com`
+- **Base de Datos**: Neon (PostgreSQL).
+- **CI/CD**: Despliegue automático desde la carpeta `backend/` al hacer push a `main`.
+
+#### Comandos de Base de Datos (Backend):
+- **Resetear DB**: `npm run db:reset` (Limpia todas las tablas).
+- **Cargar Datos Demo**: `npm run seed:demo` (Crea usuarios, embarcaciones y datos iniciales).
+
+### 🏗️ Infraestructura Frontend (AWS)
+Ubicación: `frontend/terraform/`
+
+La infraestructura se gestiona mediante **Terraform** e incluye:
+- **S3 Bucket**: Hosting de archivos estáticos (dist/).
+- **CloudFront (CDN)**: Distribución global con soporte para SPA (redirección de errores 403/404 a index.html).
+- **ACM (Certificate Manager)**: Certificado SSL gestionado automáticamente en `us-east-1`.
+
+#### Pasos para actualizar la infraestructura:
+1. Navegar a `frontend/terraform/`.
+2. Ejecutar `terraform plan` para previsualizar cambios.
+3. Ejecutar `terraform apply` para aplicar.
+
+### 🤖 CI/CD con GitHub Actions
+El despliegue es automático al hacer push a `main`.
+
+#### Secretos requeridos en GitHub:
+Configurar en `Settings > Secrets and variables > Actions`:
+- `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`: Credenciales de despliegue.
+- `CLOUDFRONT_DISTRIBUTION_ID`: ID de la distribución (`E1ZHE8PJB3TNML`).
+- `VITE_API_URL`: `https://gestornautico-backend.onrender.com`
+- `VITE_API_PREFIX`: `/api` (o el que uses)
+
+### 🌐 Configuración DNS (Externo)
+Para el dominio `guarderia.criterioingenieria.online`, se requieren dos registros **CNAME**:
+1. **Validación SSL**: El registro `_dcd569...` (proporcionado por ACM).
+2. **Aplicación**: `guarderia` -> `d3ls217b0pxzhi.cloudfront.net` (**Nube Gris / DNS Only** en Cloudflare).
+
 ## 🛠️ Tecnologías
 - **Frontend**: React, Vite, Recharts, Lucide Icons, Framer Motion.
 - **Backend**: NestJS, TypeORM, Class-validator.

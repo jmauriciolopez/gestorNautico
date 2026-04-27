@@ -83,12 +83,16 @@ export function LiquidarFacturaModal({
               <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase">
                 ID: <span className="text-[var(--text-primary)] font-black">{factura.pagoIdComprobante}</span>
               </p>
-              <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase">
-                Fecha: <span className="text-[var(--text-primary)] font-black">{new Date(factura.pagoFecha).toLocaleDateString()}</span>
-              </p>
-              <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase">
-                Medio: <span className="text-[var(--text-primary)] font-black">{factura.pagoMedio}</span>
-              </p>
+              {factura.pagoFecha && !isNaN(new Date(factura.pagoFecha).getTime()) && (
+                <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase">
+                  Fecha: <span className="text-[var(--text-primary)] font-black">{new Date(factura.pagoFecha).toLocaleDateString()}</span>
+                </p>
+              )}
+              {factura.pagoMedio && (
+                <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase">
+                  Medio: <span className="text-[var(--text-primary)] font-black">{factura.pagoMedio}</span>
+                </p>
+              )}
             </div>
           </div>
         )}

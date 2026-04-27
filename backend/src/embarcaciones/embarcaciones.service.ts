@@ -51,15 +51,16 @@ export class EmbarcacionesService extends BaseTenantService {
 
     queryBuilder
       .addSelect((subQuery) => {
-        const sq = subQuery
-          .select('COUNT(cargo.id)', 'count')
+        return subQuery
+          .select('1')
           .from('cargos', 'cargo')
           .where('cargo.cliente_id = embarcacion.clienteId')
-          .andWhere('cargo.pagado = :pagado', { pagado: false });
-
-        this.applyTenantFilter(sq, tenant, 'cargo');
-        return sq;
-      }, 'deudaCount')
+          .andWhere('cargo.pagado = false')
+          .andWhere('cargo.guarderiaId = :guarderiaId', {
+            guarderiaId: tenant.guarderiaId,
+          })
+          .limit(1);
+      }, 'hasDebt')
       .orderBy('embarcacion.createdAt', 'DESC');
 
     if (search) {
@@ -76,11 +77,11 @@ export class EmbarcacionesService extends BaseTenantService {
 
     // Mapear los resultados para incluir el flag tieneDeuda
     const itemsWithDebt = data.map((item) => {
-      const row = item as Embarcacion & { deudaCount?: string };
-      const { deudaCount, ...embarcacion } = row;
+      const row = item as Embarcacion & { hasDebt?: string | number };
+      const { hasDebt, ...embarcacion } = row;
       return {
         ...embarcacion,
-        tieneDeuda: parseInt(deudaCount || '0', 10) > 0,
+        tieneDeuda: hasDebt ? Number(hasDebt) > 0 : false,
       };
     });
 

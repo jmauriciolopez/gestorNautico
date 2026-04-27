@@ -13,14 +13,35 @@
  *  - Facturas agrupadas por mes/cliente
  */
 
+const fs = require('fs');
+const path = require('path');
 const { Client } = require('pg');
 
+// Cargar variables de entorno desde .env (manual si no hay dotenv)
+const envPath = path.join(__dirname, '..', '.env');
+const envContent = fs.readFileSync(envPath, 'utf8');
+const env = {};
+envContent.split('\n').forEach(line => {
+  const trimmedLine = line.trim();
+  if (!trimmedLine || trimmedLine.startsWith('#')) return;
+  const match = trimmedLine.match(/^([\w.-]+)\s*=\s*(.*)?$/);
+  if (match) {
+    const key = match[1];
+    let value = match[2] || '';
+    value = value.split('#')[0].trim(); // Quitar comentarios al final de la línea
+    if (value.startsWith('"') && value.endsWith('"')) value = value.substring(1, value.length - 1);
+    if (value.startsWith("'") && value.endsWith("'")) value = value.substring(1, value.length - 1);
+    env[key] = value.trim();
+  }
+});
+
 const DB = {
-  host: 'localhost',
-  port: 5432,
-  user: 'postgres',
-  password: '12781278',
-  database: 'guarderia',
+  host: env.DATABASE_HOST || 'localhost',
+  port: parseInt(env.DATABASE_PORT || '5432'),
+  user: env.DATABASE_USERNAME || 'postgres',
+  password: env.DATABASE_PASSWORD || '12781278',
+  database: env.DATABASE_NAME || 'guarderia',
+  ssl: env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false,
 };
 
 // ─── helpers ────────────────────────────────────────────────────────────────

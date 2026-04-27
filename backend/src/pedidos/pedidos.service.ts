@@ -52,14 +52,15 @@ export class PedidosService extends BaseTenantService {
       .leftJoinAndSelect('embarcacion.cliente', 'cliente')
       .addSelect((subQuery) => {
         return subQuery
-          .select('COUNT(cargo.id)', 'count')
+          .select('1')
           .from('cargos', 'cargo')
           .where('cargo.cliente_id = embarcacion.clienteId')
-          .andWhere('cargo.pagado = :pagado', { pagado: false })
+          .andWhere('cargo.pagado = false')
           .andWhere('cargo.guarderiaId = :guarderiaId', {
             guarderiaId: tenant.guarderiaId,
-          });
-      }, 'deudaCount')
+          })
+          .limit(1);
+      }, 'hasDebt')
       .where('pedido.estado IN (:...activos)', {
         activos: ['pendiente', 'en_agua'],
       })
@@ -74,13 +75,13 @@ export class PedidosService extends BaseTenantService {
     );
 
     const itemsWithDebt = data.map((item) => {
-      const row = item as Pedido & { deudaCount?: string };
-      const { deudaCount, ...pedido } = row;
+      const row = item as Pedido & { hasDebt?: string | number };
+      const { hasDebt, ...pedido } = row;
       return {
         ...pedido,
         embarcacion: {
           ...pedido.embarcacion,
-          tieneDeuda: parseInt(deudaCount || '0', 10) > 0,
+          tieneDeuda: hasDebt ? Number(hasDebt) > 0 : false,
         },
       };
     });
@@ -95,14 +96,15 @@ export class PedidosService extends BaseTenantService {
       .leftJoinAndSelect('embarcacion.cliente', 'cliente')
       .addSelect((subQuery) => {
         return subQuery
-          .select('COUNT(cargo.id)', 'count')
+          .select('1')
           .from('cargos', 'cargo')
           .where('cargo.cliente_id = embarcacion.clienteId')
-          .andWhere('cargo.pagado = :pagado', { pagado: false })
+          .andWhere('cargo.pagado = false')
           .andWhere('cargo.guarderiaId = :guarderiaId', {
             guarderiaId: tenant.guarderiaId,
-          });
-      }, 'deudaCount')
+          })
+          .limit(1);
+      }, 'hasDebt')
       .where('pedido.id = :id', { id })
       .andWhere('pedido.guarderiaId = :guarderiaId', {
         guarderiaId: tenant.guarderiaId,
@@ -114,14 +116,14 @@ export class PedidosService extends BaseTenantService {
       throw new NotFoundException(`Pedido con ID ${id} no encontrado`);
     }
 
-    const row = rawResult as Pedido & { deudaCount?: string };
-    const { deudaCount, ...pedido } = row;
+    const row = rawResult as Pedido & { hasDebt?: string | number };
+    const { hasDebt, ...pedido } = row;
 
     return {
       ...pedido,
       embarcacion: {
         ...pedido.embarcacion,
-        tieneDeuda: parseInt(deudaCount || '0', 10) > 0,
+        tieneDeuda: hasDebt ? Number(hasDebt) > 0 : false,
       },
     };
   }
