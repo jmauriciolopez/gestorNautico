@@ -1,4 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Configuracion } from './configuracion.entity';
@@ -18,6 +20,8 @@ export class ConfiguracionService extends BaseTenantService {
   constructor(
     @InjectRepository(Configuracion)
     private readonly configRepo: Repository<Configuracion>,
+    @Inject(CACHE_MANAGER)
+    private readonly cacheManager: Cache,
   ) {
     super();
   }
@@ -130,8 +134,20 @@ export class ConfiguracionService extends BaseTenantService {
     clave: string,
     defaultValue = '',
   ): Promise<string> {
+    const cacheKey = `config:${tenant.guarderiaId}:${clave}`;
+    const cachedValue = await this.cacheManager.get<string>(cacheKey);
+
+    if (cachedValue !== undefined && cachedValue !== null) {
+      return cachedValue;
+    }
+
     const config = await this.findByClave(tenant, clave);
-    return config ? config.valor : defaultValue;
+    const result = config ? config.valor : defaultValue;
+
+    // Cachear por 10 minutos
+    await this.cacheManager.set(cacheKey, result, 600000);
+
+    return result;
   }
 
   async getValorNumerico(
@@ -144,20 +160,29 @@ export class ConfiguracionService extends BaseTenantService {
   }
 
   async update(tenant: TenantContext, clave: string, valor: string) {
+    const cacheKey = `config:${tenant.guarderiaId}:${clave}`;
     const config = await this.configRepo.findOne({
       where: this.buildTenantWhere<Configuracion>(tenant, { clave }),
     });
+
+    let saved: Configuracion;
     if (config) {
       config.valor = valor;
-      return this.configRepo.save(config);
+      saved = await this.configRepo.save(config);
+    } else {
+      // Si no existe para este tenant, lo creamos
+      const nueva = this.configRepo.create({
+        clave,
+        valor,
+        guarderiaId: tenant.guarderiaId,
+      });
+      saved = await this.configRepo.save(nueva);
     }
-    // Si no existe para este tenant, lo creamos
-    const nueva = this.configRepo.create({
-      clave,
-      valor,
-      guarderiaId: tenant.guarderiaId,
-    });
-    return this.configRepo.save(nueva);
+
+    // Invalidar caché
+    await this.cacheManager.del(cacheKey);
+
+    return saved;
   }
 
   async updateMultiple(tenant: TenantContext, updates: Record<string, string>) {

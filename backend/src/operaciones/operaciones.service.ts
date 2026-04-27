@@ -313,10 +313,10 @@ export class OperacionesService extends BaseTenantService {
         );
       }
 
-      return await solRepo.findOne({
-        where: this.buildTenantWhere<SolicitudBajada>(tenant, { id }),
-        relations: ['cliente', 'embarcacion'],
-      });
+      // Optimistic return: update local object instead of re-fetching from DB
+      solicitud.estado = estado;
+      solicitud.updatedAt = new Date();
+      return solicitud;
     });
 
     // Tareas secundarias en segundo plano (post-commit)

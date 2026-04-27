@@ -248,10 +248,10 @@ export class PedidosService extends BaseTenantService {
         }
       }
 
-      return await manager.findOne(Pedido, {
-        where: this.buildTenantWhere<Pedido>(tenant, { id }),
-        relations: ['embarcacion'],
-      });
+      // Optimistic return: update local object instead of re-fetching from DB
+      pedido.estado = estado;
+      pedido.updatedAt = new Date();
+      return pedido;
     });
 
     // Notificaciones en segundo plano (post-commit)

@@ -86,9 +86,9 @@ async function main() {
 
     // ── 1. Limpiar tablas en orden seguro ──────────────────────────────────
     const tables = [
-      'pagos','cargos','facturas','movimientos','pedidos',
-      'embarcaciones','espacios','racks','zonas','ubicaciones',
-      'clientes','cajas',
+      'pagos', 'cargos', 'facturas', 'movimientos', 'pedidos', 'solicitudes_bajada',
+      'embarcaciones', 'espacios', 'racks', 'zonas', 'ubicaciones',
+      'clientes', 'cajas',
     ];
     for (const t of tables) {
       await db.query(`TRUNCATE TABLE "${t}" RESTART IDENTITY CASCADE`);

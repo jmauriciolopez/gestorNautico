@@ -17,3 +17,4 @@ frontend/terraform/.terraform.tfstate.lock.info
 .gitignore
 frontend/terraform/terraform.tfstate
 frontend/terraform/terraform.tfstate.backup
+backend/.env
