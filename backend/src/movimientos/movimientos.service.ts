@@ -7,6 +7,7 @@ import {
   ILike,
   FindManyOptions,
   FindOptionsWhere,
+  DataSource,
 } from 'typeorm';
 import { Movimiento, TipoMovimiento } from './movimientos.entity';
 import { Pedido, EstadoPedido } from '../pedidos/pedidos.entity';
@@ -46,6 +47,7 @@ export class MovimientosService extends BaseTenantService {
     private readonly espaciosService: EspaciosService,
     private readonly configuracionService: ConfiguracionService,
     private readonly notificacionesService: NotificacionesService,
+    private readonly dataSource: DataSource,
   ) {
     super();
   }
@@ -96,15 +98,25 @@ export class MovimientosService extends BaseTenantService {
     data: CreateMovimientoDto,
     manager?: EntityManager,
   ) {
+    if (manager) {
+      return await this._create(tenant, data, manager);
+    }
+    return await this.dataSource.transaction(async (mgr) => {
+      return await this._create(tenant, data, mgr);
+    });
+  }
+
+  private async _create(
+    tenant: TenantContext,
+    data: CreateMovimientoDto,
+    manager: EntityManager,
+  ) {
     const { embarcacionId, espacioId, tipo, ...rest } = data;
 
-    const movRepo = manager
-      ? manager.getRepository(Movimiento)
-      : this.movimientoRepo;
-    const pedRepo = manager ? manager.getRepository(Pedido) : this.pedidoRepo;
-    const solRepo = manager
-      ? manager.getRepository(SolicitudBajada)
-      : this.solicitudRepo;
+    const movRepo = manager.getRepository(Movimiento);
+    const pedRepo = manager.getRepository(Pedido);
+    const solRepo = manager.getRepository(SolicitudBajada);
+    const boatRepo = manager.getRepository(Embarcacion);
 
     // Find the current boat to get its assigned space if needed
     const embarcacion: Embarcacion = await this.embarcacionesService.findOne(
@@ -148,13 +160,11 @@ export class MovimientosService extends BaseTenantService {
 
     // --- SYNC STATUS ---
     if (tipo === TipoMovimiento.ENTRADA) {
-      // Boat comes to rack
-      await this.embarcacionesService.update(
-        tenant,
-        embarcacion.id,
-        { estado_operativo: EstadoEmbarcacion.EN_CUNA },
-        manager,
-      );
+      // Boat comes to rack - Direct update for performance
+      await boatRepo.update(embarcacion.id, {
+        estado_operativo: EstadoEmbarcacion.EN_CUNA,
+      });
+
       // Update or Create Order (subida)
       const pedidoExistente = await pedRepo.findOne({
         where: this.buildTenantWhere(tenant, {
@@ -192,19 +202,21 @@ export class MovimientosService extends BaseTenantService {
         }
       }
 
-      await this.notificacionesService.createForRole(tenant, Role.ADMIN, {
-        titulo: 'Retorno a Cuna',
-        mensaje: `La embarcación ${embarcacion.nombre} ha regresado a su cuna.`,
-        tipo: NotificacionTipo.INFO,
-      });
-    } else if (tipo === TipoMovimiento.SALIDA) {
-      // Boat goes to water
-      await this.embarcacionesService.update(
+      await this.notificacionesService.createForRole(
         tenant,
-        embarcacion.id,
-        { estado_operativo: EstadoEmbarcacion.EN_AGUA },
+        Role.ADMIN,
+        {
+          titulo: 'Retorno a Cuna',
+          mensaje: `La embarcación ${embarcacion.nombre} ha regresado a su cuna.`,
+          tipo: NotificacionTipo.INFO,
+        },
         manager,
       );
+    } else if (tipo === TipoMovimiento.SALIDA) {
+      // Boat goes to water - Direct update for performance
+      await boatRepo.update(embarcacion.id, {
+        estado_operativo: EstadoEmbarcacion.EN_AGUA,
+      });
 
       const pedidoExistente = await pedRepo.findOne({
         where: this.buildTenantWhere(tenant, {
@@ -242,11 +254,16 @@ export class MovimientosService extends BaseTenantService {
         }
       }
 
-      await this.notificacionesService.createForRole(tenant, Role.ADMIN, {
-        titulo: 'Salida a Agua',
-        mensaje: `La embarcación ${embarcacion.nombre} ha salido al agua.`,
-        tipo: NotificacionTipo.INFO,
-      });
+      await this.notificacionesService.createForRole(
+        tenant,
+        Role.ADMIN,
+        {
+          titulo: 'Salida a Agua',
+          mensaje: `La embarcación ${embarcacion.nombre} ha salido al agua.`,
+          tipo: NotificacionTipo.INFO,
+        },
+        manager,
+      );
     }
 
     return savedMovement;

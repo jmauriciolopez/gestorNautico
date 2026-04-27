@@ -262,7 +262,9 @@ export class ImportService extends BaseTenantService {
               estado_operativo: row.estado
                 ? (row.estado as EstadoEmbarcacion)
                 : existingEmbarcacion.estado_operativo,
-              descuento: row.descuento ? descuento : existingEmbarcacion.descuento,
+              descuento: row.descuento
+                ? descuento
+                : existingEmbarcacion.descuento,
               clienteId: cliente.id,
             });
             result.updated++;

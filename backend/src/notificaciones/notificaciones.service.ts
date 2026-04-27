@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, EntityManager } from 'typeorm';
 import { Notificacion, NotificacionTipo } from './notificacion.entity';
 import { User, Role } from '../users/user.entity';
 import { MailerService } from '@nestjs-modules/mailer';
@@ -72,20 +72,32 @@ export class NotificacionesService extends BaseTenantService {
       mensaje: string;
       tipo?: NotificacionTipo;
     },
+    manager?: EntityManager,
   ): Promise<Notificacion> {
-    const notificacion = this.notificacionesRepository.create({
+    const repo = manager
+      ? manager.getRepository(Notificacion)
+      : this.notificacionesRepository;
+    const notificacion = repo.create({
       ...data,
       guarderiaId: tenant.guarderiaId,
     });
-    return this.notificacionesRepository.save(notificacion);
+    return repo.save(notificacion);
   }
 
   async createForRole(
     tenant: TenantContext,
     role: Role,
     data: { titulo: string; mensaje: string; tipo?: NotificacionTipo },
+    manager?: EntityManager,
   ): Promise<void> {
-    const users = await this.userRepository.find({
+    const userRepo = manager
+      ? manager.getRepository(User)
+      : this.userRepository;
+    const notifRepo = manager
+      ? manager.getRepository(Notificacion)
+      : this.notificacionesRepository;
+
+    const users = await userRepo.find({
       where: {
         role,
         activo: true,
@@ -93,13 +105,13 @@ export class NotificacionesService extends BaseTenantService {
       },
     });
     const notifications = users.map((user) =>
-      this.notificacionesRepository.create({
+      notifRepo.create({
         ...data,
         usuarioId: user.id,
         guarderiaId: tenant.guarderiaId,
       }),
     );
-    await this.notificacionesRepository.save(notifications);
+    await notifRepo.save(notifications);
   }
 
   async markAsRead(
