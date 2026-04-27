@@ -49,23 +49,11 @@ export class EmbarcacionesService extends BaseTenantService {
 
     this.applyTenantFilter(queryBuilder, tenant, 'embarcacion');
 
-    queryBuilder
-      .addSelect((subQuery) => {
-        return subQuery
-          .select('1')
-          .from('cargos', 'cargo')
-          .where('cargo.cliente_id = embarcacion.clienteId')
-          .andWhere('cargo.pagado = false')
-          .andWhere('cargo.guarderiaId = :guarderiaId', {
-            guarderiaId: tenant.guarderiaId,
-          })
-          .limit(1);
-      }, 'hasDebt')
-      .orderBy('embarcacion.createdAt', 'DESC');
+    queryBuilder.orderBy('embarcacion.createdAt', 'DESC');
 
     if (search) {
       queryBuilder.andWhere(
-        'embarcacion.nombre ILIKE :search OR embarcacion.matricula ILIKE :search OR cliente.nombre ILIKE :search',
+        '(embarcacion.nombre ILIKE :search OR embarcacion.matricula ILIKE :search OR cliente.nombre ILIKE :search)',
         { search: `%${search}%` },
       );
     }

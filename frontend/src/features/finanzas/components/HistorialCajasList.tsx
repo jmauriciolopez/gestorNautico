@@ -39,8 +39,8 @@ export function HistorialCajasList({ cajas, isLoading, onVerDetalle }: Historial
     } else if (sortKey === 'saldoInicial') {
       va = Number(a.saldoInicial); vb = Number(b.saldoInicial);
     } else if (sortKey === 'recaudacion') {
-      va = a.pagos?.reduce((s, p) => s + Number(p.monto), 0) ?? 0;
-      vb = b.pagos?.reduce((s, p) => s + Number(p.monto), 0) ?? 0;
+      va = Number(a.totalRecaudado || 0);
+      vb = Number(b.totalRecaudado || 0);
     } else {
       va = Number(a.saldoFinal ?? 0); vb = Number(b.saldoFinal ?? 0);
     }
@@ -74,7 +74,7 @@ export function HistorialCajasList({ cajas, isLoading, onVerDetalle }: Historial
             <tr><td colSpan={6} className="px-8 py-20 text-center text-[var(--text-muted)] font-bold bg-[var(--bg-secondary)]/20">No se detectaron cierres históricos registrados.</td></tr>
           ) : (
             sorted.map((caja) => {
-              const totalRecaudado = caja.pagos?.reduce((sum, p) => sum + Number(p.monto), 0) || 0;
+              const totalRecaudado = Number(caja.totalRecaudado || 0);
               const totalEsperado = Number(caja.saldoInicial) + totalRecaudado;
               const diferencia = Number(caja.saldoFinal || 0) - totalEsperado;
               const isExacto = Math.abs(diferencia) < 0.01;

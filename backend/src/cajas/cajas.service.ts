@@ -40,12 +40,33 @@ export class CajasService extends BaseTenantService {
     super();
   }
 
-  findAll(tenant: TenantContext, query: PaginationQuery = {}) {
-    return paginate(this.cajaRepo, query, {
-      where: this.buildTenantWhere(tenant),
-      relations: ['pagos', 'pagos.cliente', 'pagos.cargo'],
-      order: { createdAt: 'DESC' },
+  async findAll(tenant: TenantContext, query: PaginationQuery = {}) {
+    const qb = this.cajaRepo
+      .createQueryBuilder('caja')
+      .addSelect((subQuery) => {
+        return subQuery
+          .select('COALESCE(SUM(p.monto), 0)')
+          .from('pagos', 'p')
+          .where('p.caja_id = caja.id');
+      }, 'totalRecaudado')
+      .where('caja.guarderiaId = :guarderiaId', {
+        guarderiaId: tenant.guarderiaId,
+      })
+      .orderBy('caja.createdAt', 'DESC');
+
+    const paginated = await paginate(qb, query);
+
+    // Mapear los resultados raw a la entidad para incluir el totalRecaudado
+    paginated.data = paginated.data.map((item) => {
+      const row = item as Caja & { totalRecaudado?: string | number };
+      const { totalRecaudado, ...caja } = row;
+      return {
+        ...caja,
+        totalRecaudado: Number(totalRecaudado || 0),
+      };
     });
+
+    return paginated;
   }
 
   async findOne(tenant: TenantContext, id: number) {

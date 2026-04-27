@@ -39,6 +39,7 @@ export interface Caja {
   fechaCierre?: string;
   saldoInicial: number;
   saldoFinal?: number;
+  totalRecaudado?: number;
   estado: 'ABIERTA' | 'CERRADA';
   pagos?: Pago[];
 }
