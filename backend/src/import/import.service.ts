@@ -37,6 +37,7 @@ export interface EmbarcacionImportRow {
   manga?: string;
   tipo?: string;
   estado?: string;
+  descuento?: string;
 }
 
 @Injectable()
@@ -248,6 +249,7 @@ export class ImportService extends BaseTenantService {
 
           const eslora = row.eslora ? parseFloat(row.eslora) : undefined;
           const manga = row.manga ? parseFloat(row.manga) : undefined;
+          const descuento = row.descuento ? parseFloat(row.descuento) : 0;
 
           if (existingEmbarcacion) {
             await this.embarcacionRepo.update(existingEmbarcacion.id, {
@@ -260,6 +262,7 @@ export class ImportService extends BaseTenantService {
               estado_operativo: row.estado
                 ? (row.estado as EstadoEmbarcacion)
                 : existingEmbarcacion.estado_operativo,
+              descuento: row.descuento ? descuento : existingEmbarcacion.descuento,
               clienteId: cliente.id,
             });
             result.updated++;
@@ -274,6 +277,7 @@ export class ImportService extends BaseTenantService {
               tipo: row.tipo || 'Lancha',
               estado_operativo:
                 (row.estado as EstadoEmbarcacion) || EstadoEmbarcacion.EN_CUNA,
+              descuento: descuento,
               clienteId: cliente.id,
               guarderiaId: tenant.guarderiaId,
             });

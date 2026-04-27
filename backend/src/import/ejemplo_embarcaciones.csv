@@ -1,6 +1,6 @@
-nombre,matricula,dnidueno,marca,modelo,eslora,manga,tipo,estado
-El Peregrino,ABC-1234,12345678,Yamaha,2420,7.5,2.5,Lancha,EN_CUNA
-Mar Azul,XYZ-5678,87654321,Beneteau,Oceanis 40,12.0,3.8,Velero,EN_AGUA
-Aventura,DEF-9012,22334455,Quicksilver,580,5.8,2.3,Lancha,EN_CUNA
-Tormenta,GHI-3456,44556677,Sea Ray,370,11.0,3.5,Yate,EN_AGUA
-Brisa,JKL-7890,12345678,Wind Yachts,45,13.5,4.2,Catamaran,MANTENIMIENTO
+nombre,matricula,dnidueno,marca,modelo,eslora,manga,tipo,estado,descuento
+El Peregrino,ABC-1234,12345678,Yamaha,2420,7.5,2.5,Lancha,EN_CUNA,0
+Mar Azul,XYZ-5678,87654321,Beneteau,Oceanis 40,12.0,3.8,Velero,EN_AGUA,10
+Aventura,DEF-9012,22334455,Quicksilver,580,5.8,2.3,Lancha,EN_CUNA,0
+Tormenta,GHI-3456,44556677,Sea Ray,370,11.0,3.5,Yate,EN_AGUA,0
+Brisa,JKL-7890,12345678,Wind Yachts,45,13.5,4.2,Catamaran,EN_MANTENIMIENTO,5
