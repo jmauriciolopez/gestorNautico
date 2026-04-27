@@ -8,6 +8,30 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900&display=swap" rel="stylesheet">
+    <script>
+      /**
+       * Blindaje contra errores de carga de chunks.
+       * Este error ocurre cuando se sube una nueva versión a producción y los archivos JS viejos
+       * ya no existen, pero el usuario todavía tiene la aplicación abierta.
+       */
+      window.addEventListener('error', (e) => {
+        const msg = e.message || '';
+        const isChunkError = 
+          msg.includes('Failed to fetch dynamically imported module') ||
+          msg.includes('error loading dynamically imported module') ||
+          msg.includes('Importing a module script failed');
+          
+        if (isChunkError) {
+          const now = Date.now();
+          const lastReload = parseInt(sessionStorage.getItem('last-chunk-reload') || '0');
+          // Evitar bucles infinitos de recarga (máximo una vez cada 10 segundos)
+          if (now - lastReload > 10000) {
+            sessionStorage.setItem('last-chunk-reload', now.toString());
+            window.location.reload();
+          }
+        }
+      }, true);
+    </script>
   </head>
   <body>
     <div id="root"></div>
