@@ -118,24 +118,30 @@ El sistema implementa una matriz estricta de permisos basada en roles:
 El sistema cuenta con una arquitectura de notificaciones mixta para garantizar el flujo operativo:
 
 ### Escenarios Operativos (DB)
-*Actualmente las notificaciones internas se visualizan en la campana del Dashboard.*
+*Actualmente las notificaciones internas se visualizan en la campana del Dashboard (modelo Pull).*
 
-| Evento | Destinatario | Acción |
-| :--- | :--- | :--- |
-| **Pedidos de Bajada** | `OPERADOR` | Se genera cuando un cliente solicita una bajada desde la App móvil. |
-| **Pago Informado** | `OPERADOR` / `ADMIN` | Notificación de nuevo comprobante de transferencia subido por un cliente. |
-| **Cierre de Caja** | `ADMIN` | Reporte automático al finalizar el turno de un operador. |
-| **Mora Crítica** | `ADMIN` | Alerta cuando un cliente supera los 60 días de atraso. |
-| **Facturación Masiva** | `ADMIN` | Resultado del proceso automático de generación de mensualidades. |
+| Evento | Destinatario | Acción | Estado | ¿Funciona? |
+| :--- | :--- | :--- | :--- | :---: |
+| **Pedidos de Bajada** | `OPERADOR` | Solicitud desde App móvil. | ✅ Prod | ✅ |
+| **Pago Informado** | `OPERADOR` / `ADMIN` | Comprobante subido por cliente. | ✅ Prod | ✅ |
+| **Cierre de Caja** | `ADMIN` | Al finalizar turno del operador. | ✅ Prod | ✅ |
+| **Mora Crítica** | `ADMIN` | Alerta de atraso > 60 días. | ✅ Prod | ✅ |
+| **Facturación Masiva** | `ADMIN` | Resultado de proceso mensual. | ✅ Prod | ✅ |
+| **Notif. Tiempo Real**| `TODOS` | Popup instantáneo sin refrescar. | ❌ Pendiente | ❌ (1) |
+
+*(1) Requiere implementación de WebSockets (Socket.io) para evitar el retraso de 30s del polling.*
 
 ### Notificaciones Externas (Email)
 *Gestionadas a través de plantillas HBS y servicio Resend.*
 
-| Plantilla | Destinatario | Disparador |
-| :--- | :--- | :--- |
-| `factura-creada` | `CLIENTE` | Al emitir una factura mensual o cargo extra. |
-| `pago-recibido` | `CLIENTE` | Al confirmar la liquidación de una factura. |
-| `bienvenida` | `CLIENTE` | Al dar de alta un nuevo cliente en el sistema. |
+| Plantilla | Destinatario | Disparador | Estado | ¿Funciona? |
+| :--- | :--- | :--- | :--- | :---: |
+| `factura-creada` | `CLIENTE` | Al emitir factura/cargo. | ✅ Prod | ✅ |
+| `pago-recibido` | `CLIENTE` | Al liquidar una factura. | ✅ Prod | ✅ |
+| `bienvenida` | `CLIENTE` | Alta de nuevo cliente. | ✅ Prod | ✅ |
+| `aviso-deuda` | `CLIENTE` | Recordatorio manual/auto. | ✅ Prod | ✅ |
+
+*Nota: Todas las notificaciones de DB ahora se filtran automáticamente al ser leídas, desapareciendo de la lista activa.*
 
 *Nota: Las notificaciones internas operan bajo un modelo de "Pull" (requieren navegación o refresco para actualizar el contador).*
 

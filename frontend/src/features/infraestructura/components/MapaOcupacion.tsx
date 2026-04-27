@@ -24,12 +24,103 @@ interface OccupancyRack3DContainerProps {
   highlightedQuery?: string;
 }
 
-const OccupancyRack3DContainer: React.FC<OccupancyRack3DContainerProps> = ({ 
-  rack, 
+// 1. Componente de celda memoizado para evitar re-renders masivos
+const RackCell = React.memo(({ 
+  espacio, 
+  p, c, f, 
   is3D, 
-  getBoatSizeClass,
-  highlightedQuery
+  getBoatSizeClass, 
+  highlightedQuery 
+}: { 
+  espacio: any, 
+  p: number, c: number, f: number, 
+  is3D: boolean, 
+  getBoatSizeClass: (eslora: number) => string,
+  highlightedQuery?: string
 }) => {
+  if (!espacio) return (
+    <div className={`
+      ${is3D ? 'absolute inset-0' : 'w-[85px] h-[85px]'} 
+      rounded-lg border-2 border-dashed border-white/10 opacity-10
+    `} />
+  );
+
+  const isHighlighted = highlightedQuery && (
+    espacio.embarcacion?.nombre.toLowerCase().includes(highlightedQuery.toLowerCase())
+  );
+
+  if (is3D) {
+    return (
+      <button
+        className={`
+          absolute inset-0 rounded-lg border-2 transition-all duration-700 flex flex-col items-center justify-center gap-1 group/item cell-3d
+            ${espacio.ocupado
+              ? `${getBoatSizeClass(espacio.embarcacion?.eslora || 0)} shadow-xl z-10 border-2 ${
+                  isHighlighted ? 'ring-4 ring-yellow-400 ring-offset-4 ring-offset-slate-900 scale-110 z-30 border-yellow-400' : ''
+                }`
+              : 'bg-slate-800/40 border-white/20 hover:border-indigo-400'
+            }
+        `}
+        style={{
+          transform: `translateZ(${p * 80}px) translateX(${p * 2}px) translateY(-${p * 2}px)`,
+          zIndex: 20 - p
+        }}
+      >
+        <div className="cell-volume-side cell-volume-top" />
+        <div className="cell-volume-side cell-volume-left" />
+        
+        {espacio.ocupado ? (
+          <Anchor size={20} className="text-white drop-shadow-md" />
+        ) : (
+          <span className="text-[10px] font-black opacity-10">{p}</span>
+        )}
+
+        <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[8px] font-black opacity-50 text-white tracking-widest uppercase pointer-events-none">
+          Z{p}
+        </div>
+      </button>
+    );
+  }
+
+  // Vista 2D
+  return (
+    <div
+      className={`
+        w-[85px] h-[85px] rounded-lg border-2 transition-all duration-300 flex flex-col items-center justify-center gap-1 group relative
+        ${espacio.ocupado
+          ? `${getBoatSizeClass(espacio.embarcacion?.eslora || 0)} shadow-lg border-2 ${
+              isHighlighted ? 'ring-4 ring-yellow-400 z-10 scale-110 border-yellow-400 shadow-[0_0_30px_rgba(250,204,21,0.4)]' : ''
+            }`
+          : 'bg-slate-800/40 border-white/20 hover:border-indigo-400'
+        }
+      `}
+    >
+      {espacio.ocupado ? (
+        <>
+          <Anchor size={20} className="text-white/80" />
+          {/* Lazy Detail: Solo mostramos el nombre en 2D y con truncado agresivo */}
+          <span className="text-[8px] font-black text-center px-1 truncate w-full uppercase text-white leading-tight drop-shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+            {espacio.embarcacion?.nombre}
+          </span>
+        </>
+      ) : (
+        <span className="text-[10px] font-black opacity-10 tracking-widest">{p}</span>
+      )}
+      
+      <div className="absolute top-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <span className="text-[8px] bg-black/80 px-1.5 py-0.5 rounded text-indigo-300 font-bold border border-white/5">F{f} C{c}</span>
+      </div>
+    </div>
+  );
+}, (prev, next) => {
+  // Solo re-renderizar si cambia el estado de ocupación, el highlight o el modo 3D
+  return (
+    prev.espacio?.ocupado === next.espacio?.ocupado &&
+    prev.espacio?.embarcacion?.id === next.espacio?.embarcacion?.id &&
+    prev.is3D === next.is3D &&
+    prev.highlightedQuery === next.highlightedQuery
+  );
+});
   const localRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
 
@@ -113,49 +204,15 @@ const OccupancyRack3DContainer: React.FC<OccupancyRack3DContainerProps> = ({
                         {Array.from({ length: rack.pisos }).map((_, pIdx) => {
                           const p = pIdx + 1;
                           const espacio = rack.espacios.find((e: any) => e.piso === p && e.columna === c && e.fila === f);
-
                           return (
-                            <button
+                            <RackCell 
                               key={`cell-${p}-${c}-${f}`}
-                              className={`
-                                absolute inset-0 rounded-lg border-2 transition-all duration-700 flex flex-col items-center justify-center gap-1 group/item cell-3d
-                                  ${!espacio 
-                                   ? 'bg-transparent border-dashed border-white/10 opacity-10' 
-                                   : espacio.ocupado
-                                     ? `${getBoatSizeClass(espacio.embarcacion?.eslora || 0)} shadow-xl z-10 border-2 ${
-                                         highlightedQuery && espacio.embarcacion?.nombre.toLowerCase().includes(highlightedQuery.toLowerCase())
-                                         ? 'ring-4 ring-yellow-400 ring-offset-4 ring-offset-slate-900 scale-110 z-30 border-yellow-400'
-                                         : ''
-                                       }`
-                                     : `bg-slate-800/40 border-white/20 hover:border-indigo-400 ${
-                                         highlightedQuery && rack.codigo.toLowerCase() === highlightedQuery.toLowerCase()
-                                         ? 'border-indigo-500 bg-indigo-500/30 shadow-[0_0_20px_rgba(99,102,241,0.3)]'
-                                         : ''
-                                       }`
-                                 }}
-                              `}
-                              style={{
-                                transform: `translateZ(${p * 80}px) translateX(${p * 2}px) translateY(-${p * 2}px)`,
-                                zIndex: 20 - p
-                              }}
-                            >
-                              {espacio && (
-                                <>
-                                  <div className="cell-volume-side cell-volume-top" />
-                                  <div className="cell-volume-side cell-volume-left" />
-                                </>
-                              )}
-
-                              {espacio?.ocupado ? (
-                                <Anchor size={20} className="text-white drop-shadow-md" />
-                              ) : (
-                                <span className="text-[10px] font-black opacity-10">{p}</span>
-                              )}
-
-                              <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[8px] font-black opacity-50 text-white tracking-widest uppercase pointer-events-none">
-                                Z{p}
-                              </div>
-                            </button>
+                              espacio={espacio}
+                              p={p} c={c} f={f}
+                              is3D={is3D}
+                              getBoatSizeClass={getBoatSizeClass}
+                              highlightedQuery={highlightedQuery}
+                            />
                           );
                         })}
                       </div>
@@ -211,43 +268,14 @@ const OccupancyRack3DContainer: React.FC<OccupancyRack3DContainerProps> = ({
                         const espacio = rack.espacios.find((e: any) => e.piso === p && e.columna === c && e.fila === f);
 
                         return (
-                          <div
+                          <RackCell 
                             key={`cell-2d-${p}-${c}-${f}`}
-                            className={`
-                              w-[85px] h-[85px] rounded-lg border-2 transition-all duration-300 flex flex-col items-center justify-center gap-1 group relative
-                              ${!espacio 
-                                ? 'bg-transparent border-dashed border-white/10 opacity-10' 
-                                : espacio.ocupado
-                                  ? `${getBoatSizeClass(espacio.embarcacion?.eslora || 0)} shadow-lg border-2 ${
-                                      highlightedQuery && espacio.embarcacion?.nombre.toLowerCase().includes(highlightedQuery.toLowerCase())
-                                      ? 'ring-4 ring-yellow-400 z-10 scale-110 border-yellow-400 shadow-[0_0_30px_rgba(250,204,21,0.4)]'
-                                      : ''
-                                    }`
-                                  : `bg-slate-800/40 border-white/20 hover:border-indigo-400 ${
-                                      highlightedQuery && rack.codigo.toLowerCase() === highlightedQuery.toLowerCase()
-                                      ? 'border-indigo-500 bg-indigo-500/30'
-                                      : ''
-                                    }`
-                                }
-                            `}
-                          >
-                            {espacio?.ocupado ? (
-                              <>
-                                <Anchor size={20} className="text-white/80" />
-                                <span className="text-[8px] font-black text-center px-1 truncate w-full uppercase text-white leading-tight drop-shadow-sm">
-                                  {espacio.embarcacion?.nombre}
-                                </span>
-                              </>
-                            ) : espacio && (
-                              <span className="text-[10px] font-black opacity-10 tracking-widest">{p}</span>
-                            )}
-                            
-                            {espacio && (
-                              <div className="absolute top-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <span className="text-[8px] bg-black/80 px-1.5 py-0.5 rounded text-indigo-300 font-bold border border-white/5">F{f} C{c}</span>
-                              </div>
-                            )}
-                          </div>
+                            espacio={espacio}
+                            p={p} c={c} f={f}
+                            is3D={is3D}
+                            getBoatSizeClass={getBoatSizeClass}
+                            highlightedQuery={highlightedQuery}
+                          />
                         );
                       });
                     })}
