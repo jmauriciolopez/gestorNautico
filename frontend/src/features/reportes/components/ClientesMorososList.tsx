@@ -1,10 +1,5 @@
 import { AlertTriangle, Phone, Mail } from 'lucide-react';
-import type { ClienteMoroso } from '../hooks/useReportes';
-
-interface Props {
-  data: ClienteMoroso[];
-  isLoading: boolean;
-}
+import { useClientesMorosos } from '../hooks/useReportes';
 
 function Atrasobadge({ dias }: { dias: number }) {
   if (dias > 60) return (
@@ -24,7 +19,8 @@ function Atrasobadge({ dias }: { dias: number }) {
   );
 }
 
-export function ClientesMorososList({ data, isLoading }: Props) {
+export function ClientesMorososList() {
+  const { data = [], isLoading } = useClientesMorosos();
   const totalDeuda = data.reduce((s, c) => s + Number(c.totalDeuda), 0);
 
   return (

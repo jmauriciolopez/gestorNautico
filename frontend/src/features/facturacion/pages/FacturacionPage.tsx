@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { Plus, RefreshCw, Receipt, FileText, Search, FileCheck, AlertCircle, Trash2, Calendar } from 'lucide-react';
 import { useFacturasStats } from '../hooks/useFacturas';
 import { FacturasList } from '../components/FacturasList';
-import { NuevaFacturaModal } from '../components/NuevaFacturaModal';
 import { RoleGuard } from '../../../components/auth/RoleGuard';
 import { Role } from '../../../types';
 import { useQueryClient } from '@tanstack/react-query';
 import { useDebounce } from '../../../hooks/useDebounce';
+
+const NuevaFacturaModal = lazy(() => import('../components/NuevaFacturaModal').then(m => ({ default: m.NuevaFacturaModal })));
 
 export default function FacturacionPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -185,10 +186,12 @@ export default function FacturacionPage() {
         <FacturasList filters={filters} />
       </main>
 
-      <NuevaFacturaModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      />
+      <Suspense fallback={null}>
+        <NuevaFacturaModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+        />
+      </Suspense>
     </div>
   );
 }

@@ -1,15 +1,11 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import { OcupacionReport } from '../hooks/useReportes';
+import { useOcupacion } from '../hooks/useReportes';
 import { LayoutGrid, MapPin, Loader2 } from 'lucide-react';
-
-interface Props {
-  data?: OcupacionReport;
-  isLoading: boolean;
-}
 
 const COLORS = ['#6366f1', '#1e293b']; // Indigo-500, Slate-800
 
-export const DashboardOcupacion = ({ data, isLoading }: Props) => {
+export const DashboardOcupacion = () => {
+  const { data, isLoading } = useOcupacion();
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-20">

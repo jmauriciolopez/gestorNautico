@@ -34,6 +34,7 @@ export const useClientesMorosos = () => {
   return useQuery<ClienteMoroso[]>({
     queryKey: ['reportes', guarderiaId, 'morosos'],
     queryFn: () => httpClient.get('/reportes/morosos'),
+    staleTime: 1000 * 60 * 1, // 1 minuto
   });
 };
 
@@ -42,6 +43,7 @@ export const useMensualidades = () => {
   return useQuery<MensualidadDescuento[]>({
     queryKey: ['reportes', guarderiaId, 'mensualidades'],
     queryFn: () => httpClient.get('/reportes/mensualidades'),
+    staleTime: 1000 * 60 * 5, // 5 minutos
   });
 };
 
@@ -63,6 +65,7 @@ export const useOcupacion = () => {
   return useQuery<OcupacionReport>({
     queryKey: ['reportes', guarderiaId, 'ocupacion'],
     queryFn: () => httpClient.get('/reportes/ocupacion'),
+    staleTime: 1000 * 60 * 2, // 2 minutos
   });
 };
 
@@ -81,6 +84,7 @@ export const useIngresos = (params: { startDate?: string; endDate?: string } = {
       if (params.endDate) searchParams.append('endDate', params.endDate);
       return httpClient.get(`/reportes/ingresos?${searchParams.toString()}`);
     },
+    staleTime: 1000 * 60 * 5, // 5 minutos
   });
 };
 
@@ -137,5 +141,6 @@ export const useVIPClients = () => {
   return useQuery({
     queryKey: ['dashboard', guarderiaId, 'gerencial', 'vip-clients'],
     queryFn: () => httpClient.get('/dashboard/gerencial/vip-clients'),
+    staleTime: 1000 * 60 * 30, // 30 minutos
   });
 };

@@ -1,16 +1,17 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, lazy, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useOperaciones, useSolicitudesBajada, Pedido } from '../hooks/useOperaciones';
 import { PedidosList } from '../components/PedidosList';
 import { MovimientosList } from '../components/MovimientosList';
-import { NuevoPedidoModal } from '../components/NuevoPedidoModal';
-import { NuevoMovimientoModal } from '../components/NuevoMovimientoModal';
 import { Activity, Plus, Clock, History, Building2 } from 'lucide-react';
 import { useConfirm } from '../../../shared/hooks/useConfirm';
 import { useAuth } from '../../auth/hooks/useAuth';
 import { useActiveGuarderiaId } from '../../../shared/hooks/useActiveGuarderiaId';
 import { Role } from '../../../types';
+
+const NuevoPedidoModal = lazy(() => import('../components/NuevoPedidoModal').then(m => ({ default: m.NuevoPedidoModal })));
+const NuevoMovimientoModal = lazy(() => import('../components/NuevoMovimientoModal').then(m => ({ default: m.NuevoMovimientoModal })));
 
 type Tab = 'pedidos' | 'movimientos' | 'bajadas';
 
@@ -244,18 +245,20 @@ export default function OperacionesPage() {
         )}
       </motion.main>
 
-      <NuevoPedidoModal
-        isOpen={isPedidoModalOpen}
-        onClose={() => setIsPedidoModalOpen(false)}
-        onSave={handleCreatePedido}
-        activeBoatIds={getPedidos.data?.map(p => p.embarcacion.id) || []}
-      />
+      <Suspense fallback={null}>
+        <NuevoPedidoModal
+          isOpen={isPedidoModalOpen}
+          onClose={() => setIsPedidoModalOpen(false)}
+          onSave={handleCreatePedido}
+          activeBoatIds={getPedidos.data?.map(p => p.embarcacion.id) || []}
+        />
 
-      <NuevoMovimientoModal
-        isOpen={isMovimientoModalOpen}
-        onClose={() => setIsMovimientoModalOpen(false)}
-        onSuccess={handleCreateMovimiento}
-      />
+        <NuevoMovimientoModal
+          isOpen={isMovimientoModalOpen}
+          onClose={() => setIsMovimientoModalOpen(false)}
+          onSuccess={handleCreateMovimiento}
+        />
+      </Suspense>
     </div>
   );
 }

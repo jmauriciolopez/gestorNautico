@@ -113,6 +113,32 @@ El sistema implementa una matriz estricta de permisos basada en roles:
 | **Sedes (SaaS)** | ❌ | ❌ | ❌ | ✅ |
 | **Ayuda** | ✅ | ✅ | ✅ | ✅ |
 
+## 🔔 Sistema de Notificaciones
+
+El sistema cuenta con una arquitectura de notificaciones mixta para garantizar el flujo operativo:
+
+### Escenarios Operativos (DB)
+*Actualmente las notificaciones internas se visualizan en la campana del Dashboard.*
+
+| Evento | Destinatario | Acción |
+| :--- | :--- | :--- |
+| **Pedidos de Bajada** | `OPERADOR` | Se genera cuando un cliente solicita una bajada desde la App móvil. |
+| **Pago Informado** | `OPERADOR` / `ADMIN` | Notificación de nuevo comprobante de transferencia subido por un cliente. |
+| **Cierre de Caja** | `ADMIN` | Reporte automático al finalizar el turno de un operador. |
+| **Mora Crítica** | `ADMIN` | Alerta cuando un cliente supera los 60 días de atraso. |
+| **Facturación Masiva** | `ADMIN` | Resultado del proceso automático de generación de mensualidades. |
+
+### Notificaciones Externas (Email)
+*Gestionadas a través de plantillas HBS y servicio Resend.*
+
+| Plantilla | Destinatario | Disparador |
+| :--- | :--- | :--- |
+| `factura-creada` | `CLIENTE` | Al emitir una factura mensual o cargo extra. |
+| `pago-recibido` | `CLIENTE` | Al confirmar la liquidación de una factura. |
+| `bienvenida` | `CLIENTE` | Al dar de alta un nuevo cliente en el sistema. |
+
+*Nota: Las notificaciones internas operan bajo un modelo de "Pull" (requieren navegación o refresco para actualizar el contador).*
+
 *Nota: El acceso a la creación y edición de Clientes/Embarcaciones está restringido para el rol Operador.*
 
 ---

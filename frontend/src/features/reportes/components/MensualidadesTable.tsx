@@ -1,12 +1,8 @@
 import { TrendingDown } from 'lucide-react';
-import type { MensualidadDescuento } from '../hooks/useReportes';
+import { useMensualidades } from '../hooks/useReportes';
 
-interface Props {
-  data: MensualidadDescuento[];
-  isLoading: boolean;
-}
-
-export function MensualidadesTable({ data, isLoading }: Props) {
+export function MensualidadesTable() {
+  const { data = [], isLoading } = useMensualidades();
   const totalBase = data.reduce((s, r) => s + Number(r.tarifaBase), 0);
   const totalFinal = data.reduce((s, r) => s + Number(r.totalFinal), 0);
   const totalDescuentos = totalBase - totalFinal;

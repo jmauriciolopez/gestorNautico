@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useClientesMorosos, useMensualidades, useOcupacion } from '../hooks/useReportes';
+import { useClientesMorosos } from '../hooks/useReportes';
 import { ClientesMorososList } from '../components/ClientesMorososList';
 import { MensualidadesTable } from '../components/MensualidadesTable';
 import { DashboardOcupacion } from '../components/DashboardOcupacion';
@@ -14,16 +14,14 @@ export default function ReportesPage() {
   const [activeTab, setActiveTab] = useState<Tab>('morosos');
   const queryClient = useQueryClient();
 
-  const morosos = useClientesMorosos();
-  const mensualidades = useMensualidades();
-  const ocupacion = useOcupacion();
+  const { data: morososData } = useClientesMorosos();
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ['reportes'] });
   };
 
   const tabs = [
-    { id: 'morosos' as Tab, label: 'Morosidad', icon: AlertTriangle, count: morosos.data?.length },
+    { id: 'morosos' as Tab, label: 'Morosidad', icon: AlertTriangle, count: morososData?.length },
     { id: 'auditoria' as Tab, label: 'Auditoría', icon: ShieldCheck },
     { id: 'mensualidades' as Tab, label: 'Mensualidades', icon: TrendingDown },
     { id: 'ocupacion' as Tab, label: 'Ocupación', icon: LayoutGrid },
@@ -104,16 +102,16 @@ export default function ReportesPage() {
         </div>
 
         {activeTab === 'morosos' && (
-          <ClientesMorososList data={morosos.data ?? []} isLoading={morosos.isLoading} />
+          <ClientesMorososList />
         )}
         {activeTab === 'auditoria' && (
           <PagosPorValidarList />
         )}
         {activeTab === 'mensualidades' && (
-          <MensualidadesTable data={mensualidades.data ?? []} isLoading={mensualidades.isLoading} />
+          <MensualidadesTable />
         )}
         {activeTab === 'ocupacion' && (
-          <DashboardOcupacion data={ocupacion.data} isLoading={ocupacion.isLoading} />
+          <DashboardOcupacion />
         )}
         {activeTab === 'ingresos' && (
           <DashboardIngresos />
