@@ -35,6 +35,8 @@ import { join } from 'path';
 import { APP_GUARD } from '@nestjs/core';
 import { TrialGuard } from './auth/guards/trial.guard';
 import { CacheModule } from '@nestjs/cache-manager';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 
 @Module({
   imports: [
@@ -120,7 +122,9 @@ import { CacheModule } from '@nestjs/cache-manager';
     ImportModule,
     GuarderiasModule,
   ],
+  controllers: [AppController],
   providers: [
+    AppService,
     {
       provide: APP_GUARD,
       useClass: TrialGuard,
