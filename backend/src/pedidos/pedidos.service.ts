@@ -238,14 +238,20 @@ export class PedidosService extends BaseTenantService {
       }
 
       // Notificar cambio de estado a roles relevantes
-      await this.notificacionesService.createForRole(tenant, Role.ADMIN, {
-        titulo: 'Actualización de Operación',
-        mensaje: `La embarcación ${pedido.embarcacion?.nombre || 'N/A'} cambió a estado ${estado}.`,
-        tipo:
-          estado === EstadoPedido.CANCELADO
-            ? NotificacionTipo.ALERTA
-            : NotificacionTipo.INFO,
-      });
+      // Notificar cambio de estado a roles relevantes - Pasamos el manager
+      await this.notificacionesService.createForRole(
+        tenant,
+        Role.ADMIN,
+        {
+          titulo: 'Actualización de Operación',
+          mensaje: `La embarcación ${pedido.embarcacion?.nombre || 'N/A'} cambió a estado ${estado}.`,
+          tipo:
+            estado === EstadoPedido.CANCELADO
+              ? NotificacionTipo.ALERTA
+              : NotificacionTipo.INFO,
+        },
+        manager,
+      );
 
       return await manager.findOne(Pedido, {
         where: this.buildTenantWhere<Pedido>(tenant, { id }),

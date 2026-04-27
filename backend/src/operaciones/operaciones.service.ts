@@ -5,7 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, LessThan, Repository } from 'typeorm';
+import { In, LessThan, Repository, DataSource } from 'typeorm';
 import { SolicitudBajada, EstadoSolicitud } from './solicitud-bajada.entity';
 import { CreateSolicitudBajadaDto } from './dto/create-solicitud-bajada.dto';
 import { Cliente } from '../clientes/clientes.entity';
@@ -45,6 +45,7 @@ export class OperacionesService extends BaseTenantService {
     private readonly notificacionesService: NotificacionesService,
     private readonly movimientosService: MovimientosService,
     private readonly configuracionService: ConfiguracionService,
+    private readonly dataSource: DataSource,
   ) {
     super();
   }
@@ -267,100 +268,117 @@ export class OperacionesService extends BaseTenantService {
     estado: EstadoSolicitud,
     motivo?: string,
   ) {
-    const solicitud = await this.solicitudRepo.findOne({
-      where: this.buildTenantWhere<SolicitudBajada>(tenant, { id }),
-      relations: ['cliente', 'embarcacion'],
-    });
-    if (!solicitud)
-      throw new NotFoundException(`Solicitud ${id} no encontrada`);
+    return await this.dataSource.transaction(async (manager) => {
+      const solRepo = manager.getRepository(SolicitudBajada);
 
-    const pedido = solicitud;
-
-    await this.solicitudRepo.update(id, { estado });
-
-    // Lógica según el nuevo estado simplificado
-    const embarcacionId = pedido.embarcacion?.id || solicitud.embarcacionId;
-
-    if (estado === EstadoSolicitud.EN_AGUA) {
-      await this.movimientosService.create(tenant, {
-        embarcacionId,
-        tipo: TipoMovimiento.SALIDA,
-        observaciones: `Bajada marcada desde Monitor de Cola #${pedido.id}`,
+      const solicitud = await solRepo.findOne({
+        where: this.buildTenantWhere<SolicitudBajada>(tenant, { id }),
+        relations: ['cliente', 'embarcacion'],
       });
-    } else if (estado === EstadoSolicitud.FINALIZADA) {
-      await this.movimientosService.create(tenant, {
-        embarcacionId,
-        tipo: TipoMovimiento.ENTRADA,
-        observaciones: `Retorno a cuna marcado desde Monitor de Cola #${pedido.id}`,
-      });
-    }
+      if (!solicitud)
+        throw new NotFoundException(`Solicitud ${id} no encontrada`);
 
-    const fecha = solicitud.fechaHoraDeseada.toLocaleString('es-AR');
-    const barco = solicitud.embarcacion.nombre;
-    const email = solicitud.cliente.email;
+      const pedido = solicitud;
 
-    // Notificaciones internas
-    await this.notificacionesService.createForRole(tenant, Role.ADMIN, {
-      titulo: `Operación ${estado}`,
-      mensaje: `La embarcación "${barco}" cambió a estado ${estado}.`,
-      tipo:
-        estado === EstadoSolicitud.CANCELADA
-          ? NotificacionTipo.ALERTA
-          : NotificacionTipo.EXITO,
-    });
+      await solRepo.update(id, { estado });
 
-    // Email al cliente según el nuevo estado
-    if (email) {
-      const templates: Partial<
-        Record<EstadoSolicitud, { subject: string; template: string }>
-      > = {
-        [EstadoSolicitud.EN_AGUA]: {
-          subject: 'Tu embarcación ya está en el agua — Gestor Náutico',
-          template: 'bajada-completada',
+      // Lógica según el nuevo estado simplificado
+      const embarcacionId = pedido.embarcacion?.id || solicitud.embarcacionId;
+
+      if (estado === EstadoSolicitud.EN_AGUA) {
+        await this.movimientosService.create(
+          tenant,
+          {
+            embarcacionId,
+            tipo: TipoMovimiento.SALIDA,
+            observaciones: `Bajada marcada desde Monitor de Cola #${pedido.id}`,
+          },
+          manager,
+        );
+      } else if (estado === EstadoSolicitud.FINALIZADA) {
+        await this.movimientosService.create(
+          tenant,
+          {
+            embarcacionId,
+            tipo: TipoMovimiento.ENTRADA,
+            observaciones: `Retorno a cuna marcado desde Monitor de Cola #${pedido.id}`,
+          },
+          manager,
+        );
+      }
+
+      const fecha = solicitud.fechaHoraDeseada.toLocaleString('es-AR');
+      const barco = solicitud.embarcacion.nombre;
+      const email = solicitud.cliente.email;
+
+      // Notificaciones internas
+      await this.notificacionesService.createForRole(
+        tenant,
+        Role.ADMIN,
+        {
+          titulo: `Operación ${estado}`,
+          mensaje: `La embarcación "${barco}" cambió a estado ${estado}.`,
+          tipo:
+            estado === EstadoSolicitud.CANCELADA
+              ? NotificacionTipo.ALERTA
+              : NotificacionTipo.EXITO,
         },
-        [EstadoSolicitud.FINALIZADA]: {
-          subject: 'Tu embarcación ya está en su cuna — Gestor Náutico',
-          template: 'subida-completada',
-        },
-        [EstadoSolicitud.CANCELADA]: {
-          subject: 'Tu solicitud de bajada fue cancelada — Gestor Náutico',
-          template: 'bajada-cancelada',
-        },
-      };
+        manager,
+      );
 
-      const tpl = templates[estado];
-      if (tpl) {
-        try {
-          await this.notificacionesService.sendEmailNotification(
-            email,
-            tpl.subject,
-            tpl.template,
-            {
-              clienteNombre: solicitud.cliente.nombre,
-              barcoNombre: barco,
-              fechaHora: fecha,
-              motivo: motivo ?? '',
-              anio: new Date().getFullYear(),
-            },
-          );
-        } catch (error: unknown) {
-          const msg =
-            error instanceof Error
-              ? error.message
-              : typeof error === 'string'
-                ? error
-                : 'Error desconocido';
-          this.logger.error(
-            `Error enviando email para solicitud ${id}: ${msg}`,
-          );
-          // No relanzamos el error para no bloquear la operación física
+      // Email al cliente según el nuevo estado
+      if (email) {
+        const templates: Partial<
+          Record<EstadoSolicitud, { subject: string; template: string }>
+        > = {
+          [EstadoSolicitud.EN_AGUA]: {
+            subject: 'Tu embarcación ya está en el agua — Gestor Náutico',
+            template: 'bajada-completada',
+          },
+          [EstadoSolicitud.FINALIZADA]: {
+            subject: 'Tu embarcación ya está en su cuna — Gestor Náutico',
+            template: 'subida-completada',
+          },
+          [EstadoSolicitud.CANCELADA]: {
+            subject: 'Tu solicitud de bajada fue cancelada — Gestor Náutico',
+            template: 'bajada-cancelada',
+          },
+        };
+
+        const tpl = templates[estado];
+        if (tpl) {
+          try {
+            await this.notificacionesService.sendEmailNotification(
+              email,
+              tpl.subject,
+              tpl.template,
+              {
+                clienteNombre: solicitud.cliente.nombre,
+                barcoNombre: barco,
+                fechaHora: fecha,
+                motivo: motivo ?? '',
+                anio: new Date().getFullYear(),
+              },
+            );
+          } catch (error: unknown) {
+            const msg =
+              error instanceof Error
+                ? error.message
+                : typeof error === 'string'
+                  ? error
+                  : 'Error desconocido';
+            this.logger.error(
+              `Error enviando email para solicitud ${id}: ${msg}`,
+            );
+            // No relanzamos el error para no bloquear la operación física
+          }
         }
       }
-    }
 
-    return this.solicitudRepo.findOne({
-      where: this.buildTenantWhere<SolicitudBajada>(tenant, { id }),
-      relations: ['cliente', 'embarcacion'],
+      return await solRepo.findOne({
+        where: this.buildTenantWhere<SolicitudBajada>(tenant, { id }),
+        relations: ['cliente', 'embarcacion'],
+      });
     });
   }
 }
