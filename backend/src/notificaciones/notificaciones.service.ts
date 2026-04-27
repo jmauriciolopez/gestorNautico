@@ -64,6 +64,15 @@ export class NotificacionesService extends BaseTenantService {
     });
   }
 
+  async countUnread(tenant: TenantContext, usuarioId: number): Promise<number> {
+    return this.notificacionesRepository.count({
+      where: this.buildTenantWhere<Notificacion>(tenant, {
+        usuarioId,
+        leida: false,
+      }),
+    });
+  }
+
   async create(
     tenant: TenantContext,
     data: {

@@ -46,6 +46,16 @@ export class NotificacionesController {
     });
   }
 
+  @Get('unread-count')
+  async getUnreadCount(
+    @ActiveTenant() tenant: TenantContext,
+    @Req() request: RequestWithUser,
+  ): Promise<{ count: number }> {
+    const userId = request.user.sub;
+    const count = await this.notificacionesService.countUnread(tenant, userId);
+    return { count };
+  }
+
   @Patch(':id/leer')
   async markAsRead(
     @ActiveTenant() tenant: TenantContext,

@@ -7,23 +7,19 @@ interface NotificationPopoverProps {
 }
 
 export function NotificationPopover({ isOpen, onClose }: NotificationPopoverProps) {
-  const { getNotificaciones, markAsRead, markAllAsRead, deleteNotificacion, unreadCount } = useNotificaciones();
+  const { 
+    notifications, 
+    unreadCount, 
+    markAsRead, 
+    markAllAsRead, 
+    deleteNotificacion 
+  } = useNotificaciones({ limit: 50 });
 
   if (!isOpen) return null;
 
-  const handleMarkAsRead = async (id: number) => {
-    await markAsRead.mutateAsync(id);
-  };
-
-  const handleMarkAllAsRead = async () => {
-    await markAllAsRead.mutateAsync();
-  };
-
-  const handleDelete = async (id: number) => {
-    await deleteNotificacion.mutateAsync(id);
-  };
-
-  const notifications = getNotificaciones.data || [];
+  const handleMarkAsRead = (id: number) => markAsRead.mutate(id);
+  const handleMarkAllAsRead = () => markAllAsRead.mutate();
+  const handleDelete = (id: number) => deleteNotificacion.mutate(id);
 
   const getIcon = (tipo: Notificacion['tipo']) => {
     switch (tipo) {
