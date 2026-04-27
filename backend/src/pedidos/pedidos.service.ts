@@ -230,6 +230,8 @@ export class PedidosService extends BaseTenantService {
               observaciones: `Bajada marcada desde Monitor de Cola #${pedido.id}`,
             },
             manager,
+            pedido.embarcacion,
+            true, // skipStatusSync
           );
         } else if (estado === EstadoPedido.FINALIZADO) {
           await this.movimientosService.create(
@@ -240,6 +242,8 @@ export class PedidosService extends BaseTenantService {
               observaciones: `Retorno a cuna marcado desde Monitor de Cola #${pedido.id}`,
             },
             manager,
+            pedido.embarcacion,
+            true, // skipStatusSync
           );
         }
       }

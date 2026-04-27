@@ -105,6 +105,22 @@ export class EmbarcacionesService extends BaseTenantService {
     return embarcacion;
   }
 
+  /**
+   * Versión ligera de findOne para operaciones internas que no requieren relaciones pesadas
+   */
+  async findOneMinimal(
+    tenant: TenantContext,
+    id: number,
+  ): Promise<Embarcacion> {
+    const embarcacion = await this.embarcacionesRepository.findOne({
+      where: this.buildTenantWhere<Embarcacion>(tenant, { id }),
+    });
+    if (!embarcacion) {
+      throw new NotFoundException(`Embarcación con ID ${id} no encontrada`);
+    }
+    return embarcacion;
+  }
+
   private async validarDimensionesUbicacion(
     tenant: TenantContext,
     espacioId: number,

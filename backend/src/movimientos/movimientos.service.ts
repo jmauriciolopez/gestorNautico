@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   Repository,
@@ -36,6 +36,8 @@ import { TenantContext } from '../compartido/interfaces/tenant-context.interface
 
 @Injectable()
 export class MovimientosService extends BaseTenantService {
+  private readonly logger = new Logger(MovimientosService.name);
+
   constructor(
     @InjectRepository(Movimiento)
     private readonly movimientoRepo: Repository<Movimiento>,
@@ -97,12 +99,20 @@ export class MovimientosService extends BaseTenantService {
     tenant: TenantContext,
     data: CreateMovimientoDto,
     manager?: EntityManager,
+    embarcacion?: Embarcacion,
+    skipStatusSync: boolean = false,
   ) {
     if (manager) {
-      return await this._create(tenant, data, manager);
+      return await this._create(
+        tenant,
+        data,
+        manager,
+        embarcacion,
+        skipStatusSync,
+      );
     }
     return await this.dataSource.transaction(async (mgr) => {
-      return await this._create(tenant, data, mgr);
+      return await this._create(tenant, data, mgr, embarcacion, skipStatusSync);
     });
   }
 
@@ -110,6 +120,8 @@ export class MovimientosService extends BaseTenantService {
     tenant: TenantContext,
     data: CreateMovimientoDto,
     manager: EntityManager,
+    embarcacionInput?: Embarcacion,
+    skipStatusSync: boolean = false,
   ) {
     const { embarcacionId, espacioId, tipo, ...rest } = data;
 
@@ -118,14 +130,17 @@ export class MovimientosService extends BaseTenantService {
     const solRepo = manager.getRepository(SolicitudBajada);
     const boatRepo = manager.getRepository(Embarcacion);
 
-    // Find the current boat to get its assigned space if needed
-    const embarcacion: Embarcacion = await this.embarcacionesService.findOne(
-      tenant,
-      Number(embarcacionId),
-    );
+    // Find the current boat to get its assigned space if needed (use minimal if possible)
+    const embarcacion =
+      embarcacionInput ||
+      (await this.embarcacionesService.findOneMinimal(
+        tenant,
+        Number(embarcacionId),
+      ));
+
     const targetEspacioId = espacioId
       ? Number(espacioId)
-      : embarcacion.espacio?.id || null;
+      : embarcacion.espacio?.id || embarcacion.espacioId || null;
 
     // --- CHECK AFTER HOURS (Only for ENTRADA/SUBIDA) ---
     let fueraHora = false;
@@ -159,112 +174,117 @@ export class MovimientosService extends BaseTenantService {
     const savedMovement = await movRepo.save(nuevoMovimiento);
 
     // --- SYNC STATUS ---
-    if (tipo === TipoMovimiento.ENTRADA) {
-      // Boat comes to rack - Direct update for performance
-      await boatRepo.update(embarcacion.id, {
-        estado_operativo: EstadoEmbarcacion.EN_CUNA,
-      });
-
-      // Update or Create Order (subida)
-      const pedidoExistente = await pedRepo.findOne({
-        where: this.buildTenantWhere(tenant, {
-          embarcacion: { id: embarcacion.id },
-          estado: In([EstadoPedido.PENDIENTE, EstadoPedido.EN_AGUA]),
-        }),
-        order: { createdAt: 'DESC' },
-      });
-
-      if (pedidoExistente) {
-        await pedRepo.update(pedidoExistente.id, {
-          estado: EstadoPedido.FINALIZADO,
+    // --- SYNC STATUS (Skip if requested by caller like Pedidos/Operaciones) ---
+    if (!skipStatusSync) {
+      if (tipo === TipoMovimiento.ENTRADA) {
+        // Boat comes to rack - Direct update for performance
+        await boatRepo.update(embarcacion.id, {
+          estado_operativo: EstadoEmbarcacion.EN_CUNA,
         });
-      } else {
-        const solicitudExistente = await solRepo.findOne({
+
+        // Update or Create Order (subida)
+        const pedidoExistente = await pedRepo.findOne({
           where: this.buildTenantWhere(tenant, {
             embarcacion: { id: embarcacion.id },
-            estado: In([EstadoSolicitud.PENDIENTE, EstadoSolicitud.EN_AGUA]),
+            estado: In([EstadoPedido.PENDIENTE, EstadoPedido.EN_AGUA]),
           }),
           order: { createdAt: 'DESC' },
         });
 
-        if (solicitudExistente) {
-          await solRepo.update(solicitudExistente.id, {
-            estado: EstadoSolicitud.FINALIZADA,
-          });
-        } else {
-          const nuevoPedido = pedRepo.create({
-            embarcacion: { id: embarcacion.id },
+        if (pedidoExistente) {
+          await pedRepo.update(pedidoExistente.id, {
             estado: EstadoPedido.FINALIZADO,
-            fechaProgramada: new Date(),
-            guarderiaId: tenant.guarderiaId,
           });
-          await pedRepo.save(nuevoPedido);
+        } else {
+          const solicitudExistente = await solRepo.findOne({
+            where: this.buildTenantWhere(tenant, {
+              embarcacion: { id: embarcacion.id },
+              estado: In([EstadoSolicitud.PENDIENTE, EstadoSolicitud.EN_AGUA]),
+            }),
+            order: { createdAt: 'DESC' },
+          });
+
+          if (solicitudExistente) {
+            await solRepo.update(solicitudExistente.id, {
+              estado: EstadoSolicitud.FINALIZADA,
+            });
+          } else {
+            const nuevoPedido = pedRepo.create({
+              embarcacion: { id: embarcacion.id },
+              estado: EstadoPedido.FINALIZADO,
+              fechaProgramada: new Date(),
+              guarderiaId: tenant.guarderiaId,
+            });
+            await pedRepo.save(nuevoPedido);
+          }
         }
-      }
-
-      await this.notificacionesService.createForRole(
-        tenant,
-        Role.ADMIN,
-        {
-          titulo: 'Retorno a Cuna',
-          mensaje: `La embarcación ${embarcacion.nombre} ha regresado a su cuna.`,
-          tipo: NotificacionTipo.INFO,
-        },
-        manager,
-      );
-    } else if (tipo === TipoMovimiento.SALIDA) {
-      // Boat goes to water - Direct update for performance
-      await boatRepo.update(embarcacion.id, {
-        estado_operativo: EstadoEmbarcacion.EN_AGUA,
-      });
-
-      const pedidoExistente = await pedRepo.findOne({
-        where: this.buildTenantWhere(tenant, {
-          embarcacion: { id: embarcacion.id },
-          estado: In([EstadoPedido.PENDIENTE, EstadoPedido.EN_AGUA]),
-        }),
-        order: { createdAt: 'DESC' },
-      });
-
-      if (pedidoExistente) {
-        await pedRepo.update(pedidoExistente.id, {
-          estado: EstadoPedido.EN_AGUA,
+      } else if (tipo === TipoMovimiento.SALIDA) {
+        // Boat goes to water - Direct update for performance
+        await boatRepo.update(embarcacion.id, {
+          estado_operativo: EstadoEmbarcacion.EN_AGUA,
         });
-      } else {
-        const solicitudExistente = await solRepo.findOne({
+
+        const pedidoExistente = await pedRepo.findOne({
           where: this.buildTenantWhere(tenant, {
             embarcacion: { id: embarcacion.id },
-            estado: In([EstadoSolicitud.PENDIENTE, EstadoSolicitud.EN_AGUA]),
+            estado: In([EstadoPedido.PENDIENTE, EstadoPedido.EN_AGUA]),
           }),
           order: { createdAt: 'DESC' },
         });
 
-        if (solicitudExistente) {
-          await solRepo.update(solicitudExistente.id, {
-            estado: EstadoSolicitud.EN_AGUA,
+        if (pedidoExistente) {
+          await pedRepo.update(pedidoExistente.id, {
+            estado: EstadoPedido.EN_AGUA,
           });
         } else {
-          const nuevoPedido = pedRepo.create({
-            embarcacion: { id: embarcacion.id },
-            estado: EstadoPedido.EN_AGUA,
-            fechaProgramada: new Date(),
-            guarderiaId: tenant.guarderiaId,
+          const solicitudExistente = await solRepo.findOne({
+            where: this.buildTenantWhere(tenant, {
+              embarcacion: { id: embarcacion.id },
+              estado: In([EstadoSolicitud.PENDIENTE, EstadoSolicitud.EN_AGUA]),
+            }),
+            order: { createdAt: 'DESC' },
           });
-          await pedRepo.save(nuevoPedido);
+
+          if (solicitudExistente) {
+            await solRepo.update(solicitudExistente.id, {
+              estado: EstadoSolicitud.EN_AGUA,
+            });
+          } else {
+            const nuevoPedido = pedRepo.create({
+              embarcacion: { id: embarcacion.id },
+              estado: EstadoPedido.EN_AGUA,
+              fechaProgramada: new Date(),
+              guarderiaId: tenant.guarderiaId,
+            });
+            await pedRepo.save(nuevoPedido);
+          }
         }
       }
+    }
 
-      await this.notificacionesService.createForRole(
+    // Notificaciones (Background - no await inside transaction for role notifications if possible,
+    // but here we keep them inside for simplicity or move to after transaction in callers)
+    const tituloMsg =
+      tipo === TipoMovimiento.ENTRADA ? 'Retorno a Cuna' : 'Salida a Agua';
+    const mensajeMsg =
+      tipo === TipoMovimiento.ENTRADA
+        ? `La embarcación ${embarcacion.nombre} ha regresado a su cuna.`
+        : `La embarcación ${embarcacion.nombre} ha salido al agua.`;
+
+    this.notificacionesService
+      .createForRole(
         tenant,
         Role.ADMIN,
         {
-          titulo: 'Salida a Agua',
-          mensaje: `La embarcación ${embarcacion.nombre} ha salido al agua.`,
+          titulo: tituloMsg,
+          mensaje: mensajeMsg,
           tipo: NotificacionTipo.INFO,
         },
         manager,
+      )
+      .catch((e) =>
+        this.logger.error('Error en notificación background de movimiento', e),
       );
-    }
 
     return savedMovement;
   }
